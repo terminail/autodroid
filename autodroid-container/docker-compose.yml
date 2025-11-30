@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Appium Server Service
+  appium-server:
+    image: appium/appium:latest
+    container_name: autodroid-appium
+    ports:
+      - "4723:4723"
+    privileged: true
+    environment:
+      - RELAXED_SECURITY=true
+      - ALLOW_INSECURE=adb_shell
+      - APPIUM_LOG_LEVEL=info
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb  # For USB device access
+      - /var/run/usbmuxd:/var/run/usbmuxd  # For iOS device access (optional)
+    restart: unless-stopped
+    networks:
+      - autodroid-network
+
+  # Automation Core Service
+  automation-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autodroid-core
+    depends_on:
+      - appium-server
+    environment:
+      - APPIUM_URL=http://appium-server:4723
+      - WORKFLOWS_DIR=/app/workflows
+      - MAX_CONCURRENT_TASKS=5
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./workflows:/app/workflows
+      - ./reports:/app/reports
+      - /dev/bus/usb:/dev/bus/usb  # For USB device access
+    restart: unless-stopped
+    networks:
+      - autodroid-network
+
+  # Device Manager Service
+  device-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autodroid-device-manager
+    command: python -m core.device.manager
+    privileged: true
+    environment:
+      - APPIUM_URL=http://appium-server:4723
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb  # For USB device access
+      - /var/run/usbmuxd:/var/run/usbmuxd  # For iOS device access (optional)
+    restart: unless-stopped
+    networks:
+      - autodroid-network
+
+# Network Configuration
+networks:
+  autodroid-network:
+    driver: bridge
+    name: autodroid-network
+
+# Volume Configuration
+volumes:
+  workflows:
+    name: autodroid-workflows
+  reports:
+    name: autodroid-reports

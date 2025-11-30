@@ -40,6 +40,19 @@
 - Automatic failure screenshot saving
 - Performance indicator statistics and analysis
 
+**F007 - User Authentication System**
+- Email/password user registration
+- Email/password login with input validation
+- Fingerprint biometric authentication support
+- Secure authentication state management
+- Session persistence across app restarts
+
+**F008 - Multi-language Support**
+- English language support
+- Chinese language support
+- Dynamic language switching based on device locale
+- Comprehensive string resource management
+
 ## 2. Non-functional Requirements
 
 ### 2.1 Performance Requirements

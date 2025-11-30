@@ -1,0 +1,3 @@
+// Top-level settings file for Gradle projects.
+// Include the app module
+include ':app'

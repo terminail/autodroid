@@ -1,0 +1,12 @@
+{
+  "device_name": "",
+  "android_version": "",
+  "device_id": "",
+  "battery_level": 0,
+  "is_charging": false,
+  "storage_available": 0,
+  "storage_total": 0,
+  "network_type": "",
+  "wifi_ssid": "",
+  "last_updated": 0
+}

@@ -17,7 +17,7 @@ flowchart TD
     end
     
     subgraph CommunicationLayer[Message Communication and Coordination Layer]
-        WebSocket[WebSocket API--]
+        Zenoh[Zenoh--]
         HTTP[RESTful API--]
         ADB[Android Debug Bridge]
     end
@@ -39,11 +39,11 @@ flowchart TD
         end
     end
     
-    ContainerServer --> WebSocket
+    ContainerServer --> Zenoh
     ContainerServer --> HTTP
     ContainerServer --> ADB
 
-    WebSocket --> TestDevices
+    Zenoh --> TestDevices
     HTTP --> TestDevices
     ADB --> TestDevices
     
@@ -55,7 +55,7 @@ flowchart TD
     
     class ContainerServer container;
     class WorkflowEngine,SchedulingSystem,DeviceManagement,RESTfulAPI component;
-    class WebSocketHTTP communication;
+    class ZenohHTTP communication;
     class TestDeviceA,TestDeviceB,TestDeviceC,ProxyAppA,ProxyAppB,ProxyAppC device;
 ```
 
@@ -72,8 +72,10 @@ flowchart TD
    - **Device Management**: Handles device discovery, connection, and monitoring
 
 3. **Communication Layer**
-   - Uses WebSocket/HTTP for real-time communication
+   - Uses Zenoh for device auto-discovery and real-time messaging
+   - Uses HTTP for RESTful API communication
    - Connects the container server with test devices
+   - Enables automatic device discovery in local network
 
 4. **Test Devices**
    - Android devices running target applications

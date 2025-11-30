@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Autodroid 代理</string>
+    <string name="app_description">Autodroid 自动化系统的 Android 代理应用</string>
+    <string name="connection_status_label">连接状态</string>
+    <string name="device_info">设备信息</string>
+    <string name="status_connected">已连接</string>
+    <string name="status_disconnected">已断开</string>
+    <string name="status_connecting">连接中...</string>
+    <string name="action_settings">设置</string>
+    <string name="action_about">关于</string>
+    <string name="menu_settings">设置</string>
+    <string name="menu_about">关于</string>
+    <string name="notification_title">Autodroid 代理</string>
+    <string name="notification_message">已连接到 Autodroid 服务器</string>
+    
+    <!-- Biometric Authentication -->
+    <string name="biometric_login_title">生物识别登录</string>
+    <string name="biometric_login_subtitle">使用指纹登录</string>
+    <string name="biometric_login_description">使用已注册的指纹进行身份验证</string>
+    <string name="biometric_auth_failed">生物识别验证失败</string>
+    <string name="biometric_error">生物识别错误: </string>
+    
+    <!-- Login Screen -->
+    <string name="login_button">登录</string>
+    <string name="login_button_loading">登录中...</string>
+    <string name="email_required">请输入邮箱</string>
+    <string name="email_invalid">请输入有效的邮箱地址</string>
+    <string name="password_required">请输入密码</string>
+    <string name="password_min_length">密码长度至少为6个字符</string>
+    
+    <!-- Register Screen -->
+    <string name="register_button">注册</string>
+    <string name="register_button_loading">注册中...</string>
+    <string name="confirm_password">请确认密码</string>
+    <string name="passwords_mismatch">密码不匹配</string>
+    
+    <!-- Main Screen -->
+    <string name="disconnected">已断开</string>
+    <string name="server_ip">服务器IP: </string>
+    <string name="server_status">服务器状态: </string>
+    <string name="connected">已连接</string>
+    <string name="no_workflows">没有可用的工作流</string>
+    <string name="available_workflows">可用工作流:</string>
+    <string name="permissions_granted">权限已授予</string>
+    <string name="permissions_denied">部分权限被拒绝</string>
+    <string name="connection_status">连接状态: </string>
+    <string name="device_label">设备: </string>
+    <string name="android_version_label">Android版本: </string>
+    <string name="local_ip_label">本地IP: </string>
+    <string name="unknown">未知</string>
+</resources>
