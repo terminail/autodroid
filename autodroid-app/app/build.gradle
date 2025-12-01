@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace ='com.autodroid.proxy'
+    namespace ='com.autodroid.manager'
     compileSdk = 36
 
     // Ignore lint errors for older SDK versions
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.autodroid.proxy"
+        applicationId "com.autodroid.manager"
         minSdk =30
         targetSdk =33
         versionCode =1

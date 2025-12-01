@@ -115,9 +115,8 @@ Develop a cross-platform Android app automation framework based on container tec
 ┌──────┴──────┐         ┌──────┴──────┐         ┌──────┴──────┐
 │  Test Device A │         │  Test Device B │         │  Test Device C │
 │  ┌────────┐ │         │  ┌────────┐ │         │  ┌────────┐ │
-│  │ Proxy  │ │         │  │ Proxy  │ │         │  │ Proxy  │ │
+│  │ Manager│ │         │  │ Manager│ │         │  │ Manager│ │
 │  │ App    │ │         │  │ App    │ │         │  │ App    │ │
-│  └────────┘ │         │  └────────┘ │         │  └────────┘ │
 └─────────────┘         └─────────────┘         └─────────────┘
 ```
 

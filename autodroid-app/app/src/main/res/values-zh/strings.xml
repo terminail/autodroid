@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Autodroid 代理</string>
-    <string name="app_description">Autodroid 自动化系统的 Android 代理应用</string>
+    <string name="app_name">Autodroid 管理器</string>
+    <string name="app_description">Autodroid 自动化系统的 Android 管理器应用</string>
     <string name="connection_status_label">连接状态</string>
     <string name="device_info">设备信息</string>
     <string name="status_connected">已连接</string>
@@ -11,7 +11,7 @@
     <string name="action_about">关于</string>
     <string name="menu_settings">设置</string>
     <string name="menu_about">关于</string>
-    <string name="notification_title">Autodroid 代理</string>
+    <string name="notification_title">Autodroid 管理器</string>
     <string name="notification_message">已连接到 Autodroid 服务器</string>
     
     <!-- Biometric Authentication -->

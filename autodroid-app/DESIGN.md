@@ -93,28 +93,28 @@ public class MainActivity extends AppCompatActivity {
     
     <fragment
         android:id="@+id/workflowsFragment"
-        android:name="com.autodroid.proxy.ui.workflows.WorkflowsFragment"
+        android:name="com.autodroid.manager.ui.workflows.WorkflowsFragment"
         android:label="Workflows" />
         
     <fragment
         android:id="@+id/reportsFragment"
-        android:name="com.autodroid.proxy.ui.reports.ReportsFragment"
+        android:name="com.autodroid.manager.ui.reports.ReportsFragment"
         android:label="Reports" />
 
         
     <fragment
         android:id="@+id/dashboardFragment"
-        android:name="com.autodroid.proxy.ui.dashboard.DashboardFragment"
+        android:name="com.autodroid.manager.ui.dashboard.DashboardFragment"
         android:label="Dashboard" />
         
     <fragment
         android:id="@+id/ordersFragment"
-        android:name="com.autodroid.proxy.ui.orders.OrdersFragment"
+        android:name="com.autodroid.manager.ui.orders.OrdersFragment"
         android:label="Orders" />
         
     <fragment
         android:id="@+id/myFragment"
-        android:name="com.autodroid.proxy.ui.my.MyFragment"
+        android:name="com.autodroid.manager.ui.my.MyFragment"
         android:label="My" />
         
 </navigation>
@@ -459,7 +459,7 @@ private void startServiceDiscovery() {
 你的服务器需要注册mDNS服务：
 
 ### Python示例（使用zeroconf）：
-```python
+```
 from zeroconf import ServiceInfo, Zeroconf
 
 def register_service():
@@ -633,7 +633,7 @@ public class WorkflowDetailFragment extends Fragment {
     
     <fragment
         android:id="@+id/workflowsFragment"
-        android:name="com.autodroid.proxy.ui.workflows.WorkflowsFragment"
+        android:name="com.autodroid.manager.ui.workflows.WorkflowsFragment"
         android:label="Workflows">
         <action
             android:id="@+id/action_workflowsFragment_to_workflowDetailFragment"
@@ -642,7 +642,7 @@ public class WorkflowDetailFragment extends Fragment {
     
     <fragment
         android:id="@+id/workflowDetailFragment"
-        android:name="com.autodroid.proxy.ui.workflows.detail.WorkflowDetailFragment"
+        android:name="com.autodroid.manager.ui.workflows.detail.WorkflowDetailFragment"
         android:label="Workflow Details">
         <argument
             android:name="workflowId"
@@ -732,4 +732,4 @@ private void setupLayout() {
 4. ✅ 便于未来扩展（平板适配）
 5. ✅ 使用Navigation Component统一管理
 
-这种设计会让你的应用更加现代化、维护性更好，并且提供更流畅的用户体验。
+这种设计会让你的应用更加现代化、维护性更好，并且提供更流畅的用户体验.

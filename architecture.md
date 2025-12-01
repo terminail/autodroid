@@ -28,15 +28,15 @@ flowchart TD
         TestDeviceA[Test Device A] --> TestDeviceB[Test Device B] --> TestDeviceC[Test Device C]
         
         subgraph TestDeviceA
-            ProxyAppA[Proxy App]
+            ProxyAppA[Manager App]
         end
         
         subgraph TestDeviceB
-            ProxyAppB[Proxy App]
+            ProxyAppB[Manager App]
         end
         
         subgraph TestDeviceC
-            ProxyAppC[Proxy App]
+            ProxyAppC[Manager App]
         end
     end
     
@@ -83,7 +83,7 @@ flowchart TD
 
 4. **Test Devices**
    - Android devices running target applications
-   - Equipped with proxy app for enhanced communication
+   - Equipped with manager app for enhanced communication
    - Supports both USB and network ADB connections
 
 ## 2. Container Service Architecture
