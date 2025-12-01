@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="autodroid-app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-11-30T08:00:41.484256200Z">
+        <DropdownSelection timestamp="2025-12-01T01:15:22.005702700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Administrator\.android\avd\Pixel_5.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=TDCDU17905004388" />
             </handle>
           </Target>
         </DropdownSelection>

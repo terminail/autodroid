@@ -12,7 +12,7 @@
     android:foreground="?android:attr/selectableItemBackground">
 
     <TextView
-        android:id="@+id/workflow_name"
+        android:id="@+id/workflow_item_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
@@ -21,7 +21,16 @@
         android:layout_marginBottom="4dp" />
 
     <TextView
-        android:id="@+id/workflow_description"
+        android:id="@+id/workflow_item_package"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/workflow_item_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="14sp"

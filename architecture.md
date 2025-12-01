@@ -17,8 +17,9 @@ flowchart TD
     end
     
     subgraph CommunicationLayer[Message Communication and Coordination Layer]
-        Zenoh[Zenoh--]
-        HTTP[RESTful API--]
+        mDNS[mDNS - Device Discovery]
+        HTTP[RESTful API - FastAPI]
+        WebSocket[WebSocket - Real-time Communication]
         ADB[Android Debug Bridge]
     end
     
@@ -39,12 +40,14 @@ flowchart TD
         end
     end
     
-    ContainerServer --> Zenoh
+    ContainerServer --> mDNS
     ContainerServer --> HTTP
+    ContainerServer --> WebSocket
     ContainerServer --> ADB
 
-    Zenoh --> TestDevices
+    mDNS --> TestDevices
     HTTP --> TestDevices
+    WebSocket --> TestDevices
     ADB --> TestDevices
     
     %% Styling - Using black text with white background for better clarity
@@ -55,7 +58,7 @@ flowchart TD
     
     class ContainerServer container;
     class WorkflowEngine,SchedulingSystem,DeviceManagement,RESTfulAPI component;
-    class ZenohHTTP communication;
+    class mDNS,HTTP,WebSocket,ADB communication;
     class TestDeviceA,TestDeviceB,TestDeviceC,ProxyAppA,ProxyAppB,ProxyAppC device;
 ```
 
@@ -72,8 +75,9 @@ flowchart TD
    - **Device Management**: Handles device discovery, connection, and monitoring
 
 3. **Communication Layer**
-   - Uses Zenoh for device auto-discovery and real-time messaging
-   - Uses HTTP for RESTful API communication
+   - Uses mDNS for lightweight device auto-discovery in local network
+   - Uses FastAPI for RESTful API communication
+   - Uses WebSocket for real-time messaging between server and devices
    - Connects the container server with test devices
    - Enables automatic device discovery in local network
 
@@ -137,6 +141,6 @@ services:
 ### Service Interactions
 
 - The `automation-core` service communicates with `appium-server` to execute UI automation commands
-- The `device-manager` service handles device discovery and management
+- The `device-manager` service handles device discovery and management using mDNS
 - All services work together to provide a complete automation solution
 - Volumes are used to persist workflows and reports outside containers

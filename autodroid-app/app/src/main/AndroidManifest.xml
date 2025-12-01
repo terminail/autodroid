@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    
+    <!-- Location permissions for mDNS discovery (required for Android 6.0+) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     
     <!-- Device monitoring permissions -->
     <uses-permission android:name="android.permission.BATTERY_STATS" />
@@ -74,12 +79,18 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
         </activity>
         
-        <!-- Zenoh Service -->
+        <!-- Order Detail Activity -->
+        <activity
+            android:name=".OrderDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        </activity>
+        
+        <!-- Network Service -->
         <service
-            android:name=".service.ZenohService"
+            android:name=".service.NetworkService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
-
         
     </application>
 

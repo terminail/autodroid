@@ -4,7 +4,7 @@
 
 ### Core Frameworks
 - **Automation Engine**: Appium + UI Automator 2
-- **Device Communication**: ADB + Appium Server + Zenoh
+- **Device Communication**: ADB + Appium Server + mDNS + FastAPI + WebSocket
 - **Container Runtime**: Docker + Podman
 - **Programming Language**: Python 3.11+ (Server), Java/Kotlin (Android App)
 
@@ -19,7 +19,8 @@
 - **Testing Framework**: pytest, AndroidJUnitRunner
 - **Code Quality**: flake8, black, mypy, Android Lint
 - **CI/CD**: GitHub Actions
-- **Real-time Communication**: Zenoh (for device auto-discovery and real-time messaging)
+- **Device Discovery**: mDNS (for lightweight device auto-discovery)
+- **Real-time Communication**: FastAPI + WebSocket (for real-time messaging between server and devices)
 - **Authentication**: Android Biometric API, JWT
 - **Android Architecture**: MVVM (Model-View-ViewModel)
 - **HTTP Client**: OkHttp
@@ -302,14 +303,13 @@ async def get_matched_workflows(
 
 **Android App API Call**
 ```java
-// In ZenohService.java
+// In NetworkService.java
 public void scanInstalledApks() {
-    // Send scan request to server via Zenoh or HTTP
+    // Send scan request to server via HTTP
     String scanRequest = String.format("{\"device_id\": \"%s\"}", deviceId);
-    zenoh.put("autodroid/device/" + deviceId + "/scan-apks", scanRequest);
     
-    // Or via HTTP
-    // authService.scanApks(deviceId, new AuthCallback() { /* ... */ });
+    // Using FastAPI endpoint
+    authService.scanApks(deviceId, new AuthCallback() { /* ... */ });
 }
 ```
 
@@ -326,12 +326,12 @@ public void scanInstalledApks() {
    - Package name
    - App name (using `pm.getApplicationLabel()`)
    - Version code and name (using `PackageInfo`)
-4. **Send to Server**: App sends extracted APK info to server via HTTP/Zenoh
+4. **Send to Server**: App sends extracted APK info to server via HTTP/WebSocket
 5. **Workflow Matching**: Server matches APK info with available workflows using:
    - Exact package name match
    - Version compatibility check
    - Device capability validation
-6. **Result Return**: Server returns matched workflows to app
+6. **Result Return**: Server returns matched workflows to app via WebSocket or HTTP response
 7. **App Display**: App displays matched workflows for user selection
 
 **Benefits of App-Based Scanning**:
