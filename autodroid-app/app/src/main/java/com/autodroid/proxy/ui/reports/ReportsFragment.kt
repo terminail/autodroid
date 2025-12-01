@@ -1,15 +1,14 @@
-// ReportsFragment.java
+// ReportsFragment.kt
 package com.autodroid.proxy.ui.reports
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.proxy.R
-import com.autodroid.proxy.ReportDetailActivity
 import com.autodroid.proxy.ui.BaseFragment
 import com.autodroid.proxy.ui.adapters.BaseItemAdapter
 import com.autodroid.proxy.viewmodel.AppViewModel
@@ -78,9 +77,12 @@ class ReportsFragment : BaseFragment() {
     }
 
     private fun openReportDetail(report: MutableMap<String?, Any?>) {
-        // Start ReportDetailActivity
-        val intent = Intent(getActivity(), ReportDetailActivity::class.java)
-        intent.putExtra("report_id", report.get("id") as String?)
-        startActivity(intent)
+        // Navigate to ReportDetailFragment using Navigation Component
+        val reportId = report.get("id") as String?
+        
+        if (reportId != null) {
+            val action = ReportsFragmentDirections.actionNavReportsToReportDetailFragment(reportId)
+            findNavController().navigate(action)
+        }
     }
 }

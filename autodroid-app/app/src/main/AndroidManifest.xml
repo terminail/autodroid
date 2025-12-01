@@ -65,27 +65,6 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
         </activity>
         
-        <!-- Report Detail Activity -->
-        <activity
-            android:name=".ReportDetailActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
-        </activity>
-        
-        <!-- Workflow Detail Activity -->
-        <activity
-            android:name=".WorkflowDetailActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
-        </activity>
-        
-        <!-- Order Detail Activity -->
-        <activity
-            android:name=".OrderDetailActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
-        </activity>
-        
         <!-- Network Service -->
         <service
             android:name=".service.NetworkService"

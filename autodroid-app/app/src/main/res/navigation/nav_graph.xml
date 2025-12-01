@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_workflows">
+
+    <fragment
+        android:id="@+id/nav_workflows"
+        android:name="com.autodroid.proxy.ui.workflows.WorkflowsFragment"
+        android:label="Workflows">
+        <action
+            android:id="@+id/action_nav_workflows_to_workflowDetailFragment"
+            app:destination="@id/workflowDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_reports"
+        android:name="com.autodroid.proxy.ui.reports.ReportsFragment"
+        android:label="Reports">
+        <action
+            android:id="@+id/action_nav_reports_to_reportDetailFragment"
+            app:destination="@id/reportDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.autodroid.proxy.ui.dashboard.DashboardFragment"
+        android:label="Dashboard" />
+
+    <fragment
+        android:id="@+id/nav_orders"
+        android:name="com.autodroid.proxy.ui.orders.OrdersFragment"
+        android:label="Orders">
+        <action
+            android:id="@+id/action_nav_orders_to_orderDetailFragment"
+            app:destination="@id/orderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_my"
+        android:name="com.autodroid.proxy.ui.my.MyFragment"
+        android:label="My" />
+
+    <fragment
+        android:id="@+id/workflowDetailFragment"
+        android:name="com.autodroid.proxy.ui.workflows.detail.WorkflowDetailFragment"
+        android:label="Workflow Details">
+        <argument
+            android:name="workflow"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reportDetailFragment"
+        android:name="com.autodroid.proxy.ui.reports.detail.ReportDetailFragment"
+        android:label="Report Details">
+        <argument
+            android:name="report_id"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/orderDetailFragment"
+        android:name="com.autodroid.proxy.ui.orders.detail.OrderDetailFragment"
+        android:label="Order Details">
+        <argument
+            android:name="order_id"
+            app:argType="string" />
+        <argument
+            android:name="order_title"
+            app:argType="string" />
+        <argument
+            android:name="order_status"
+            app:argType="string" />
+        <argument
+            android:name="order_created"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

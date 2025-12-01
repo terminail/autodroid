@@ -1,19 +1,17 @@
-// WorkflowsFragment.java
+// WorkflowsFragment.kt
 package com.autodroid.proxy.ui.workflows
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.proxy.R
-import com.autodroid.proxy.WorkflowDetailActivity
 import com.autodroid.proxy.ui.BaseFragment
 import com.autodroid.proxy.ui.adapters.BaseItemAdapter
 import com.autodroid.proxy.viewmodel.AppViewModel
-import com.google.gson.Gson
 
 class WorkflowsFragment : BaseFragment() {
     private var workflowsTitleTextView: TextView? = null
@@ -79,14 +77,13 @@ class WorkflowsFragment : BaseFragment() {
     }
 
     private fun openWorkflowDetail(workflow: MutableMap<String?, Any?>?) {
-        // Convert workflow to JSON string
-        val gson = Gson()
-        val workflowJson = gson.toJson(workflow)
-
-
-        // Start WorkflowDetailActivity
-        val intent = Intent(getActivity(), WorkflowDetailActivity::class.java)
-        intent.putExtra("workflow", workflowJson)
-        startActivity(intent)
+        // Get workflow ID
+        val workflowId = workflow?.get("id") as String?
+        
+        // Navigate to WorkflowDetailFragment using Navigation Component
+        if (workflowId != null) {
+            val action = WorkflowsFragmentDirections.actionNavWorkflowsToWorkflowDetailFragment(workflowId)
+            findNavController().navigate(action)
+        }
     }
 }

@@ -1,14 +1,13 @@
-// OrdersFragment.java
+// OrdersFragment.kt
 package com.autodroid.proxy.ui.orders
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.autodroid.proxy.OrderDetailActivity
 import com.autodroid.proxy.R
 import com.autodroid.proxy.ui.BaseFragment
 import com.autodroid.proxy.ui.adapters.BaseItemAdapter
@@ -78,12 +77,17 @@ class OrdersFragment : BaseFragment() {
     }
 
     private fun openOrderDetail(order: MutableMap<String?, Any?>) {
-        // Start OrderDetailActivity
-        val intent = Intent(getActivity(), OrderDetailActivity::class.java)
-        intent.putExtra("order_id", order.get("id") as String?)
-        intent.putExtra("order_title", order.get("title") as String?)
-        intent.putExtra("order_status", order.get("status") as String?)
-        intent.putExtra("order_created", order.get("subtitle") as String?)
-        startActivity(intent)
+        // Navigate to OrderDetailFragment using Navigation Component
+        val orderId = order.get("id") as String?
+        val orderTitle = order.get("title") as String?
+        val orderStatus = order.get("status") as String?
+        val orderCreated = order.get("subtitle") as String?
+        
+        if (orderId != null && orderTitle != null && orderStatus != null && orderCreated != null) {
+            val action = OrdersFragmentDirections.actionNavOrdersToOrderDetailFragment(
+                orderId, orderTitle, orderStatus, orderCreated
+            )
+            findNavController().navigate(action)
+        }
     }
 }
