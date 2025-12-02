@@ -1,44 +1,202 @@
-这是一个非常好的问题，也触及到了一个常见的混淆点。
+# Autodroid App
 
-首先，最重要的一点需要澄清：
+Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和管理测试工作流。
 
-**HarmonyOS（鸿蒙操作系统）不是Android，它是一个独立的操作系统。因此，它不直接对应任何一个“安卓版本”。**
+## 功能特性
 
-你提到的 `HarmonyOS 3.0.0` 是一个鸿蒙的版本号，而不是Android的版本号。它们之间的关系和开发环境要求如下：
+- **服务器发现**：通过 mDNS 自动发现 Autodroid 服务器
+- **设备注册**：将测试设备信息注册到服务器
+- **工作流管理**：查看和管理测试工作流
+- **测试报告**：查看测试执行报告
+- **实时监控**：监控测试设备状态
 
-### 核心关系解读
+## 开发环境
 
-1.  **系统独立性**：HarmonyOS 是华为自主研发的分布式操作系统，其内核可以是Linux内核、LiteOS内核，以及未来纯粹的鸿蒙微内核。它不再基于Android的AOSP（Android开放源代码项目），或者至少从HarmonyOS 2.0开始，其核心已经与Android分离。
+- **Android Studio**：最新稳定版
+- **Kotlin**：1.9.0+
+- **Gradle**：8.0+
+- **Android SDK**：API Level 30+
 
-2.  **应用兼容性**：为了兼容现有的海量Android应用，HarmonyOS 内置了 **“Android运行时环境”**。这意味着，一个 `.apk` 文件仍然可以在HarmonyOS设备上安装和运行。这个运行时环境有其自己对应的 **Android API 级别**。
+## 构建项目
 
-### 针对 HarmonyOS 3.0.0 的环境需求
+### 1. 打开项目
 
-对于 `HarmonyOS 3.0.0`，其内置的Android运行时环境通常对应的是 **Android 12 (API level 31)**。
+使用 Android Studio 打开 `autodroid-app` 目录。
 
-因此，虽然系统是HarmonyOS，但当你使用Appium等基于Android技术的自动化测试框架时，你需要准备的是与 **Android 12** 相匹配的开发环境。
+### 2. 同步 Gradle
 
-### JDK 选择建议
+等待 Android Studio 自动同步 Gradle 依赖。如果遇到问题，可以手动点击 "Sync Project with Gradle Files" 按钮。
 
-根据上面的分析，以及Appium官方文档的建议（对于最新的Android API级别，需要JDK 9+），你的选择非常明确：
+### 3. 构建 APK
 
-| 项目 | 推荐版本 | 说明 |
-| :--- | :--- | :--- |
-| **目标系统** | HarmonyOS 3.0.0 | 设备本身运行的系统。 |
-| **对应的Android环境** | **Android 12 (API 31)** | Appium将其视为一个Android 12设备来进行通信和操控。 |
-| **JDK 版本** | **JDK 11 或 JDK 17 (强烈推荐)** | 这两个都是长期支持版本，在稳定性、兼容性和社区支持上取得了很好的平衡。它们完全满足Appium和Android 12的要求。 |
-| **JDK 8** | 不推荐 | 虽然对于旧项目可能有效，但对于Android 12及更高版本的环境，可能会遇到兼容性问题。 |
+```bash
+# 构建 Debug 版本
+./gradlew assembleDebug
 
-### 结论与操作步骤
+# 构建 Release 版本
+./gradlew assembleRelease
+```
 
-1.  **明确目标**：你要测试的是运行 `HarmonyOS 3.0.0` 的设备，但Appium会将其识别为一个 **Android 12** 设备。
+## 运行应用
 
-2.  **安装JDK**：
-    *   **首选**：安装 **JDK 11** 或 **JDK 17**。这是目前企业级开发和自动化测试中最主流、最稳定的选择。
-    *   **备选**：理论上JDK 21也可以，但对于自动化测试这种强调环境稳定的场景，建议优先选择经过更长时间验证的LTS版本（如11或17）。
+### 1. 连接设备
 
-3.  **配置环境**：确保 `JAVA_HOME` 环境变量正确指向你安装的JDK 11或17的目录，并将 `%JAVA_HOME%\bin` 添加到 `PATH` 变量中。
+使用 USB 数据线连接 Android 设备到开发机，并确保已启用 USB 调试模式。
 
-4.  **验证**：安装Appium后，运行 `appium-doctor` 命令，确保所有与Android相关的依赖项（包括JDK）都检查通过。
+### 2. 安装应用
 
-**总结一句话：为你的 HarmonyOS 3.0.0 设备配置 Appium 测试环境时，请按照针对 Android 12 的标准来准备，即安装 JDK 11 或 JDK 17。**
+```bash
+# 安装 Debug 版本
+./gradlew installDebug
+
+# 或使用 adb 命令
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
+
+### 3. 启动应用
+
+在设备上找到 Autodroid App 图标，点击启动应用。
+
+## 运行测试
+
+### 运行 NsdHelperTest
+
+NsdHelperTest 是一个集成测试，用于测试应用通过 mDNS 发现服务器的功能。
+
+#### 步骤 1：准备测试环境
+
+1. 确保已安装 Android Studio
+2. 确保已连接测试设备或启动模拟器
+3. 确保设备已启用开发者选项和 USB 调试
+
+#### 步骤 2：运行测试
+
+**方法 1：使用 Android Studio**
+
+1. 在 Android Studio 中打开项目
+2. 打开 `app/src/androidTest/java/com/autodroid/manager/utils/NsdHelperTest.kt` 文件
+3. 点击文件左侧的绿色运行按钮，选择 "Run 'NsdHelperTest'"
+4. 选择测试设备，点击 "OK"
+
+**方法 2：使用命令行**
+
+```bash
+# 运行所有集成测试
+./gradlew connectedAndroidTest
+
+# 运行特定测试类
+./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.autodroid.manager.utils.NsdHelperTest
+
+# 运行特定测试方法
+./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.autodroid.manager.utils.NsdHelperTest#testServiceDiscovery
+```
+
+#### 步骤 3：查看测试结果
+
+**在 Android Studio 中**：
+- 测试结果会显示在 "Run" 窗口中
+- 可以查看测试通过/失败状态和详细日志
+
+**在命令行中**：
+- 测试结果会输出到控制台
+- 详细测试报告生成在 `app/build/reports/androidTests/connected/` 目录下
+
+### 运行单元测试
+
+```bash
+# 运行所有单元测试
+./gradlew test
+
+# 运行特定测试类
+./gradlew testDebugUnitTest --tests "com.autodroid.manager.utils.NsdHelperTest"
+```
+
+## 测试依赖
+
+- **JUnit 4**：单元测试框架
+- **AndroidX Test**：集成测试框架
+- **Espresso**：UI 测试框架
+
+## 项目结构
+
+```
+autodroid-app/
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/autodroid/manager/
+│   │   │   │   ├── auth/          # 认证相关代码
+│   │   │   │   ├── managers/      # 业务管理器
+│   │   │   │   ├── model/        # 数据模型
+│   │   │   │   ├── service/      # 服务类
+│   │   │   │   ├── ui/           # UI 组件
+│   │   │   │   ├── utils/        # 工具类
+│   │   │   │   └── viewmodel/     # ViewModel 类
+│   │   │   ├── res/             # 资源文件
+│   │   │   └── AndroidManifest.xml  # 应用配置
+│   │   └── androidTest/         # 集成测试
+│   │       └── java/com/autodroid/manager/  # 集成测试代码
+│   └── build.gradle.kts         # 模块配置
+├── build.gradle.kts             # 项目配置
+└── settings.gradle.kts          # 项目设置
+```
+
+## 核心组件
+
+### 1. NsdHelper
+
+用于通过 mDNS 发现 Autodroid 服务器。
+
+### 2. NetworkService
+
+处理与服务器的网络通信。
+
+### 3. DeviceInfoManager
+
+管理设备信息和状态。
+
+### 4. WorkflowManager
+
+管理测试工作流。
+
+## API 接口
+
+应用通过 RESTful API 与 Autodroid 服务器通信，主要接口包括：
+
+- `/api/health`：健康检查
+- `/api/server`：获取服务器信息
+- `/api/devices/register`：注册设备
+- `/api/workflows`：获取工作流列表
+- `/api/plans`：获取测试计划
+
+## 常见问题
+
+### 1. 无法发现服务器
+
+- 确保设备和服务器在同一网络
+- 确保服务器已启动并运行 mDNS 服务
+- 检查设备的网络权限
+
+### 2. 设备注册失败
+
+- 检查设备网络连接
+- 确保服务器 API 正常
+- 检查设备信息格式
+
+### 3. 测试运行失败
+
+- 确保设备已正确连接
+- 确保已启用 USB 调试
+- 检查测试代码和依赖
+
+## 贡献指南
+
+1. Fork 仓库
+2. 创建特性分支
+3. 提交代码
+4. 推送分支
+5. 创建 Pull Request
+
+## 许可证
+
+MIT License

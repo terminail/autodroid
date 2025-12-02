@@ -49,4 +49,22 @@
     <string name="android_version_label">Android版本: </string>
     <string name="local_ip_label">本地IP: </string>
     <string name="unknown">未知</string>
+    <string name="show_parameters">显示参数</string>
+    <string name="hide_parameters">隐藏参数</string>
+    <string name="timeout_seconds">超时时间 (秒):</string>
+    <string name="retry_count">重试次数:</string>
+    <string name="step_delay_ms">步骤延迟 (毫秒):</string>
+    <string name="device_selection">设备选择:</string>
+    
+    <!-- Device Selection Options -->
+    <string-array name="device_selection_options">
+        <item>自动选择</item>
+        <item>当前设备</item>
+        <item>所有设备</item>
+    </string-array>
+    <string-array name="device_selection_values">
+        <item>auto</item>
+        <item>current</item>
+        <item>all</item>
+    </string-array>
 </resources>

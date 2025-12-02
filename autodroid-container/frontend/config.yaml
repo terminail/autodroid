@@ -1,0 +1,39 @@
+# Frontend Configuration
+# This file configures the connection to the FastAPI backend server
+
+server:
+  # FastAPI server URL (include protocol, host, and port)
+  url: http://localhost:8003
+  # API base path (if the API is served under a subpath)
+  api_base: /api
+  # Whether to use HTTPS (true/false)
+  use_https: false
+  # Timeout for API requests in milliseconds
+  timeout: 10000
+
+# Dashboard configuration
+dashboard:
+  # Auto-refresh interval in seconds
+  refresh_interval: 30
+  # Whether to show connection suggestions
+  show_connection_suggestions: true
+  # Whether to show WiFi network details
+  show_wifi_details: true
+
+# Logging configuration
+logging:
+  # Log level (debug, info, warn, error)
+  level: info
+  # Whether to log API requests
+  log_api_requests: false
+
+# UI configuration
+ui:
+  # Default theme (light, dark, system)
+  default_theme: light
+  # Default language (en, zh, ja)
+  default_language: en
+  # Whether to show tooltips
+  show_tooltips: true
+  # Whether to show help text
+  show_help_text: true

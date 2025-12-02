@@ -5,47 +5,27 @@ import androidx.lifecycle.ViewModel
 
 class AppViewModel : ViewModel() {
     // Getters for LiveData
-    // Server information
-    val serverIp: MutableLiveData<String?> = MutableLiveData<String?>()
-    val serverConnected: MutableLiveData<Boolean?> = MutableLiveData<Boolean?>(false)
-    val serverInfo: MutableLiveData<MutableMap<String?, Any?>?> =
-        MutableLiveData<MutableMap<String?, Any?>?>()
+    // Server information - unified object from mDNS discovery
+    val serverInfo = MutableLiveData<MutableMap<String?, Any?>?>()
 
     // Workflows information
-    val availableWorkflows: MutableLiveData<MutableList<MutableMap<String?, Any?>?>?> =
-        MutableLiveData<MutableList<MutableMap<String?, Any?>?>?>()
-    val selectedWorkflow: MutableLiveData<MutableMap<String?, Any?>?> =
-        MutableLiveData<MutableMap<String?, Any?>?>()
+    val availableWorkflows = MutableLiveData<MutableList<MutableMap<String?, Any?>?>?>()
+    val selectedWorkflow = MutableLiveData<MutableMap<String?, Any?>?>()
 
     // Test reports information
-    val testReports: MutableLiveData<MutableList<MutableMap<String?, Any?>?>?> =
-        MutableLiveData<MutableList<MutableMap<String?, Any?>?>?>()
-    val selectedReport: MutableLiveData<MutableMap<String?, Any?>?> =
-        MutableLiveData<MutableMap<String?, Any?>?>()
+    val testReports = MutableLiveData<MutableList<MutableMap<String?, Any?>?>?>()
+    val selectedReport = MutableLiveData<MutableMap<String?, Any?>?>()
 
     // Real-time execution information
-    val currentExecution: MutableLiveData<MutableMap<String?, Any?>?> =
-        MutableLiveData<MutableMap<String?, Any?>?>()
-    val executionLog: MutableLiveData<String?> = MutableLiveData<String?>()
+    val currentExecution = MutableLiveData<MutableMap<String?, Any?>?>()
+    val executionLog = MutableLiveData<String?>()
 
     // Device information
-    val deviceIp: MutableLiveData<String?> = MutableLiveData<String?>()
+    val deviceIp = MutableLiveData<String?>()
 
     // Setters
-    fun setServerIp(ip: String?) {
-        serverIp.setValue(ip)
-    }
-
-    fun setServerConnected(connected: Boolean) {
-        serverConnected.setValue(connected)
-    }
-
     fun setServerInfo(info: MutableMap<String?, Any?>?) {
         serverInfo.setValue(info)
-        // Extract server IP from info if available
-        if (info != null && info.containsKey("ip")) {
-            serverIp.setValue(info.get("ip").toString())
-        }
     }
 
     fun setAvailableWorkflows(workflows: MutableList<MutableMap<String?, Any?>?>?) {

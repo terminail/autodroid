@@ -42,6 +42,18 @@
         android:label="My" />
 
     <fragment
+        android:id="@+id/nav_server_detail"
+        android:name="com.autodroid.manager.ui.server.ServerDetailFragment"
+        android:label="Server Detail">
+        <argument
+            android:name="serverIp"
+            app:argType="string" />
+        <argument
+            android:name="serverPort"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
         android:id="@+id/workflowDetailFragment"
         android:name="com.autodroid.manager.ui.workflows.detail.WorkflowDetailFragment"
         android:label="Workflow Details">

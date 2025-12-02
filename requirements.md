@@ -53,6 +53,16 @@
 - Dynamic language switching based on device locale
 - Comprehensive string resource management
 
+**F009 - Server-side Driver Configuration**
+- FastAPI server port configuration (default: 8000)
+- Frontend API endpoint configuration
+- Server hostname and IP address display
+- Network interface auto-detection
+- mDNS service discovery support
+- Cross-origin resource sharing (CORS) configuration
+- HTTP/HTTPS protocol support
+- API base path configuration
+
 ## 2. Non-functional Requirements
 
 ### 2.1 Performance Requirements

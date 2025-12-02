@@ -4,9 +4,9 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
 @dataclass
-class DeviceTestPlan:
+class DeviceWorkflowPlan:
     id: str
-    workflow_name: str
+    workflow_id: str
     device_udid: str
     enabled: bool
     schedule: Dict[str, Any]
@@ -14,20 +14,20 @@ class DeviceTestPlan:
 
 class SmartScheduler:
     def __init__(self):
-        self.active_plans: Dict[str, DeviceTestPlan] = {}
-        self.task_queue: List[DeviceTestPlan] = []
+        self.active_plans: Dict[str, DeviceWorkflowPlan] = {}
+        self.task_queue: List[DeviceWorkflowPlan] = []
     
-    def add_test_plan(self, plan: DeviceTestPlan):
-        """Add a new test plan to the scheduler"""
+    def add_workflow_plan(self, plan: DeviceWorkflowPlan):
+        """Add a new workflow plan to the scheduler"""
         self.active_plans[plan.id] = plan
     
-    def remove_test_plan(self, plan_id: str):
-        """Remove a test plan from the scheduler"""
+    def remove_workflow_plan(self, plan_id: str):
+        """Remove a workflow plan from the scheduler"""
         if plan_id in self.active_plans:
             del self.active_plans[plan_id]
     
-    def update_test_plan(self, plan: DeviceTestPlan):
-        """Update an existing test plan"""
+    def update_workflow_plan(self, plan: DeviceWorkflowPlan):
+        """Update an existing workflow plan"""
         if plan.id in self.active_plans:
             self.active_plans[plan.id] = plan
     
@@ -55,8 +55,8 @@ class SmartScheduler:
         
         return False
     
-    async def get_due_test_plans(self) -> List[DeviceTestPlan]:
-        """Get all test plans that are due for execution"""
+    async def get_due_workflow_plans(self) -> List[DeviceWorkflowPlan]:
+        """Get all workflow plans that are due for execution"""
         current_time = datetime.datetime.now()
         active_plans = []
         
@@ -72,7 +72,7 @@ class SmartScheduler:
     async def schedule_tasks(self):
         """Main scheduling loop"""
         while True:
-            due_plans = await self.get_due_test_plans()
+            due_plans = await self.get_due_workflow_plans()
             
             for plan in due_plans:
                 if plan.id not in [task.id for task in self.task_queue]:
@@ -80,15 +80,15 @@ class SmartScheduler:
             
             await asyncio.sleep(60)  # Check every minute
     
-    def get_next_task(self) -> Optional[DeviceTestPlan]:
+    def get_next_task(self) -> Optional[DeviceWorkflowPlan]:
         """Get the next task from the queue"""
         if self.task_queue:
             return self.task_queue.pop(0)
         return None
     
     async def handle_event(self, event_type: str, event_data: Dict[str, Any]):
-        """Handle event-driven test plan execution"""
-        # Find test plans that match the event
+        """Handle event-driven workflow plan execution"""
+        # Find workflow plans that match the event
         for plan_id, plan in self.active_plans.items():
             if plan.enabled and 'event_trigger' in plan.schedule:
                 trigger = plan.schedule['event_trigger']

@@ -47,7 +47,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: autodroid-device-manager
-    command: python -m core.device.manager
+    command: python -m core.device.device_manager
     privileged: true
     environment:
       - APPIUM_URL=http://appium-server:4723

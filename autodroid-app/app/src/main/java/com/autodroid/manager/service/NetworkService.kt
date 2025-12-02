@@ -149,23 +149,23 @@ class NetworkService : Service() {
         nsdHelper = NsdHelper(this, object : ServiceDiscoveryCallback {
             override fun onServiceFound(serviceName: String?, host: String?, port: Int) {
                 Log.d(TAG, "Service found: " + serviceName + " at " + host + ":" + port)
-                discoveredServer = DiscoveredServer(serviceName, host, port)
+                if (serviceName != null && host != null) {
+                    discoveredServer = DiscoveredServer(serviceName, host, port)
 
+                    // Notify callback if set
+                    if (serverDiscoveryCallback != null) {
+                        serverDiscoveryCallback!!.onServerDiscovered(discoveredServer)
+                    }
 
-                // Notify callback if set
-                if (serverDiscoveryCallback != null) {
-                    serverDiscoveryCallback!!.onServerDiscovered(discoveredServer)
+                    // Publish device information to the discovered server
+                    publishDeviceInfo(host, port)
                 }
-
-
-                // Publish device information to the discovered server
-                publishDeviceInfo(host, port)
             }
 
             override fun onServiceLost(serviceName: String?) {
                 Log.d(TAG, "Service lost: " + serviceName)
                 if (serverDiscoveryCallback != null && discoveredServer != null &&
-                    discoveredServer!!.name == serviceName
+                    discoveredServer!!.serviceName == serviceName
                 ) {
                     serverDiscoveryCallback!!.onServerLost(discoveredServer)
                     discoveredServer = null
@@ -178,11 +178,37 @@ class NetworkService : Service() {
 
             override fun onDiscoveryFailed() {
                 Log.e(TAG, "mDNS discovery failed")
+                // Retry discovery after a delay
+                executorService!!.submit(Runnable {
+                    try {
+                        Thread.sleep(5000) // Wait 5 seconds before retry
+                        nsdHelper!!.discoverServices()
+                    } catch (e: InterruptedException) {
+                        Log.e(TAG, "Retry interrupted", e)
+                    }
+                })
             }
         })
 
         nsdHelper!!.initialize()
-        nsdHelper!!.discoverServices()
+        
+        // Start discovery with retry mechanism
+        startDiscoveryWithRetry()
+    }
+    
+    private fun startDiscoveryWithRetry() {
+        executorService!!.submit(Runnable {
+            try {
+                // Small delay to ensure service is fully initialized
+                Thread.sleep(1000)
+                nsdHelper!!.discoverServices()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start discovery, will retry", e)
+                // Retry after delay
+                Thread.sleep(3000)
+                nsdHelper!!.discoverServices()
+            }
+        })
     }
 
     private fun publishDeviceInfo(serverHost: String?, serverPort: Int) {

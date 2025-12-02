@@ -37,8 +37,9 @@ class NsdHelper(context: Context, callback: ServiceDiscoveryCallback?) {
     private fun initializeDiscoveryListener() {
         discoveryListener = object : NsdManager.DiscoveryListener {
             override fun onStartDiscoveryFailed(serviceType: String?, errorCode: Int) {
-                Log.e(TAG, "Discovery failed: Error code:" + errorCode)
-                nsdManager!!.stopServiceDiscovery(this)
+                Log.e(TAG, "Discovery failed: Error code:$errorCode, ServiceType:$serviceType")
+                Log.e(TAG, "Error meaning: ${getErrorName(errorCode)}")
+                // Don't try to stop discovery that never started - this causes IllegalArgumentException
                 if (callback != null) callback.onDiscoveryFailed()
             }
 
@@ -113,11 +114,28 @@ class NsdHelper(context: Context, callback: ServiceDiscoveryCallback?) {
     }
 
     fun tearDown() {
-        stopDiscovery()
+        try {
+            stopDiscovery()
+        } catch (e: IllegalArgumentException) {
+            // Ignore exception if discovery is not active
+            Log.d(TAG, "Discovery already stopped or never started")
+        }
+    }
+
+    /**
+     * Get human-readable error name for NsdManager error codes
+     */
+    private fun getErrorName(errorCode: Int): String {
+        return when (errorCode) {
+            NsdManager.FAILURE_ALREADY_ACTIVE -> "FAILURE_ALREADY_ACTIVE"
+            NsdManager.FAILURE_INTERNAL_ERROR -> "FAILURE_INTERNAL_ERROR"
+            NsdManager.FAILURE_MAX_LIMIT -> "FAILURE_MAX_LIMIT"
+            else -> "UNKNOWN_ERROR_$errorCode"
+        }
     }
 
     companion object {
         private const val TAG = "NsdHelper"
-        private const val SERVICE_TYPE = "_autodroid._tcp."
+        private const val SERVICE_TYPE = "_autodroid._tcp.local."
     }
 }

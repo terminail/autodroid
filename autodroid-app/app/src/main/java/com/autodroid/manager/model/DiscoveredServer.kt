@@ -1,12 +1,15 @@
-// DiscoveredServer.kt
 package com.autodroid.manager.model
 
-class DiscoveredServer(// Getters and setters
-    @JvmField var name: String?, @JvmField var host: String?, var port: Int
+/**
+ * Data class representing a discovered server via mDNS
+ */
+data class DiscoveredServer(
+    val serviceName: String,
+    val host: String,
+    val port: Int,
+    val discoveredTime: Long = System.currentTimeMillis()
 ) {
-    var discoveredTime: Long
-
-    init {
-        this.discoveredTime = System.currentTimeMillis()
-    }
+    // Get a display name for the server
+    val displayName: String
+        get() = serviceName.split(".")[0]
 }
