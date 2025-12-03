@@ -41,7 +41,6 @@ class DashboardFragment : BaseFragment() {
     private var serverStatusTextView: TextView? = null
     private var wifiNameTextView: TextView? = null
     private var wifiIpTextView: TextView? = null
-    private var appLocalIpTextView: TextView? = null
     private var wifiStatusTextView: TextView? = null
     private var scanApksButton: Button? = null
     private var serversRecyclerView: RecyclerView? = null
@@ -85,7 +84,7 @@ class DashboardFragment : BaseFragment() {
         serverStatusTextView = view?.findViewById(R.id.server_status)
         wifiNameTextView = view?.findViewById(R.id.wifi_name)
         wifiIpTextView = view?.findViewById(R.id.wifi_ip)
-        appLocalIpTextView = view?.findViewById(R.id.app_local_ip)
+        
         wifiStatusTextView = view?.findViewById(R.id.wifi_status)
         scanApksButton = view?.findViewById(R.id.scan_apks_button)
         serversRecyclerView = view?.findViewById(R.id.dashboard_items_recycler_view)
@@ -321,16 +320,12 @@ class DashboardFragment : BaseFragment() {
      */
     private fun updateWiFiInfo() {
         val wifiInfo = getCurrentWiFiInfo()
-        val localIp = getLocalIpAddress()
         
         // Update WiFi name
         wifiNameTextView?.text = wifiInfo.first ?: "Not connected"
         
         // Update WiFi IP
         wifiIpTextView?.text = wifiInfo.second ?: "-"
-        
-        // Update app local IP
-        appLocalIpTextView?.text = localIp ?: "-"
         
         // Update WiFi status
         if (wifiInfo.first == null) {

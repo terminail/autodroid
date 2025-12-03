@@ -18,7 +18,7 @@ class DeviceInfoManager(private val context: Context?, private val viewModel: Ap
             val localIp = this.localIpAddress
 
             return String.format(
-                "Device: %s\nAndroid: %s\nIP: %s",
+                "Device: %s\nAndroid: %s\nNetwork IP: %s",
                 deviceName, androidVersion, localIp
             )
         }
@@ -32,15 +32,18 @@ class DeviceInfoManager(private val context: Context?, private val viewModel: Ap
     private val localIpAddress: String?
         get() {
             try {
-                val wifiInterface =
-                    NetworkInterface.getByName("wlan0")
-                if (wifiInterface != null) {
-                    val addresses =
-                        wifiInterface.getInetAddresses()
+                // Try to get the first non-loopback IPv4 address from any network interface
+                val interfaces = NetworkInterface.getNetworkInterfaces()
+                while (interfaces.hasMoreElements()) {
+                    val networkInterface = interfaces.nextElement()
+                    val addresses = networkInterface.inetAddresses
                     while (addresses.hasMoreElements()) {
                         val address = addresses.nextElement()
-                        if (!address.isLoopbackAddress() && address is Inet4Address) {
-                            return address.getHostAddress()
+                        if (!address.isLoopbackAddress && address is Inet4Address) {
+                            // Skip wlan0 interface to avoid duplication with WiFi IP
+                            if (networkInterface.name != "wlan0") {
+                                return address.hostAddress
+                            }
                         }
                     }
                 }
