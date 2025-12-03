@@ -39,9 +39,13 @@ class ReportsFragment : BaseFragment() {
         reportsRecyclerView!!.setLayoutManager(LinearLayoutManager(getContext()))
         adapter = BaseItemAdapter(
             reportItems,
-            BaseItemAdapter.OnItemClickListener { item: MutableMap<String?, Any?>? ->
-                // Handle item click - open report detail
-                openReportDetail(item!!)
+            object : BaseItemAdapter.OnItemClickListener {
+                override fun onItemClick(item: MutableMap<String?, Any?>?) {
+                    // Handle item click - open report detail
+                    if (item != null) {
+                        openReportDetail(item)
+                    }
+                }
             },
             R.layout.item_generic
         )

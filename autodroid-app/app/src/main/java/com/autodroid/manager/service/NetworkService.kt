@@ -64,7 +64,9 @@ class NetworkService : Service() {
 
 
         // Initialize device ID
-        deviceId = Build.SERIAL
+        // Use a combination of device properties to create a unique identifier
+        // This avoids permission issues with Build.getSerial()
+        deviceId = "${Build.MANUFACTURER}_${Build.MODEL}_${Build.VERSION.RELEASE}_${Build.ID}"
 
 
         // Initialize executor service

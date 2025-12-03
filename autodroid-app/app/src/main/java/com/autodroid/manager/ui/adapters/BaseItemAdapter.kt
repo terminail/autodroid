@@ -8,13 +8,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.manager.R
 
 class BaseItemAdapter(
-    private var items: List<Map<String, Any?>>?,
+    private var items: List<MutableMap<String?, Any?>?>?,
     private val listener: OnItemClickListener?,
     private val itemLayoutRes: Int
 ) : RecyclerView.Adapter<BaseItemAdapter.ItemViewHolder>() {
 
     interface OnItemClickListener {
-        fun onItemClick(item: Map<String, Any?>?)
+        fun onItemClick(item: MutableMap<String?, Any?>?)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
@@ -29,7 +29,7 @@ class BaseItemAdapter(
 
     override fun getItemCount(): Int = items?.size ?: 0
 
-    fun updateItems(newItems: List<Map<String, Any?>>?) {
+    fun updateItems(newItems: List<MutableMap<String?, Any?>?>?) {
         this.items = newItems
         notifyDataSetChanged()
     }
@@ -39,7 +39,7 @@ class BaseItemAdapter(
         private val subtitleTextView: TextView? = itemView.findViewById(R.id.item_subtitle)
         private val statusTextView: TextView? = itemView.findViewById(R.id.item_status)
 
-        fun bind(item: Map<String, Any?>?) {
+        fun bind(item: MutableMap<String?, Any?>?) {
             // Bind common fields
             titleTextView?.text = item?.get("title")?.toString() ?: "Unknown"
             subtitleTextView?.text = item?.get("subtitle")?.toString() ?: ""

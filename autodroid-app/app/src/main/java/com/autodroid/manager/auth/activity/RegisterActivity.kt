@@ -79,11 +79,11 @@ class RegisterActivity : AppCompatActivity() {
 
         // Observe error messages
         authViewModel!!.errorMessage.observe(this, Observer { errorMessage: String? ->
-            if (errorMessage != null && !errorMessage.isEmpty()) {
-                errorTextView!!.setText(errorMessage)
-                errorTextView!!.setVisibility(View.VISIBLE)
+            if (!errorMessage.isNullOrEmpty()) {
+                errorTextView!!.text = errorMessage
+                errorTextView!!.visibility = View.VISIBLE
             } else {
-                errorTextView!!.setVisibility(View.GONE)
+                errorTextView!!.visibility = View.GONE
             }
         })
     }
@@ -154,3 +154,4 @@ class RegisterActivity : AppCompatActivity() {
         return isValid
     }
 }
+

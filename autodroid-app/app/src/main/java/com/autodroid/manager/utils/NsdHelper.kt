@@ -3,7 +3,11 @@ package com.autodroid.manager.utils
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import java.util.concurrent.Executor
 
 class NsdHelper(private val context: Context, private val callback: ServiceDiscoveryCallback) {
     private val TAG = "NsdHelper"
@@ -59,7 +63,24 @@ class NsdHelper(private val context: Context, private val callback: ServiceDisco
                 }
                 
                 // Resolve service to get detailed information
-                nsdManager.resolveService(serviceInfo, resolveListener)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    nsdManager.resolveService(
+                        serviceInfo,
+                        Handler(Looper.getMainLooper()) as Executor,
+                        object : NsdManager.ResolveListener {
+                            override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                                resolveListener.onResolveFailed(serviceInfo, errorCode)
+                            }
+                            
+                            override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+                                resolveListener.onServiceResolved(serviceInfo)
+                            }
+                        }
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    nsdManager.resolveService(serviceInfo, resolveListener)
+                }
             }
             
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {
@@ -79,7 +100,12 @@ class NsdHelper(private val context: Context, private val callback: ServiceDisco
                 Log.d(TAG, "Resolve Succeeded: $serviceInfo")
                 
                 val serviceName = serviceInfo.getServiceName()
-                val host = serviceInfo.getHost().getHostAddress()
+                val host = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    serviceInfo.host?.hostAddress
+                } else {
+                    @Suppress("DEPRECATION")
+                    serviceInfo.getHost().getHostAddress()
+                }
                 val port = serviceInfo.getPort()
                 
                 Log.d(TAG, "Resolved service: $serviceName at $host:$port")

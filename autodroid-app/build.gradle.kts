@@ -2,15 +2,13 @@
 
 buildscript {
     repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
         maven { url = uri("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/") }
         maven { url = uri("https://mirrors.huaweicloud.com/repository/maven/") }
-        // Chinese mirrors for better accessibility in mainland China
         maven { url = uri("https://maven.aliyun.com/repository/public/") }
         maven { url = uri("https://maven.aliyun.com/repository/google/") }
-        // Fallback to standard repositories
-        mavenCentral()
-        // Use explicit Google Maven repository URL
-        maven { url = uri("https://maven.google.com/") }
     }
     dependencies {
         // Use Android Gradle Plugin 8.13.0 which matches Gradle 8.13
@@ -30,19 +28,6 @@ buildscript {
         
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
-    }
-}
-
-allprojects {
-    repositories {
-        maven { url = uri("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/") }
-        // Chinese mirrors for better accessibility in mainland China
-        maven { url = uri("https://maven.aliyun.com/repository/public/") }
-        maven { url = uri("https://maven.aliyun.com/repository/google/") }
-        maven { url = uri("https://mirrors.huaweicloud.com/repository/maven/") }
-        // Fallback to standard repositories
-        mavenCentral()
-        maven { url = uri("https://maven.google.com/") }
     }
 }
 

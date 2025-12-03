@@ -39,9 +39,13 @@ class OrdersFragment : BaseFragment() {
         ordersRecyclerView!!.setLayoutManager(LinearLayoutManager(getContext()))
         adapter = BaseItemAdapter(
             orderItems,
-            BaseItemAdapter.OnItemClickListener { item: MutableMap<String?, Any?>? ->
-                // Handle item click - open order detail
-                openOrderDetail(item!!)
+            object : BaseItemAdapter.OnItemClickListener {
+                override fun onItemClick(item: MutableMap<String?, Any?>?) {
+                    // Handle item click - open order detail
+                    if (item != null) {
+                        openOrderDetail(item)
+                    }
+                }
             },
             R.layout.item_generic
         )

@@ -40,9 +40,11 @@ class WorkflowsFragment : BaseFragment() {
         workflowsRecyclerView!!.setLayoutManager(LinearLayoutManager(getContext()))
         adapter = BaseItemAdapter(
             workflowItems,
-            BaseItemAdapter.OnItemClickListener { item: MutableMap<String?, Any?>? ->
-                // Handle item click - open workflow detail
-                openWorkflowDetail(item)
+            object : BaseItemAdapter.OnItemClickListener {
+                override fun onItemClick(item: MutableMap<String?, Any?>?) {
+                    // Handle item click - open workflow detail
+                    openWorkflowDetail(item)
+                }
             },
             R.layout.item_generic
         )

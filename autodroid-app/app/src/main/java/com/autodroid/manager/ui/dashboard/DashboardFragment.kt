@@ -275,7 +275,7 @@ class DashboardFragment : BaseFragment() {
 
     private fun updateServerListUI() {
         val serverItems = discoveredServers.map { server ->
-            mutableMapOf(
+            mutableMapOf<String?, Any?>(
                 "title" to server.displayName,
                 "subtitle" to "${server.host}:${server.port}",
                 "status" to "Available",
@@ -335,11 +335,21 @@ class DashboardFragment : BaseFragment() {
         // Update WiFi status
         if (wifiInfo.first == null) {
             wifiStatusTextView?.text = "Not connected to any WiFi"
-            wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_orange_dark))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_orange_dark, null))
+            } else {
+                @Suppress("DEPRECATION")
+                wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_orange_dark))
+            }
             updateConnectionStatus("Please connect to WiFi to discover servers")
         } else {
             wifiStatusTextView?.text = "Connected to WiFi"
-            wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_green_dark))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_green_dark, null))
+            } else {
+                @Suppress("DEPRECATION")
+                wifiStatusTextView?.setTextColor(resources.getColor(android.R.color.holo_green_dark))
+            }
         }
     }
 
@@ -356,7 +366,12 @@ class DashboardFragment : BaseFragment() {
             if (networkCapabilities != null && networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                 // Connected to WiFi
                 val wifiManager = requireContext().applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                val wifiInfo = wifiManager.connectionInfo
+                val wifiInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    @Suppress("DEPRECATION")
+                    wifiManager.connectionInfo
+                } else {
+                    wifiManager.connectionInfo
+                }
                 val wifiName = wifiInfo.ssid?.removeSurrounding("\"")
                 val wifiIp = intToIp(wifiInfo.ipAddress)
                 return Pair(wifiName, wifiIp)
@@ -364,7 +379,12 @@ class DashboardFragment : BaseFragment() {
         } else {
             // For older Android versions
             val wifiManager = requireContext().applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val wifiInfo = wifiManager.connectionInfo
+            val wifiInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                @Suppress("DEPRECATION")
+                wifiManager.connectionInfo
+            } else {
+                wifiManager.connectionInfo
+            }
             if (wifiInfo.networkId != -1) {
                 val wifiName = wifiInfo.ssid?.removeSurrounding("\"")
                 val wifiIp = intToIp(wifiInfo.ipAddress)
@@ -432,10 +452,6 @@ class DashboardFragment : BaseFragment() {
 
     private fun updateConnectionStatus(status: String) {
         connectionStatusTextView?.text = "Connection Status: $status"
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onDestroy() {

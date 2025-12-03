@@ -59,10 +59,10 @@ class WorkflowAdapter(
                 descriptionTextView.setText(description)
             }
 
-            val metadata = workflow.getOrDefault("metadata", null) as MutableMap<String?, Any?>?
+            val metadata = workflow.getOrDefault("metadata", null) as? MutableMap<String?, Any?>
             if (metadata != null) {
-                val packageName = metadata.getOrDefault("app_package", "") as String?
-                if (!packageName!!.isEmpty()) {
+                val packageName = metadata.getOrDefault("app_package", "") as? String
+                if (!packageName.isNullOrEmpty()) {
                     packageTextView.setText(packageName)
                     packageTextView.setVisibility(View.VISIBLE)
                 } else {
