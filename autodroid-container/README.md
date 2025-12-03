@@ -40,23 +40,48 @@ Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，�
 
 1. 确保虚拟环境已激活
 
-2. 直接运行 FastAPI 应用：
+2. **推荐方式**：使用统一启动脚本（同时启动API和前端）：
    ```bash
-   uvicorn api.main:app --host 0.0.0.0 --port 8003 --reload
+   python start.py
    ```
 
-3. 或者使用项目脚本：
+3. 或者使用配置化启动脚本：
    ```bash
-   python -m api.main
+   python run_server.py
+   ```
 
-   cd /d/git/autodroid/autodroid-container && conda activate liugejiao && python run_server.py
+4. **Windows用户**：双击运行批处理文件：
+   ```
+   start_server.bat
+   ```
+
+5. 或者直接运行 FastAPI 应用（仅API）：
+   ```bash
+   uvicorn api.main:app --host 0.0.0.0 --port 8004 --reload
    ```
 
 ### 服务启动后
 
-- 服务器将在 `http://0.0.0.0:8003` 上运行
-- API 文档将在 `http://localhost:8003/docs` 上可用
-- 可通过 `http://localhost:8003/redoc` 查看另一种格式的 API 文档
+- **API服务器**将在 `http://0.0.0.0:8004` 上运行
+- **前端应用**将在 `http://0.0.0.0:8004/app` 上运行
+- **API文档**将在 `http://localhost:8004/docs` 上可用
+- 可通过 `http://localhost:8004/redoc` 查看另一种格式的 API 文档
+
+### 启动信息
+
+启动后，您将看到以下信息：
+```
+============================================================
+🚀 Autodroid Container Server Started
+============================================================
+📡 API Server: http://127.0.0.1:8004
+📚 API Documentation: http://127.0.0.1:8004/docs
+🌐 Frontend Application: http://127.0.0.1:8004/app
+🔍 API Health Check: http://127.0.0.1:8004/api/health
+============================================================
+Press Ctrl+C to stop the server
+============================================================
+```
 
 ## API 访问示例
 
@@ -118,7 +143,7 @@ curl http://localhost:8003/api/server
 ### 3. 注册设备
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8000/api/devices/register
+curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8003/api/devices/register
 ```
 
 响应示例：
@@ -139,7 +164,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "
 ### 4. 获取所有注册设备
 
 ```bash
-curl http://localhost:8000/api/devices
+curl http://localhost:8003/api/devices
 ```
 
 响应示例：
@@ -211,7 +236,7 @@ pytest
 
 ### 端口被占用
 
-如果端口 8000 已被占用，可以使用其他端口：
+如果端口 8003 已被占用，可以使用其他端口：
 
 ```bash
 uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload

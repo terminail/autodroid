@@ -32,7 +32,7 @@ services:
       - WORKFLOWS_DIR=/app/workflows
       - MAX_CONCURRENT_TASKS=5
     ports:
-      - "8000:8000"
+      - "8003:8003"
     volumes:
       - ./workflows:/app/workflows
       - ./reports:/app/reports

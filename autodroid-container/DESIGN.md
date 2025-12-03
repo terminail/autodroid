@@ -15,14 +15,14 @@ Autodroid 服务端采用 FastAPI + Python 的微服务架构，提供以下核�
 #### 端口配置
 ```python
 # 默认端口配置
-FASTAPI_PORT = 8000
+FASTAPI_PORT = 8003
 FASTAPI_HOST = "0.0.0.0"  # 允许所有网络接口访问
 ```
 
 #### 启动配置
 ```python
 # 使用 uvicorn 启动服务器
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn api.main:app --host 0.0.0.0 --port 8003 --reload
 ```
 
 ### 2.2 前端 API 端点配置
@@ -31,7 +31,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 ```yaml
 # frontend/config.yaml
 server:
-  url: http://localhost:8000
+  url: http://localhost:8003
   api_base: /api
   use_https: false
   timeout: 10000
@@ -49,7 +49,7 @@ server:
 # mDNS 服务配置
 SERVICE_TYPE = "_autodroid._tcp.local."
 SERVICE_NAME = "Autodroid Server"
-SERVICE_PORT = 8000
+SERVICE_PORT = 8003
 SERVICE_PROPERTIES = {
     'version': '1.0',
     'description': 'Autodroid Automation Server'
@@ -151,7 +151,7 @@ class PortManager:
     def __init__(self):
         self.used_ports = set()
     
-    def get_available_port(self, start_port=8000, max_port=9000):
+    def get_available_port(self, start_port=8003, max_port=9000):
         """获取可用端口"""
         for port in range(start_port, max_port + 1):
             if port not in self.used_ports and self.is_port_available(port):
@@ -482,9 +482,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8003
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8003"]
 ```
 
 ### 7.2 docker-compose 配置
@@ -496,7 +496,7 @@ services:
   autodroid-server:
     build: .
     ports:
-      - "8000:8000"
+      - "8003:8003"
     environment:
       - FASTAPI_ENV=production
     volumes:
@@ -518,7 +518,7 @@ class Settings(BaseSettings):
     
     # 服务器配置
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8003
     
     # 数据库配置
     database_url: str = "sqlite:///./autodroid.db"
@@ -537,18 +537,18 @@ settings = Settings()
 
 ### 9.1 常见问题
 
-1. **端口冲突**：如果端口 8000 被占用，服务端会自动寻找可用端口
-2. **网络连接**：确保防火墙允许端口 8000 的访问
+1. **端口冲突**：如果端口 8003 被占用，服务端会自动寻找可用端口
+2. **网络连接**：确保防火墙允许端口 8003 的访问
 3. **mDNS 发现**：确保网络支持多播 DNS
 
 ### 9.2 调试工具
 
 ```bash
 # 检查端口占用
-netstat -an | findstr 8000
+netstat -an | findstr 8003
 
 # 测试 API 连接
-curl http://localhost:8000/api/health
+curl http://localhost:8003/api/health
 
 # 检查 mDNS 服务
 avahi-browse -at

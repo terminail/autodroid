@@ -2,29 +2,8 @@ import subprocess
 import json
 import time
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
 
-@dataclass
-class ApkInfo:
-    apkid: str
-    package_name: str
-    app_name: str
-    version: str
-    version_code: int
-    installed_time: int
-    is_system: bool
-    icon_path: str = ""
-
-@dataclass
-class DeviceInfo:
-    udid: str
-    device_name: str
-    android_version: str
-    battery_level: int
-    is_online: bool
-    connection_type: str  # 'usb' or 'network'
-    user_id: Optional[str] = None  # 关联的用户ID
-    apks: Dict[str, ApkInfo] = field(default_factory=dict)
+from .models import ApkInfo, DeviceInfo
 
 class DeviceManager:
     def __init__(self):

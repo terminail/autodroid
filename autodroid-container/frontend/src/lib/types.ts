@@ -26,6 +26,15 @@ export interface ServerInfo {
     };
 }
 
+// Server data type for dashboard
+export interface ServerData {
+    name: string;
+    hostname: string;
+    ip_address: string;
+    platform: string;
+    api_base_url?: string;
+}
+
 export interface WiFiNetwork {
     name: string;
     signal_strength: number;
@@ -43,13 +52,17 @@ export interface ServerWiFiInfo {
 
 // Device related types
 export interface DeviceInfo {
-    udid: string;
+    id: string;
+    name: string;
     model: string;
-    manufacturer: string;
-    version: string;
-    sdk_version: number;
+    os_version: string;
+    status: 'online' | 'offline' | 'busy';
     ip_address: string;
-    status: string;
+    last_seen: string;
+    udid?: string;
+    manufacturer?: string;
+    version?: string;
+    sdk_version?: number;
     apks?: APKInfo[];
     [key: string]: any;
 }
@@ -97,9 +110,12 @@ export interface WorkflowInfo {
     id: string;
     name: string;
     description: string;
-    metadata: Record<string, string>;
-    device_selection: Record<string, any>;
-    steps: WorkflowStep[];
+    status?: 'active' | 'inactive' | 'error';
+    created_at?: string;
+    updated_at?: string;
+    metadata?: Record<string, string>;
+    device_selection?: Record<string, any>;
+    steps?: WorkflowStep[];
     schedule?: Record<string, any>;
 }
 
@@ -173,6 +189,15 @@ export interface AppConfig {
 }
 
 // User related types
+export interface UserInfo {
+    id: string;
+    email: string;
+    name: string;
+    role: 'admin' | 'user';
+    last_login: string;
+    created_at: string;
+}
+
 export interface UserProfile {
     id: string;
     username: string;
@@ -234,9 +259,10 @@ export interface TestReport {
 
 // API response types
 export interface ApiResponse<T = any> {
+    success?: boolean;
     message?: string;
     data?: T;
-    [key: string]: any;
+    error?: string;
 }
 
 export interface DevicesResponse {

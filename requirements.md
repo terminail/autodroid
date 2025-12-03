@@ -40,14 +40,20 @@
 - Automatic failure screenshot saving
 - Performance indicator statistics and analysis
 
-**F007 - User Authentication System**
+**F007 - QR Code Connection Feature**
+- Server-side generation of QR codes containing API endpoint information
+- Mobile app scans QR codes to automatically obtain server connection information
+- QR code content includes API endpoint URL, server name and version information
+- Support for manual API endpoint input as backup connection method
+
+**F008 - User Authentication System**
 - Email/password user registration
 - Email/password login with input validation
 - Fingerprint biometric authentication support
 - Secure authentication state management
 - Session persistence across app restarts
 
-**F008 - Multi-language Support**
+**F009 - Multi-language Support**
 - English language support
 - Chinese language support
 - Dynamic language switching based on device locale

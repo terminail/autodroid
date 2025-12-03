@@ -51,7 +51,7 @@ export function load() {
 
 // Check if a route requires authentication (internal function)
 function _requiresAuth(pathname: string): boolean {
-	const publicRoutes = ['/auth', '/auth/login'];
+	const publicRoutes = ['/app/auth', '/app/auth/login'];
 	return !publicRoutes.some(route => pathname.startsWith(route));
 }
 

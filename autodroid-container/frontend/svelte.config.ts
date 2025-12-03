@@ -33,6 +33,10 @@ const config = {
 	},
 
 	kit: {
+		// Configure for serving from /app path
+		paths: {
+			base: '/app'
+		},
 		// Use static adapter for serving with FastAPI in SPA mode
 		adapter: adapter({
 			// Use SPA mode with fallback for client-side routing

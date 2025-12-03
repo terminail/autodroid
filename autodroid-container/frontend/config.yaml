@@ -3,7 +3,7 @@
 
 server:
   # FastAPI server URL (include protocol, host, and port)
-  url: http://localhost:8003
+  url: http://localhost:8004
   # API base path (if the API is served under a subpath)
   api_base: /api
   # Whether to use HTTPS (true/false)

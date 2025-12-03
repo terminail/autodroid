@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { API_CONFIG } from '$lib/config';
 
 	let email = '15317227@qq.com'; // 默认邮箱
 	let password = '123456'; // 默认密码
@@ -12,7 +13,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('http://localhost:8003/api/auth/login', {
+			const response = await fetch(API_CONFIG.LOGIN_URL, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -29,7 +30,7 @@
 				localStorage.setItem('auth_token', data.access_token);
 				// 获取用户信息并存储
 				try {
-					const userResponse = await fetch('http://localhost:8003/api/auth/me', {
+					const userResponse = await fetch(API_CONFIG.ME_URL, {
 						headers: {
 							'Authorization': `Bearer ${data.access_token}`
 						}
@@ -41,8 +42,8 @@
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
 				}
-				// 跳转到首页并强制刷新以更新认证状态
-				window.location.href = '/';
+				// 跳转到首页
+				window.location.href = '/app';
 			} else {
 				const errorData = await response.json();
 				error = errorData.detail || '登录失败';
@@ -57,7 +58,7 @@
 	}
 
 	function goToRegister() {
-		goto('/auth');
+		goto('/app/auth');
 	}
 </script>
 

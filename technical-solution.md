@@ -13,6 +13,7 @@
 - **UI Analysis**: Appium Inspector, UI Automator Viewer
 - **Report Generation**: Allure, pytest-html
 - **Configuration Management**: Pydantic, YAML
+- **QR Code Generation**: qrcode (Python), ZXing (Android)
 
 ### Development Tools
 - **API Framework**: FastAPI
@@ -258,7 +259,298 @@ This organization ensures that:
 - Workflows are easily manageable and maintainable
 - The system can automatically select the right workflow for the right app version
 
-## 4. App-Server Workflow Matching
+## 5. QR Code Connection Feature
+
+### 5.1 Overview
+The QR code connection feature allows the mobile app to quickly connect to the server by scanning a QR code displayed on the server's connection status page. This eliminates the need for manual IP address entry and provides a seamless setup experience.
+
+### 5.2 Server-side QR Code Generation
+
+#### 5.2.1 QR Code Content Structure
+The QR code contains a JSON object with the following information:
+```json
+{
+  "server_name": "AutoDroid Server",
+  "api_endpoint": "http://192.168.1.59:8003/api",
+  "version": "1.0.0",
+  "timestamp": "2023-11-15T10:30:00Z"
+}
+```
+
+#### 5.2.2 Implementation (Python)
+```python
+# qr_service.py
+import qrcode
+import json
+from datetime import datetime
+from fastapi import APIRouter, Depends
+from io import BytesIO
+import base64
+
+router = APIRouter()
+
+@router.get("/api/qr-code")
+async def generate_qr_code():
+    """Generate QR code containing server connection information"""
+    # Get server information
+    server_info = {
+        "server_name": "AutoDroid Server",
+        "api_endpoint": f"http://{get_server_ip()}:8003/api",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    # Generate QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(json.dumps(server_info))
+    qr.make(fit=True)
+    
+    # Convert to base64 image
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    
+    return {
+        "qr_code": f"data:image/png;base64,{img_str}",
+        "server_info": server_info
+    }
+```
+
+#### 5.2.3 Frontend Integration
+```javascript
+// ConnectionStatus.svelte
+<script>
+  import { onMount } from 'svelte';
+  
+  let qrCodeData = '';
+  let serverInfo = {};
+  
+  onMount(async () => {
+    const response = await fetch('/api/qr-code');
+    const data = await response.json();
+    qrCodeData = data.qr_code;
+    serverInfo = data.server_info;
+  });
+</script>
+
+<div class="connection-status">
+  <h2>Connection Status</h2>
+  <div class="server-info">
+    <p>Server: {serverInfo.server_name}</p>
+    <p>API Endpoint: {serverInfo.api_endpoint}</p>
+  </div>
+  
+  <div class="qr-code-container">
+    <h3>Scan to Connect</h3>
+    <img src={qrCodeData} alt="QR Code for server connection" />
+    <p>Scan this QR code with AutoDroid mobile app to connect</p>
+  </div>
+</div>
+```
+
+### 5.3 Mobile App QR Code Scanning
+
+#### 5.3.1 Implementation (Android)
+```java
+// QRCodeScannerFragment.java
+public class QRCodeScannerFragment extends Fragment {
+    private static final int REQUEST_CAMERA_PERMISSION = 1;
+    private CodeScanner mCodeScanner;
+    private QRCodeScanCallback callback;
+    
+    public interface QRCodeScanCallback {
+        void onQRCodeScanned(ServerConnectionInfo serverInfo);
+        void onScanError(String error);
+    }
+    
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_qr_code_scanner, container, false);
+        
+        // Setup camera and scanner
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        } else {
+            setupScanner(root);
+        }
+        
+        return root;
+    }
+    
+    private void setupScanner(View root) {
+        ScannerView scannerView = root.findViewById(R.id.scanner_view);
+        mCodeScanner = new CodeScanner(getContext(), scannerView);
+        
+        mCodeScanner.setDecodeCallback(new DecodeCallback() {
+            @Override
+            public void onDecoded(@NonNull Result result) {
+                getActivity().runOnUiThread(() -> {
+                    try {
+                        // Parse QR code content
+                        String qrContent = result.getText();
+                        ServerConnectionInfo serverInfo = parseQRCodeContent(qrContent);
+                        
+                        if (callback != null) {
+                            callback.onQRCodeScanned(serverInfo);
+                        }
+                        
+                        // Go back to previous screen
+                        Navigation.findNavController(getView()).navigateUp();
+                    } catch (Exception e) {
+                        if (callback != null) {
+                            callback.onScanError("Invalid QR code format");
+                        }
+                    }
+                });
+            }
+        });
+        
+        scannerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mCodeScanner.startPreview();
+            }
+        });
+    }
+    
+    private ServerConnectionInfo parseQRCodeContent(String qrContent) throws JSONException {
+        JSONObject json = new JSONObject(qrContent);
+        
+        return new ServerConnectionInfo(
+            json.getString("server_name"),
+            json.getString("api_endpoint"),
+            json.getString("version"),
+            json.getString("timestamp")
+        );
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mCodeScanner != null) {
+            mCodeScanner.startPreview();
+        }
+    }
+    
+    @Override
+    public void onPause() {
+        if (mCodeScanner != null) {
+            mCodeScanner.releaseResources();
+        }
+        super.onPause();
+    }
+}
+```
+
+#### 5.3.2 Data Model
+```java
+// ServerConnectionInfo.java
+public class ServerConnectionInfo {
+    private String serverName;
+    private String apiEndpoint;
+    private String version;
+    private String timestamp;
+    
+    public ServerConnectionInfo(String serverName, String apiEndpoint, 
+                              String version, String timestamp) {
+        this.serverName = serverName;
+        this.apiEndpoint = apiEndpoint;
+        this.version = version;
+        this.timestamp = timestamp;
+    }
+    
+    // Getters
+    public String getServerName() { return serverName; }
+    public String getApiEndpoint() { return apiEndpoint; }
+    public String getVersion() { return version; }
+    public String getTimestamp() { return timestamp; }
+    
+    // Validate if the connection info is still valid (e.g., not too old)
+    public boolean isValid() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date timestampDate = sdf.parse(timestamp);
+            Date now = new Date();
+            
+            // Consider valid if less than 24 hours old
+            long diffInMs = Math.abs(now.getTime() - timestampDate.getTime());
+            long diffInHours = diffInMs / (60 * 60 * 1000);
+            
+            return diffInHours < 24;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+}
+```
+
+#### 5.3.3 Integration with Connection Flow
+```java
+// ConnectionFragment.java
+public class ConnectionFragment extends Fragment implements QRCodeScannerFragment.QRCodeScanCallback {
+    private TextView serverInfoText;
+    private Button scanQRButton;
+    private Button manualConnectButton;
+    private ConnectionViewModel viewModel;
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        scanQRButton.setOnClickListener(v -> {
+            Navigation.findNavController(v)
+                .navigate(R.id.action_connectionFragment_to_qrCodeScannerFragment);
+        });
+        
+        manualConnectButton.setOnClickListener(v -> {
+            showManualInputDialog();
+        });
+    }
+    
+    @Override
+    public void onQRCodeScanned(ServerConnectionInfo serverInfo) {
+        if (serverInfo.isValid()) {
+            viewModel.setServerEndpoint(serverInfo.getApiEndpoint());
+            serverInfoText.setText("Connected to: " + serverInfo.getServerName());
+            
+            // Test connection
+            viewModel.testConnection();
+        } else {
+            Toast.makeText(getContext(), "QR code is expired", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    @Override
+    public void onScanError(String error) {
+        Toast.makeText(getContext(), "Scan error: " + error, Toast.LENGTH_SHORT).show();
+    }
+}
+```
+
+### 5.4 Security Considerations
+
+1. **QR Code Expiration**: QR codes include timestamps and are considered valid for 24 hours
+2. **HTTPS Support**: The system supports HTTPS endpoints for secure connections
+3. **Authentication**: After QR code scanning, normal authentication flow is still required
+4. **Validation**: The mobile app validates the QR code format before using the connection information
+
+### 5.5 Fallback Mechanism
+
+If QR code scanning fails or is not available, users can:
+1. Manually enter the server IP address and port
+2. Use mDNS discovery (if enabled)
+3. Select from previously connected servers
+
+## 6. App-Server Workflow Matching
 
 ### 4.1 Feature Overview
 The Android app can trigger the server to scan the test device's installed APKs and match them with available workflows. This enables:

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { API_CONFIG } from '$lib/config';
 
 	let email = '15317227@qq.com'; // 默认邮箱
 	let password = '123456'; // 默认密码
@@ -25,7 +26,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('http://localhost:8003/api/auth/register', {
+			const response = await fetch(API_CONFIG.REGISTER_URL, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -58,7 +59,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('http://localhost:8003/api/auth/login', {
+			const response = await fetch(API_CONFIG.LOGIN_URL, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -74,7 +75,7 @@
 				// 存储token
 				localStorage.setItem('auth_token', data.access_token);
 				// 跳转到首页
-				goto('/');
+				goto('/app/');
 			} else {
 			const errorData = await response.json();
 			error = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail) || '登录失败';
@@ -87,7 +88,7 @@
 	}
 
 	function goToLogin() {
-		goto('/auth/login');
+		goto('/app/auth/login');
 	}
 </script>
 

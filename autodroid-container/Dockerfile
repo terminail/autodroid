@@ -37,7 +37,7 @@ ENV WORKFLOWS_DIR=/app/workflows
 ENV MAX_CONCURRENT_TASKS=5
 
 # Expose API port
-EXPOSE 8000
+EXPOSE 8003
 
 # Set entry point
-CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8003"]

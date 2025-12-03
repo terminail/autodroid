@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { API_CONFIG } from '$lib/config';
 	
 	let favicon = '/favicon.ico';
 
@@ -16,12 +17,12 @@
 		const currentPath = window.location.pathname;
 		
 		if (_requiresAuth(currentPath) && !$page.data?.authState?.isAuthenticated) {
-			goto('/auth/login');
+			goto('/app/auth/login');
 			return;
 		}
 		
 		// 如果已登录但访问认证页面，重定向到首页
-		if ($page.data?.authState?.isAuthenticated && currentPath.startsWith('/auth')) {
+		if ($page.data?.authState?.isAuthenticated && currentPath.startsWith('/app/auth')) {
 			goto('/');
 			return;
 		}
@@ -29,30 +30,18 @@
 		isLoading = false;
 	});
 
-	async function logout() {
-		try {
-			const token = localStorage.getItem('auth_token');
-			if (token) {
-				await fetch('http://localhost:8003/api/auth/logout', {
-					method: 'POST',
-					headers: {
-						'Authorization': `Bearer ${token}`
-					}
-				});
-			}
-			
-			// 清除本地存储
-			localStorage.removeItem('auth_token');
-			localStorage.removeItem('user_data');
-			// 使用强制刷新跳转到登录页
-			window.location.href = '/auth/login';
-		} catch (error) {
-			console.error('Logout error:', error);
-			// 即使API调用失败也要清除本地存储并重定向
-			localStorage.removeItem('auth_token');
-			localStorage.removeItem('user_data');
-			window.location.href = '/auth/login';
-		}
+	function logout(event: MouseEvent) {
+		// 阻止任何默认行为和事件传播
+		event.preventDefault();
+		event.stopPropagation();
+		
+		// 清除本地存储
+		localStorage.removeItem('auth_token');
+		localStorage.removeItem('user_data');
+		
+		// 使用最直接的方式跳转，确保不会有任何API调用
+		window.location.replace('/app/auth/login');
+		return false;
 	}
 </script>
 
@@ -61,7 +50,7 @@
 </svelte:head>
 
 {#if !isLoading}
-		{#if window.location.pathname.startsWith('/auth')}
+		{#if window.location.pathname.startsWith('/app/auth')}
 			<!-- 认证页面不显示导航栏 -->
 		{:else}
 			<nav class="navbar">
@@ -69,16 +58,16 @@
 					<h1>Autodroid Admin</h1>
 				</div>
 				<div class="navbar-menu">
-					<a href="/" class:active={window.location.pathname === '/'}>Dashboard</a>
-					<a href="/workflows" class:active={window.location.pathname.startsWith('/workflows')}>Workflows</a>
-					<a href="/reports" class:active={window.location.pathname.startsWith('/reports')}>Reports</a>
-					<a href="/orders" class:active={window.location.pathname.startsWith('/orders')}>Orders</a>
-					<a href="/my" class:active={window.location.pathname.startsWith('/my')}>My</a>
+					<a href="/app" class:active={window.location.pathname === '/' || window.location.pathname === '/app'}>Dashboard</a>
+					<a href="/app/workflows" class:active={window.location.pathname.startsWith('/app/workflows')}>Workflows</a>
+					<a href="/app/reports" class:active={window.location.pathname.startsWith('/app/reports')}>Reports</a>
+					<a href="/app/orders" class:active={window.location.pathname.startsWith('/app/orders')}>Orders</a>
+					<a href="/app/my" class:active={window.location.pathname.startsWith('/app/my')}>My</a>
 				</div>
 			{#if $page.data?.authState?.isAuthenticated && $page.data?.authState?.user}
 			<div class="navbar-user">
 				<span class="user-info">欢迎，{$page.data.authState.user.full_name || $page.data.authState.user.email}</span>
-				<button onclick={logout} class="logout-button">退出</button>
+				<button on:click={logout} type="button" class="logout-button">退出</button>
 			</div>
 		{/if}
 		</nav>

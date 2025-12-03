@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { WorkflowInfo } from '$lib/types';
 	import { onMount } from 'svelte';
-	import { getApiUrl } from '$lib/utils/config';
+	import { getApiUrl } from '$lib/config';
 
 	let workflows: WorkflowInfo[] = [];
 	let isLoading = true;
