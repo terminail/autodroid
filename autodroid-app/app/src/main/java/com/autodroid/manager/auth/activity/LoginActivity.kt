@@ -47,6 +47,9 @@ class LoginActivity : AppCompatActivity() {
         errorTextView = findViewById<TextView>(R.id.login_error)
         registerLink = findViewById<TextView>(R.id.register_link)
 
+        // Set focus on the Login button instead of the email field
+        loginButton?.requestFocus()
+
 
         // Initialize ViewModel
         authViewModel = ViewModelProvider(

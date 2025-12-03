@@ -7,6 +7,12 @@ class AppViewModel : ViewModel() {
     // Getters for LiveData
     // Server information - unified object from mDNS discovery
     val serverInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    
+    // Discovery status information
+    val discoveryInProgress = MutableLiveData<Boolean>()
+    val discoveryRetryCount = MutableLiveData<Int>()
+    val discoveryMaxRetries = MutableLiveData<Int>()
+    val discoveryFailed = MutableLiveData<Boolean>()
 
     // Workflows information
     val availableWorkflows = MutableLiveData<MutableList<MutableMap<String?, Any?>?>?>()
@@ -26,6 +32,16 @@ class AppViewModel : ViewModel() {
     // Setters
     fun setServerInfo(info: MutableMap<String?, Any?>?) {
         serverInfo.setValue(info)
+    }
+    
+    fun setDiscoveryStatus(inProgress: Boolean, retryCount: Int, maxRetries: Int) {
+        discoveryInProgress.setValue(inProgress)
+        discoveryRetryCount.setValue(retryCount)
+        discoveryMaxRetries.setValue(maxRetries)
+    }
+    
+    fun setDiscoveryFailed(failed: Boolean) {
+        discoveryFailed.setValue(failed)
     }
 
     fun setAvailableWorkflows(workflows: MutableList<MutableMap<String?, Any?>?>?) {

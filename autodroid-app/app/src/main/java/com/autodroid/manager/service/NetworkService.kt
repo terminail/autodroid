@@ -27,6 +27,7 @@ import java.util.concurrent.Executors
 /**
  * NetworkService is a foreground service that manages network connections and communication.
  * It handles mDNS service discovery and communication with the Autodroid server via FastAPI.
+ * This service now manages its own lifecycle and updates the DiscoveryStatusManager singleton.
  */
 class NetworkService : Service() {
     private val binder: IBinder = LocalBinder()
@@ -37,13 +38,10 @@ class NetworkService : Service() {
     var discoveredServer: DiscoveredServer? = null
         private set
 
-    // Callback for server discovery
-    private var serverDiscoveryCallback: ServerDiscoveryCallback? = null
-
-    interface ServerDiscoveryCallback {
-        fun onServerDiscovered(server: DiscoveredServer?)
-        fun onServerLost(server: DiscoveredServer?)
-    }
+    // mDNS discovery retry mechanism
+    private var currentRetryCount = 0
+    private var maxRetries = 3
+    private var isDiscoveryInProgress = false
 
     inner class LocalBinder : Binder() {
         val service: NetworkService
@@ -54,31 +52,31 @@ class NetworkService : Service() {
         super.onCreate()
         Log.d(TAG, "NetworkService created")
 
+        // Initialize the DiscoveryStatusManager with application context
+        DiscoveryStatusManager.initialize(this)
 
         // Create notification channel for foreground service
         createNotificationChannel()
 
-
         // Start service in foreground
         startForeground(NOTIFICATION_ID, createNotification())
-
 
         // Initialize device ID
         // Use a combination of device properties to create a unique identifier
         // This avoids permission issues with Build.getSerial()
         deviceId = "${Build.MANUFACTURER}_${Build.MODEL}_${Build.VERSION.RELEASE}_${Build.ID}"
 
-
         // Initialize executor service
         executorService = Executors.newSingleThreadExecutor()
-
 
         // Initialize HTTP client
         httpClient = OkHttpClient()
 
-
         // Initialize and start mDNS discovery
         initNetworkDiscovery()
+        
+        // Update service status
+        DiscoveryStatusManager.isServiceRunning.value = true
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -89,17 +87,18 @@ class NetworkService : Service() {
         super.onDestroy()
         Log.d(TAG, "NetworkService destroyed")
 
-
         // Stop mDNS discovery
         if (nsdHelper != null) {
             nsdHelper!!.tearDown()
         }
 
-
         // Shutdown executor service
         if (executorService != null) {
             executorService!!.shutdownNow()
         }
+        
+        // Update service status
+        DiscoveryStatusManager.isServiceRunning.value = false
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -153,11 +152,11 @@ class NetworkService : Service() {
                 Log.d(TAG, "Service found: " + serviceName + " at " + host + ":" + port)
                 if (serviceName != null && host != null) {
                     discoveredServer = DiscoveredServer(serviceName, host, port)
-
-                    // Notify callback if set
-                    if (serverDiscoveryCallback != null) {
-                        serverDiscoveryCallback!!.onServerDiscovered(discoveredServer)
-                    }
+                    isDiscoveryInProgress = false
+                    
+                    // Update DiscoveryStatusManager
+                    DiscoveryStatusManager.updateServerInfo(discoveredServer)
+                    DiscoveryStatusManager.updateDiscoveryStatus(false, currentRetryCount, maxRetries)
 
                     // Publish device information to the discovered server
                     publishDeviceInfo(host, port)
@@ -166,29 +165,67 @@ class NetworkService : Service() {
 
             override fun onServiceLost(serviceName: String?) {
                 Log.d(TAG, "Service lost: " + serviceName)
-                if (serverDiscoveryCallback != null && discoveredServer != null &&
-                    discoveredServer!!.serviceName == serviceName
-                ) {
-                    serverDiscoveryCallback!!.onServerLost(discoveredServer)
+                if (discoveredServer != null && discoveredServer!!.serviceName == serviceName) {
+                    // Update DiscoveryStatusManager
+                    DiscoveryStatusManager.updateServerInfo(null)
                     discoveredServer = null
                 }
             }
 
             override fun onDiscoveryStarted() {
                 Log.d(TAG, "mDNS discovery started")
+                isDiscoveryInProgress = true
+                currentRetryCount = 0
+                
+                // Update DiscoveryStatusManager
+                DiscoveryStatusManager.updateDiscoveryStatus(true, currentRetryCount, maxRetries)
             }
 
             override fun onDiscoveryFailed() {
                 Log.e(TAG, "mDNS discovery failed")
-                // Retry discovery after a delay
-                executorService!!.submit(Runnable {
-                    try {
-                        Thread.sleep(5000) // Wait 5 seconds before retry
-                        nsdHelper!!.discoverServices()
-                    } catch (e: InterruptedException) {
-                        Log.e(TAG, "Retry interrupted", e)
-                    }
-                })
+                isDiscoveryInProgress = false
+                
+                // Increment retry count
+                currentRetryCount++
+                
+                // Check if we should retry
+                if (currentRetryCount < maxRetries) {
+                    // Update DiscoveryStatusManager about retry
+                    DiscoveryStatusManager.updateDiscoveryStatus(true, currentRetryCount, maxRetries)
+                    
+                    // Retry discovery with exponential backoff
+                    executorService!!.submit(Runnable {
+                        try {
+                            // Calculate delay: 8s, 16s, 32s for retries 1, 2, 3
+                            val delayMs = 8000 * (1 shl (currentRetryCount - 1))
+                            Log.d(TAG, "Retrying discovery in ${delayMs}ms (attempt ${currentRetryCount + 1}/$maxRetries)")
+                            Thread.sleep(delayMs.toLong())
+                            isDiscoveryInProgress = true
+                            nsdHelper!!.discoverServices()
+                        } catch (e: InterruptedException) {
+                            Log.e(TAG, "Retry interrupted", e)
+                        }
+                    })
+                } else {
+                    // All retries failed
+                    Log.e(TAG, "All $maxRetries discovery attempts failed")
+                    
+                    // Update DiscoveryStatusManager about final failure
+                    DiscoveryStatusManager.updateDiscoveryStatus(false, currentRetryCount, maxRetries)
+                    DiscoveryStatusManager.updateDiscoveryFailed(true)
+                    
+                    // Auto-stop the service after multiple failures
+                    executorService!!.submit(Runnable {
+                        try {
+                            // Wait a bit to ensure the UI has time to process the failure
+                            Thread.sleep(2000)
+                            Log.d(TAG, "Stopping NetworkService after multiple discovery failures")
+                            stopSelf()
+                        } catch (e: InterruptedException) {
+                            Log.e(TAG, "Auto-stop interrupted", e)
+                        }
+                    })
+                }
             }
         })
 
@@ -203,6 +240,7 @@ class NetworkService : Service() {
             try {
                 // Small delay to ensure service is fully initialized
                 Thread.sleep(1000)
+                isDiscoveryInProgress = true
                 nsdHelper!!.discoverServices()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start discovery, will retry", e)
@@ -221,13 +259,11 @@ class NetworkService : Service() {
                 val androidVersion = Build.VERSION.RELEASE
                 val localIp = this.localIpAddress
 
-
                 // Create JSON message
                 val deviceInfoJson = String.format(
                     "{\"type\":\"device_info\",\"data\":{\"device_name\":\"%s\",\"android_version\":\"%s\",\"device_id\":\"%s\",\"local_ip\":\"%s\"}}",
                     deviceName, androidVersion, deviceId, localIp
                 )
-
 
                 // Send device info to server via FastAPI
                 sendDeviceInfoToServer(serverHost, serverPort, deviceInfoJson)
@@ -269,8 +305,19 @@ class NetworkService : Service() {
     private val localIpAddress: String?
         get() {
             try {
-                val inetAddress = InetAddress.getLocalHost()
-                return inetAddress.getHostAddress()
+                // Try to get the first non-loopback IPv4 address from any network interface
+                val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+                while (interfaces.hasMoreElements()) {
+                    val networkInterface = interfaces.nextElement()
+                    val addresses = networkInterface.inetAddresses
+                    while (addresses.hasMoreElements()) {
+                        val address = addresses.nextElement()
+                        if (!address.isLoopbackAddress && address is java.net.Inet4Address) {
+                            return address.hostAddress
+                        }
+                    }
+                }
+                return "unknown"
             } catch (e: Exception) {
                 Log.e(
                     TAG,
@@ -285,8 +332,21 @@ class NetworkService : Service() {
         Log.d(TAG, "Matching workflows for APKs (simulated): " + apkInfoListJson)
     }
 
-    fun setServerDiscoveryCallback(callback: ServerDiscoveryCallback?) {
-        this.serverDiscoveryCallback = callback
+    fun stopMdnsDiscovery() {
+        if (nsdHelper != null) {
+            nsdHelper!!.tearDown()
+            isDiscoveryInProgress = false
+            Log.d(TAG, "mDNS discovery stopped")
+        }
+    }
+
+    fun restartMdnsDiscovery() {
+        currentRetryCount = 0
+        if (nsdHelper != null) {
+            nsdHelper!!.initialize()
+            startDiscoveryWithRetry()
+            Log.d(TAG, "mDNS discovery restarted")
+        }
     }
 
     val discoveredServers: MutableList<DiscoveredServer?>?

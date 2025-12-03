@@ -40,10 +40,8 @@ class DeviceInfoManager(private val context: Context?, private val viewModel: Ap
                     while (addresses.hasMoreElements()) {
                         val address = addresses.nextElement()
                         if (!address.isLoopbackAddress && address is Inet4Address) {
-                            // Skip wlan0 interface to avoid duplication with WiFi IP
-                            if (networkInterface.name != "wlan0") {
-                                return address.hostAddress
-                            }
+                            // Return the first non-loopback IPv4 address (including wlan0)
+                            return address.hostAddress
                         }
                     }
                 }

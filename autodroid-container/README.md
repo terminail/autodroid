@@ -40,24 +40,16 @@ Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，�
 
 1. 确保虚拟环境已激活
 
-2. **推荐方式**：使用统一启动脚本（同时启动API和前端）：
+2. 启动服务器（推荐方式）：
    ```bash
-   python start.py
-   ```
-
-3. 或者使用配置化启动脚本：
-   ```bash
+   cd 'd:/git/autodroid/autodroid-container'; 
+   conda activate liugejiao;
    python run_server.py
    ```
 
-4. **Windows用户**：双击运行批处理文件：
+3. **Windows用户**：双击运行批处理文件：
    ```
    start_server.bat
-   ```
-
-5. 或者直接运行 FastAPI 应用（仅API）：
-   ```bash
-   uvicorn api.main:app --host 0.0.0.0 --port 8004 --reload
    ```
 
 ### 服务启动后
@@ -88,7 +80,7 @@ Press Ctrl+C to stop the server
 ### 1. 健康检查
 
 ```bash
-curl http://localhost:8003/api/health
+curl http://localhost:8004/api/health
 ```
 
 响应示例：
@@ -107,7 +99,7 @@ curl http://localhost:8003/api/health
 ### 2. 获取服务器信息
 
 ```bash
-curl http://localhost:8003/api/server
+curl http://localhost:8004/api/server
 ```
 
 响应示例：
@@ -143,7 +135,7 @@ curl http://localhost:8003/api/server
 ### 3. 注册设备
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8003/api/devices/register
+curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8004/api/devices/register
 ```
 
 响应示例：
@@ -164,7 +156,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "
 ### 4. 获取所有注册设备
 
 ```bash
-curl http://localhost:8003/api/devices
+curl http://localhost:8004/api/devices
 ```
 
 响应示例：
@@ -236,7 +228,13 @@ pytest
 
 ### 端口被占用
 
-如果端口 8003 已被占用，可以使用其他端口：
+如果端口 8004 已被占用，可以修改配置文件中的端口设置：
+
+1. 编辑 `config.yaml` 文件
+2. 修改 `server.backend.port` 的值
+3. 重新启动服务器
+
+或者临时使用其他端口：
 
 ```bash
 uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
