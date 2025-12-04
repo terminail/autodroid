@@ -13,14 +13,6 @@
         android:gravity="center"
         android:padding="24dp">
 
-        <!-- Logo -->
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@android:drawable/ic_dialog_info"
-            android:contentDescription="App Logo"
-            android:layout_marginBottom="32dp" />
-
         <!-- Title -->
         <TextView
             android:layout_width="wrap_content"
@@ -161,6 +153,14 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+
+        <!-- Logo -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@android:drawable/ic_dialog_info"
+            android:contentDescription="App Logo"
+            android:layout_marginBottom="32dp" />
 
     </LinearLayout>
 </ScrollView>

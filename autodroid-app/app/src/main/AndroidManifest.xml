@@ -80,8 +80,7 @@
         <!-- Network Service -->
         <service
             android:name=".service.NetworkService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:exported="false" />
         
     </application>
 

@@ -41,8 +41,8 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.values.all { it }) {
-            // All permissions granted, start network service
-            startNetworkService()
+            // All permissions granted (NetworkService is auto-started in MyApplication)
+            Log.d(TAG, "All permissions granted for mDNS discovery")
         } else {
             // Some permissions denied, show message
             Toast.makeText(this, "Permissions required for mDNS discovery", Toast.LENGTH_LONG).show()
@@ -57,10 +57,8 @@ class MainActivity : AppCompatActivity() {
         checkAuthentication()
         initializeNavigation()
         
-        // Check and request permissions before starting network service
-        if (checkAndRequestPermissions()) {
-            startNetworkService()
-        }
+        // Check and request permissions (NetworkService is auto-started in MyApplication)
+        checkAndRequestPermissions()
     }
 
     private fun initializeViewModels() {
@@ -105,11 +103,6 @@ class MainActivity : AppCompatActivity() {
         NavigationUI.setupWithNavController(bottomNavigation, navController)
     }
 
-    private fun startNetworkService() {
-        // Start NetworkService using DiscoveryStatusManager
-        DiscoveryStatusManager.startNetworkService()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         // NetworkService now handles its own lifecycle
@@ -122,8 +115,8 @@ class MainActivity : AppCompatActivity() {
     private fun checkAndRequestPermissions(): Boolean {
         val permissionsNeeded = mutableListOf<String>()
         
-        // Check location permission for mDNS discovery (Android 10+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        // Check location permission for mDNS discovery (Android 6.0+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
             }

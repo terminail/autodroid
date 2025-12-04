@@ -8,6 +8,7 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -168,10 +169,32 @@ class DashboardFragment : BaseFragment() {
             apkScannerManager?.scanInstalledApks()
         }
 
+        // Debug: Check if NetworkService is running
+        Log.d("DashboardFragment", "Initializing views - checking NetworkService status")
+        Log.d("DashboardFragment", "QR code fallback flag: ${DiscoveryStatusManager.isQrCodeChosenAsFallback()}")
+
         // Update UI with initial data
         updateUI()
+        
+        // Start observing discovery status immediately
+        setupObservers()
+        
+        // NetworkService is now auto-started in MyApplication, no need to start it here
+        // DashboardFragment only observes the discovery status and updates UI accordingly
     }
 
+    private var discoveryStartTime: Long = 0
+    private val discoveryTimer = object : android.os.CountDownTimer(Long.MAX_VALUE, 1000) {
+        override fun onTick(millisUntilFinished: Long) {
+            val elapsedSeconds = (System.currentTimeMillis() - discoveryStartTime) / 1000
+            scanQrButton?.text = "Discovering servers... ${elapsedSeconds}s"
+        }
+        
+        override fun onFinish() {
+            // Timer will run indefinitely until canceled
+        }
+    }
+    
     override fun setupObservers() {
         // Observe server info from DiscoveryStatusManager
         DiscoveryStatusManager.serverInfo.observe(viewLifecycleOwner) { serverInfo ->
@@ -197,12 +220,8 @@ class DashboardFragment : BaseFragment() {
                         else -> discoveryMethod
                     }
                     
-                    // Only restart mDNS discovery if the connection was via mDNS
-                    // Don't restart if the user has chosen QR code as fallback
-                    if (discoveryMethod == "mDNS") {
-                        DiscoveryStatusManager.startNetworkService()
-                        Log.d(TAG, "Restarted NetworkService after mDNS connection was lost")
-                    }
+                    // NetworkService is auto-started in MyApplication, no need to restart it here
+                    // DashboardFragment only observes the discovery status and updates UI accordingly
                 }
                 
                 // Check server health if we have an API endpoint
@@ -226,17 +245,35 @@ class DashboardFragment : BaseFragment() {
                 apiEndpointTextView?.text = "-"
                 connectionStatusTextView?.text = "Discovering servers..."
                 
-                // Show QR code button when no server is discovered
+                // Show QR code button with status when no server is discovered (disabled)
                 scanQrButton?.visibility = View.VISIBLE
+                scanQrButton?.text = "Discovering servers..."
+                scanQrButton?.isEnabled = false
             }
         }
         
         // Observe discovery status from DiscoveryStatusManager
         DiscoveryStatusManager.discoveryInProgress.observe(viewLifecycleOwner) { inProgress ->
             if (inProgress == true) {
-                connectionStatusTextView?.text = "mDNS Discovering..."
-                // Hide QR code button during discovery
-                scanQrButton?.visibility = View.GONE
+                discoveryStartTime = System.currentTimeMillis()
+                discoveryTimer.start()
+                
+                requireActivity().runOnUiThread {
+                    connectionStatusTextView?.text = "mDNS Discovering..."
+                    // Show QR code button with status info during discovery (disabled)
+                    scanQrButton?.visibility = View.VISIBLE
+                    scanQrButton?.text = "mDNS Discovering..."
+                    scanQrButton?.isEnabled = false
+                    Log.d(TAG, "Discovery in progress - QR code button disabled")
+                }
+            } else {
+                discoveryTimer.cancel()
+                
+                requireActivity().runOnUiThread {
+                    scanQrButton?.text = "Scan QR Code"
+                    scanQrButton?.isEnabled = true
+                    Log.d(TAG, "Discovery stopped - QR code button enabled")
+                }
             }
         }
         
@@ -245,9 +282,14 @@ class DashboardFragment : BaseFragment() {
             val maxRetries = DiscoveryStatusManager.discoveryMaxRetries.value ?: 0
             if (retryCount != null && maxRetries > 0) {
                 if (retryCount < maxRetries) {
-                    connectionStatusTextView?.text = "mDNS Retry ${retryCount + 1}/$maxRetries"
-                    // Hide QR code button during retry
-                    scanQrButton?.visibility = View.GONE
+                    requireActivity().runOnUiThread {
+                        connectionStatusTextView?.text = "mDNS Retry ${retryCount + 1}/$maxRetries"
+                        // Show QR code button with retry info during retry (disabled)
+                        scanQrButton?.visibility = View.VISIBLE
+                        scanQrButton?.text = "mDNS Retry ${retryCount + 1}/$maxRetries"
+                        scanQrButton?.isEnabled = false
+                        Log.d(TAG, "Discovery retry ${retryCount + 1}/$maxRetries - QR code button disabled")
+                    }
                 }
             }
         }
@@ -255,17 +297,44 @@ class DashboardFragment : BaseFragment() {
         // Observe discovery failure from DiscoveryStatusManager
         DiscoveryStatusManager.discoveryFailed.observe(viewLifecycleOwner) { failed ->
             if (failed == true) {
-                // Calculate total time for mDNS failure (8s + 16s + 32s = 56 seconds)
-                val totalFailureTime = 56
-                connectionStatusTextView?.text = "mDNS Failed after ${totalFailureTime}s"
+                discoveryTimer.cancel()
+                // Calculate actual elapsed time for mDNS failure
+                val elapsedSeconds = if (discoveryStartTime > 0) {
+                    (System.currentTimeMillis() - discoveryStartTime) / 1000
+                } else {
+                    56 // Fallback to default time if start time not recorded
+                }
+                connectionStatusTextView?.text = "mDNS Failed after ${elapsedSeconds}s"
                 serverIpTextView?.text = "Discovery failed"
                 serverPortTextView?.text = "-"
                 serverStatusTextView?.text = "FAILED"
                 apiEndpointTextView?.text = "-"
-                // Show QR code button when discovery fails
-                scanQrButton?.visibility = View.VISIBLE
+                
+                // Ensure UI updates on main thread
+                requireActivity().runOnUiThread {
+                    // Show QR code button with "Scan QR Code" text when discovery fails (enabled)
+                    scanQrButton?.visibility = View.VISIBLE
+                    scanQrButton?.text = "Scan QR Code"
+                    scanQrButton?.isEnabled = true
+                    Log.d(TAG, "mDNS failed after ${elapsedSeconds}s - QR code button enabled and visible")
+                }
+                
                 // Mark that user is now using QR code as fallback
                 DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
+                
+                // Stop NetworkService to avoid unnecessary retries
+                DiscoveryStatusManager.stopNetworkService()
+                Log.d(TAG, "Stopped NetworkService after mDNS failure to conserve resources")
+            } else {
+                // Reset failure state when discovery is restarted
+                requireActivity().runOnUiThread {
+                    connectionStatusTextView?.text = "Discovering servers..."
+                    serverIpTextView?.text = "Searching..."
+                    serverPortTextView?.text = "-"
+                    serverStatusTextView?.text = "Checking..."
+                    apiEndpointTextView?.text = "-"
+                    Log.d(TAG, "Discovery failure state reset")
+                }
             }
         }
     }
@@ -578,10 +647,7 @@ class DashboardFragment : BaseFragment() {
             if (apiEndpoint.isNotEmpty() && ipAddress.isNotEmpty() && port > 0) {
                 // Mark QR code as chosen as fallback to prevent mDNS restart
                 DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
-                
-                // Stop mDNS discovery when connecting via QRCode
-                DiscoveryStatusManager.stopNetworkService()
-                Log.d(TAG, "Stopped NetworkService when connecting via QRCode")
+
                 
                 // Update UI with server information
                 serverIpTextView?.text = ipAddress

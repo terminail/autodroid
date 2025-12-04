@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = "com.autodroid.test"
+version = "1.0"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // JmDNS library for mDNS discovery
+    implementation 'javax.jmdns:jmdns:3.4.1'
+    
+    // Test dependencies
+    testImplementation 'junit:junit:4.13.2'
+}
+
+application {
+    mainClassName = 'com.autodroid.test.PureJavaMdnsDiscoveryTest'
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

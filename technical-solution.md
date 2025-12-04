@@ -121,6 +121,53 @@ public class AuthService {
 - **Locale Detection**: Automatic language selection based on device settings
 - **Comprehensive Coverage**: All UI text externalized to string resources
 
+### 2.6 Server Connection & Dynamic UI Updates (Android App)
+
+#### Implementation
+- **NetworkService**: Background service handling mDNS discovery with real-time status updates
+- **DiscoveryStatusManager**: Singleton pattern managing discovery status across the app
+- **LiveData Observers**: Reactive UI updates based on discovery state changes
+- **Failure Handling**: Comprehensive error handling with user-friendly status messages
+
+#### Key Components
+```kotlin
+// NetworkService.kt - Background service for mDNS discovery
+class NetworkService : Service() {
+    private fun notifyDiscoveryFailedListeners() {
+        Log.d(TAG, "Notifying discovery failed listeners")
+        // Update DiscoveryStatusManager with failure status
+        DiscoveryStatusManager.updateDiscoveryFailed(true)
+        Log.d(TAG, "Discovery failure notification sent")
+    }
+}
+
+// DashboardFragment.kt - UI state management
+private val discoveryFailedObserver = Observer<Boolean> { failed ->
+    if (failed == true) {
+        val elapsedTime = (System.currentTimeMillis() - discoveryStartTime) / 1000
+        updateConnectionStatus("mDNS Failed after ${elapsedTime}s")
+        serverInfoTextView?.text = "Discovery failed"
+        serverStatusTextView?.text = "FAILED"
+        scanQrButton?.isEnabled = true
+        scanQrButton?.text = "Scan QR Code"
+        Log.d(TAG, "Discovery failed after ${elapsedTime}s")
+    } else {
+        // Reset UI when discovery is restarted
+        updateConnectionStatus("mDNS Discovering...")
+        serverInfoTextView?.text = "Searching..."
+        serverStatusTextView?.text = "SEARCHING"
+        scanQrButton?.isEnabled = false
+        scanQrButton?.text = "Scan QR Code"
+    }
+}
+```
+
+#### Status Flow
+1. **Discovery Starting**: "mDNS Discovering..." with disabled QR button
+2. **Discovery Failed**: "mDNS Failed after Xs" with enabled QR button
+3. **Discovery Restarted**: Reset to initial state for retry
+4. **Service Found**: Update with server information and connection options
+
 #### Resource Structure
 ```
 res/

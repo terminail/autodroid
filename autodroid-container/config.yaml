@@ -120,7 +120,7 @@ network:
   # mDNS service configuration
   mdns:
     # Service name for discovery
-    service_name: "autodroid"
+    service_name: "Autodroid Server"
     # Service type
     service_type: "_autodroid._tcp.local."
     # Service port (should match backend server port)

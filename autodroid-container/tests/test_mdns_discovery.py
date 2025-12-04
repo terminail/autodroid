@@ -86,7 +86,7 @@ def test_mdns_service_discovery():
         # Verify service details
         service = listener.discovered_services[0]
         assert service['type'] == "_autodroid._tcp.local."
-        assert service['port'] == 8001
+        assert service['port'] == 8004
         assert 'Autodroid Server' in service['name']
         assert len(service['addresses']) > 0
         

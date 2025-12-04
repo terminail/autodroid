@@ -108,6 +108,31 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 - Comprehensive user documentation
 - Deployment guide for different platforms
 
+## Phase 6: Server Connection UI Enhancement (Completed)
+
+### Objectives
+- Fix Server Connection dynamic UI update issues
+- Implement proper mDNS discovery failure handling
+- Enhance user experience with real-time status updates
+
+### Tasks Completed
+- **NetworkService Fix**: Implemented proper failure notification mechanism
+- **DashboardFragment Enhancement**: Removed hardcoded failure time, added dynamic calculation
+- **UI State Management**: Improved LiveData observers for real-time updates
+- **QR Code Button State**: Enhanced button state management during discovery failures
+
+### Key Fixes Implemented
+1. **NetworkService.notifyDiscoveryFailedListeners()**: Now properly calls `DiscoveryStatusManager.updateDiscoveryFailed(true)`
+2. **DashboardFragment.discoveryFailedObserver**: Calculates actual elapsed time instead of hardcoded 56s
+3. **UI Reset Logic**: Added proper state reset when discovery is restarted
+4. **Status Flow**: Complete status flow from discovery start to failure with accurate timing
+
+### Deliverables Achieved
+- Functional Server Connection with dynamic status updates
+- Accurate mDNS failure time display
+- Enhanced user experience with clear status indicators
+- Reliable QR code fallback mechanism
+
 ## Success Criteria
 
 - All core functions implemented according to requirements

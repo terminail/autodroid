@@ -35,6 +35,20 @@ Develop a cross-platform Android app automation framework based on container tec
 3. Build and run the containers
 4. Create your first test plan using the [Usage Guide](usage-guide.md)
 
+## Recent Updates
+
+### Server Connection Dynamic UI Update Fix
+- **Fixed**: NetworkService failure notification mechanism now properly updates UI status
+- **Fixed**: DashboardFragment mDNS discovery failure time calculation (removed hardcoded 56s)
+- **Enhanced**: Real-time status updates for Server Connection section
+- **Improved**: QR code button state management during discovery failures
+
+When mDNS discovery fails, the UI now correctly displays:
+- Status: "mDNS Failed after Xs" (X = actual elapsed time)
+- Server IP: "Discovery failed"
+- Server Status: "FAILED"
+- QR Code Button: Enabled and shows "Scan QR Code"
+
 ## Key Success Factors
 
 1. **Standardization**: Unified workflow definition and configuration management

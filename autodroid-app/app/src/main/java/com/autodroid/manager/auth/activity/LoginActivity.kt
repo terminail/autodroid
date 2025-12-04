@@ -36,6 +36,10 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Hide the action bar
+        supportActionBar?.hide()
+        
         setContentView(R.layout.activity_login)
 
 
@@ -233,4 +237,4 @@ class LoginActivity : AppCompatActivity() {
         return isValid
     }
 }
-
+

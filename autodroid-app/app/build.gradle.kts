@@ -66,6 +66,10 @@ dependencies {
     // JSON parsing
     implementation("com.google.code.gson:gson:2.13.2")
     
+    // Third-party mDNS libraries
+    implementation("javax.jmdns:jmdns:3.4.1")
+    implementation("org.bitlet:weupnp:0.1.4")
+    
     // ML Kit for QR code scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("androidx.camera:camera-core:1.3.1")

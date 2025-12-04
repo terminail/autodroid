@@ -25,6 +25,9 @@ object DiscoveryStatusManager {
     // Network service status
     val isServiceRunning = MutableLiveData<Boolean>()
     
+    // Network connectivity status
+    val networkConnected = MutableLiveData<Boolean>()
+    
     // Flag to track if user has chosen QR code as fallback
     private var qrCodeChosenAsFallback = false
     
@@ -57,7 +60,9 @@ object DiscoveryStatusManager {
                 context.startService(intent)
             }
             
-            isServiceRunning.value = true
+            Handler(Looper.getMainLooper()).post {
+                isServiceRunning.value = true
+            }
         }
     }
     
@@ -68,7 +73,10 @@ object DiscoveryStatusManager {
         val context = applicationContext ?: return
         val intent = android.content.Intent(context, NetworkService::class.java)
         context.stopService(intent)
-        isServiceRunning.value = false
+        
+        Handler(Looper.getMainLooper()).post {
+            isServiceRunning.value = false
+        }
     }
     
     /**
@@ -82,12 +90,16 @@ object DiscoveryStatusManager {
                 info["ip"] = server.host
                 info["port"] = server.port
                 info["connected"] = true
+                info["discovery_method"] = "mDNS"
+                info["api_endpoint"] = "http://${server.host}:${server.port}/api"
                 serverInfo.value = info
+                Log.d("DiscoveryStatusManager", "Server info updated via mDNS: ${server.host}:${server.port}")
             } else {
                 // Mark as disconnected
                 val currentInfo = serverInfo.value?.toMutableMap() ?: mutableMapOf()
                 currentInfo["connected"] = false
                 serverInfo.value = currentInfo
+                Log.d("DiscoveryStatusManager", "Server disconnected")
             }
         }
     }
@@ -102,7 +114,21 @@ object DiscoveryStatusManager {
     }
     
     /**
-     * Update discovery status
+     * Update discovery status (simplified version with only inProgress flag)
+     */
+    fun updateDiscoveryStatus(inProgress: Boolean) {
+        Handler(Looper.getMainLooper()).post {
+            discoveryInProgress.value = inProgress
+            // Reset retry count when discovery starts/stops
+            if (inProgress) {
+                discoveryRetryCount.value = 0
+                discoveryMaxRetries.value = 0
+            }
+        }
+    }
+
+    /**
+     * Update discovery status with retry information
      */
     fun updateDiscoveryStatus(inProgress: Boolean, retryCount: Int, maxRetries: Int) {
         Handler(Looper.getMainLooper()).post {
@@ -122,11 +148,22 @@ object DiscoveryStatusManager {
     }
     
     /**
+     * Update network connectivity status
+     */
+    fun updateNetworkStatus(connected: Boolean) {
+        Handler(Looper.getMainLooper()).post {
+            networkConnected.value = connected
+        }
+    }
+    
+    /**
      * Mark QR code as chosen as fallback
      */
     fun setQrCodeChosenAsFallback(chosen: Boolean) {
-        qrCodeChosenAsFallback = chosen
-        Log.d("DiscoveryStatusManager", "QR code chosen as fallback: $chosen")
+        Handler(Looper.getMainLooper()).post {
+            qrCodeChosenAsFallback = chosen
+            Log.d("DiscoveryStatusManager", "QR code chosen as fallback: $chosen")
+        }
     }
     
     /**

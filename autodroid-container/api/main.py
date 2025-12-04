@@ -12,19 +12,11 @@ from .devices import router as devices_router
 from .workflows import router as workflows_router
 from .server import router as server_router
 from .apks import router as apks_router
+from .mdns import MDNSService, register_mdns_from_config
 
 import os
 import asyncio
-import socket
 import yaml
-
-# Try to import zeroconf, but handle gracefully if not available
-try:
-    from zeroconf import ServiceInfo, Zeroconf
-    ZEROCONF_AVAILABLE = True
-except ImportError:
-    ZEROCONF_AVAILABLE = False
-    print("⚠ zeroconf module not available, mDNS functionality will be disabled")
 
 from core.device.device_manager import DeviceManager, DeviceInfo
 from core.workflow.engine import WorkflowEngine, WorkflowConfig
@@ -62,96 +54,22 @@ async def start_scheduler():
     """Start the scheduling service"""
     asyncio.create_task(scheduler.schedule_tasks())
 
-async def register_mdns_service():
-    """Register the server with mDNS for discovery using correct async API"""
-    if not ZEROCONF_AVAILABLE:
-        print("⚠ mDNS service skipped: zeroconf module not available")
-        return
-        
-    try:
-        # Get network configuration
-        network_config = config.get('network', {})
-        mdns_config = network_config.get('mdns', {})
-        server_backend_config = server_config.get('backend', {})
-        
-        # Use configuration values with defaults
-        service_type = mdns_config.get('service_type', "_autodroid._tcp.local.")
-        service_name = f"{mdns_config.get('service_name', 'autodroid')}._autodroid._tcp.local."
-        port = mdns_config.get('service_port', server_backend_config.get('port', 8004))
-        
-        # Get server IP address
-        hostname = socket.gethostname()
-        server_ip = socket.gethostbyname(hostname)
-        print(f"Server IP: {server_ip}")
-        
-        # Build API URL from configuration
-        api_base = server_backend_config.get('api_base', '/api')
-        use_https = server_backend_config.get('use_https', False)
-        protocol = 'https' if use_https else 'http'
-        api_url = f"{protocol}://{server_ip}:{port}{api_base}"
-        
-        properties = {
-            'version': '1.0',
-            'description': 'Autodroid Server',
-            'api_url': api_url,
-            'frontend_url': f"{protocol}://{server_ip}:{port}/app"
-        }
-        
-        # Create ServiceInfo
-        info = ServiceInfo(
-            service_type,
-            service_name,
-            addresses=[socket.inet_aton(server_ip)],
-            port=port,
-            properties=properties
-        )
-        
-        # Register service using correct async API
-        from zeroconf.asyncio import AsyncZeroconf
-        
-        # Create and keep the AsyncZeroconf instance alive for persistent registration
-        aiozc = AsyncZeroconf()
-        await aiozc.async_register_service(info)
-        
-        # Keep zeroconf instance alive
-        app.state.zeroconf = aiozc
-        app.state.service_info = info
-        
-        print(f"✓ mDNS service registered: {service_name} at {server_ip}:{port}")
-        print(f"✓ API URL: {api_url}")
-        print("✓ Using correct async zeroconf API")
-        
-    except Exception as e:
-        import traceback
-        print(f"✗ Failed to register mDNS service: {e}")
-        print(f"Full error traceback:")
-        traceback.print_exc()
-        # This is a critical failure - mDNS is required for the system to work
-        print("⚠ WARNING: mDNS registration failed. The app will not be able to discover this server.")
-        # Continue without mDNS - don't crash the server
-        print("⚠ Continuing without mDNS service...")
-
 # Lifespan event handler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     # Startup
     await start_scheduler()
-    await register_mdns_service()
+    
+    # Register mDNS service
+    mdns_service = await register_mdns_from_config(config)
+    app.state.mdns_service = mdns_service
     
     yield
     
     # Shutdown
-    if not ZEROCONF_AVAILABLE:
-        return
-        
-    if hasattr(app.state, 'zeroconf') and hasattr(app.state, 'service_info'):
-        try:
-            await app.state.zeroconf.async_unregister_service(app.state.service_info)
-            await app.state.zeroconf.async_close()
-            print("✓ mDNS service unregistered")
-        except Exception as e:
-            print(f"✗ Failed to unregister mDNS service: {e}")
+    if hasattr(app.state, 'mdns_service'):
+        await app.state.mdns_service.unregister_service()
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(

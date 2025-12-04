@@ -497,6 +497,139 @@ def register_service():
 
 这种方案非常适合你的Autodroid应用，可以实现服务器的自动发现，大大提升用户体验。
 
+## mDNS服务启动架构优化
+
+### 架构变更概述
+
+经过架构优化，mDNS服务启动逻辑已从分散式管理改为集中式管理：
+
+**优化前（分散式）：**
+- MainActivity启动时检查权限并启动NetworkService
+- MyApplication启动时也启动NetworkService
+- DashboardFragment可以强制启动NetworkService
+
+**优化后（集中式）：**
+- **仅MyApplication在应用启动时自动启动NetworkService**
+- MainActivity仅负责权限检查，不再启动服务
+- DashboardFragment仅在特定条件下（服务未运行且非QR码回退模式）启动服务
+
+### 新的启动流程
+
+```java
+// 1. 应用启动时自动启动（MyApplication.kt）
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        DiscoveryStatusManager.init(this)
+        DiscoveryStatusManager.startNetworkService() // 自动启动
+    }
+}
+
+// 2. MainActivity仅检查权限（MainActivity.kt）
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 仅检查权限，服务已由MyApplication启动
+        checkAndRequestPermissions()
+    }
+}
+
+// 3. DashboardFragment智能启动（DashboardFragment.kt）
+class DashboardFragment : Fragment() {
+    private fun initViews() {
+        // 仅在服务未运行且非QR码回退模式时启动
+        if (!DiscoveryStatusManager.isServiceRunning.value == true && 
+            !qrCodeChosenAsFallback) {
+            DiscoveryStatusManager.startNetworkService()
+        }
+    }
+}
+```
+
+### 动态UI更新机制
+
+DashboardFragment通过观察DiscoveryStatusManager的状态变化，实现动态UI更新：
+
+```kotlin
+// 观察mDNS发现状态
+DiscoveryStatusManager.discoveryInProgress.observe(viewLifecycleOwner) { inProgress ->
+    requireActivity().runOnUiThread {
+        if (inProgress == true) {
+            connectionStatusTextView.text = "mDNS Discovering..."
+            scanQrButton.visibility = View.GONE
+            Log.d(TAG, "Discovery in progress - QR code button disabled")
+        } else {
+            connectionStatusTextView.text = "mDNS Stopped"
+            scanQrButton.visibility = View.VISIBLE
+            scanQrButton.isEnabled = true
+            Log.d(TAG, "Discovery stopped - QR code button enabled")
+        }
+    }
+}
+
+// 观察重试次数
+DiscoveryStatusManager.discoveryRetryCount.observe(viewLifecycleOwner) { retryCount ->
+    requireActivity().runOnUiThread {
+        val maxRetries = DiscoveryStatusManager.discoveryMaxRetries.value ?: 0
+        if (retryCount != null && maxRetries > 0) {
+            connectionStatusTextView.text = "mDNS Retry ${retryCount + 1}/$maxRetries"
+            scanQrButton.visibility = View.GONE
+            Log.d(TAG, "Discovery retry ${retryCount + 1}/$maxRetries - QR code button disabled")
+        }
+    }
+}
+
+// 观察发现失败状态
+DiscoveryStatusManager.discoveryFailed.observe(viewLifecycleOwner) { failed ->
+    requireActivity().runOnUiThread {
+        if (failed == true) {
+            connectionStatusTextView.text = "mDNS Failed - Try QR Code"
+            scanQrButton.visibility = View.VISIBLE
+            scanQrButton.isEnabled = true
+            scanQrButton.text = "Scan QR Code Instead"
+            
+            // 停止NetworkService避免不必要的重试
+            DiscoveryStatusManager.stopNetworkService()
+            Log.d(TAG, "Discovery failed - QR code button enabled, service stopped")
+        }
+    }
+}
+```
+
+### 架构优势
+
+1. **简化启动逻辑**：避免重复启动服务，减少资源浪费
+2. **统一管理**：所有mDNS相关操作通过DiscoveryStatusManager集中管理
+3. **智能回退**：mDNS失败后自动启用QR码扫描作为备选方案
+4. **线程安全**：所有UI更新操作都在主线程执行，避免ANR
+5. **状态一致性**：通过LiveData确保UI状态与后台服务状态同步
+
+### 权限管理
+
+```kotlin
+// 权限请求回调（MainActivity.kt）
+private val requestPermissionsLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestMultiplePermissions()
+) { permissions ->
+    if (permissions.values.all { it }) {
+        // 权限已授予（服务已由MyApplication自动启动）
+        Log.d(TAG, "All permissions granted for mDNS discovery")
+    } else {
+        // 权限被拒绝
+        Toast.makeText(this, "Permissions required for mDNS discovery", Toast.LENGTH_LONG).show()
+    }
+}
+```
+
+### 错误处理机制
+
+- **重试机制**：mDNS发现失败后自动重试（最多3次）
+- **失败回退**：所有重试失败后启用QR码扫描
+- **服务保护**：避免在失败状态下继续启动服务消耗资源
+- **日志记录**：详细记录各阶段状态变化便于调试
+
+这种优化后的架构确保了mDNS服务的稳定运行，同时提供了良好的用户体验和错误处理机制。
+
 
 ## Q: WorkflowsFragment 内部采用recycleview展示列表，点击列表内item应该打开一个detailFragment还是独立的detailActivity？
 ## 对于你的Autodroid应用，我强烈推荐使用 **DetailFragment** 而不是独立的 DetailActivity。
