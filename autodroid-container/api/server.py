@@ -16,7 +16,7 @@ import json
 import base64
 import io
 from datetime import datetime, timedelta
-import qrcode
+# import qrcode  # Temporarily commented out for testing
 
 from .models import WiFiList
 

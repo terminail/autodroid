@@ -67,13 +67,63 @@ async def get_device_apk(udid: str, apkid: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/{udid}/apks")
-async def add_device_apk(udid: str, apk_info: Dict[str, Any]):
-    """Add an APK to a device"""
+async def add_device_apk(udid: str, apk_info: Any):
+    """Add one or multiple APKs to a device"""
     try:
-        apk = device_manager.add_apk(udid, apk_info)
+        # Check if apk_info is a single APK or a list of APKs
+        if isinstance(apk_info, list):
+            # Handle bulk APK registration
+            added_apks = []
+            errors = []
+            
+            for apk_item in apk_info:
+                try:
+                    apk = device_manager.add_apk(udid, apk_item)
+                    added_apks.append(apk.__dict__)
+                except ValueError as e:
+                    errors.append({
+                        "apk_info": apk_item,
+                        "error": str(e)
+                    })
+            
+            return {
+                "message": f"Added {len(added_apks)} APKs to device {udid}",
+                "added_apks": added_apks,
+                "errors": errors,
+                "total_processed": len(apk_info)
+            }
+        else:
+            # Handle single APK registration
+            apk = device_manager.add_apk(udid, apk_info)
+            return {
+                "message": f"APK added successfully to device {udid}",
+                "apk": apk.__dict__
+            }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{udid}/apks/bulk")
+async def add_device_apks_bulk(udid: str, apk_list: List[Dict[str, Any]]):
+    """Add multiple APKs to a device in bulk"""
+    try:
+        added_apks = []
+        errors = []
+        
+        for apk_info in apk_list:
+            try:
+                apk = device_manager.add_apk(udid, apk_info)
+                added_apks.append(apk.__dict__)
+            except ValueError as e:
+                errors.append({
+                    "apk_info": apk_info,
+                    "error": str(e)
+                })
+        
         return {
-            "message": f"APK added successfully to device {udid}",
-            "apk": apk.__dict__
+            "message": f"Added {len(added_apks)} APKs to device {udid}",
+            "added_apks": added_apks,
+            "errors": errors,
+            "total_processed": len(apk_list)
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

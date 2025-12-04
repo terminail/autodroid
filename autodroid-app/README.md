@@ -31,10 +31,10 @@ Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于�
 
 ```bash
 # 构建 Debug 版本
-./gradlew assembleDebug
+ cd 'd:/git/autodroid/autodroid-app';./gradlew assembleDebug
 
 # 构建 Release 版本
-./gradlew assembleRelease
+ cd 'd:/git/autodroid/autodroid-app';./gradlew assembleRelease
 ```
 
 ## 运行应用
@@ -47,7 +47,7 @@ Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于�
 
 ```bash
 # 安装 Debug 版本
-./gradlew installDebug
+cd 'd:/git/autodroid/autodroid-app';./gradlew installDebug
 
 # 或使用 adb 命令
 adb install app/build/outputs/apk/debug/app-debug.apk

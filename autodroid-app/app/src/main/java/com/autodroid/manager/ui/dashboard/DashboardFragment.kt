@@ -32,7 +32,7 @@ import java.util.Date
 import java.util.Locale
 import com.autodroid.manager.R
 import com.autodroid.manager.managers.WorkflowManager
-import com.autodroid.manager.managers.APKScannerManager
+import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
@@ -41,6 +41,9 @@ import com.autodroid.manager.viewmodel.AppViewModel
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.utils.NetworkUtils
+import com.autodroid.manager.utils.DeviceUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 class DashboardFragment : BaseFragment() {
     private val TAG = "DashboardFragment"
@@ -59,7 +62,7 @@ class DashboardFragment : BaseFragment() {
     
     // Managers
     private var workflowManager: WorkflowManager? = null
-    private var apkScannerManager: APKScannerManager? = null
+    private var apkScannerManager: ApkScannerManager? = null
 
     private val dashboardItems = mutableListOf<DashboardItem>()
     
@@ -75,7 +78,7 @@ class DashboardFragment : BaseFragment() {
 
         // Initialize managers
         workflowManager = WorkflowManager(requireContext(), viewModel)
-        apkScannerManager = APKScannerManager(requireContext())
+        apkScannerManager = ApkScannerManager(requireContext())
 
         // Initialize Activity Result API launchers
         requestCameraPermissionLauncher = registerForActivityResult(
@@ -111,7 +114,7 @@ class DashboardFragment : BaseFragment() {
             }
             
             override fun onScanApksClick() {
-                apkInfoItemManager.handleScanApksClick()
+                apkInfoItemManager?.handleScanApksClick()
             }
         })
         
@@ -163,23 +166,19 @@ class DashboardFragment : BaseFragment() {
          )
          
          // Initialize ApkInfoItemManager
-         apkInfoItemManager = ApkInfoItemManager(
-             context = requireContext(),
-             lifecycleOwner = viewLifecycleOwner,
-             viewModel = viewModel,
-             onItemUpdate = { updatedItem ->
-                 // Update the dashboard item when the APK info item changes
-                 val apkInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkInfoItem }
-                 if (apkInfoIndex != -1) {
-                     dashboardItems[apkInfoIndex] = updatedItem
-                     dashboardAdapter?.updateItems(dashboardItems)
-                 }
-             },
-             onScanApksClick = {
-                 // Handle APK scan click
-                 apkScannerManager?.scanInstalledApks()
-             }
-         )
+        apkInfoItemManager = ApkInfoItemManager(
+            context = requireContext(),
+            lifecycleOwner = viewLifecycleOwner,
+            viewModel = viewModel,
+            onItemUpdate = { updatedItem ->
+                // Update the dashboard item when the APK info item changes
+                val apkInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkInfoItem }
+                if (apkInfoIndex != -1) {
+                    dashboardItems[apkInfoIndex] = updatedItem
+                    dashboardAdapter?.updateItems(dashboardItems)
+                }
+            }
+        )
          
          // Initialize QR code scanning functionality
          serverConnectionItemManager.initializeQRCodeScanning(requestCameraPermissionLauncher, startQRCodeScannerLauncher)

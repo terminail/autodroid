@@ -6,6 +6,11 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.viewmodel.AppViewModel
 import com.autodroid.manager.model.DashboardItem
+import com.autodroid.manager.apk.ApkScannerManager
+import com.autodroid.manager.utils.DeviceUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Manager class for handling APK Information dashboard item functionality
@@ -14,8 +19,7 @@ class ApkInfoItemManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
     private val viewModel: AppViewModel,
-    private val onItemUpdate: (DashboardItem) -> Unit,
-    private val onScanApksClick: () -> Unit
+    private val onItemUpdate: (DashboardItem) -> Unit
 ) {
     
     companion object {
@@ -37,7 +41,8 @@ class ApkInfoItemManager(
         // Observe APK information changes from ViewModel
         viewModel.apkInfo.observe(lifecycleOwner) { apkInfo ->
             apkInfo?.let {
-                updateApkItem(it.mapKeys { (key, _) -> key ?: "" } as Map<String, Any>)
+                val safeMap = it.mapKeys { (key, _) -> key ?: "" }.mapValues { (_, value) -> value ?: "" }
+                updateApkItem(safeMap)
             }
         }
         
@@ -133,13 +138,52 @@ class ApkInfoItemManager(
     fun handleScanApksClick() {
         try {
             // Update scan status
-            viewModel.setApkScanStatus("Scanning...")
+            viewModel.setApkScanStatus("Scanning APKs...")
             
-            // Trigger APK scan
-            onScanApksClick()
+            // Start scanning in background
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Get device UDID
+                    val deviceUdid = DeviceUtils.getDeviceUDID(context)
+                    
+                    // Create ApkScannerManager instance
+                    val apkScannerManager = ApkScannerManager(context)
+                    
+                    // Scan installed APKs
+                    val apkList = apkScannerManager.scanInstalledApks()
+                    
+                    // Register APKs with server
+                    apkScannerManager.registerApksWithServer(apkList, deviceUdid)
+                    
+                    // Update UI on main thread
+                    CoroutineScope(Dispatchers.Main).launch {
+                        viewModel.setApkScanStatus("Scan completed: ${apkList.size} APKs found")
+                        
+                        // Update APK info with scan results
+                        val apkInfo = mutableMapOf<String?, Any?>()
+                        apkInfo["packageName"] = "Multiple APKs"
+                        apkInfo["version"] = "${apkList.size} packages"
+                        viewModel.setApkInfo(apkInfo)
+                        
+                        // Update dashboard item
+                        val apkItem = DashboardItem.ApkInfoItem(
+                            packageName = "Multiple APKs",
+                            version = "${apkList.size} packages"
+                        )
+                        onItemUpdate(apkItem)
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error scanning APKs: ${e.message}")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        viewModel.setApkScanStatus("Scan failed: ${e.message}")
+                    }
+                }
+            }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error handling scan APKs click: ${e.message}")
+            Log.e(TAG, "Error handling APK scan click: ${e.message}")
+            viewModel.setApkScanStatus("Scan failed: ${e.message}")
         }
     }
     
