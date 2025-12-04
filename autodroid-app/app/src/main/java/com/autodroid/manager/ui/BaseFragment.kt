@@ -11,8 +11,7 @@ import com.autodroid.manager.R
 import com.autodroid.manager.viewmodel.AppViewModel
 
 abstract class BaseFragment : Fragment() {
-    @JvmField
-    protected var viewModel: AppViewModel? = null
+    protected lateinit var viewModel: AppViewModel
     @JvmField
     protected var listener: FragmentListener? = null
 
@@ -45,5 +44,7 @@ abstract class BaseFragment : Fragment() {
 
     protected abstract val layoutId: Int
     protected abstract fun initViews(view: View?)
-    protected abstract fun setupObservers()
+    protected open fun setupObservers() {
+        // 默认空实现，子类可以选择性重写
+    }
 }

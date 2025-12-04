@@ -1,12 +1,21 @@
-# Python bytecode cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Java/Gradle build outputs
+bin/
+build/
+out/
+*.jar
+*.war
+*.ear
+
+# Gradle
+.gradle/
+gradle-app.setting
 
 # IDE files
 .vscode/
 .idea/
+*.iws
+*.iml
+*.ipr
 
 # OS files
 .DS_Store
@@ -19,5 +28,8 @@ Thumbs.db
 *.tmp
 *.temp
 
-build/
-.gradle/
+# Python bytecode cache (if any Python files exist)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

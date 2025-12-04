@@ -28,10 +28,33 @@ class AppViewModel : ViewModel() {
 
     // Device information
     val deviceIp = MutableLiveData<String?>()
+    val deviceInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+
+    // WiFi information
+    val wifiInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    
+    // Network information
+    val networkInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    
+    // APK information
+    val apkInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    val apkScanStatus = MutableLiveData<String?>()
 
     // Setters
     fun setServerInfo(info: MutableMap<String?, Any?>?) {
         serverInfo.setValue(info)
+    }
+    
+    fun setWifiInfo(info: MutableMap<String?, Any?>?) {
+        wifiInfo.setValue(info)
+    }
+    
+    fun setNetworkInfo(info: MutableMap<String?, Any?>?) {
+        networkInfo.setValue(info)
+    }
+    
+    fun setDeviceInfo(info: MutableMap<String?, Any?>?) {
+        deviceInfo.setValue(info)
     }
     
     fun setDiscoveryStatus(inProgress: Boolean, retryCount: Int, maxRetries: Int) {
@@ -75,5 +98,13 @@ class AppViewModel : ViewModel() {
 
     fun setDeviceIp(ip: String?) {
         deviceIp.setValue(ip)
+    }
+    
+    fun setApkInfo(info: MutableMap<String?, Any?>?) {
+        apkInfo.setValue(info)
+    }
+    
+    fun setApkScanStatus(status: String?) {
+        apkScanStatus.setValue(status)
     }
 }

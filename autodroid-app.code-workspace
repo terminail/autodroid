@@ -1,0 +1,53 @@
+{
+    "folders": [
+        {
+            "name": "autodroid-app",
+            "path": "autodroid-app"
+        }
+    ],
+    "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.import.gradle.enabled": true,
+        "java.import.gradle.wrapper.enabled": true,
+        "java.import.gradle.offline.enabled": false,
+        "java.import.gradle.arguments": "-x test",
+        "java.import.gradle.jvmArguments": "-Xmx4g",
+        "java.configuration.runtimes": [
+            {
+                "name": "JavaSE-17",
+                "path": "C:\\Program Files\\Java\\jdk-17.0.2",
+                "default": true
+            }
+        ],
+        "kotlin.debugAdapter.enabled": true,
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/build": true,
+            "**/.gradle": true,
+            "**/node_modules": true
+        },
+        "search.exclude": {
+            "**/build": true,
+            "**/.gradle": true,
+            "**/node_modules": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.vscode-java-pack",
+            "mathiasfrohlich.Kotlin",
+            "vscjava.vscode-gradle",
+            "naco-siren.gradle-language",
+            "redhat.java",
+            "vscjava.vscode-java-debug",
+            "vscjava.vscode-java-test",
+            "vscjava.vscode-maven",
+            "vscjava.vscode-java-dependency"
+        ]
+    }
+}
