@@ -16,22 +16,22 @@ import com.autodroid.manager.MainActivity
 import com.autodroid.manager.R
 import com.autodroid.manager.auth.viewmodel.AuthViewModel
 import com.autodroid.manager.auth.viewmodel.SharedViewModelFactory
+import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.ui.BaseActivity
 
-class RegisterActivity : AppCompatActivity() {
+class RegisterActivity : BaseActivity() {
     private var emailEditText: EditText? = null
     private var passwordEditText: EditText? = null
     private var confirmPasswordEditText: EditText? = null
     private var registerButton: Button? = null
-    private var errorTextView: TextView? = null
     private var loginLink: TextView? = null
 
-    private var authViewModel: AuthViewModel? = null
+    // Remove AuthViewModel as it's now part of AppViewModel
+    // private var authViewModel: AuthViewModel? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register)
+    override fun getLayoutId(): Int = R.layout.activity_register
 
-
+    override fun initViews() {
         // Initialize UI components
         emailEditText = findViewById<EditText>(R.id.register_email)
         passwordEditText = findViewById<EditText>(R.id.register_password)
@@ -40,23 +40,40 @@ class RegisterActivity : AppCompatActivity() {
         errorTextView = findViewById<TextView>(R.id.register_error)
         loginLink = findViewById<TextView>(R.id.login_link)
 
+        // Set error text view for base class
+        errorTextView = findViewById<TextView>(R.id.register_error)
+    }
 
-        // Initialize ViewModel
-        authViewModel = ViewModelProvider(this, SharedViewModelFactory()).get<AuthViewModel>(AuthViewModel::class.java)
-
-
-        // Set up observers
+    override fun setupObservers() {
         observeViewModel()
+        observeErrorMessages()
+    }
 
+    override fun setupClickListeners() {
+        setupRegisterClickListeners()
+    }
+    
+    protected fun setupCommonObservers() {
+        observeErrorMessages()
+    }
 
-        // Set up click listeners
-        setupClickListeners()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Observe authentication state
+        observeViewModel()
+    }
+    
+    override fun initializeViewModel() {
+        // Let BaseActivity handle the global appViewModel initialization
+        // This ensures all activities have access to the global AppViewModel
+        super.initializeViewModel()
     }
 
     private fun observeViewModel() {
-        // Observe authentication state
-        authViewModel!!.isAuthenticated.observe(this, Observer { isAuthenticated: Boolean? ->
-            if (isAuthenticated == true) {
+        // Observe authentication state from AppViewModel
+        appViewModel.userInfo.observe(this, Observer { userInfo ->
+            if (userInfo?.isAuthenticated == true) {
                 // Navigate to main activity on successful registration
                 val intent = Intent(this@RegisterActivity, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -64,31 +81,9 @@ class RegisterActivity : AppCompatActivity() {
                 finish()
             }
         })
-
-
-        // Observe loading state
-        authViewModel!!.isLoading.observe(this, Observer { isLoading: Boolean? ->
-            registerButton!!.setEnabled(!isLoading!!)
-            if (isLoading) {
-                registerButton!!.setText(getString(R.string.register_button_loading))
-            } else {
-                registerButton!!.setText(getString(R.string.register_button))
-            }
-        })
-
-
-        // Observe error messages
-        authViewModel!!.errorMessage.observe(this, Observer { errorMessage: String? ->
-            if (!errorMessage.isNullOrEmpty()) {
-                errorTextView!!.text = errorMessage
-                errorTextView!!.visibility = View.VISIBLE
-            } else {
-                errorTextView!!.visibility = View.GONE
-            }
-        })
     }
 
-    private fun setupClickListeners() {
+    private fun setupRegisterClickListeners() {
         // Register button click listener
         registerButton!!.setOnClickListener(View.OnClickListener { v: View? ->
             val email = emailEditText!!.getText().toString().trim { it <= ' ' }
@@ -98,8 +93,8 @@ class RegisterActivity : AppCompatActivity() {
 
             // Validate input
             if (validateInput(email, password, confirmPassword)) {
-                // Call register method in ViewModel
-                authViewModel!!.register(email, password, confirmPassword)
+                // Call register method in AppViewModel
+                appViewModel!!.register(email, password, confirmPassword)
             }
         })
 
@@ -119,7 +114,7 @@ class RegisterActivity : AppCompatActivity() {
 
 
         // Clear previous error
-        errorTextView!!.setVisibility(View.GONE)
+        errorTextView.setVisibility(View.GONE)
 
 
         // Validate email
@@ -154,4 +149,4 @@ class RegisterActivity : AppCompatActivity() {
         return isValid
     }
 }
-
+

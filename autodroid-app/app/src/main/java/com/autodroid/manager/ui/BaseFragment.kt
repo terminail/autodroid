@@ -1,50 +1,44 @@
-// BaseFragment.java
+// BaseFragment.kt
 package com.autodroid.manager.ui
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.autodroid.manager.R
-import com.autodroid.manager.viewmodel.AppViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.autodroid.manager.AppViewModel
 
+/**
+ * 统一的Fragment基类，提供标准化的生命周期管理和ViewModel初始化
+ */
 abstract class BaseFragment : Fragment() {
-    protected lateinit var viewModel: AppViewModel
-    @JvmField
-    protected var listener: FragmentListener? = null
-
-    interface FragmentListener {
-        fun onFragmentInteraction(data: Bundle?)
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is FragmentListener) {
-            listener = context as FragmentListener
-        }
-    }
-
+    protected lateinit var appViewModel: AppViewModel
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Initialize ViewModel here if needed
+        initializeViewModel()
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(this.layoutId, container, false)
+    
+    /**
+     * 初始化全局的AppViewModel
+     * 子类可以重写此方法来自定义ViewModel初始化逻辑
+     */
+    protected open fun initializeViewModel() {
+        appViewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
+    }
+    
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(getLayoutId(), container, false)
+    }
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         initViews(view)
         setupObservers()
-        return view
     }
-
-    protected abstract val layoutId: Int
-    protected abstract fun initViews(view: View?)
-    protected open fun setupObservers() {
-        // 默认空实现，子类可以选择性重写
-    }
+    
+    protected abstract fun getLayoutId(): Int
+    protected abstract fun initViews(view: View)
+    protected abstract fun setupObservers()
 }

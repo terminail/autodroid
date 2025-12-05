@@ -177,13 +177,15 @@ class ApkScannerManager(private val context: Context) {
         try {
             val apiClient = ApiClient.getInstance()
             
-            // Collect device information
-            val deviceInfo = mapOf(
-                "udid" to deviceUdid,
-                "device_name" to Build.MODEL,
-                "android_version" to Build.VERSION.RELEASE,
-                "battery_level" to 50, // Default value
-                "connection_type" to "network"
+            // Create DeviceRegistrationInfo object
+            val deviceInfo = com.autodroid.manager.model.DeviceRegistrationInfo(
+                udid = deviceUdid,
+                name = Build.MODEL,
+                model = Build.MODEL,
+                manufacturer = Build.MANUFACTURER,
+                androidVersion = Build.VERSION.RELEASE,
+                ipAddress = "unknown", // Default value
+                isConnected = true
             )
             
             // Register device with server

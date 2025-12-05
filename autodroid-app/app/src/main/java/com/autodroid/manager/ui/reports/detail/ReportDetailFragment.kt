@@ -4,12 +4,13 @@ package com.autodroid.manager.ui.reports.detail
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import com.autodroid.manager.R
-import com.autodroid.manager.ui.BaseDetailFragment
-import java.util.*
+import com.autodroid.manager.model.Report
+import com.autodroid.manager.ui.BaseFragment
 
-class ReportDetailFragment : BaseDetailFragment() {
+class ReportDetailFragment : BaseFragment() {
     companion object {
         private const val ARG_REPORT_ID = "report_id"
         
@@ -64,31 +65,29 @@ class ReportDetailFragment : BaseDetailFragment() {
     private fun loadReportDetails(reportId: String) {
         // In a real app, this would fetch the report details from the server
         // For now, we'll just use a mock report
-        val mockReport: MutableMap<String, Any> = HashMap()
-        mockReport["id"] = reportId
-        mockReport["workflow_name"] = "Sample Workflow"
-        mockReport["status"] = "success"
-        mockReport["start_time"] = "2024-01-01 12:00:00"
-        mockReport["duration"] = "30.5"
-        mockReport["steps"] = "Step 1: Launch App - Success\nStep 2: Click Button - Success\nStep 3: Verify Result - Success"
-
+        val mockReport = Report.mock().copy(id = reportId)
         updateReportUI(mockReport)
     }
 
-    private fun updateReportUI(report: Map<String, Any>) {
-        reportIdTextView.text = "Report ID: ${report.getOrDefault("id", "N/A")}"
-        workflowNameTextView.text = "Workflow: ${report.getOrDefault("workflow_name", "N/A")}"
-        statusTextView.text = "Status: ${report.getOrDefault("status", "N/A")}"
-        startTimeTextView.text = "Start Time: ${report.getOrDefault("start_time", "N/A")}"
-        durationTextView.text = "Duration: ${report.getOrDefault("duration", "N/A")} seconds"
-        stepsTextView.text = "Steps:\n${report.getOrDefault("steps", "N/A")}"
+    private fun updateReportUI(report: Report) {
+        reportIdTextView.text = "Report ID: ${report.id ?: "N/A"}"
+        workflowNameTextView.text = "Workflow: ${report.workflow ?: "N/A"}"
+        statusTextView.text = "Status: ${report.status ?: "N/A"}"
+        startTimeTextView.text = "Start Time: ${report.createdAt ?: "N/A"}"
+        durationTextView.text = "Duration: ${report.duration ?: "N/A"}"
+        
+        // Format steps for display
+        val stepsText = report.steps?.joinToString("\n") { step ->
+            "Step ${step.stepNumber}: ${step.action} - ${step.status} (${step.duration})"
+        } ?: "N/A"
+        stepsTextView.text = "Steps:\n$stepsText"
 
         // Set status text color based on status
-        val status = report.getOrDefault("status", "").toString()
-        when (status) {
-            "success" -> statusTextView.setTextColor(requireContext().getColor(android.R.color.holo_green_dark))
-            "failed" -> statusTextView.setTextColor(requireContext().getColor(android.R.color.holo_red_dark))
-            else -> statusTextView.setTextColor(requireContext().getColor(android.R.color.black))
+        val status = report.status ?: ""
+        when (status.uppercase()) {
+            "COMPLETED", "SUCCESS" -> statusTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark))
+            "FAILED" -> statusTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
+            else -> statusTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
         }
     }
 }

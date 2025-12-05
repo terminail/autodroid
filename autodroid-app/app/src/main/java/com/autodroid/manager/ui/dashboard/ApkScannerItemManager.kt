@@ -4,7 +4,7 @@ package com.autodroid.manager.ui.dashboard
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.utils.DeviceUtils

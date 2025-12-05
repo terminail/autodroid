@@ -7,7 +7,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.autodroid.manager.R
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject

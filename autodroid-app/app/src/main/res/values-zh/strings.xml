@@ -67,4 +67,25 @@
         <item>current</item>
         <item>all</item>
     </string-array>
+    
+    <!-- Server Connection Status -->
+    <string name="server_connection_checking">正在检查服务器连接...</string>
+    <string name="server_connection_success">服务器连接成功</string>
+    <string name="server_connection_failed">服务器连接失败</string>
+    <string name="server_connection_waiting">正在等待服务器连接...</string>
+    <string name="server_discovery_in_progress">正在发现服务器...</string>
+    <string name="server_discovery_failed">服务器发现失败</string>
+    <string name="qr_code_fallback_available">QR码回退可用</string>
+    <string name="connection_method_mdns">mDNS发现</string>
+    <string name="connection_method_qr">QR码扫描</string>
+    <string name="connection_method_manual">手动输入</string>
+    <string name="login_requires_server_connection">请先建立服务器连接</string>
+    <string name="server_connection_required">需要服务器连接</string>
+    <string name="server_not_connected">服务器未连接，请先检查服务器连接</string>
+    <string name="server_connection_retrying">正在重试服务器连接...</string>
+    <string name="server_connection_timeout">服务器连接超时</string>
+    <string name="server_connection_network_error">网络错误，请检查网络连接</string>
+    <string name="server_discovery_qr_fallback">mDNS发现失败，使用QR码回退</string>
+    <string name="server_connection_method_mdns">通过mDNS自动发现</string>
+    <string name="server_connection_method_qr">通过QR码手动连接</string>
 </resources>

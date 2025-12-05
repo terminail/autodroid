@@ -68,4 +68,25 @@
         <item>current</item>
         <item>all</item>
     </string-array>
+    
+    <!-- Server Connection Status -->
+    <string name="server_connection_checking">Checking server connection...</string>
+    <string name="server_connection_success">Server connection successful</string>
+    <string name="server_connection_failed">Server connection failed</string>
+    <string name="server_connection_waiting">Waiting for server connection...</string>
+    <string name="server_discovery_in_progress">Server discovery in progress...</string>
+    <string name="server_discovery_failed">Server discovery failed</string>
+    <string name="qr_code_fallback_available">QR code fallback available</string>
+    <string name="connection_method_mdns">mDNS Discovery</string>
+    <string name="connection_method_qr">QR Code Scan</string>
+    <string name="connection_method_manual">Manual Entry</string>
+    <string name="login_requires_server_connection">Please establish server connection first</string>
+    <string name="server_connection_required">Server connection required</string>
+    <string name="server_not_connected">Server not connected. Please check server connection first.</string>
+    <string name="server_connection_retrying">Retrying server connection...</string>
+    <string name="server_connection_timeout">Server connection timeout</string>
+    <string name="server_connection_network_error">Network error, please check your network connection</string>
+    <string name="server_discovery_qr_fallback">mDNS discovery failed, using QR code fallback</string>
+    <string name="server_connection_method_mdns">Connect via mDNS auto-discovery</string>
+    <string name="server_connection_method_qr">Connect via QR code manually</string>
 </resources>

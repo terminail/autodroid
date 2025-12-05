@@ -2,9 +2,11 @@
 package com.autodroid.manager
 
 import android.app.Application
+import androidx.lifecycle.MutableLiveData
 import com.autodroid.manager.service.DiscoveryStatusManager
 
 class MyApplication : Application() {
+    
     override fun onCreate() {
         super.onCreate()
         instance = this

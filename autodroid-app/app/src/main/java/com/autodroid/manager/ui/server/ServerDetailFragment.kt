@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 
 class ServerDetailFragment : BaseFragment() {
     // UI Components
@@ -21,10 +21,8 @@ class ServerDetailFragment : BaseFragment() {
     private var serverIp: String? = null
     private var serverPort: Int = 0
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+   public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
-
         // Get server info from arguments
         arguments?.let { args ->
             serverIp = args.getString("serverIp")
@@ -32,10 +30,11 @@ class ServerDetailFragment : BaseFragment() {
         }
     }
 
-    override val layoutId: Int
-        get() = R.layout.fragment_server_detail
+    override fun getLayoutId(): Int {
+        return R.layout.fragment_server_detail
+    }
 
-    override fun initViews(view: View?) {
+    override fun initViews(view: View) {
         serverNameTextView = view?.findViewById(R.id.server_name_text_view)
         serverIpTextView = view?.findViewById(R.id.server_ip_text_view)
         serverPortTextView = view?.findViewById(R.id.server_port_text_view)
@@ -56,20 +55,18 @@ class ServerDetailFragment : BaseFragment() {
     }
 
     override fun setupObservers() {
-        viewModel?.let { vm ->
-            // Observe the unified serverInfo object to ensure consistent state
-            vm.serverInfo.observe(viewLifecycleOwner) { serverInfo ->
-                if (serverInfo != null) {
-                    val connected = serverInfo["connected"] as? Boolean ?: false
-                    val currentIp = serverInfo["ip"]?.toString()
-                    val currentPort = serverInfo["port"] as? Int ?: 0
-                    
-                    // Update connection buttons based on whether this server is the connected one
-                    val isThisServerConnected = connected && currentIp == serverIp && currentPort == serverPort
-                    updateConnectionButtons(isThisServerConnected)
-                } else {
-                    updateConnectionButtons(false)
-                }
+        // Observe the unified serverInfo object to ensure consistent state
+        appViewModel.serverInfo.observe(viewLifecycleOwner) { serverInfo ->
+            if (serverInfo != null) {
+                val connected = serverInfo["connected"] as? Boolean ?: false
+                val currentIp = serverInfo["ip"]?.toString()
+                val currentPort = serverInfo["port"] as? Int ?: 0
+                
+                // Update connection buttons based on whether this server is the connected one
+                val isThisServerConnected = connected && currentIp == serverIp && currentPort == serverPort
+                updateConnectionButtons(isThisServerConnected)
+            } else {
+                updateConnectionButtons(false)
             }
         }
     }
@@ -93,14 +90,14 @@ class ServerDetailFragment : BaseFragment() {
         serverInfo["port"] = serverPort
         serverInfo["connected"] = true
         
-        viewModel?.setServerInfo(serverInfo)
+        appViewModel.setServerInfo(serverInfo)
 
         Toast.makeText(context, "Connected to server $serverIp:$serverPort", Toast.LENGTH_SHORT).show()
     }
 
     private fun disconnectFromServer() {
         // Disconnect from current server by clearing serverInfo
-        viewModel?.setServerInfo(null)
+        appViewModel.setServerInfo(null)
         Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
     }
 

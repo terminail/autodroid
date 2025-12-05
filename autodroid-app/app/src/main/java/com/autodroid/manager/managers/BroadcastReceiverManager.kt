@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.google.gson.Gson
 
 class BroadcastReceiverManager(

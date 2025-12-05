@@ -7,6 +7,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import com.autodroid.manager.model.DeviceRegistrationInfo
 
 /**
  * ApiClient for communicating with the Autodroid container server
@@ -68,7 +69,7 @@ class ApiClient private constructor() {
     /**
      * Register a device with the server
      */
-    fun registerDevice(deviceInfo: Map<String, Any>): Response {
+    fun registerDevice(deviceInfo: DeviceRegistrationInfo): Response {
         val url = "$serverBaseUrl/api/devices/register"
         return makePostRequest(url, deviceInfo)
     }

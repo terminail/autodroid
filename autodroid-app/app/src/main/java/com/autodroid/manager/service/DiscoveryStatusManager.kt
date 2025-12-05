@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.autodroid.manager.model.DiscoveredServer
+import com.autodroid.manager.model.DiscoveryStatus
 
 /**
  * Singleton for managing global discovery status that can be observed by any component
@@ -16,11 +17,8 @@ object DiscoveryStatusManager {
     // Server information
     val serverInfo = MutableLiveData<MutableMap<String?, Any?>?>()
     
-    // Discovery status information
-    val discoveryInProgress = MutableLiveData<Boolean>()
-    val discoveryRetryCount = MutableLiveData<Int>()
-    val discoveryMaxRetries = MutableLiveData<Int>()
-    val discoveryFailed = MutableLiveData<Boolean>()
+    // Discovery status information (encapsulated)
+    val discoveryStatus = MutableLiveData<DiscoveryStatus>()
     
     // Network service status
     val isServiceRunning = MutableLiveData<Boolean>()
@@ -114,16 +112,21 @@ object DiscoveryStatusManager {
     }
     
     /**
+     * Update discovery status (encapsulated version)
+     */
+    fun updateDiscoveryStatus(status: DiscoveryStatus) {
+        Handler(Looper.getMainLooper()).post {
+            discoveryStatus.value = status
+        }
+    }
+
+    /**
      * Update discovery status (simplified version with only inProgress flag)
      */
     fun updateDiscoveryStatus(inProgress: Boolean) {
         Handler(Looper.getMainLooper()).post {
-            discoveryInProgress.value = inProgress
-            // Reset retry count when discovery starts/stops
-            if (inProgress) {
-                discoveryRetryCount.value = 0
-                discoveryMaxRetries.value = 0
-            }
+            val currentStatus = discoveryStatus.value ?: DiscoveryStatus.initial()
+            discoveryStatus.value = currentStatus.copy(inProgress = inProgress)
         }
     }
 
@@ -132,9 +135,7 @@ object DiscoveryStatusManager {
      */
     fun updateDiscoveryStatus(inProgress: Boolean, retryCount: Int, maxRetries: Int) {
         Handler(Looper.getMainLooper()).post {
-            discoveryInProgress.value = inProgress
-            discoveryRetryCount.value = retryCount
-            discoveryMaxRetries.value = maxRetries
+            discoveryStatus.value = DiscoveryStatus(inProgress, retryCount, maxRetries, false)
         }
     }
     
@@ -143,7 +144,8 @@ object DiscoveryStatusManager {
      */
     fun updateDiscoveryFailed(failed: Boolean) {
         Handler(Looper.getMainLooper()).post {
-            discoveryFailed.value = failed
+            val currentStatus = discoveryStatus.value ?: DiscoveryStatus.initial()
+            discoveryStatus.value = currentStatus.copy(failed = failed)
         }
     }
     

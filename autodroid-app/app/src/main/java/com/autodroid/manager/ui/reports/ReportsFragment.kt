@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 
 class ReportsFragment : BaseFragment() {
     private var reportsTitleTextView: TextView? = null
@@ -21,16 +21,15 @@ class ReportsFragment : BaseFragment() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel =
-            ViewModelProvider(requireActivity()).get<AppViewModel>(AppViewModel::class.java)
         reportItems = ArrayList<MutableMap<String?, Any?>?>()
         setupMockData()
     }
 
-    override val layoutId: Int
-        get() = R.layout.fragment_reports
+    override fun getLayoutId(): Int {
+        return R.layout.fragment_reports
+    }
 
-    override fun initViews(view: View?) {
+    override fun initViews(view: View) {
         reportsTitleTextView = view?.findViewById<TextView?>(R.id.reports_title)
         reportsRecyclerView = view?.findViewById<RecyclerView>(R.id.reports_recycler_view)
 

@@ -6,11 +6,12 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.autodroid.manager.R
-import com.autodroid.manager.ui.BaseDetailFragment
+import com.autodroid.manager.ui.BaseFragment
 
-class OrderDetailFragment : BaseDetailFragment() {
+class OrderDetailFragment : BaseFragment() {
     companion object {
         private const val TAG = "OrderDetailFragment"
         private const val ARG_ORDER_ID = "orderId"

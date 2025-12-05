@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.google.gson.Gson
 
 class WorkflowsFragment : BaseFragment() {
@@ -22,16 +22,15 @@ class WorkflowsFragment : BaseFragment() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel =
-            ViewModelProvider(requireActivity()).get<AppViewModel>(AppViewModel::class.java)
         workflowItems = ArrayList<MutableMap<String?, Any?>?>()
         setupMockData()
     }
 
-    override val layoutId: Int
-        get() = R.layout.fragment_workflows
+    override fun getLayoutId(): Int {
+        return R.layout.fragment_workflows
+    }
 
-    override fun initViews(view: View?) {
+    override fun initViews(view: View) {
         workflowsTitleTextView = view?.findViewById<TextView?>(R.id.workflows_title)
         workflowsRecyclerView = view?.findViewById<RecyclerView>(R.id.workflows_recycler_view)
 

@@ -9,9 +9,9 @@ import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import com.autodroid.manager.R
 import com.autodroid.manager.model.DashboardItem
-import com.autodroid.manager.ui.BaseDetailFragment
+import com.autodroid.manager.ui.BaseFragment
 
-class ApkDetailFragment : BaseDetailFragment() {
+class ApkDetailFragment : BaseFragment() {
     companion object {
         private const val TAG = "ApkDetailFragment"
         private const val ARG_APK_INFO = "apkInfo"

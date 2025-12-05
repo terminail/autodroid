@@ -18,63 +18,84 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.autodroid.manager.MainActivity
-import com.autodroid.manager.R
+import com.autodroid.manager.service.DiscoveryStatusManager
 import com.autodroid.manager.auth.viewmodel.AuthViewModel
 import com.autodroid.manager.auth.viewmodel.SharedViewModelFactory
+import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.ui.BaseActivity
+import com.autodroid.manager.R
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : BaseActivity() {
     private var emailEditText: EditText? = null
     private var passwordEditText: EditText? = null
     private var loginButton: Button? = null
     private var fingerprintLoginButton: Button? = null
-    private var errorTextView: TextView? = null
     private var registerLink: TextView? = null
+    override lateinit var errorTextView: TextView
 
     private var authViewModel: AuthViewModel? = null
+    override lateinit var appViewModel: AppViewModel
     private var biometricPrompt: BiometricPrompt? = null
     private var promptInfo: PromptInfo? = null
+    
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
+
+    override fun getLayoutId(): Int = R.layout.activity_login
+
+    override fun initViews() {
         // Hide the action bar
         supportActionBar?.hide()
         
-        setContentView(R.layout.activity_login)
-
-
         // Initialize UI components
         emailEditText = findViewById<EditText>(R.id.login_email)
         passwordEditText = findViewById<EditText>(R.id.login_password)
         loginButton = findViewById<Button>(R.id.login_button)
         fingerprintLoginButton = findViewById<Button>(R.id.fingerprint_login_button)
-        errorTextView = findViewById<TextView>(R.id.login_error)
         registerLink = findViewById<TextView>(R.id.register_link)
+
+        // Set error text view for base class
+        // errorTextView is already set in BaseActivity
 
         // Set focus on the Login button instead of the email field
         loginButton?.requestFocus()
 
-
-        // Initialize ViewModel
-        authViewModel = ViewModelProvider(
-            this,
-            SharedViewModelFactory()
-        ).get<AuthViewModel>(AuthViewModel::class.java)
-
         // Set up biometric authentication
         setupBiometricAuthentication()
-
-
-        // Set up observers
-        observeViewModel()
-
-
-        // Set up click listeners
-        setupClickListeners()
     }
 
-    private fun observeViewModel() {
+    override fun setupObservers() {
+        observeViewModel()
+        observeErrorMessages()
+    }
+
+    override fun setupClickListeners() {
+        setupClickListenersImpl()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
         // Observe authentication state
+        observeViewModel()
+        
+        // Setup biometric authentication if available
+        setupBiometricAuthentication()
+    }
+    
+    override fun initializeViewModel() {
+        // Let BaseActivity handle the global appViewModel initialization
+        // This ensures all activities have access to the global AppViewModel
+        super.initializeViewModel()
+        
+        // Initialize AuthViewModel
+        authViewModel = ViewModelProvider(this, SharedViewModelFactory())[AuthViewModel::class.java]
+    }
+
+
+
+    private fun observeViewModel() {
+        // Observe authentication state from AuthViewModel
         authViewModel!!.isAuthenticated.observe(this, Observer { isAuthenticated: Boolean? ->
             Log.d("LoginActivity", "Authentication state changed: " + isAuthenticated)
             if (isAuthenticated != null && isAuthenticated) {
@@ -84,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
 
-                // Pass authentication data
+                // Pass authentication data from AuthViewModel
                 intent.putExtra("isAuthenticated", true)
                 intent.putExtra("userId", authViewModel!!.userId.getValue())
                 intent.putExtra("email", authViewModel!!.email.getValue())
@@ -93,17 +114,6 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("LoginActivity", "Starting MainActivity with authentication data")
                 startActivity(intent)
                 finish()
-            }
-        })
-
-
-        // Observe error messages
-        authViewModel!!.errorMessage.observe(this, Observer { errorMessage: String? ->
-            if (!errorMessage.isNullOrEmpty()) {
-                errorTextView!!.text = errorMessage
-                errorTextView!!.visibility = View.VISIBLE
-            } else {
-                errorTextView!!.visibility = View.GONE
             }
         })
     }
@@ -135,10 +145,8 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-
         // Create executor for biometric prompt
         val executor = ContextCompat.getMainExecutor(this)
-
 
         // Create biometric prompt with callbacks
         biometricPrompt = BiometricPrompt(
@@ -147,26 +155,25 @@ class LoginActivity : AppCompatActivity() {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    // Biometric authentication succeeded, login the user
+                    // Biometric authentication succeeded, login the user using AuthViewModel
                     authViewModel!!.loginWithBiometrics()
                 }
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    errorTextView!!.setText(getString(R.string.biometric_auth_failed))
-                    errorTextView!!.setVisibility(View.VISIBLE)
+                    errorTextView.text = getString(R.string.biometric_auth_failed)
+                    errorTextView.visibility = View.VISIBLE
                 }
 
                 @SuppressLint("SetTextI18n")
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED) {
-                        errorTextView!!.text = getString(R.string.biometric_error) + errString
-                        errorTextView!!.visibility = View.VISIBLE
+                        errorTextView.text = getString(R.string.biometric_error) + errString
+                        errorTextView.visibility = View.VISIBLE
                     }
                 }
             })
-
 
         // Configure prompt info
         promptInfo = PromptInfo.Builder()
@@ -177,20 +184,18 @@ class LoginActivity : AppCompatActivity() {
             .build()
     }
 
-    private fun setupClickListeners() {
+    override fun setupClickListenersImpl() {
         // Login button click listener
         loginButton!!.setOnClickListener { v: View? ->
             val email = emailEditText!!.getText().toString().trim { it <= ' ' }
             val password = passwordEditText!!.getText().toString().trim { it <= ' ' }
 
-
             // Validate input
             if (validateInput(email, password)) {
-                // Call login method in ViewModel
+                // Call login method in AuthViewModel
                 authViewModel!!.login(email, password)
             }
         }
-
 
         // Fingerprint login button click listener
         fingerprintLoginButton!!.setOnClickListener { v: View? ->
@@ -198,22 +203,19 @@ class LoginActivity : AppCompatActivity() {
             biometricPrompt!!.authenticate(promptInfo!!)
         }
 
-
         // Register link click listener
-        registerLink!!.setOnClickListener(View.OnClickListener { v: View? ->
+        registerLink!!.setOnClickListener { v: View? ->
             // Navigate to register activity
             val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
             startActivity(intent)
-        })
+        }
     }
 
     private fun validateInput(email: String?, password: String?): Boolean {
         var isValid = true
 
-
         // Clear previous error
-        errorTextView!!.visibility = View.GONE
-
+        errorTextView.visibility = View.GONE
 
         // Validate email
         if (TextUtils.isEmpty(email)) {
@@ -223,7 +225,6 @@ class LoginActivity : AppCompatActivity() {
             emailEditText!!.error = getString(R.string.email_invalid)
             isValid = false
         }
-
 
         // Validate password
         if (TextUtils.isEmpty(password)) {
@@ -237,4 +238,3 @@ class LoginActivity : AppCompatActivity() {
         return isValid
     }
 }
-

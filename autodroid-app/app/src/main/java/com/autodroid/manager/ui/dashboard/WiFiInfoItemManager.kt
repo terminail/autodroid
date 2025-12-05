@@ -8,9 +8,11 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.utils.NetworkUtils
 import com.autodroid.manager.model.DashboardItem
+import com.autodroid.manager.model.WifiInfo
+import com.autodroid.manager.model.NetworkInfo
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -52,14 +54,14 @@ class WiFiInfoItemManager(
         // Observe WiFi information changes from ViewModel
         viewModel.wifiInfo.observe(lifecycleOwner) { wifiInfo ->
             wifiInfo?.let {
-                updateWiFiItem(it.filter { (k, v) -> k != null && v != null }.mapKeys { it.key!! }.mapValues { it.value!! })
+                updateWiFiItem(wifiInfo)
             }
         }
         
         // Observe network connectivity changes
         viewModel.networkInfo.observe(lifecycleOwner) { networkInfo ->
             networkInfo?.let {
-                updateWiFiItemWithNetworkInfo(it.filter { (k, v) -> k != null && v != null }.mapKeys { it.key!! }.mapValues { it.value!! })
+                updateWiFiItemWithNetworkInfo(networkInfo)
             }
         }
     }
@@ -69,20 +71,20 @@ class WiFiInfoItemManager(
      */
     fun updateWiFiInfo() {
         try {
-            val wifiInfo = getCurrentWiFiInfo()
+            val wifiInfoObj = getCurrentWiFiInfo()
             
             // Update ViewModel with WiFi info
-            viewModel.setWifiInfo(wifiInfo.toMutableMap() as MutableMap<String?, Any?>?)
+            viewModel.setWifiInfo(wifiInfoObj)
             
-            // Create and update dashboard item
+            // Create and update dashboard item using the WifiInfo object
             val wifiItem = DashboardItem.WiFiInfoItem(
-                ssid = wifiInfo["ssid"] as? String ?: "Unknown",
-                bssid = wifiInfo["bssid"] as? String ?: "Unknown",
-                signalStrength = wifiInfo["signalStrength"] as? Int ?: 0,
-                frequency = wifiInfo["frequency"] as? Int ?: 0,
-                ipAddress = wifiInfo["ipAddress"] as? String ?: "Unknown",
-                linkSpeed = wifiInfo["linkSpeed"] as? Int ?: 0,
-                isConnected = wifiInfo["isConnected"] as? Boolean ?: false
+                ssid = wifiInfoObj.ssid ?: "Unknown",
+                bssid = wifiInfoObj.bssid ?: "Unknown",
+                signalStrength = wifiInfoObj.signalStrength ?: 0,
+                frequency = wifiInfoObj.frequency ?: 0,
+                ipAddress = wifiInfoObj.ipAddress ?: "Unknown",
+                linkSpeed = wifiInfoObj.linkSpeed ?: 0,
+                isConnected = wifiInfoObj.isConnected
             )
             
             onItemUpdate(wifiItem)
@@ -95,16 +97,16 @@ class WiFiInfoItemManager(
     /**
      * Update WiFi item with WiFi information
      */
-    private fun updateWiFiItem(wifiInfo: Map<String, Any>) {
+    private fun updateWiFiItem(wifiInfo: WifiInfo) {
         try {
             val wifiItem = DashboardItem.WiFiInfoItem(
-                ssid = wifiInfo["ssid"] as? String ?: "Unknown",
-                bssid = wifiInfo["bssid"] as? String ?: "Unknown",
-                signalStrength = (wifiInfo["signalStrength"] as? Number)?.toInt() ?: 0,
-                frequency = (wifiInfo["frequency"] as? Number)?.toInt() ?: 0,
-                ipAddress = wifiInfo["ipAddress"] as? String ?: "Unknown",
-                linkSpeed = (wifiInfo["linkSpeed"] as? Number)?.toInt() ?: 0,
-                isConnected = wifiInfo["isConnected"] as? Boolean ?: false
+                ssid = wifiInfo.ssid ?: "Unknown",
+                bssid = wifiInfo.bssid ?: "Unknown",
+                signalStrength = wifiInfo.signalStrength ?: 0,
+                frequency = wifiInfo.frequency ?: 0,
+                ipAddress = wifiInfo.ipAddress ?: "Unknown",
+                linkSpeed = wifiInfo.linkSpeed ?: 0,
+                isConnected = wifiInfo.isConnected
             )
             
             onItemUpdate(wifiItem)
@@ -117,18 +119,18 @@ class WiFiInfoItemManager(
     /**
      * Update WiFi item with network information
      */
-    private fun updateWiFiItemWithNetworkInfo(networkInfo: Map<String, Any>) {
+    private fun updateWiFiItemWithNetworkInfo(networkInfo: NetworkInfo) {
         try {
-            val currentWifiInfo = viewModel.wifiInfo.value?.toMap() ?: emptyMap()
+            val currentWifiInfo = viewModel.wifiInfo.value ?: WifiInfo.empty()
             
             val wifiItem = DashboardItem.WiFiInfoItem(
-                ssid = currentWifiInfo["ssid"] as? String ?: "Unknown",
-                bssid = currentWifiInfo["bssid"] as? String ?: "Unknown",
-                signalStrength = (currentWifiInfo["signalStrength"] as? Number)?.toInt() ?: 0,
-                frequency = (currentWifiInfo["frequency"] as? Number)?.toInt() ?: 0,
-                ipAddress = networkInfo["ipAddress"] as? String ?: "Unknown",
-                linkSpeed = (currentWifiInfo["linkSpeed"] as? Number)?.toInt() ?: 0,
-                isConnected = networkInfo["isWifiConnected"] as? Boolean ?: false
+                ssid = currentWifiInfo.ssid ?: "Unknown",
+                bssid = currentWifiInfo.bssid ?: "Unknown",
+                signalStrength = currentWifiInfo.signalStrength ?: 0,
+                frequency = currentWifiInfo.frequency ?: 0,
+                ipAddress = networkInfo.ipAddress ?: "Unknown",
+                linkSpeed = currentWifiInfo.linkSpeed ?: 0,
+                isConnected = networkInfo.isConnected && networkInfo.connectionType == NetworkInfo.ConnectionType.WIFI
             )
             
             onItemUpdate(wifiItem)
@@ -141,7 +143,7 @@ class WiFiInfoItemManager(
     /**
      * Get current WiFi information using NetworkUtils
      */
-    private fun getCurrentWiFiInfo(): Map<String, Any> {
+    private fun getCurrentWiFiInfo(): WifiInfo {
         return NetworkUtils.getDetailedWiFiInfo(context)
     }
     

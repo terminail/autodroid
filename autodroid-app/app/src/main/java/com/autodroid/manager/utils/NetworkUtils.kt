@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
+import com.autodroid.manager.model.WifiInfo
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
@@ -216,39 +217,39 @@ object NetworkUtils {
      * Get detailed WiFi information including SSID, BSSID, signal strength, frequency, IP address, link speed, and connection status
      * 
      * @param context The application context
-     * @return A map containing detailed WiFi information
+     * @return A WifiInfo object containing detailed WiFi information
      */
-    fun getDetailedWiFiInfo(context: Context): Map<String, Any> {
+    fun getDetailedWiFiInfo(context: Context): WifiInfo {
         return try {
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             val wifiInfo = wifiManager.connectionInfo
             val isWifiConnected = isWifiConnected(context)
             
-            val wifiInfoMap = mutableMapOf<String, Any>()
-            
             if (isWifiConnected && wifiInfo != null) {
-                wifiInfoMap["ssid"] = wifiInfo.ssid?.removeSurrounding("\"") ?: "Unknown"
-                wifiInfoMap["bssid"] = wifiInfo.bssid ?: "Unknown"
-                wifiInfoMap["signalStrength"] = WifiManager.calculateSignalLevel(wifiInfo.rssi, 5)
-                wifiInfoMap["frequency"] = wifiInfo.frequency
-                wifiInfoMap["ipAddress"] = getWiFiIpAddress() ?: "Unknown"
-                wifiInfoMap["linkSpeed"] = wifiInfo.linkSpeed
-                wifiInfoMap["isConnected"] = true
+                WifiInfo(
+                    ssid = wifiInfo.ssid?.removeSurrounding("\"") ?: "Unknown",
+                    bssid = wifiInfo.bssid ?: "Unknown",
+                    signalStrength = WifiManager.calculateSignalLevel(wifiInfo.rssi, 5),
+                    frequency = wifiInfo.frequency,
+                    ipAddress = getWiFiIpAddress() ?: "Unknown",
+                    linkSpeed = wifiInfo.linkSpeed,
+                    isConnected = true
+                )
             } else {
-                wifiInfoMap["ssid"] = "Not Connected"
-                wifiInfoMap["bssid"] = "Unknown"
-                wifiInfoMap["signalStrength"] = 0
-                wifiInfoMap["frequency"] = 0
-                wifiInfoMap["ipAddress"] = "Unknown"
-                wifiInfoMap["linkSpeed"] = 0
-                wifiInfoMap["isConnected"] = false
+                WifiInfo(
+                    ssid = "Not Connected",
+                    bssid = "Unknown",
+                    signalStrength = 0,
+                    frequency = 0,
+                    ipAddress = "Unknown",
+                    linkSpeed = 0,
+                    isConnected = false
+                )
             }
-            
-            wifiInfoMap
         } catch (e: Exception) {
             Log.e(TAG, "Error getting detailed WiFi info: ${e.message}")
-            emptyMap()
+            WifiInfo.empty()
         }
     }
     

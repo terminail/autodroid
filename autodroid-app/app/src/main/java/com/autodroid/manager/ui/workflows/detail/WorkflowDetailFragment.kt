@@ -4,11 +4,12 @@ package com.autodroid.manager.ui.workflows.detail
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.autodroid.manager.R
-import com.autodroid.manager.ui.BaseDetailFragment
+import com.autodroid.manager.ui.BaseFragment
 
-class WorkflowDetailFragment : BaseDetailFragment() {
+class WorkflowDetailFragment : BaseFragment() {
     companion object {
         private const val ARG_WORKFLOW_ID = "workflow_id"
         

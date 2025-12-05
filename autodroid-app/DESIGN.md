@@ -198,6 +198,364 @@ This gives you the benefits of single Activity architecture without a complete r
 
 **Recommendation**: Go with Single MainActivity + Fragments for Autodroid. It's more maintainable long-term and better suited for your app's real-time, data-sharing needs.
 
+## **应用启动流程与服务器连接状态管理架构优化**
+
+### **架构问题识别与优化目标**
+
+经过分析，当前架构存在以下问题需要优化：
+
+#### **当前问题：**
+1. **LoginActivity依赖DiscoveryStatus**：登录界面在服务器未连接时不应出现
+2. **DiscoveryStatus使用范围过广**：状态管理未限定在合适的范围内
+3. **Dashboard未作为首要页面**：服务器发现和验证应优先于登录流程
+4. **启动逻辑混乱**：多个组件重复启动网络服务
+
+#### **优化目标：**
+1. **服务器连接优先**：应用启动后首先聚焦于服务器发现和连接
+2. **登录流程后置**：仅在服务器连接成功后才显示登录界面
+3. **状态管理集中化**：统一管理服务器连接状态和应用导航
+4. **Dashboard为中心**：DashboardFragment作为首要页面处理服务器发现
+
+### **新的应用启动流程设计**
+
+#### **1. 应用启动阶段（MyApplication）**
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        
+        // 初始化状态管理器
+        DiscoveryStatusManager.init(this)
+        
+        // 自动启动网络服务（mDNS发现）
+        DiscoveryStatusManager.startNetworkService()
+        
+        // 设置服务器连接状态监听
+        setupServerConnectionObserver()
+    }
+    
+    private fun setupServerConnectionObserver() {
+        // 监听服务器连接状态变化
+        DiscoveryStatusManager.serverInfo.observeForever { serverInfo ->
+            if (serverInfo != null && serverInfo["connected"] == true) {
+                // 服务器已连接，可以准备登录流程
+                Log.d(TAG, "Server connected, ready for authentication")
+            } else {
+                // 服务器未连接，保持发现状态
+                Log.d(TAG, "Server not connected, maintaining discovery mode")
+            }
+        }
+    }
+}
+```
+
+#### **2. MainActivity启动逻辑优化**
+```kotlin
+class MainActivity : AppCompatActivity() {
+    private lateinit var navController: NavController
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // 设置布局
+        setContentView(R.layout.activity_main)
+        
+        // 检查必要权限
+        checkAndRequestPermissions()
+        
+        // 设置导航
+        setupNavigation()
+        
+        // 检查服务器连接状态并决定导航目标
+        checkServerConnectionAndAuthentication()
+    }
+    
+    private fun setupNavigation() {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+        
+        // 设置底部导航
+        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        NavigationUI.setupWithNavController(bottomNavigation, navController)
+    }
+    
+    private fun checkServerConnectionAndAuthentication() {
+        val serverInfo = DiscoveryStatusManager.serverInfo.value
+        val isConnected = serverInfo?.get("connected") as? Boolean ?: false
+        
+        if (isConnected) {
+            // 服务器已连接，检查认证状态
+            val isAuthenticated = checkAuthenticationStatus()
+            
+            if (!isAuthenticated) {
+                // 服务器连接但未认证，跳转到登录界面
+                navController.navigate(R.id.loginActivity)
+            } else {
+                // 已认证，保持在Dashboard
+                navController.navigate(R.id.dashboardFragment)
+            }
+        } else {
+            // 服务器未连接，保持在Dashboard进行发现
+            navController.navigate(R.id.dashboardFragment)
+        }
+    }
+    
+    private fun checkAuthenticationStatus(): Boolean {
+        // 检查用户是否已认证
+        val sharedPreferences = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getBoolean("is_authenticated", false)
+    }
+}
+```
+
+#### **3. DashboardFragment作为首要页面**
+```kotlin
+class DashboardFragment : BaseFragment() {
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
+        // 初始化服务器连接状态观察
+        setupServerConnectionObservers()
+        
+        // 初始化mDNS发现状态观察
+        setupDiscoveryObservers()
+        
+        // 设置UI事件监听
+        setupUIListeners()
+    }
+    
+    private fun setupServerConnectionObservers() {
+        // 观察服务器连接状态
+        DiscoveryStatusManager.serverInfo.observe(viewLifecycleOwner) { serverInfo ->
+            updateConnectionStatusUI(serverInfo)
+        }
+        
+        // 观察连接状态
+        DiscoveryStatusManager.connected.observe(viewLifecycleOwner) { connected ->
+            if (connected == true) {
+                // 服务器连接成功，可以显示登录相关选项
+                showAuthenticationOptions()
+            } else {
+                // 服务器未连接，专注于发现流程
+                showDiscoveryOptions()
+            }
+        }
+    }
+    
+    private fun setupDiscoveryObservers() {
+        // 观察mDNS发现状态
+        DiscoveryStatusManager.discoveryInProgress.observe(viewLifecycleOwner) { inProgress ->
+            updateDiscoveryStatusUI(inProgress)
+        }
+        
+        // 观察重试次数
+        DiscoveryStatusManager.discoveryRetryCount.observe(viewLifecycleOwner) { retryCount ->
+            updateRetryStatusUI(retryCount)
+        }
+    }
+    
+    private fun setupUIListeners() {
+        // 扫描二维码按钮点击事件
+        scanQrButton.setOnClickListener {
+            // 启动二维码扫描作为mDNS发现的回退方案
+            startQrCodeScan()
+        }
+        
+        // 手动输入服务器地址
+        manualInputButton.setOnClickListener {
+            // 显示手动输入对话框
+            showManualInputDialog()
+        }
+    }
+    
+    private fun updateConnectionStatusUI(serverInfo: MutableMap<String?, Any?>?) {
+        val isConnected = serverInfo?.get("connected") as? Boolean ?: false
+        
+        if (isConnected) {
+            val host = serverInfo["ip"] as? String
+            val port = serverInfo["port"] as? Int
+            connectionStatusTextView.text = "已连接服务器: $host:$port"
+            connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.success))
+        } else {
+            connectionStatusTextView.text = "正在发现服务器..."
+            connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.warning))
+        }
+    }
+}
+```
+
+#### **4. LoginActivity简化与依赖移除**
+```kotlin
+class LoginActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // 设置布局
+        setContentView(R.layout.activity_login)
+        
+        // 移除对DiscoveryStatus的直接依赖
+        // LoginActivity只负责登录功能，不处理服务器连接状态
+        
+        setupLoginForm()
+        setupNavigation()
+    }
+    
+    private fun setupLoginForm() {
+        // 设置登录表单和验证逻辑
+        loginButton.setOnClickListener {
+            val username = usernameEditText.text.toString()
+            val password = passwordEditText.text.toString()
+            
+            if (validateCredentials(username, password)) {
+                performLogin(username, password)
+            }
+        }
+    }
+    
+    private fun setupNavigation() {
+        // 设置返回按钮
+        backButton.setOnClickListener {
+            // 返回Dashboard
+            finish()
+        }
+        
+        // 注册链接
+        registerLink.setOnClickListener {
+            // 跳转到注册界面
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+    }
+    
+    private fun validateCredentials(username: String, password: String): Boolean {
+        // 简单的客户端验证
+        return username.isNotBlank() && password.length >= 6
+    }
+    
+    private fun performLogin(username: String, password: String) {
+        // 执行登录API调用
+        // 成功后保存认证状态并返回MainActivity
+        val sharedPreferences = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putBoolean("is_authenticated", true).apply()
+        
+        // 返回MainActivity，此时会显示已认证的Dashboard
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        finish()
+    }
+}
+```
+
+### **导航图设计（nav_graph.xml）**
+```xml
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dashboardFragment">
+    
+    <!-- 首要页面：服务器发现和连接 -->
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.autodroid.manager.ui.dashboard.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard">
+        
+        <action
+            android:id="@+id/action_dashboard_to_login"
+            app:destination="@id/loginActivity"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left" />
+    </fragment>
+    
+    <!-- 登录活动（仅在服务器连接后显示） -->
+    <activity
+        android:id="@+id/loginActivity"
+        android:name="com.autodroid.manager.ui.login.LoginActivity"
+        android:label="Login"
+        tools:layout="@layout/activity_login" />
+    
+    <!-- 其他功能页面 -->
+    <fragment
+        android:id="@+id/workflowsFragment"
+        android:name="com.autodroid.manager.ui.workflows.WorkflowsFragment"
+        android:label="Workflows"
+        tools:layout="@layout/fragment_workflows" />
+        
+    <fragment
+        android:id="@+id/reportsFragment"
+        android:name="com.autodroid.manager.ui.reports.ReportsFragment"
+        android:label="Reports"
+        tools:layout="@layout/fragment_reports" />
+        
+    <fragment
+        android:id="@+id/myFragment"
+        android:name="com.autodroid.manager.ui.my.MyFragment"
+        android:label="My"
+        tools:layout="@layout/fragment_my" />
+        
+</navigation>
+```
+
+### **状态管理优化**
+
+#### **DiscoveryStatusManager职责明确化**
+```kotlin
+object DiscoveryStatusManager {
+    
+    // 服务器连接状态（仅包含连接相关信息）
+    val serverInfo: MutableLiveData<MutableMap<String?, Any?>?> = MutableLiveData()
+    val connected: MutableLiveData<Boolean?> = MutableLiveData()
+    
+    // mDNS发现状态
+    val discoveryInProgress: MutableLiveData<Boolean?> = MutableLiveData()
+    val discoveryRetryCount: MutableLiveData<Int?> = MutableLiveData()
+    val discoveryMaxRetries: MutableLiveData<Int?> = MutableLiveData(3)
+    
+    // 网络服务状态
+    val isServiceRunning: MutableLiveData<Boolean?> = MutableLiveData()
+    
+    fun init(context: Context) {
+        // 初始化状态管理器
+        // 不自动启动网络服务，由MyApplication统一管理
+    }
+    
+    fun startNetworkService() {
+        // 启动网络服务（mDNS发现）
+        // 仅由MyApplication调用
+    }
+    
+    fun updateServerInfo(discoveredServer: DiscoveredServer?) {
+        // 更新服务器信息
+        val newServerInfo = mutableMapOf<String?, Any?>()
+        
+        discoveredServer?.let { server ->
+            newServerInfo["ip"] = server.host
+            newServerInfo["port"] = server.port
+            newServerInfo["connected"] = true
+            connected.postValue(true)
+        } ?: run {
+            newServerInfo["connected"] = false
+            connected.postValue(false)
+        }
+        
+        serverInfo.postValue(newServerInfo)
+    }
+}
+```
+
+### **优势总结**
+
+1. **清晰的职责分离**：每个组件有明确的职责范围
+2. **合理的启动流程**：服务器发现 → 连接 → 认证 → 功能使用
+3. **状态管理集中化**：统一的状态管理避免重复逻辑
+4. **用户体验优化**：用户首先看到服务器发现状态，而不是登录界面
+5. **代码可维护性**：模块化设计便于测试和维护
+
+这种架构设计确保了应用的逻辑流程更加合理，用户体验更加流畅。
 
 
 
@@ -496,6 +854,238 @@ def register_service():
 4. **后台限制**：Android 8.0+对后台服务发现有限制
 
 这种方案非常适合你的Autodroid应用，可以实现服务器的自动发现，大大提升用户体验。
+
+## mDNS发现流程UI状态管理设计
+
+### UI状态管理规范
+
+为了提供更好的用户体验，mDNS发现过程中需要实现精细的UI状态管理：
+
+#### 1. mDNS发现过程中的UI状态
+
+**发现进行中状态：**
+- 显示状态："Discovering Server via mDNS"
+- 按钮状态：SCAN QRCODE按钮隐藏
+- 用户交互：禁止用户手动干预发现过程
+- 视觉反馈：显示进度指示器或动画
+
+**发现失败状态：**
+- 显示状态："mDNS Discovery Failed - Try QR Code"
+- 按钮状态：SCAN QRCODE按钮显示并启用
+- 按钮文本："Scan QR Code Instead"
+- 用户交互：允许用户使用备选方案
+
+**发现成功状态：**
+- 显示状态："Server Found via mDNS"
+- 按钮状态：SCAN QRCODE按钮隐藏
+- 自动流程：自动进行服务器连接和认证
+
+#### 2. 状态转换逻辑
+
+```kotlin
+// DashboardFragment中的UI状态管理
+class DashboardFragment : Fragment() {
+    
+    private fun setupDiscoveryObservers() {
+        // 观察mDNS发现状态
+        DiscoveryStatusManager.discoveryInProgress.observe(viewLifecycleOwner) { inProgress ->
+            requireActivity().runOnUiThread {
+                when {
+                    inProgress == true -> {
+                        // mDNS发现进行中
+                        updateUIForDiscoveryInProgress()
+                    }
+                    DiscoveryStatusManager.discoveryFailed.value == true -> {
+                        // mDNS发现失败
+                        updateUIForDiscoveryFailed()
+                    }
+                    DiscoveryStatusManager.connected.value == true -> {
+                        // 服务器连接成功
+                        updateUIForConnectionSuccess()
+                    }
+                    else -> {
+                        // 默认状态
+                        updateUIForDefaultState()
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun updateUIForDiscoveryInProgress() {
+        // 发现进行中状态
+        connectionStatusTextView.text = "Discovering Server via mDNS"
+        connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.discovery_in_progress))
+        
+        // 隐藏QR码扫描按钮
+        scanQrButton.visibility = View.GONE
+        
+        // 显示进度指示器
+        progressIndicator.visibility = View.VISIBLE
+        
+        Log.d(TAG, "mDNS discovery in progress - UI updated")
+    }
+    
+    private fun updateUIForDiscoveryFailed() {
+        // 发现失败状态
+        connectionStatusTextView.text = "mDNS Discovery Failed - Try QR Code"
+        connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.discovery_failed))
+        
+        // 显示并启用QR码扫描按钮
+        scanQrButton.visibility = View.VISIBLE
+        scanQrButton.isEnabled = true
+        scanQrButton.text = "Scan QR Code Instead"
+        
+        // 隐藏进度指示器
+        progressIndicator.visibility = View.GONE
+        
+        Log.d(TAG, "mDNS discovery failed - QR code button enabled")
+    }
+    
+    private fun updateUIForConnectionSuccess() {
+        // 连接成功状态
+        val serverInfo = DiscoveryStatusManager.serverInfo.value
+        val host = serverInfo?.get("ip") as? String ?: "unknown"
+        val port = serverInfo?.get("port") as? Int ?: 0
+        
+        connectionStatusTextView.text = "Server Found via mDNS: $host:$port"
+        connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.connection_success))
+        
+        // 隐藏QR码扫描按钮
+        scanQrButton.visibility = View.GONE
+        
+        // 隐藏进度指示器
+        progressIndicator.visibility = View.GONE
+        
+        Log.d(TAG, "Server connected via mDNS - UI updated")
+    }
+}
+```
+
+#### 3. 重试机制UI反馈
+
+```kotlin
+// 重试过程中的UI更新
+DiscoveryStatusManager.discoveryRetryCount.observe(viewLifecycleOwner) { retryCount ->
+    requireActivity().runOnUiThread {
+        val maxRetries = DiscoveryStatusManager.discoveryMaxRetries.value ?: 3
+        if (retryCount != null && retryCount < maxRetries) {
+            // 重试进行中
+            connectionStatusTextView.text = "mDNS Retry ${retryCount + 1}/$maxRetries"
+            scanQrButton.visibility = View.GONE
+            progressIndicator.visibility = View.VISIBLE
+            
+            Log.d(TAG, "Discovery retry ${retryCount + 1}/$maxRetries - QR code button disabled")
+        } else if (retryCount != null && retryCount >= maxRetries) {
+            // 重试次数用尽
+            DiscoveryStatusManager.discoveryFailed.postValue(true)
+            Log.d(TAG, "Discovery retries exhausted - marking as failed")
+        }
+    }
+}
+```
+
+### 用户交互限制
+
+#### 1. 发现过程中的交互限制
+
+**禁止的操作：**
+- 点击SCAN QRCODE按钮
+- 手动输入服务器地址
+- 切换到底部导航的其他fragment
+- 执行任何可能干扰发现过程的操作
+
+**允许的操作：**
+- 查看当前发现状态
+- 等待发现过程完成
+- 在发现失败后使用备选方案
+
+#### 2. 状态恢复机制
+
+```kotlin
+// 处理配置变化（如屏幕旋转）
+override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+    outState.putBoolean("discovery_in_progress", 
+        DiscoveryStatusManager.discoveryInProgress.value == true)
+    outState.putBoolean("discovery_failed", 
+        DiscoveryStatusManager.discoveryFailed.value == true)
+}
+
+override fun onViewStateRestored(savedInstanceState: Bundle?) {
+    super.onViewStateRestored(savedInstanceState)
+    savedInstanceState?.let { bundle ->
+        val wasDiscoveryInProgress = bundle.getBoolean("discovery_in_progress", false)
+        val wasDiscoveryFailed = bundle.getBoolean("discovery_failed", false)
+        
+        if (wasDiscoveryInProgress && !wasDiscoveryFailed) {
+            // 恢复发现进行中状态
+            updateUIForDiscoveryInProgress()
+        } else if (wasDiscoveryFailed) {
+            // 恢复发现失败状态
+            updateUIForDiscoveryFailed()
+        }
+    }
+}
+```
+
+### 错误处理和用户引导
+
+#### 1. 错误状态下的用户引导
+
+```kotlin
+private fun setupErrorHandling() {
+    scanQrButton.setOnClickListener {
+        // 启动QR码扫描
+        startQrCodeScan()
+        
+        // 显示使用说明
+        showQrCodeUsageHint()
+    }
+    
+    manualInputButton.setOnClickListener {
+        // 显示手动输入对话框
+        showManualInputDialog()
+        
+        // 显示输入格式提示
+        showServerAddressFormatHint()
+    }
+}
+
+private fun showQrCodeUsageHint() {
+    val hintText = "请扫描服务器生成的二维码，或联系管理员获取二维码"
+    Snackbar.make(requireView(), hintText, Snackbar.LENGTH_LONG)
+        .setAction("了解") { /* 用户确认 */ }
+        .show()
+}
+```
+
+#### 2. 网络环境检测
+
+```kotlin
+private fun checkNetworkEnvironment() {
+    val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val activeNetwork = connectivityManager.activeNetwork
+    
+    if (activeNetwork == null) {
+        // 无网络连接
+        connectionStatusTextView.text = "No Network Connection"
+        connectionStatusTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.error))
+        scanQrButton.isEnabled = false
+        
+        showNetworkConnectionHint()
+    } else {
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+        if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+            // WiFi网络 - 适合mDNS发现
+            Log.d(TAG, "WiFi network detected - optimal for mDNS")
+        } else {
+            // 移动网络 - mDNS可能受限
+            Log.d(TAG, "Mobile network detected - mDNS may be limited")
+        }
+    }
+}
+```
 
 ## mDNS服务启动架构优化
 

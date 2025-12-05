@@ -37,7 +37,7 @@ import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
 import com.autodroid.manager.service.DiscoveryStatusManager
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.utils.NetworkUtils
@@ -75,10 +75,9 @@ class DashboardFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
 
         // Initialize managers
-        workflowManager = WorkflowManager(requireContext(), viewModel)
+        workflowManager = WorkflowManager(requireContext(), appViewModel)
         apkScannerManager = ApkScannerManager(requireContext())
 
         // Initialize Activity Result API launchers
@@ -97,12 +96,11 @@ class DashboardFragment : BaseFragment() {
         // NetworkService is now auto-started in MyApplication
     }
 
-    override val layoutId: Int
-        get() = R.layout.fragment_dashboard
+    override fun getLayoutId(): Int = R.layout.fragment_dashboard
 
-    override fun initViews(view: View?) {
+    override fun initViews(view: View) {
         // Initialize RecyclerView for hybrid dashboard items
-        dashboardRecyclerView = view?.findViewById(R.id.dashboard_recycler_view)
+        dashboardRecyclerView = view.findViewById(R.id.dashboard_recycler_view)
         
         // Set up RecyclerView with LinearLayoutManager
         dashboardRecyclerView?.layoutManager = LinearLayoutManager(context)
@@ -111,35 +109,35 @@ class DashboardFragment : BaseFragment() {
         serverConnectionItemManager = ServerConnectionItemManager(
             requireContext(),
             viewLifecycleOwner,
-            viewModel,
+            appViewModel,
             ::onServerConnectionItemUpdate
         )
         
         deviceInfoItemManager = DeviceInfoItemManager(
             requireContext(),
             viewLifecycleOwner,
-            viewModel,
+            appViewModel,
             ::onDeviceInfoItemUpdate
         )
         
         wifiInfoItemManager = WiFiInfoItemManager(
             requireContext(),
             viewLifecycleOwner,
-            viewModel,
+            appViewModel,
             ::onWiFiInfoItemUpdate
         )
         
         apkScannerItemManager = ApkScannerItemManager(
             requireContext(),
             viewLifecycleOwner,
-            viewModel,
+            appViewModel,
             ::onApkScannerItemUpdate
         )
         
         apkInfoItemManager = ApkInfoItemManager(
             requireContext(),
             viewLifecycleOwner,
-            viewModel,
+            appViewModel,
             ::onApkInfoItemUpdate
         )
         
@@ -184,15 +182,16 @@ class DashboardFragment : BaseFragment() {
         // DashboardFragment only observes the discovery status and updates UI accordingly
     }
 
-
-
-
-
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // UI initialization is already handled in initViews and updateUI
         // No need for additional refresh calls here
+    }
+
+    override fun setupObservers() {
+        // 设置观察者，监听AppViewModel中的数据变化
+        // 由于DashboardFragment使用ItemManager架构，主要的观察逻辑已经在各个ItemManager中实现
+        // 这里可以添加全局性的观察逻辑，如果需要的话
     }
 
     /**
@@ -228,14 +227,14 @@ class DashboardFragment : BaseFragment() {
         dashboardItems.clear()
         
         // Add initial items in the correct order:
-        // 1. Connection Status
+        // 1. Connection Status - Initialize with mDNS discovery state
         dashboardItems.add(DashboardItem.ServerConnectionItem(
-            status = "Discovering servers...",
+            status = "Discovering servers via mDNS...",
             serverIp = "Searching...",
             serverPort = "-",
-            serverStatus = "Disconnected",
+            serverStatus = "DISCONNECTED",
             apiEndpoint = "-",
-            showQrButton = true
+            showQrButton = false  // Initially hide QR button during mDNS discovery
         ))
         
         // 2. Wifi Information

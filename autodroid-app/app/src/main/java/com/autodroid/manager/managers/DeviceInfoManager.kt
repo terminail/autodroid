@@ -4,7 +4,7 @@ package com.autodroid.manager.managers
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import java.io.*
 import java.net.Inet4Address
 import java.net.NetworkInterface

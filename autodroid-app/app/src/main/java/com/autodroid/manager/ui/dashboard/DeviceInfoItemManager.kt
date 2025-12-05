@@ -6,9 +6,11 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DashboardItem
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.utils.NetworkUtils
 import com.autodroid.manager.ui.adapters.DashboardAdapter
+import com.autodroid.manager.model.NetworkInfo
+import com.autodroid.manager.model.DeviceInfo
 
 /**
  * Manager class for handling Device Information dashboard item functionality
@@ -39,20 +41,14 @@ class DeviceInfoItemManager(
         // Observe device information changes from ViewModel
         viewModel.deviceInfo.observe(lifecycleOwner) { deviceInfo ->
             deviceInfo?.let {
-                val filteredMap = it.filter { (k, v) -> k != null && v != null }
-                    .mapKeys { it.key!! }
-                    .mapValues { it.value!! }
-                updateDeviceItem(filteredMap)
+                updateDeviceItem(it)
             }
         }
         
         // Observe network connectivity changes
         viewModel.networkInfo.observe(lifecycleOwner) { networkInfo ->
             networkInfo?.let {
-                val filteredMap = it.filter { (k, v) -> k != null && v != null }
-                    .mapKeys { it.key!! }
-                    .mapValues { it.value!! }
-                updateDeviceItemWithNetworkInfo(filteredMap)
+                updateDeviceItemWithNetworkInfo(it)
             }
         }
     }
@@ -66,14 +62,18 @@ class DeviceInfoItemManager(
             val androidVersion = Build.VERSION.RELEASE
             val localIp = NetworkUtils.getLocalIpAddress() ?: "Not Available"
             
-            val deviceInfo = mutableMapOf<String?, Any?>()
-            deviceInfo["deviceName"] = deviceName
-            deviceInfo["androidVersion"] = androidVersion
-            deviceInfo["localIp"] = localIp
-            deviceInfo["buildManufacturer"] = Build.MANUFACTURER
-            deviceInfo["buildBrand"] = Build.BRAND
-            deviceInfo["buildDevice"] = Build.DEVICE
-            deviceInfo["buildProduct"] = Build.PRODUCT
+            // Create DeviceInfo object directly
+            val deviceInfo = DeviceInfo(
+                ip = localIp,
+                name = deviceName,
+                model = Build.MODEL,
+                platform = "Android",
+                androidVersion = androidVersion,
+                manufacturer = Build.MANUFACTURER,
+                brand = Build.BRAND,
+                device = Build.DEVICE,
+                product = Build.PRODUCT
+            )
             
             // Update ViewModel with device info
             viewModel.setDeviceInfo(deviceInfo)
@@ -99,18 +99,16 @@ class DeviceInfoItemManager(
     /**
      * Update device item with network information
      */
-    private fun updateDeviceItemWithNetworkInfo(networkInfo: Map<String, Any>) {
+    private fun updateDeviceItemWithNetworkInfo(networkInfo: NetworkInfo) {
         try {
-            val currentDeviceInfo = viewModel.deviceInfo.value?.filter { (k, v) -> k != null && v != null }
-                ?.mapKeys { it.key!! }
-                ?.mapValues { it.value!! } ?: emptyMap()
+            val currentDeviceInfo = viewModel.deviceInfo.value
             
             val deviceItem = DashboardItem.DeviceInfoItem(
                 udid = "KNT-AL10-1234567890",
                 userId = "user001",
-                name = currentDeviceInfo["deviceName"] as? String ?: Build.MODEL,
+                name = currentDeviceInfo?.name ?: Build.MODEL,
                 platform = "Android",
-                deviceModel = currentDeviceInfo["model"] as? String ?: Build.MODEL,
+                deviceModel = currentDeviceInfo?.model ?: Build.MODEL,
                 deviceStatus = "在线",
                 connectionTime = "2024-01-01 00:00:00"
             )
@@ -125,14 +123,14 @@ class DeviceInfoItemManager(
     /**
      * Update device item with device information
      */
-    private fun updateDeviceItem(deviceInfo: Map<String, Any>) {
+    private fun updateDeviceItem(deviceInfo: DeviceInfo) {
         try {
             val deviceItem = DashboardItem.DeviceInfoItem(
                 udid = "KNT-AL10-1234567890",
                 userId = "user001",
-                name = deviceInfo["deviceName"] as? String ?: Build.MODEL,
+                name = deviceInfo.name ?: Build.MODEL,
                 platform = "Android",
-                deviceModel = deviceInfo["model"] as? String ?: Build.MODEL,
+                deviceModel = deviceInfo.model ?: Build.MODEL,
                 deviceStatus = "在线",
                 connectionTime = "2024-01-01 00:00:00"
             )
