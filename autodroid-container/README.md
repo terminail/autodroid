@@ -48,10 +48,11 @@ Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，�
    ```
 
 3. **Windows用户**：双击运行批处理文件：
-   ```
-  cd 'd:/git/autodroid/autodroid-container'; start_server.bat
+  ```bash
+  
+  cd 'd:/git/autodroid/autodroid-container'; ./start_server.bat
    
-   ```
+  ```
 
 ### 服务启动后
 

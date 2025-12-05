@@ -70,6 +70,7 @@ class DashboardFragment : BaseFragment() {
     private lateinit var serverConnectionItemManager: ServerConnectionItemManager
     private lateinit var deviceInfoItemManager: DeviceInfoItemManager
     private lateinit var wifiInfoItemManager: WiFiInfoItemManager
+    private lateinit var apkScannerItemManager: ApkScannerItemManager
     private lateinit var apkInfoItemManager: ApkInfoItemManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,6 +107,42 @@ class DashboardFragment : BaseFragment() {
         // Set up RecyclerView with LinearLayoutManager
         dashboardRecyclerView?.layoutManager = LinearLayoutManager(context)
         
+        // Initialize item managers FIRST
+        serverConnectionItemManager = ServerConnectionItemManager(
+            requireContext(),
+            viewLifecycleOwner,
+            viewModel,
+            ::onServerConnectionItemUpdate
+        )
+        
+        deviceInfoItemManager = DeviceInfoItemManager(
+            requireContext(),
+            viewLifecycleOwner,
+            viewModel,
+            ::onDeviceInfoItemUpdate
+        )
+        
+        wifiInfoItemManager = WiFiInfoItemManager(
+            requireContext(),
+            viewLifecycleOwner,
+            viewModel,
+            ::onWiFiInfoItemUpdate
+        )
+        
+        apkScannerItemManager = ApkScannerItemManager(
+            requireContext(),
+            viewLifecycleOwner,
+            viewModel,
+            ::onApkScannerItemUpdate
+        )
+        
+        apkInfoItemManager = ApkInfoItemManager(
+            requireContext(),
+            viewLifecycleOwner,
+            viewModel,
+            ::onApkInfoItemUpdate
+        )
+        
         // Initialize DashboardAdapter
         dashboardAdapter = DashboardAdapter()
         dashboardAdapter?.setOnItemClickListener(object : DashboardAdapter.OnItemClickListener {
@@ -114,80 +151,27 @@ class DashboardFragment : BaseFragment() {
             }
             
             override fun onScanApksClick() {
-                apkInfoItemManager?.handleScanApksClick()
+                android.util.Log.d("DashboardFragment", "onScanApksClick被调用")
+                apkScannerItemManager?.handleScanApksClick()
+            }
+            
+            override fun onApkItemClick(apkInfo: DashboardItem.ApkInfo) {
+                // Navigate to detail fragment with APK information
+                navigateToApkDetail(apkInfo)
             }
         })
         
         dashboardRecyclerView?.adapter = dashboardAdapter
-        
-        // Initialize ServerConnectionItemManager
-         serverConnectionItemManager = ServerConnectionItemManager(
-             context = requireContext(),
-             lifecycleOwner = viewLifecycleOwner,
-             viewModel = viewModel,
-             onItemUpdate = { updatedItem ->
-                 // Update the dashboard item when the server connection item changes
-                 val serverConnectionIndex = dashboardItems.indexOfFirst { it is DashboardItem.ServerConnectionItem }
-                 if (serverConnectionIndex != -1) {
-                     dashboardItems[serverConnectionIndex] = updatedItem
-                     dashboardAdapter?.updateItems(dashboardItems)
-                 }
-             }
-         )
-         
-         // Initialize DeviceInfoItemManager
-         deviceInfoItemManager = DeviceInfoItemManager(
-             context = requireContext(),
-             lifecycleOwner = viewLifecycleOwner,
-             viewModel = viewModel,
-             onItemUpdate = { updatedItem ->
-                 // Update the dashboard item when the device info item changes
-                 val deviceInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceInfoItem }
-                 if (deviceInfoIndex != -1) {
-                     dashboardItems[deviceInfoIndex] = updatedItem
-                     dashboardAdapter?.updateItems(dashboardItems)
-                 }
-             }
-         )
-         
-         // Initialize WiFiInfoItemManager
-         wifiInfoItemManager = WiFiInfoItemManager(
-             context = requireContext(),
-             lifecycleOwner = viewLifecycleOwner,
-             viewModel = viewModel,
-             onItemUpdate = { updatedItem ->
-                 // Update the dashboard item when the WiFi info item changes
-                 val wifiInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiInfoItem }
-                 if (wifiInfoIndex != -1) {
-                     dashboardItems[wifiInfoIndex] = updatedItem
-                     dashboardAdapter?.updateItems(dashboardItems)
-                 }
-             }
-         )
-         
-         // Initialize ApkInfoItemManager
-        apkInfoItemManager = ApkInfoItemManager(
-            context = requireContext(),
-            lifecycleOwner = viewLifecycleOwner,
-            viewModel = viewModel,
-            onItemUpdate = { updatedItem ->
-                // Update the dashboard item when the APK info item changes
-                val apkInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkInfoItem }
-                if (apkInfoIndex != -1) {
-                    dashboardItems[apkInfoIndex] = updatedItem
-                    dashboardAdapter?.updateItems(dashboardItems)
-                }
-            }
-        )
          
          // Initialize QR code scanning functionality
          serverConnectionItemManager.initializeQRCodeScanning(requestCameraPermissionLauncher, startQRCodeScannerLauncher)
          
-         // Initialize all item managers
-         serverConnectionItemManager.initialize()
-         deviceInfoItemManager.initialize()
-         wifiInfoItemManager.initialize()
-         apkInfoItemManager.initialize()
+         // Start item managers
+        serverConnectionItemManager.initialize()
+        deviceInfoItemManager.initialize()
+        wifiInfoItemManager.initialize()
+        apkScannerItemManager.initialize()
+        apkInfoItemManager.initialize()
 
         // Debug: Check if NetworkService is running
         Log.d("DashboardFragment", "Initializing views - checking NetworkService status")
@@ -211,11 +195,40 @@ class DashboardFragment : BaseFragment() {
         // No need for additional refresh calls here
     }
 
+    /**
+     * Simplified callback for server connection item updates
+     */
+    private fun onServerConnectionItemUpdate(item: DashboardItem) {
+        serverConnectionItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+    
+    /**
+     * Simplified callback for device info item updates
+     */
+    private fun onDeviceInfoItemUpdate(item: DashboardItem) {
+        deviceInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+    
+    /**
+     * Simplified callback for WiFi info item updates
+     */
+    private fun onWiFiInfoItemUpdate(item: DashboardItem) {
+        wifiInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+    
+    /**
+     * Simplified callback for APK scanner item updates
+     */
+    private fun onApkScannerItemUpdate(item: DashboardItem) {
+        apkScannerItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+
     private fun updateUI() {
         // Clear existing items
         dashboardItems.clear()
         
-        // Add initial items - these will be updated by the respective item managers
+        // Add initial items in the correct order:
+        // 1. Connection Status
         dashboardItems.add(DashboardItem.ServerConnectionItem(
             status = "Discovering servers...",
             serverIp = "Searching...",
@@ -225,6 +238,7 @@ class DashboardFragment : BaseFragment() {
             showQrButton = true
         ))
         
+        // 2. Wifi Information
         dashboardItems.add(DashboardItem.WiFiInfoItem(
             ssid = "Unknown",
             bssid = "Unknown",
@@ -235,6 +249,7 @@ class DashboardFragment : BaseFragment() {
             isConnected = false
         ))
         
+        // 3. Device Information
         dashboardItems.add(DashboardItem.DeviceInfoItem(
             udid = "Unknown",
             userId = "user001",
@@ -245,10 +260,22 @@ class DashboardFragment : BaseFragment() {
             connectionTime = "Never"
         ))
         
-        dashboardItems.add(DashboardItem.ApkInfoItem(
-            packageName = "",
-            version = ""
+        // 4. APK scanner
+        dashboardItems.add(DashboardItem.ApkScannerItem(
+            scanStatus = "SCAN INSTALLED APKS"
         ))
+        
+        // 5. Add empty APK info item as placeholder (will be updated when APKs are scanned)
+        dashboardItems.add(DashboardItem.ApkInfo(
+            packageName = "",
+            appName = "",
+            version = "",
+            versionCode = 0,
+            installTime = "",
+            updateTime = ""
+        ))
+        
+        // 6. Static Dashboard Items (add any additional static items here if needed)
         
         // Update adapter with new items
         dashboardAdapter?.updateItems(dashboardItems)
@@ -257,7 +284,7 @@ class DashboardFragment : BaseFragment() {
         serverConnectionItemManager.refresh()
         wifiInfoItemManager.refresh()
         deviceInfoItemManager.refresh()
-        apkInfoItemManager.refresh()
+        apkScannerItemManager.refresh()
     }
 
     // updateWiFiInfo method removed - WiFi information updates are handled by WiFiInfoItemManager
@@ -279,6 +306,34 @@ class DashboardFragment : BaseFragment() {
     // Server connection related methods removed - handled by ServerConnectionItemManager
     
     // updateConnectionStatus method removed - UI updates are now handled through data model
+
+    /**
+     * Simplified callback for APK information item updates
+     */
+    private fun onApkInfoItemUpdate(item: DashboardItem) {
+        apkInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+    
+    private fun navigateToApkDetail(apkInfo: DashboardItem.ApkInfo) {
+        try {
+            // Create bundle with APK info arguments
+            val bundle = Bundle().apply {
+                putString("appName", apkInfo.appName)
+            putString("packageName", apkInfo.packageName)
+            putString("version", apkInfo.version)
+            putInt("versionCode", apkInfo.versionCode)
+            putString("installTime", apkInfo.installTime)
+            putString("updateTime", apkInfo.updateTime)
+            }
+            
+            // Navigate to APK detail fragment
+            findNavController().navigate(R.id.action_nav_dashboard_to_apkDetailFragment, bundle)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error navigating to APK detail: ${e.message}", e)
+            // Fallback: show error message
+            android.widget.Toast.makeText(requireContext(), "无法打开APK详情页面", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()

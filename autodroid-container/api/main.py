@@ -18,7 +18,8 @@ import os
 import asyncio
 import yaml
 
-from core.device.device_manager import DeviceManager, DeviceInfo
+from core.device.service import DeviceManager
+from core.device.models import DeviceInfo
 from core.workflow.engine import WorkflowEngine, WorkflowConfig
 from core.scheduling.scheduler import SmartScheduler, DeviceWorkflowPlan
 from core.auth.models import UserCreate, UserLogin, UserResponse, Token

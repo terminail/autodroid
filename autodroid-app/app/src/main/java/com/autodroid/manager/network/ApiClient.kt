@@ -14,7 +14,9 @@ import java.util.concurrent.TimeUnit
 class ApiClient private constructor() {
     companion object {
         private const val TAG = "ApiClient"
-        private const val BASE_URL = "http://192.168.1.59:8004" // Default server URL
+        // For Android emulator: use 10.0.2.2 to access host machine
+        // For physical device: use actual host IP address (e.g., 192.168.1.59)
+        const val BASE_URL = "http://10.0.2.2:8004" // Server URL for Android emulator
         private var instance: ApiClient? = null
         
         fun getInstance(): ApiClient {
@@ -48,19 +50,11 @@ class ApiClient private constructor() {
     }
     
     /**
-     * Register a single APK for a device
+     * Register APKs for a device (supports both single APK and list of APKs)
      */
-    fun registerApkForDevice(deviceUdid: String, apkData: Map<String, Any>): Response {
+    fun registerApksForDevice(deviceUdid: String, apkData: Any): Response {
         val url = "$serverBaseUrl/api/devices/$deviceUdid/apks"
         return makePostRequest(url, apkData)
-    }
-    
-    /**
-     * Register multiple APKs for a device in bulk
-     */
-    fun registerApksBulkForDevice(deviceUdid: String, apkList: List<Map<String, Any>>): Response {
-        val url = "$serverBaseUrl/api/devices/$deviceUdid/apks/bulk"
-        return makePostRequest(url, apkList)
     }
     
     /**
@@ -75,7 +69,7 @@ class ApiClient private constructor() {
      * Register a device with the server
      */
     fun registerDevice(deviceInfo: Map<String, Any>): Response {
-        val url = "$serverBaseUrl/api/devices"
+        val url = "$serverBaseUrl/api/devices/register"
         return makePostRequest(url, deviceInfo)
     }
     

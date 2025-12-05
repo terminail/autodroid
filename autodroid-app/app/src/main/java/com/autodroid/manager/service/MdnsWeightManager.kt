@@ -33,7 +33,7 @@ class MdnsWeightManager(private val context: Context) {
     }
     
     /**
-     * Handle implementation failure - reduce weight but don't disable completely
+     * Handle implementation failure - disable implementation immediately
      */
     fun onImplementationFailed(implementation: MdnsImplementation) {
         val implementationName = implementation.javaClass.simpleName
@@ -43,17 +43,9 @@ class MdnsWeightManager(private val context: Context) {
         
         Log.d(TAG, "Implementation $implementationName failed. Current weight: $currentWeight")
         
-        // Instead of disabling completely, reduce weight by 1
-        // This allows implementations to recover after temporary failures
-        if (currentWeight > WEIGHT_MIN) {
-            val newWeight = maxOf(WEIGHT_MIN, currentWeight - 1)
-            database.updateWeight(implementationName, newWeight)
-            Log.d(TAG, "Implementation $implementationName weight reduced to: $newWeight")
-        } else if (currentWeight == WEIGHT_DISABLED) {
-            // If already disabled, try to restore with minimal weight
-            database.updateWeight(implementationName, WEIGHT_MIN)
-            Log.d(TAG, "Implementation $implementationName restored to minimal weight: $WEIGHT_MIN")
-        }
+        // Disable implementation immediately on failure
+        database.updateWeight(implementationName, WEIGHT_DISABLED)
+        Log.d(TAG, "Implementation $implementationName disabled (weight set to: $WEIGHT_DISABLED)")
     }
     
     /**

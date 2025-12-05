@@ -2,7 +2,7 @@ import jwt
 import datetime
 from typing import Optional
 from .models import Token, TokenData
-from .database import UserDatabase
+from .database import AuthDatabase
 
 class AuthService:
     """认证服务类"""
@@ -11,7 +11,7 @@ class AuthService:
         self.secret_key = secret_key
         self.algorithm = algorithm
         self.token_expire_minutes = token_expire_minutes
-        self.user_db = UserDatabase()
+        self.user_db = AuthDatabase()
     
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """验证密码"""

@@ -15,7 +15,9 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_SERVER_CONNECTION = 0
         const val TYPE_WIFI = 1
         const val TYPE_DEVICE = 2
-        const val TYPE_APK = 3
+        const val TYPE_APK_SCANNER = 3
+        const val TYPE_APK = 4
+        const val TYPE_APK_INFO = 5
     }
     
     private val items = mutableListOf<DashboardItem>()
@@ -24,6 +26,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     interface OnItemClickListener {
         fun onScanQrCodeClick()
         fun onScanApksClick()
+        fun onApkItemClick(apkInfo: DashboardItem.ApkInfo)
     }
     
     private var listener: OnItemClickListener? = null
@@ -57,9 +60,17 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.item_device, parent, false)
                 DeviceViewHolder(view)
             }
+            TYPE_APK_SCANNER -> {
+                val view = inflater.inflate(R.layout.item_apk_scanner, parent, false)
+                ApkScannerViewHolder(view)
+            }
             TYPE_APK -> {
                 val view = inflater.inflate(R.layout.item_apk, parent, false)
                 ApkViewHolder(view)
+            }
+            TYPE_APK_INFO -> {
+                val view = inflater.inflate(R.layout.item_apk, parent, false)
+                ApkInfoViewHolder(view)
             }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
@@ -71,7 +82,9 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is ServerConnectionViewHolder -> holder.bind(item as DashboardItem.ServerConnectionItem)
             is WiFiViewHolder -> holder.bind(item as DashboardItem.WiFiInfoItem)
             is DeviceViewHolder -> holder.bind(item as DashboardItem.DeviceInfoItem)
-            is ApkViewHolder -> holder.bind(item as DashboardItem.ApkInfoItem)
+            is ApkScannerViewHolder -> holder.bind(item as DashboardItem.ApkScannerItem)
+            is ApkViewHolder -> holder.bind(item as DashboardItem.ApkItem)
+            is ApkInfoViewHolder -> holder.bind(item as DashboardItem.ApkInfo)
         }
     }
     
@@ -134,17 +147,75 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
     
-    inner class ApkViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ApkScannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val scanApksButton: Button = itemView.findViewById(R.id.scan_apks_button)
+        private val scanStatusText: TextView = itemView.findViewById(R.id.scan_status_text)
         
         init {
             scanApksButton.setOnClickListener {
+                android.util.Log.d("DashboardAdapter", "APK扫描按钮被点击")
                 listener?.onScanApksClick()
             }
         }
         
-        fun bind(item: DashboardItem.ApkInfoItem) {
-            // APK扫描按钮不需要绑定具体数据
+        fun bind(item: DashboardItem.ApkScannerItem) {
+            // 显示扫描按钮文本
+            scanApksButton.text = item.scanStatus
+            // 显示状态信息在专门的TextView中
+            scanStatusText.text = item.statusMessage
+            // 控制按钮可见性
+            scanApksButton.visibility = if (item.showButton) View.VISIBLE else View.GONE
+        }
+    }
+    
+    inner class ApkViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val apkAppName: TextView = itemView.findViewById(R.id.apk_app_name)
+        private val apkPackageName: TextView = itemView.findViewById(R.id.apk_package_name)
+        private val apkVersion: TextView = itemView.findViewById(R.id.apk_version)
+        private val apkVersionCode: TextView = itemView.findViewById(R.id.apk_version_code)
+        
+        init {
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val item = items[position] as DashboardItem.ApkItem
+                    listener?.onApkItemClick(item.apkInfo)
+                }
+            }
+        }
+        
+        fun bind(item: DashboardItem.ApkItem) {
+            // 显示单个APK信息
+            val apkInfo = item.apkInfo
+            apkAppName.text = apkInfo.appName
+            apkPackageName.text = "Package: ${apkInfo.packageName}"
+            apkVersion.text = "Version: ${apkInfo.version}"
+            apkVersionCode.text = "Code: ${apkInfo.versionCode}"
+        }
+    }
+    
+    inner class ApkInfoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val apkAppName: TextView = itemView.findViewById(R.id.apk_app_name)
+        private val apkPackageName: TextView = itemView.findViewById(R.id.apk_package_name)
+        private val apkVersion: TextView = itemView.findViewById(R.id.apk_version)
+        private val apkVersionCode: TextView = itemView.findViewById(R.id.apk_version_code)
+        
+        init {
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val item = items[position] as DashboardItem.ApkInfo
+                    listener?.onApkItemClick(item)
+                }
+            }
+        }
+        
+        fun bind(item: DashboardItem.ApkInfo) {
+            // 显示APK信息
+            apkAppName.text = item.appName
+            apkPackageName.text = "Package: ${item.packageName}"
+            apkVersion.text = "Version: ${item.version}"
+            apkVersionCode.text = "Code: ${item.versionCode}"
         }
     }
 }

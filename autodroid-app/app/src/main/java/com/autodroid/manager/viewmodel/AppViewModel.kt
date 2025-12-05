@@ -39,6 +39,8 @@ class AppViewModel : ViewModel() {
     // APK information
     val apkInfo = MutableLiveData<MutableMap<String?, Any?>?>()
     val apkScanStatus = MutableLiveData<String?>()
+    val apkList = MutableLiveData<List<com.autodroid.manager.model.DashboardItem.ApkInfo>?>()
+    val selectedApkIndex = MutableLiveData<Int>()
 
     // Setters
     fun setServerInfo(info: MutableMap<String?, Any?>?) {
@@ -106,5 +108,13 @@ class AppViewModel : ViewModel() {
     
     fun setApkScanStatus(status: String?) {
         apkScanStatus.setValue(status)
+    }
+    
+    fun setApkList(apkList: List<com.autodroid.manager.model.DashboardItem.ApkInfo>?) {
+        this.apkList.setValue(apkList)
+    }
+    
+    fun setSelectedApkIndex(index: Int) {
+        selectedApkIndex.setValue(index)
     }
 }

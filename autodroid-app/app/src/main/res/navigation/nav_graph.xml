@@ -25,7 +25,11 @@
     <fragment
         android:id="@+id/nav_dashboard"
         android:name="com.autodroid.manager.ui.dashboard.DashboardFragment"
-        android:label="Dashboard" />
+        android:label="Dashboard">
+        <action
+            android:id="@+id/action_nav_dashboard_to_apkDetailFragment"
+            app:destination="@id/apkDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_orders"
@@ -87,6 +91,30 @@
         <argument
             android:name="order_created"
             app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/apkDetailFragment"
+        android:name="com.autodroid.manager.ui.apk.detail.ApkDetailFragment"
+        android:label="APK Details">
+        <argument
+            android:name="appName"
+            app:argType="string"/>
+        <argument
+            android:name="packageName"
+            app:argType="string"/>
+        <argument
+            android:name="version"
+            app:argType="string"/>
+        <argument
+            android:name="versionCode"
+            app:argType="string"/>
+        <argument
+            android:name="installTime"
+            app:argType="string"/>
+        <argument
+            android:name="updateTime"
+            app:argType="string"/>
     </fragment>
 
 </navigation>

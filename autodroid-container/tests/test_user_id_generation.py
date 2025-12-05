@@ -2,14 +2,14 @@
 测试基于邮箱地址的简化用户ID生成算法
 """
 import pytest
-from core.auth.database import UserDatabase
+from core.auth.database import AuthDatabase
 
 class TestUserIdGeneration:
     """测试用户ID生成算法"""
     
     def setup_method(self):
         """测试前初始化"""
-        self.db = UserDatabase()
+        self.db = AuthDatabase()
     
     def test_basic_email_id_generation(self):
         """测试基本邮箱ID生成"""
@@ -122,7 +122,7 @@ class TestUserDatabaseOperations:
         # 确保数据库文件被完全清理
         self._force_cleanup_database()
         
-        self.db = UserDatabase(self.test_db_path)
+        self.db = AuthDatabase(self.test_db_path)
     
     def teardown_method(self):
         """测试后清理"""

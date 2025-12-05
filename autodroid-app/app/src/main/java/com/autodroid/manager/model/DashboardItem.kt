@@ -32,8 +32,22 @@ sealed class DashboardItem(val type: Int) {
         val connectionTime: String = "2024-01-01 00:00:00"
     ) : DashboardItem(DashboardAdapter.TYPE_DEVICE)
     
-    data class ApkInfoItem(
-        val packageName: String = "",
-        val version: String = ""
+    data class ApkScannerItem(
+        val scanStatus: String = "SCAN INSTALLED APKS",
+        val statusMessage: String = "Ready to scan",
+        val showButton: Boolean = true
+    ) : DashboardItem(DashboardAdapter.TYPE_APK_SCANNER)
+    
+    data class ApkItem(
+        val apkInfo: ApkInfo
     ) : DashboardItem(DashboardAdapter.TYPE_APK)
+    
+    data class ApkInfo(
+        val packageName: String,
+        val appName: String,
+        val version: String,
+        val versionCode: Int,
+        val installTime: String = "Unknown",
+        val updateTime: String = "Unknown"
+    ) : DashboardItem(DashboardAdapter.TYPE_APK_INFO)
 }

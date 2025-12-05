@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.viewmodel.AppViewModel
 import com.autodroid.manager.utils.NetworkUtils
+import com.autodroid.manager.ui.adapters.DashboardAdapter
 
 /**
  * Manager class for handling Device Information dashboard item functionality
@@ -157,5 +158,41 @@ class DeviceInfoItemManager(
      */
     fun cleanup() {
         // Clean up any observers or resources if needed
+    }
+    
+    /**
+     * Handle list update logic for device info item
+     */
+    fun handleListUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
+        return try {
+            if (item is DashboardItem.DeviceInfoItem) {
+                // Find existing device info item in the list
+                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceInfoItem }
+                
+                if (existingIndex != -1) {
+                    // Update existing item
+                    dashboardItems[existingIndex] = item
+                } else {
+                    // Add new item after WiFi info item
+                    val wifiInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiInfoItem }
+                    if (wifiInfoIndex != -1) {
+                        dashboardItems.add(wifiInfoIndex + 1, item)
+                    } else {
+                        // Fallback: add to the end
+                        dashboardItems.add(item)
+                    }
+                }
+                
+                // Update adapter
+                dashboardAdapter?.notifyDataSetChanged()
+                true
+            } else {
+                Log.e(TAG, "Invalid item type for device info: ${item::class.simpleName}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating device info item in list: ${e.message}", e)
+            false
+        }
     }
 }

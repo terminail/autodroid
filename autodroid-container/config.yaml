@@ -1,174 +1,85 @@
-# Autodroid Container Configuration
-# This is the unified configuration file for both backend and frontend services
-
-# Server Configuration
-server:
-  # Backend server configuration
-  backend:
-    # FastAPI server host and port
-    host: "0.0.0.0"
-    port: 8004
-    # API base path
-    api_base: "/api"
-    # Whether to use HTTPS
-    use_https: false
-    # Request timeout in milliseconds
-    timeout: 10000
-    # Log level
-    log_level: "info"
-    # Enable auto-reload for development
-    reload: true
-  
-  # Frontend server configuration
-  frontend:
-    # Vite development server port
-    port: 5173
-    # Frontend build directory
-    build_dir: "frontend/build"
-    # Whether to enable hot reload
-    hot_reload: true
-
-# Database Configuration
-database:
-  # SQLite database file path
-  sqlite_path: "users.db"
-  # Test database file path
-  test_sqlite_path: "test_users.db"
-  # Database connection pool settings
-  pool_size: 10
-  max_overflow: 20
-  # Enable database logging
-  echo: false
-
-# Authentication Configuration
 auth:
-  # JWT secret key (should be set via environment variable in production)
-  secret_key: "your-secret-key-change-in-production"
-  # JWT algorithm
-  algorithm: "HS256"
-  # Access token expiration time in minutes
   access_token_expire_minutes: 30
-  # Refresh token expiration time in days
+  algorithm: HS256
   refresh_token_expire_days: 7
-
-# Device Management Configuration
-devices:
-  # Maximum number of concurrent devices
-  max_concurrent_devices: 10
-  # Device connection timeout in seconds
-  connection_timeout: 30
-  # Default device settings
-  default_settings:
-    # Default screen resolution
-    screen_width: 1080
-    screen_height: 1920
-    # Default orientation
-    orientation: "portrait"
-
-# Workflow Engine Configuration
-workflow:
-  # Maximum workflow execution time in minutes
-  max_execution_time: 60
-  # Workflow retry settings
-  max_retries: 3
-  retry_delay: 5
-  # Workflow storage settings
-  storage_path: "workflows/"
-
-# Scheduling Configuration
-scheduling:
-  # Maximum scheduled tasks
-  max_scheduled_tasks: 100
-  # Task cleanup interval in hours
-  cleanup_interval: 24
-  # Default timezone
-  timezone: "UTC"
-
-# Logging Configuration
-logging:
-  # Global log level
-  level: "info"
-  # Log file path
-  file_path: "logs/autodroid.log"
-  # Maximum log file size in MB
-  max_file_size: 10
-  # Number of backup files to keep
-  backup_count: 5
-  # Whether to log API requests
-  log_api_requests: false
-
-# UI Configuration
-ui:
-  # Default theme (light, dark, system)
-  default_theme: "light"
-  # Default language (en, zh, ja)
-  default_language: "en"
-  # Dashboard settings
-  dashboard:
-    # Auto-refresh interval in seconds
-    refresh_interval: 30
-    # Whether to show connection suggestions
-    show_connection_suggestions: true
-    # Whether to show WiFi network details
-    show_wifi_details: true
-  # UI behavior settings
-  show_tooltips: true
-  show_help_text: true
-
-# Network Configuration
-network:
-  # mDNS service configuration
-  mdns:
-    # Service name for discovery
-    service_name: "Autodroid Server"
-    # Service type
-    service_type: "_autodroid._tcp.local."
-    # Service port (should match backend server port)
-    service_port: 8004
-  # CORS settings
-  cors:
-    # Allowed origins
-    allowed_origins:
-      - "http://localhost:5173"
-      - "http://127.0.0.1:5173"
-      - "http://localhost:5196"
-      - "http://127.0.0.1:5196"
-    # Whether to allow credentials
-    allow_credentials: true
-
-# Security Configuration
-security:
-  # Rate limiting settings
-  rate_limit:
-    # Maximum requests per minute
-    requests_per_minute: 60
-    # Burst capacity
-    burst_capacity: 100
-  # Input validation
-  max_request_size: "10MB"
-  # Security headers
-  enable_security_headers: true
-
-# Development Configuration
+  secret_key: your-secret-key-change-in-production
+database:
+  echo: false
+  max_overflow: 20
+  pool_size: 10
+  sqlite_path: users.db
+  test_sqlite_path: test_users.db
 development:
-  # Debug mode
   debug: true
-  # Enable API documentation
+  docs_url: /docs
   enable_docs: true
-  # Swagger UI path
-  docs_url: "/docs"
-  # Redoc path
-  redoc_url: "/redoc"
-
-# Production Configuration
+  redoc_url: /redoc
+devices:
+  connection_timeout: 30
+  default_settings:
+    orientation: portrait
+    screen_height: 1920
+    screen_width: 1080
+  max_concurrent_devices: 10
+logging:
+  backup_count: 5
+  file_path: logs/autodroid.log
+  level: info
+  log_api_requests: false
+  max_file_size: 10
+network:
+  cors:
+    allow_credentials: true
+    allowed_origins:
+    - http://localhost:5173
+    - http://127.0.0.1:5173
+    - http://localhost:5196
+    - http://127.0.0.1:5196
+  mdns:
+    enabled: false  # Disable mDNS to avoid registration failures
+    service_name: Autodroid Server
+    service_port: 8004
+    service_type: _autodroid._tcp.local.
 production:
-  # Production-specific settings
   debug: false
   enable_docs: false
-  # SSL/TLS settings
-  ssl_cert_path: ""
-  ssl_key_path: ""
-
-# Environment-specific overrides
-# These can be set via environment variables
-# Example: AUTODROID_SERVER_BACKEND_PORT=8004
+  ssl_cert_path: ''
+  ssl_key_path: ''
+scheduling:
+  cleanup_interval: 24
+  max_scheduled_tasks: 100
+  timezone: UTC
+security:
+  enable_security_headers: true
+  max_request_size: 10MB
+  rate_limit:
+    burst_capacity: 100
+    requests_per_minute: 60
+server:
+  backend:
+    api_base: /api
+    host: 0.0.0.0
+    log_level: info
+    port: 8004
+    reload: true
+    timeout: 10000
+    use_https: false
+  frontend:
+    build_dir: frontend/build
+    hot_reload: true
+    port: 5173
+  port: 8004
+ui:
+  dashboard:
+    refresh_interval: 30
+    show_connection_suggestions: true
+    show_wifi_details: true
+  default_language: en
+  default_theme: light
+  show_help_text: true
+  show_tooltips: true
+workflow:
+  max_execution_time: 60
+  max_retries: 3
+  retry_delay: 5
+  storage_path: workflows/

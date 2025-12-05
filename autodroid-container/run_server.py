@@ -28,13 +28,34 @@ def load_config():
 
 def print_startup_info(host, port, frontend_mount_path):
     """Print clear startup information for both API and frontend"""
+    
+    # Get the actual server IP address
+    import socket
+    try:
+        # Get the actual IP address that can be accessed from the network
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            server_ip = s.getsockname()[0]
+    except:
+        # Fallback to hostname resolution
+        try:
+            server_ip = socket.gethostbyname(socket.gethostname())
+        except:
+            server_ip = "localhost"
+    
+    # Determine which URL to display
+    if host == "0.0.0.0":
+        display_host = server_ip
+    else:
+        display_host = host
+    
     print("\n" + "="*60)
     print("🚀 Autodroid Container Server Started")
     print("="*60)
-    print(f"📡 API Server: http://{host}:{port}")
-    print(f"📚 API Documentation: http://{host}:{port}/docs")
-    print(f"🌐 Frontend Application: http://{host}:{port}{frontend_mount_path}")
-    print(f"🔍 API Health Check: http://{host}:{port}/api/health")
+    print(f"📡 API Server: http://{display_host}:{port}")
+    print(f"📚 API Documentation: http://{display_host}:{port}/docs")
+    print(f"🌐 Frontend Application: http://{display_host}:{port}{frontend_mount_path}")
+    print(f"🔍 API Health Check: http://{display_host}:{port}/api/health")
     print("="*60)
     print("Press Ctrl+C to stop the server")
     print("="*60 + "\n")
@@ -48,8 +69,8 @@ async def main():
     backend_config = server_config.get('backend', {})
     frontend_config = server_config.get('frontend', {})
     
-    host = backend_config.get('host', '127.0.0.1')
-    port = backend_config.get('port', 8003)
+    host = backend_config.get('host', '0.0.0.0')  # Bind to all interfaces by default
+    port = backend_config.get('port', 8004)  # Use 8004 as default
     log_level = backend_config.get('log_level', 'info')
     reload = backend_config.get('reload', False)
     

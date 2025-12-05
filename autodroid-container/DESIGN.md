@@ -554,8 +554,207 @@ curl http://localhost:8003/api/health
 avahi-browse -at
 ```
 
+## 10. 模块架构规范设计
+
+### 10.1 统一模块架构
+
+基于对现有 auth、device、apk 三个模块的分析，制定以下统一架构规范：
+
+#### 10.1.1 文件命名规范
+
+每个模块应包含以下标准文件：
+- `database.py` - 数据库操作层，使用 Peewee ORM
+- `service.py` - 业务逻辑层，处理核心业务功能
+- `models.py` - 数据模型层，包含 Pydantic 请求/响应模型
+
+**重命名示例：**
+- `apk_database.py` → `database.py`
+- `device_manager.py` → `service.py`
+
+#### 10.1.2 模块结构示例
+
+```
+core/
+├── auth/
+│   ├── database.py      # 数据库操作 (已存在)
+│   ├── service.py       # 业务逻辑 (已存在)
+│   └── models.py        # 数据模型 (已存在)
+├── device/
+│   ├── database.py      # 数据库操作 (已存在)
+│   ├── service.py       # 业务逻辑 (重命名自 device_manager.py)
+│   └── models.py        # 数据模型 (待创建)
+└── apk/
+    ├── database.py      # 数据库操作 (重命名自 apk_database.py)
+    ├── service.py       # 业务逻辑 (待创建)
+    └── models.py        # 数据模型 (待创建)
+```
+
+### 10.2 数据模型分层设计
+
+#### 10.2.1 模型分层架构
+
+```python
+# 第一层：Peewee ORM 模型 (全局共享)
+# database/models.py
+class User(Model):
+    id = CharField(primary_key=True)
+    email = CharField(unique=True)
+    name = CharField()
+    role = CharField(default='user')
+    created_at = DateTimeField(default=datetime.now)
+    last_login = DateTimeField(null=True)
+
+class Device(Model):
+    udid = CharField(primary_key=True)
+    user = ForeignKeyField(User, backref='devices')
+    name = CharField()
+    platform = CharField()
+    model = CharField(null=True)
+    status = CharField(default='disconnected')
+    connected_at = DateTimeField(null=True)
+
+class Apk(Model):
+    apkid = CharField(primary_key=True)
+    package_name = CharField()
+    app_name = CharField()
+    version = CharField(null=True)
+    version_code = IntegerField(null=True)
+    installed_time = DateTimeField(default=datetime.now)
+    is_system = BooleanField(default=False)
+
+# 第二层：模块专用 Pydantic 模型
+# apk/models.py
+class ApkCreateRequest(BaseModel):
+    package_name: str
+    app_name: str
+    version: Optional[str] = None
+    version_code: Optional[int] = None
+    is_system: bool = False
+
+class ApkResponse(BaseModel):
+    apkid: str
+    package_name: str
+    app_name: str
+    version: Optional[str]
+    version_code: Optional[int]
+    installed_time: datetime
+    is_system: bool
+
+# device/models.py
+class DeviceCreateRequest(BaseModel):
+    udid: str
+    user_id: str
+    name: str
+    platform: str
+    model: Optional[str] = None
+
+class DeviceResponse(BaseModel):
+    udid: str
+    user_id: str
+    name: str
+    platform: str
+    model: Optional[str]
+    status: str
+    connected_at: Optional[datetime]
+```
+
+#### 10.2.2 数据库操作层规范
+
+每个模块的 `database.py` 应遵循以下规范：
+
+```python
+# apk/database.py 示例
+class ApkDatabase:
+    def __init__(self, db_path: str):
+        self.db = SqliteDatabase(db_path)
+        self.models = [Apk, DeviceApk]  # 只包含本模块相关的模型
+    
+    def register_apk_to_device(self, apk_data: dict, device_udid: str) -> Apk:
+        """使用 Peewee ORM 注册 APK 到设备"""
+        with self.db.atomic():
+            apk, created = Apk.get_or_create(
+                apkid=apk_data['apkid'],
+                defaults=apk_data
+            )
+            # 关联设备
+            DeviceApk.get_or_create(
+                device_udid=device_udid,
+                apkid=apk.apkid
+            )
+            return apk
+    
+    def get_apk(self, apkid: str) -> Optional[Apk]:
+        """使用 Peewee 查询获取 APK"""
+        try:
+            return Apk.get(Apk.apkid == apkid)
+        except Apk.DoesNotExist:
+            return None
+```
+
+#### 10.2.3 业务逻辑层规范
+
+每个模块的 `service.py` 应遵循以下规范：
+
+```python
+# apk/service.py 示例
+class ApkService:
+    def __init__(self, db: ApkDatabase):
+        self.db = db
+    
+    def register_apk(self, apk_data: ApkCreateRequest, device_udid: str) -> ApkResponse:
+        """注册 APK 业务逻辑"""
+        # 1. 数据验证
+        if not self._validate_apk_data(apk_data):
+            raise ValueError("Invalid APK data")
+        
+        # 2. 调用数据库层
+        apk = self.db.register_apk_to_device(apk_data.dict(), device_udid)
+        
+        # 3. 转换为响应模型
+        return ApkResponse.from_orm(apk)
+    
+    def _validate_apk_data(self, apk_data: ApkCreateRequest) -> bool:
+        """APK 数据验证"""
+        # 实现验证逻辑
+        return True
+```
+
+### 10.3 实施计划
+
+#### 10.3.1 第一阶段：文件重命名和结构调整
+- [x] 重命名 `apk_database.py` → `database.py`
+- [x] 重命名 `device_manager.py` → `service.py`
+- [ ] 为 apk 模块创建 `service.py`
+- [ ] 为 apk 模块创建 `models.py`
+- [ ] 为 device 模块创建 `models.py`
+
+#### 10.3.2 第二阶段：数据库重构
+- [ ] 重构 apk 模块的 `database.py`，完全使用 Peewee ORM
+- [ ] 重构 auth 模块，移除专用数据库管理器
+- [ ] 统一所有模块的数据库实现方式
+
+#### 10.3.3 第三阶段：集成测试
+- [ ] 更新所有相关文件的导入语句
+- [ ] 测试统一后的架构功能
+- [ ] 验证各模块间的数据一致性
+
+### 10.4 技术优势
+
+1. **一致性**：所有模块采用相同的架构模式
+2. **可维护性**：清晰的职责分离，便于代码维护
+3. **可扩展性**：新增模块可快速套用现有模式
+4. **测试友好**：各层可独立测试，提高测试覆盖率
+5. **类型安全**：Pydantic 模型提供运行时类型检查
+
+### 10.5 迁移注意事项
+
+1. **向后兼容**：确保现有 API 接口不受影响
+2. **数据迁移**：需要处理现有数据的迁移
+3. **依赖更新**：更新所有相关模块的导入路径
+4. **测试覆盖**：确保重构后的功能完整性
+
 ---
 
-**文档版本**: 1.0  
+**文档版本**: 1.1  
 **最后更新**: 2025-01-01  
 **维护者**: Autodroid 开发团队

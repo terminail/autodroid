@@ -2,7 +2,7 @@
 测试边界情况和错误处理
 """
 import pytest
-from core.auth.database import UserDatabase
+from core.auth.database import AuthDatabase
 
 class TestEdgeCases:
     """测试边界情况"""
@@ -17,7 +17,7 @@ class TestEdgeCases:
         # 确保数据库文件被完全清理
         self._force_cleanup_database()
         
-        self.db = UserDatabase(self.test_db_path)
+        self.db = AuthDatabase(self.test_db_path)
     
     def teardown_method(self):
         """测试后清理"""
@@ -155,7 +155,7 @@ class TestDatabaseErrorHandling:
         # 确保数据库文件被完全清理
         self._force_cleanup_database()
         
-        self.db = UserDatabase(self.test_db_path)
+        self.db = AuthDatabase(self.test_db_path)
     
     def teardown_method(self):
         """测试后清理"""
@@ -227,7 +227,7 @@ class TestDatabaseErrorHandling:
         """测试数据库连接问题"""
         # 使用无效的数据库路径
         try:
-            invalid_db = UserDatabase("/invalid/path/database.db")
+            invalid_db = AuthDatabase("/invalid/path/database.db")
             # 这里应该处理异常或返回错误
         except Exception as e:
             # 应该抛出适当的异常

@@ -8,6 +8,7 @@ import com.autodroid.manager.viewmodel.AppViewModel
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.utils.DeviceUtils
+import com.autodroid.manager.ui.adapters.DashboardAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,6 +27,8 @@ class ApkInfoItemManager(
         private const val TAG = "ApkInfoItemManager"
     }
     
+    // selectedApkIndex is now managed by AppViewModel
+    
     /**
      * Initialize the ApkInfoItemManager
      */
@@ -38,6 +41,14 @@ class ApkInfoItemManager(
      * Set up observers for APK information changes
      */
     private fun setupApkObservers() {
+        // Observe APK list changes from ViewModel
+        viewModel.apkList.observe(lifecycleOwner) { apkList ->
+            apkList?.let {
+                // Update APK information based on selected APK
+                updateApkInfo()
+            }
+        }
+        
         // Observe APK information changes from ViewModel
         viewModel.apkInfo.observe(lifecycleOwner) { apkInfo ->
             apkInfo?.let {
@@ -46,11 +57,8 @@ class ApkInfoItemManager(
             }
         }
         
-        // Observe APK scan status changes
-        viewModel.apkScanStatus.observe(lifecycleOwner) { scanStatus ->
-            scanStatus?.let {
-                updateApkItemWithScanStatus(mapOf("status" to it))
-            }
+        viewModel.selectedApkIndex.observeForever { selectedIndex ->
+            updateApkInfo()
         }
     }
     
@@ -64,13 +72,31 @@ class ApkInfoItemManager(
             // Update ViewModel with APK info
             viewModel.setApkInfo(apkInfo.toMutableMap())
             
-            // Create and update dashboard item
-            val apkItem = DashboardItem.ApkInfoItem(
-                packageName = apkInfo["packageName"] as? String ?: "",
-                version = apkInfo["version"] as? String ?: ""
-            )
-            
-            onItemUpdate(apkItem)
+            // Only create and update dashboard item if we have valid APK information
+            if (apkInfo.isNotEmpty()) {
+                val apkInfoItem = DashboardItem.ApkInfo(
+                    packageName = apkInfo["packageName"] as? String ?: "Unknown",
+                    appName = apkInfo["appName"] as? String ?: "Unknown App",
+                    version = apkInfo["version"] as? String ?: "Unknown",
+                    versionCode = apkInfo["versionCode"] as? Int ?: 0,
+                    installTime = apkInfo["installTime"] as? String ?: "Unknown",
+                    updateTime = apkInfo["updateTime"] as? String ?: "Unknown"
+                )
+                
+                onItemUpdate(apkInfoItem)
+            } else {
+                // If no APK info available, send a special empty APK item to indicate removal
+                // This is a workaround since onItemUpdate expects non-null DashboardItem
+                val emptyApkInfoItem = DashboardItem.ApkInfo(
+                    packageName = "",
+                    appName = "",
+                    version = "",
+                    versionCode = 0,
+                    installTime = "",
+                    updateTime = ""
+                )
+                onItemUpdate(emptyApkInfoItem)
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "Error updating APK info: ${e.message}")
@@ -82,48 +108,46 @@ class ApkInfoItemManager(
      */
     private fun updateApkItem(apkInfo: Map<String, Any>) {
         try {
-            val apkItem = DashboardItem.ApkInfoItem(
-                packageName = apkInfo["packageName"] as? String ?: "",
-                version = apkInfo["version"] as? String ?: ""
+            val apkInfoItem = DashboardItem.ApkInfo(
+                packageName = apkInfo["packageName"] as? String ?: "Unknown",
+                appName = apkInfo["appName"] as? String ?: "Unknown App",
+                version = apkInfo["version"] as? String ?: "Unknown",
+                versionCode = apkInfo["versionCode"] as? Int ?: 0,
+                installTime = apkInfo["installTime"] as? String ?: "Unknown",
+                updateTime = apkInfo["updateTime"] as? String ?: "Unknown"
             )
             
-            onItemUpdate(apkItem)
+            onItemUpdate(apkInfoItem)
             
         } catch (e: Exception) {
             Log.e(TAG, "Error updating APK item: ${e.message}")
         }
     }
     
-    /**
-     * Update APK item with scan status
-     */
-    private fun updateApkItemWithScanStatus(scanStatus: Map<String, Any>) {
-        try {
-            val currentApkInfo = viewModel.apkInfo.value ?: emptyMap()
-            
-            val apkItem = DashboardItem.ApkInfoItem(
-                packageName = currentApkInfo["packageName"] as? String ?: "",
-                version = currentApkInfo["version"] as? String ?: ""
-            )
-            
-            onItemUpdate(apkItem)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating APK item with scan status: ${e.message}")
-        }
-    }
+
     
     /**
-     * Get current APK information
+     * Get current APK information based on selected APK
      */
     private fun getCurrentApkInfo(): Map<String, Any> {
         return try {
-            // This would typically scan the device for APKs
-            // For now, return mock data
             val apkInfoMap = mutableMapOf<String, Any>()
             
-            apkInfoMap["packageName"] = "com.example.app"
-            apkInfoMap["version"] = "1.0.0"
+            // Get current APK list from ViewModel
+            val currentApkList = viewModel.apkList.value
+            val selectedIndex = viewModel.selectedApkIndex.value ?: -1
+            
+            if (currentApkList != null && currentApkList.isNotEmpty() && selectedIndex >= 0 && selectedIndex < currentApkList.size) {
+                // Get real APK data from the selected APK
+                val selectedApk = currentApkList[selectedIndex]
+                apkInfoMap["packageName"] = selectedApk.packageName ?: "Unknown"
+                apkInfoMap["appName"] = selectedApk.appName ?: "Unknown App"
+                apkInfoMap["version"] = selectedApk.version ?: "Unknown"
+                apkInfoMap["versionCode"] = selectedApk.versionCode ?: 0
+            } else {
+                // No APK selected or APK list is empty - return empty map to hide APK info section
+                return emptyMap()
+            }
             
             apkInfoMap
         } catch (e: Exception) {
@@ -133,58 +157,22 @@ class ApkInfoItemManager(
     }
     
     /**
-     * Handle scan APKs button click
+     * Handle APK item selection
      */
-    fun handleScanApksClick() {
+    fun selectApk(apkIndex: Int) {
         try {
-            // Update scan status
-            viewModel.setApkScanStatus("Scanning APKs...")
-            
-            // Start scanning in background
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    // Get device UDID
-                    val deviceUdid = DeviceUtils.getDeviceUDID(context)
-                    
-                    // Create ApkScannerManager instance
-                    val apkScannerManager = ApkScannerManager(context)
-                    
-                    // Scan installed APKs
-                    val apkList = apkScannerManager.scanInstalledApks()
-                    
-                    // Register APKs with server
-                    apkScannerManager.registerApksWithServer(apkList, deviceUdid)
-                    
-                    // Update UI on main thread
-                    CoroutineScope(Dispatchers.Main).launch {
-                        viewModel.setApkScanStatus("Scan completed: ${apkList.size} APKs found")
-                        
-                        // Update APK info with scan results
-                        val apkInfo = mutableMapOf<String?, Any?>()
-                        apkInfo["packageName"] = "Multiple APKs"
-                        apkInfo["version"] = "${apkList.size} packages"
-                        viewModel.setApkInfo(apkInfo)
-                        
-                        // Update dashboard item
-                        val apkItem = DashboardItem.ApkInfoItem(
-                            packageName = "Multiple APKs",
-                            version = "${apkList.size} packages"
-                        )
-                        onItemUpdate(apkItem)
-                    }
-                    
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error scanning APKs: ${e.message}")
-                    CoroutineScope(Dispatchers.Main).launch {
-                        viewModel.setApkScanStatus("Scan failed: ${e.message}")
-                    }
-                }
-            }
-            
+            viewModel.setSelectedApkIndex(apkIndex)
         } catch (e: Exception) {
-            Log.e(TAG, "Error handling APK scan click: ${e.message}")
-            viewModel.setApkScanStatus("Scan failed: ${e.message}")
+            Log.e(TAG, "Error selecting APK: ${e.message}")
         }
+    }
+    
+    /**
+     * Handle APK information display - scan functionality is handled by ApkScannerItemManager
+     */
+    fun handleApkInfoDisplay() {
+        // This method is intentionally left empty as scanning is handled by ApkScannerItemManager
+        // ApkInfoItemManager only displays APK information provided by the scanning process
     }
     
     /**
@@ -199,5 +187,50 @@ class ApkInfoItemManager(
      */
     fun cleanup() {
         // Clean up any observers or resources if needed
+    }
+    
+    /**
+     * Handle list update logic for APK info item
+     */
+    fun handleListUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
+        return try {
+            if (item is DashboardItem.ApkInfo) {
+                // Only add/update APK info item if we have valid APK information
+                if (item.packageName.isNotEmpty()) {
+                    // Find existing APK info item in the list
+                    val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkInfo }
+                    
+                    if (existingIndex != -1) {
+                        // Update existing item
+                        dashboardItems[existingIndex] = item
+                    } else {
+                        // Add new item after APK scanner item
+                        val apkScannerIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkScannerItem }
+                        if (apkScannerIndex != -1) {
+                            dashboardItems.add(apkScannerIndex + 1, item)
+                        } else {
+                            // Fallback: add to the end
+                            dashboardItems.add(item)
+                        }
+                    }
+                } else {
+                    // Remove APK info item if no valid APK information
+                    val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.ApkInfo }
+                    if (existingIndex != -1) {
+                        dashboardItems.removeAt(existingIndex)
+                    }
+                }
+                
+                // Update adapter
+                dashboardAdapter?.notifyDataSetChanged()
+                true
+            } else {
+                Log.e(TAG, "Invalid item type for APK info: ${item::class.simpleName}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating APK info item in list: ${e.message}", e)
+            false
+        }
     }
 }

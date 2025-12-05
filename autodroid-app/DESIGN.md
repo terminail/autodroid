@@ -580,6 +580,82 @@ DiscoveryStatusManager.discoveryRetryCount.observe(viewLifecycleOwner) { retryCo
 }
 
 // 观察发现失败状态
+
+## mDNS权重管理机制优化建议
+
+### 当前实现状态
+
+**当前权重管理逻辑：**
+- 失败时立即将mDNS实现权重设为-1（禁用）
+- 成功时恢复默认权重（LegacyNsd=10, JmDNS=9, WeUPnP=8, StandardNsd=7）
+- 所有实现失败后跳过mDNS发现流程，使用其他连接方式
+
+### 后续优化建议
+
+#### 1. 自动恢复机制
+**问题：** 实现被禁用后无法自动恢复，需要手动重置
+**建议方案：**
+```kotlin
+// 在MdnsWeightManager中添加定时恢复逻辑
+class MdnsWeightManager {
+    private val autoRecoveryHandler = Handler(Looper.getMainLooper())
+    private val autoRecoveryRunnable = object : Runnable {
+        override fun run() {
+            // 检查被禁用的实现，尝试恢复
+            val disabledImplementations = weightDatabase.getDisabledImplementations()
+            disabledImplementations.forEach { implementation ->
+                // 检查网络环境变化或时间阈值
+                if (shouldAutoRecover(implementation)) {
+                    weightDatabase.resetWeight(implementation)
+                    Log.d(TAG, "Auto-recovered implementation: $implementation")
+                }
+            }
+            // 24小时后再次检查
+            autoRecoveryHandler.postDelayed(this, 24 * 60 * 60 * 1000)
+        }
+    }
+    
+    private fun shouldAutoRecover(implementation: String): Boolean {
+        // 基于时间阈值（如24小时）
+        // 或网络环境变化检测
+        return true
+    }
+}
+```
+
+#### 2. 网络环境感知
+**问题：** 未考虑网络环境变化后重置权重
+**建议方案：**
+```kotlin
+// 监听网络连接变化
+class NetworkAwareWeightManager {
+    private val connectivityManager: ConnectivityManager
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            // 网络连接可用时，检查是否需要重置权重
+            if (isNetworkEnvironmentChanged()) {
+                resetAllWeights()
+                Log.d(TAG, "Network environment changed - reset all mDNS weights")
+            }
+        }
+    }
+    
+    private fun isNetworkEnvironmentChanged(): Boolean {
+        // 检测WiFi网络切换、IP段变化等
+        return true
+    }
+}
+```
+
+### 实现优先级
+1. **高优先级：** 添加时间基础的自动恢复机制（如24小时后自动重置）
+2. **中优先级：** 集成网络环境变化检测
+3. **低优先级：** 添加用户手动重置选项
+
+### 预期效果
+- 提高mDNS发现的可靠性
+- 减少手动干预需求
+- 适应动态网络环境变化
 DiscoveryStatusManager.discoveryFailed.observe(viewLifecycleOwner) { failed ->
     requireActivity().runOnUiThread {
         if (failed == true) {

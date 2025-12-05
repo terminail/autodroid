@@ -1,50 +1,22 @@
-import sqlite3
-import os
-from typing import Optional, Dict
+import time
+from typing import Optional, Dict, Any
 from datetime import datetime
 import hashlib
-import uuid
 import secrets
+import re
+import uuid
+from peewee import DoesNotExist
 
-class UserDatabase:
-    """用户数据库管理类"""
+from ..database.base import BaseDatabase
+from ..database.models import User, Session
+
+
+class AuthDatabase(BaseDatabase):
+    """认证数据库管理类（使用peewee ORM）"""
     
-    def __init__(self, db_path: str = "autodroid.db"):
-        self.db_path = db_path
-        self._init_db()
-    
-    def _init_db(self):
-        """初始化数据库表"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # 创建用户表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                email TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                password_hash TEXT NOT NULL,
-                role TEXT DEFAULT 'user',
-                last_login DATETIME,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # 创建会话表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sessions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                token TEXT NOT NULL,
-                expires_at DATETIME NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
+    def __init__(self):
+        """初始化认证数据库"""
+        super().__init__()
     
     def _hash_password(self, password: str) -> str:
         """密码哈希（使用SHA256 + salt）"""
@@ -66,7 +38,6 @@ class UserDatabase:
         # 使用邮箱前缀作为用户ID的基础
         email_prefix = email.split('@')[0]
         # 移除特殊字符，只保留字母数字
-        import re
         clean_id = re.sub(r'[^a-zA-Z0-9]', '', email_prefix)
         # 如果太短，添加随机后缀
         if len(clean_id) < 3:
@@ -76,13 +47,8 @@ class UserDatabase:
     def create_user(self, email: str, name: str, password: str, role: str = "user") -> Optional[str]:
         """创建新用户"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             # 检查邮箱是否已存在
-            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-            existing_user = cursor.fetchone()
-            if existing_user:
+            if User.select().where(User.email == email).exists():
                 raise ValueError("邮箱已存在")
             
             # 生成基于邮箱的简化用户ID
@@ -91,198 +57,139 @@ class UserDatabase:
             # 确保用户ID唯一，如果冲突则添加数字后缀
             original_id = user_id
             counter = 1
-            while True:
-                cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-                if not cursor.fetchone():
-                    break
+            while User.select().where(User.id == user_id).exists():
                 user_id = f"{original_id}{counter}"
                 counter += 1
             
             # 密码哈希
             password_hash = self._hash_password(password)
             
-            # 插入用户数据（email 同时作为 username）
-            cursor.execute('''
-                INSERT INTO users (id, email, name, password_hash, role)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, email, name, password_hash, role))
+            # 创建用户
+            user = User.create(
+                id=user_id,
+                email=email,
+                name=name,
+                password_hash=password_hash,
+                role=role
+            )
             
-            conn.commit()
-            conn.close()
-            return user_id
+            return user.id
             
-        except sqlite3.Error:
+        except Exception:
             return None
     
-    def authenticate_user(self, email: str, password: str) -> Optional[dict]:
+    def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
         """用户认证"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             # 获取用户信息
-            cursor.execute('''
-                SELECT id, email, name, password_hash, role, last_login, created_at
-                FROM users WHERE email = ?
-            ''', (email,))
-            
-            user_data = cursor.fetchone()
-            if not user_data:
-                return None
+            user = User.get(User.email == email)
             
             # 验证密码
-            if not self._verify_password(password, user_data[3]):
+            if not self._verify_password(password, user.password_hash):
                 return None
             
             # 更新最后登录时间
-            cursor.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", (user_data[0],))
-            conn.commit()
-            conn.close()
+            user.last_login = datetime.now()
+            user.save()
             
             # 返回用户信息
             return {
-                "id": user_data[0],
-                "email": user_data[1],
-                "name": user_data[2],
-                "role": user_data[4],
-                "last_login": user_data[5],
-                "created_at": user_data[6]
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": user.role,
+                "last_login": user.last_login,
+                "created_at": user.created_at
             }
             
-        except sqlite3.Error:
+        except DoesNotExist:
+            return None
+        except Exception:
             return None
     
-    def get_user_by_id(self, user_id: str) -> Optional[dict]:
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """根据ID获取用户信息"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT id, email, name, role, last_login, created_at
-                FROM users WHERE id = ?
-            ''', (user_id,))
-            
-            user_data = cursor.fetchone()
-            conn.close()
-            
-            if user_data:
-                return {
-                    "id": user_data[0],
-                    "email": user_data[1],
-                    "name": user_data[2],
-                    "role": user_data[3],
-                    "last_login": user_data[4],
-                    "created_at": user_data[5]
-                }
+            user = User.get(User.id == user_id)
+            return {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": user.role,
+                "last_login": user.last_login,
+                "created_at": user.created_at
+            }
+        except DoesNotExist:
             return None
-            
-        except sqlite3.Error:
+        except Exception:
             return None
     
     def get_user_id_by_email(self, email: str) -> Optional[str]:
         """根据邮箱获取用户ID"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-            
-            user_data = cursor.fetchone()
-            conn.close()
-            
-            if user_data:
-                return user_data[0]
+            user = User.get(User.email == email)
+            return user.id
+        except DoesNotExist:
             return None
-            
-        except sqlite3.Error:
+        except Exception:
             return None
     
-    def get_user_by_email(self, email: str) -> Optional[dict]:
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """根据邮箱获取用户信息"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT id, email, name, role, last_login, created_at
-                FROM users WHERE email = ?
-            ''', (email,))
-            
-            user_data = cursor.fetchone()
-            conn.close()
-            
-            if user_data:
-                return {
-                    "id": user_data[0],
-                    "email": user_data[1],
-                    "name": user_data[2],
-                    "role": user_data[3],
-                    "last_login": user_data[4],
-                    "created_at": user_data[5]
-                }
+            user = User.get(User.email == email)
+            return {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": user.role,
+                "last_login": user.last_login,
+                "created_at": user.created_at
+            }
+        except DoesNotExist:
             return None
-            
-        except sqlite3.Error:
+        except Exception:
             return None
     
     def create_session(self, user_id: str, token: str, expires_at: datetime) -> bool:
         """创建用户会话"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             session_id = str(uuid.uuid4())
-            cursor.execute('''
-                INSERT INTO sessions (id, user_id, token, expires_at)
-                VALUES (?, ?, ?, ?)
-            ''', (session_id, user_id, token, expires_at.isoformat()))
-            
-            conn.commit()
-            conn.close()
+            Session.create(
+                id=session_id,
+                user=user_id,
+                token=token,
+                expires_at=expires_at
+            )
             return True
-            
-        except sqlite3.Error:
+        except Exception:
             return False
     
-    def validate_session(self, token: str) -> Optional[dict]:
+    def validate_session(self, token: str) -> Optional[Dict[str, Any]]:
         """验证会话令牌"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            session = (Session
+                     .select(Session, User)
+                     .join(User)
+                     .where((Session.token == token) & 
+                           (Session.expires_at > datetime.now()))
+                     .get())
             
-            cursor.execute('''
-                SELECT s.user_id, s.expires_at, u.email, u.role
-                FROM sessions s
-                JOIN users u ON s.user_id = u.id
-                WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP
-            ''', (token,))
-            
-            session_data = cursor.fetchone()
-            conn.close()
-            
-            if session_data:
-                return {
-                    "user_id": session_data[0],
-                    "email": session_data[2],
-                    "role": session_data[3],
-                    "expires_at": session_data[1]
-                }
+            return {
+                "user_id": session.user.id,
+                "email": session.user.email,
+                "role": session.user.role,
+                "expires_at": session.expires_at
+            }
+        except DoesNotExist:
             return None
-            
-        except sqlite3.Error:
+        except Exception:
             return None
     
     def delete_session(self, token: str) -> bool:
         """删除会话"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("DELETE FROM sessions WHERE token = ?", (token,))
-            conn.commit()
-            conn.close()
-            return True
-            
-        except sqlite3.Error:
+            deleted_count = Session.delete().where(Session.token == token).execute()
+            return deleted_count > 0
+        except Exception:
             return False

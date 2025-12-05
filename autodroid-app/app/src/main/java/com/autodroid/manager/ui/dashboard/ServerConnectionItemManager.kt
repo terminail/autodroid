@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.service.DiscoveryStatusManager
 import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.ui.adapters.DashboardAdapter
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import androidx.activity.result.ActivityResultLauncher
@@ -426,5 +427,35 @@ class ServerConnectionItemManager(
     fun refresh() {
         // Reinitialize the server connection item with current data
         initialize()
+    }
+    
+    /**
+     * Handle list update logic for server connection item
+     */
+    fun handleListUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
+        return try {
+            if (item is DashboardItem.ServerConnectionItem) {
+                // Find existing server connection item in the list
+                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.ServerConnectionItem }
+                
+                if (existingIndex != -1) {
+                    // Update existing item
+                    dashboardItems[existingIndex] = item
+                } else {
+                    // Add new item at the beginning
+                    dashboardItems.add(0, item)
+                }
+                
+                // Update adapter
+                dashboardAdapter?.notifyDataSetChanged()
+                true
+            } else {
+                Log.e(TAG, "Invalid item type for server connection: ${item::class.simpleName}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating server connection item in list: ${e.message}", e)
+            false
+        }
     }
 }
