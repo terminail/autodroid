@@ -4,9 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DashboardItem
-import com.autodroid.manager.service.DiscoveryStatusManager
-import com.autodroid.manager.viewmodel.AppViewModel
+import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.ui.adapters.DashboardAdapter
+import com.autodroid.manager.service.DiscoveryStatusManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import androidx.activity.result.ActivityResultLauncher
@@ -32,6 +32,10 @@ class ServerConnectionItemManager(
     // Activity Result API launchers for QR code scanning
     private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var startQRCodeScannerLauncher: ActivityResultLauncher<Intent>
+    
+    // Server connection state
+    private var isServerConnected = false
+    private var serverConnectionMethod = "none" // mDNS, QRCode, or none
     
     /**
      * Initialize the QR code scanning functionality
@@ -87,21 +91,27 @@ class ServerConnectionItemManager(
     fun initialize() {
         setupObservers()
         updateItem(
-            status = "Discovering servers...",
+            status = "Discovering servers via mDNS...",
             serverIp = "Searching...",
             serverPort = "-",
             serverStatus = "Disconnected",
             apiEndpoint = "-",
-            showQrButton = true
+            showQrButton = true, // Show QR button but disable during mDNS discovery
+            isQrButtonEnabled = false // Disable button during discovery
         )
+        
+        // Start mDNS discovery if not already running
+        if (!DiscoveryStatusManager.isQrCodeChosenAsFallback()) {
+            DiscoveryStatusManager.startNetworkService()
+        }
     }
     
     /**
      * Set up observers for server discovery status
      */
     private fun setupObservers() {
-        // Observe server info from DiscoveryStatusManager
-        DiscoveryStatusManager.serverInfo.observe(lifecycleOwner) { serverInfo ->
+        // Observe server info from AppViewModel
+        viewModel.serverInfo.observe(lifecycleOwner) { serverInfo ->
             serverInfo?.let {
                 val connected = it["connected"] as? Boolean ?: false
                 val discoveryMethod = it["discovery_method"] as? String ?: ""
@@ -109,96 +119,105 @@ class ServerConnectionItemManager(
                 val port = it["port"] as? Int ?: 0
                 val apiEndpoint = it["api_endpoint"] as? String ?: "-"
                 
+                isServerConnected = connected
+                serverConnectionMethod = discoveryMethod
+                
                 updateItem(
-                    status = if (connected) "Connected via $discoveryMethod" else when (discoveryMethod) {
-                        "mDNS" -> "mDNS OK"
-                        "QRCode" -> "QRCode OK"
-                        else -> discoveryMethod
+                    status = when {
+                        connected -> "Connected via $discoveryMethod"
+                        discoveryMethod == "mDNS" -> "mDNS Discovery Successful"
+                        discoveryMethod == "QRCode" -> "QR Code Scanned"
+                        else -> "Server Found"
                     },
                     serverIp = ip,
                     serverPort = port.toString(),
-                    serverStatus = "Checking...",
+                    serverStatus = if (connected) "CONNECTED" else "DISCOVERED",
                     apiEndpoint = apiEndpoint,
-                    showQrButton = discoveryMethod != "mDNS"
+                    showQrButton = true, // Always show QR button
+                    isQrButtonEnabled = !connected // Enable button only if not connected
                 )
                 
                 // Check server health if we have an API endpoint
-                if (apiEndpoint != "-") {
+                if (apiEndpoint != "-" && !connected) {
                     checkServerHealth(apiEndpoint) { isHealthy ->
-                        updateItem(serverStatus = if (isHealthy) "READY" else "FAILED")
+                        updateItem(serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED")
+                        
+                        // If server is healthy, automatically connect to it
+                        if (isHealthy) {
+                            connectToServer(ip, port, apiEndpoint)
+                        }
                     }
                 }
             } ?: run {
                 // Clear UI when no server info is available
-                updateItem(
-                    status = "Discovering servers...",
-                    serverIp = "Searching...",
-                    serverPort = "-",
-                    serverStatus = "Checking...",
-                    apiEndpoint = "-",
-                    showQrButton = true
-                )
-            }
-        }
-        
-        // Observe discovery status from DiscoveryStatusManager
-        DiscoveryStatusManager.discoveryInProgress.observe(lifecycleOwner) { inProgress ->
-            if (inProgress == true) {
-                updateItem(
-                    status = "mDNS Discovering...",
-                    showQrButton = false
-                )
-                Log.d(TAG, "Discovery in progress - QR code button disabled")
-            } else {
-                updateItem(
-                    showQrButton = true
-                )
-                Log.d(TAG, "Discovery stopped - QR code button enabled")
-            }
-        }
-        
-        // Observe discovery retry count from DiscoveryStatusManager
-        DiscoveryStatusManager.discoveryRetryCount.observe(lifecycleOwner) { retryCount ->
-            val maxRetries = DiscoveryStatusManager.discoveryMaxRetries.value ?: 0
-            if (retryCount != null && maxRetries > 0) {
-                if (retryCount < maxRetries) {
-                    updateItem(
-                        status = "mDNS Retry ${retryCount + 1}/$maxRetries",
-                        showQrButton = false
-                    )
-                    Log.d(TAG, "Discovery retry ${retryCount + 1}/$maxRetries - QR code button disabled")
-                }
-            }
-        }
-        
-        // Observe discovery failure from DiscoveryStatusManager
-        DiscoveryStatusManager.discoveryFailed.observe(lifecycleOwner) { failed ->
-            if (failed == true) {
-                updateItem(
-                    status = "mDNS Failed",
-                    serverIp = "Discovery failed",
-                    serverPort = "-",
-                    serverStatus = "FAILED",
-                    apiEndpoint = "-",
-                    showQrButton = true
-                )
-                Log.d(TAG, "mDNS failed - QR code button enabled and visible")
+                isServerConnected = false
+                serverConnectionMethod = "none"
                 
-                // Mark that user is now using QR code as fallback
-                DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
-                DiscoveryStatusManager.stopNetworkService()
-                Log.d(TAG, "Stopped NetworkService after mDNS failure to conserve resources")
-            } else {
-                // Reset failure state when discovery is restarted
                 updateItem(
-                    status = "Discovering servers...",
+                    status = "Discovering servers via mDNS...",
                     serverIp = "Searching...",
                     serverPort = "-",
-                    serverStatus = "Checking...",
+                    serverStatus = "DISCONNECTED",
                     apiEndpoint = "-",
-                    showQrButton = true
+                    showQrButton = true, // Show QR button
+                    isQrButtonEnabled = false // Disable button during discovery
                 )
-                Log.d(TAG, "Discovery failure state reset")
+            }
+        }
+        
+        // Observe discovery status from AppViewModel
+        viewModel.discoveryStatus.observe(lifecycleOwner) { status ->
+            status?.let { discoveryStatus ->
+                if (discoveryStatus.isDiscovering()) {
+                    // Discovery in progress - show status and disable QR button
+                    if (!discoveryStatus.hasReachedMaxRetries()) {
+                        updateItem(
+                            status = if (discoveryStatus.retryCount > 0) 
+                                "mDNS Retry ${discoveryStatus.retryCount + 1}/${discoveryStatus.maxRetries}" 
+                                else "mDNS Discovery in Progress...",
+                            serverIp = "Searching...",
+                            serverPort = "-",
+                            serverStatus = "DISCOVERING",
+                            apiEndpoint = "-",
+                            showQrButton = true, // Show button but disable interaction
+                            isQrButtonEnabled = false // Disable interaction during discovery
+                        )
+                        Log.d(TAG, "Discovery in progress - QR code button visible but disabled")
+                    }
+                } else if (discoveryStatus.isDiscoveryFailed()) {
+                    // Discovery failed - enable QR code button as fallback
+                    updateItem(
+                        status = "mDNS Discovery Failed",
+                        serverIp = "Discovery failed",
+                        serverPort = "-",
+                        serverStatus = "DISCONNECTED",
+                        apiEndpoint = "-",
+                        showQrButton = true,
+                        isQrButtonEnabled = true // Enable interaction after failure
+                    )
+                    Log.d(TAG, "mDNS failed - QR code button enabled and clickable")
+                    
+                    // Mark that user is now using QR code as fallback
+                    if (!DiscoveryStatusManager.isQrCodeChosenAsFallback()) {
+                        DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
+                        DiscoveryStatusManager.stopNetworkService()
+                        Log.d(TAG, "Stopped NetworkService after mDNS failure to conserve resources")
+                    }
+                } else {
+                    // Discovery not active - show discovery status with disabled QR button
+                    if (!DiscoveryStatusManager.isQrCodeChosenAsFallback()) {
+                        updateItem(
+                            status = "Discovering servers via mDNS...",
+                            serverIp = "Searching...",
+                            serverPort = "-",
+                            serverStatus = "DISCOVERING",
+                            apiEndpoint = "-",
+                            showQrButton = true, // Show button during discovery
+                            isQrButtonEnabled = false // Disable interaction during discovery
+                        )
+                        Log.d(TAG, "Discovery not active - showing discovery status with disabled QR button")
+                    }
+                }
             }
         }
     }
@@ -243,11 +262,13 @@ class ServerConnectionItemManager(
                 DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
 
                 updateItem(
-                    status = "QRCode",
+                    status = "QR Code Scanned Successfully",
                     serverIp = ipAddress,
                     serverPort = port.toString(),
                     apiEndpoint = apiEndpoint,
-                    serverStatus = "CHECKING"
+                    serverStatus = "DISCOVERED",
+                    showQrButton = true, // Show QR button
+                    isQrButtonEnabled = false // Disable button until connection is established
                 )
                 
                 // Update DiscoveryStatusManager with server info
@@ -259,12 +280,12 @@ class ServerConnectionItemManager(
                 serverInfo["connected"] = false // Not connected yet
                 serverInfo["discovery_method"] = "QRCode"
                 
-                DiscoveryStatusManager.setServerInfo(serverInfo)
+                viewModel.setServerInfo(serverInfo)
                 
                 // Check server health
                 checkServerHealth(apiEndpoint) { isHealthy ->
                     updateItem(
-                        serverStatus = if (isHealthy) "READY" else "FAILED"
+                        serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
                     )
                     
                     // If server is healthy, connect to it
@@ -272,9 +293,12 @@ class ServerConnectionItemManager(
                         connectToServer(ipAddress, port, apiEndpoint)
                     }
                 }
+            } else {
+                Toast.makeText(context, "Invalid QR code format", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error processing QR code result: ${e.message}")
+            Toast.makeText(context, "Error processing QR code: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -308,11 +332,11 @@ class ServerConnectionItemManager(
         Log.i(TAG, "Connecting to server: $serverIp:$serverPort")
         
         // Get the discovery method from the server info
-        val discoveryMethod = DiscoveryStatusManager.serverInfo.value?.get("discovery_method")?.toString() ?: "unknown"
+        val discoveryMethod = viewModel.serverInfo.value?.get("discovery_method")?.toString() ?: "unknown"
         
         updateItem(
             status = "Connected to server via $discoveryMethod",
-            serverStatus = "CONNECTING"
+            serverStatus = "CONNECTED"
         )
         
         // Update DiscoveryStatusManager with server info
@@ -324,12 +348,12 @@ class ServerConnectionItemManager(
         serverInfo["connected"] = true
         serverInfo["discovery_method"] = discoveryMethod
         
-        DiscoveryStatusManager.setServerInfo(serverInfo)
+        viewModel.setServerInfo(serverInfo)
         
         // Check server health
         checkServerHealth(apiEndpoint) { isHealthy ->
             updateItem(
-                serverStatus = if (isHealthy) "READY" else "FAILED"
+                serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
             )
         }
     }
@@ -400,7 +424,8 @@ class ServerConnectionItemManager(
         serverPort: String? = null,
         serverStatus: String? = null,
         apiEndpoint: String? = null,
-        showQrButton: Boolean? = null
+        showQrButton: Boolean? = null,
+        isQrButtonEnabled: Boolean? = null
     ) {
         currentItem = DashboardItem.ServerConnectionItem(
             status = status ?: currentItem.status,
@@ -408,7 +433,8 @@ class ServerConnectionItemManager(
             serverPort = serverPort ?: currentItem.serverPort,
             serverStatus = serverStatus ?: currentItem.serverStatus,
             apiEndpoint = apiEndpoint ?: currentItem.apiEndpoint,
-            showQrButton = showQrButton ?: currentItem.showQrButton
+            showQrButton = showQrButton ?: currentItem.showQrButton,
+            isQrButtonEnabled = isQrButtonEnabled ?: currentItem.isQrButtonEnabled
         )
         
         onItemUpdate(currentItem)
@@ -422,9 +448,30 @@ class ServerConnectionItemManager(
     }
     
     /**
+     * Check if server is currently connected
+     */
+    fun isServerConnected(): Boolean {
+        return isServerConnected
+    }
+    
+    /**
+     * Get current server connection method
+     */
+    fun getServerConnectionMethod(): String {
+        return serverConnectionMethod
+    }
+    
+    /**
      * Refresh the server connection information
      */
     fun refresh() {
+        // Reset connection state and restart discovery
+        isServerConnected = false
+        serverConnectionMethod = "none"
+        
+        // Reset QR code fallback flag to allow mDNS discovery
+        DiscoveryStatusManager.resetQrCodeFallback()
+        
         // Reinitialize the server connection item with current data
         initialize()
     }

@@ -112,6 +112,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             serverStatus.text = item.serverStatus
             apiEndpoint.text = item.apiEndpoint
             scanQrButton.visibility = if (item.showQrButton) View.VISIBLE else View.GONE
+            scanQrButton.isEnabled = item.isQrButtonEnabled
         }
     }
     

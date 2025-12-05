@@ -9,7 +9,8 @@ sealed class DashboardItem(val type: Int) {
         val serverPort: String = "-",
         val serverStatus: String = "Disconnected",
         val apiEndpoint: String = "-",
-        val showQrButton: Boolean = true
+        val showQrButton: Boolean = true,
+        val isQrButtonEnabled: Boolean = true
     ) : DashboardItem(DashboardAdapter.TYPE_SERVER_CONNECTION)
     
     data class WiFiInfoItem(
