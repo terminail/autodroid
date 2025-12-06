@@ -1,4 +1,4 @@
-// WiFiInfoItemManager.kt
+// WiFiItemManager.kt
 package com.autodroid.manager.ui.dashboard
 
 import android.content.Context
@@ -11,8 +11,8 @@ import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.utils.NetworkUtils
 import com.autodroid.manager.model.DashboardItem
-import com.autodroid.manager.model.WifiInfo
-import com.autodroid.manager.model.NetworkInfo
+import com.autodroid.manager.model.Wifi
+import com.autodroid.manager.model.Network
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -20,7 +20,7 @@ import java.net.NetworkInterface
 /**
  * Manager class for handling WiFi Information dashboard item functionality
  */
-class WiFiInfoItemManager(
+class WiFiItemManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
     private val viewModel: AppViewModel,
@@ -28,7 +28,7 @@ class WiFiInfoItemManager(
 ) {
     
     companion object {
-        private const val TAG = "WiFiInfoItemManager"
+        private const val TAG = "WiFiItemManager"
     }
     
     private val connectivityManager: ConnectivityManager by lazy {
@@ -40,7 +40,7 @@ class WiFiInfoItemManager(
     }
     
     /**
-     * Initialize the WiFiInfoItemManager
+     * Initialize the WiFiItemManager
      */
     fun initialize() {
         setupWiFiObservers()
@@ -52,16 +52,16 @@ class WiFiInfoItemManager(
      */
     private fun setupWiFiObservers() {
         // Observe WiFi information changes from ViewModel
-        viewModel.wifiInfo.observe(lifecycleOwner) { wifiInfo ->
-            wifiInfo?.let {
-                updateWiFiItem(wifiInfo)
+        viewModel.wifi.observe(lifecycleOwner) { wifi ->
+            if (wifi != null) {
+                updateWiFiItem(wifi)
             }
         }
         
         // Observe network connectivity changes
-        viewModel.networkInfo.observe(lifecycleOwner) { networkInfo ->
-            networkInfo?.let {
-                updateWiFiItemWithNetworkInfo(networkInfo)
+        viewModel.network.observe(lifecycleOwner) { network ->
+            network?.let {
+                updateWiFiItemWithNetwork(network)
             }
         }
     }
@@ -74,10 +74,10 @@ class WiFiInfoItemManager(
             val wifiInfoObj = getCurrentWiFiInfo()
             
             // Update ViewModel with WiFi info
-            viewModel.setWifiInfo(wifiInfoObj)
+            viewModel.setWifi(wifiInfoObj)
             
             // Create and update dashboard item using the WifiInfo object
-            val wifiItem = DashboardItem.WiFiInfoItem(
+            val wifiItem = DashboardItem.WiFiItem(
                 ssid = wifiInfoObj.ssid ?: "Unknown",
                 bssid = wifiInfoObj.bssid ?: "Unknown",
                 signalStrength = wifiInfoObj.signalStrength ?: 0,
@@ -97,9 +97,9 @@ class WiFiInfoItemManager(
     /**
      * Update WiFi item with WiFi information
      */
-    private fun updateWiFiItem(wifiInfo: WifiInfo) {
+    private fun updateWiFiItem(wifiInfo: Wifi) {
         try {
-            val wifiItem = DashboardItem.WiFiInfoItem(
+            val wifiItem = DashboardItem.WiFiItem(
                 ssid = wifiInfo.ssid ?: "Unknown",
                 bssid = wifiInfo.bssid ?: "Unknown",
                 signalStrength = wifiInfo.signalStrength ?: 0,
@@ -119,18 +119,18 @@ class WiFiInfoItemManager(
     /**
      * Update WiFi item with network information
      */
-    private fun updateWiFiItemWithNetworkInfo(networkInfo: NetworkInfo) {
+    private fun updateWiFiItemWithNetwork(network: Network) {
         try {
-            val currentWifiInfo = viewModel.wifiInfo.value ?: WifiInfo.empty()
+            val currentWifi = viewModel.wifi.value ?: Wifi.empty()
             
-            val wifiItem = DashboardItem.WiFiInfoItem(
-                ssid = currentWifiInfo.ssid ?: "Unknown",
-                bssid = currentWifiInfo.bssid ?: "Unknown",
-                signalStrength = currentWifiInfo.signalStrength ?: 0,
-                frequency = currentWifiInfo.frequency ?: 0,
-                ipAddress = networkInfo.ipAddress ?: "Unknown",
-                linkSpeed = currentWifiInfo.linkSpeed ?: 0,
-                isConnected = networkInfo.isConnected && networkInfo.connectionType == NetworkInfo.ConnectionType.WIFI
+            val wifiItem = DashboardItem.WiFiItem(
+                ssid = currentWifi.ssid ?: "Unknown",
+                bssid = currentWifi.bssid ?: "Unknown",
+                signalStrength = currentWifi.signalStrength ?: 0,
+                frequency = currentWifi.frequency ?: 0,
+                ipAddress = network.ipAddress ?: "Unknown",
+                linkSpeed = currentWifi.linkSpeed ?: 0,
+                isConnected = network.isConnected && network.connectionType == Network.ConnectionType.WIFI
             )
             
             onItemUpdate(wifiItem)
@@ -143,7 +143,7 @@ class WiFiInfoItemManager(
     /**
      * Get current WiFi information using NetworkUtils
      */
-    private fun getCurrentWiFiInfo(): WifiInfo {
+    private fun getCurrentWiFiInfo(): com.autodroid.manager.model.Wifi {
         return NetworkUtils.getDetailedWiFiInfo(context)
     }
     
@@ -166,7 +166,7 @@ class WiFiInfoItemManager(
      */
     fun updateWiFiItem(name: String, ip: String, isConnected: Boolean) {
         try {
-            val wifiItem = DashboardItem.WiFiInfoItem(
+            val wifiItem = DashboardItem.WiFiItem(
                 ssid = name,
                 bssid = "Unknown",
                 signalStrength = 0,
@@ -201,16 +201,16 @@ class WiFiInfoItemManager(
      */
     fun handleListUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
         return try {
-            if (item is DashboardItem.WiFiInfoItem) {
+            if (item is DashboardItem.WiFiItem) {
                 // Find existing WiFi info item in the list
-                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiInfoItem }
+                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiItem }
                 
                 if (existingIndex != -1) {
                     // Update existing item
                     dashboardItems[existingIndex] = item
                 } else {
                     // Add new item after server connection item
-                    val serverConnectionIndex = dashboardItems.indexOfFirst { it is DashboardItem.ServerConnectionItem }
+                    val serverConnectionIndex = dashboardItems.indexOfFirst { it is DashboardItem.ServerItem }
                     if (serverConnectionIndex != -1) {
                         dashboardItems.add(serverConnectionIndex + 1, item)
                     } else {
@@ -219,8 +219,8 @@ class WiFiInfoItemManager(
                     }
                 }
                 
-                // Update adapter
-                dashboardAdapter?.notifyDataSetChanged()
+                // Update adapter - use updateItems to sync both lists
+                dashboardAdapter?.updateItems(dashboardItems)
                 true
             } else {
                 Log.e(TAG, "Invalid item type for WiFi info: ${item::class.simpleName}")

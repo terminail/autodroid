@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
  * 设备信息封装类
  * 封装设备相关的属性和状态
  */
-data class DeviceInfo(
+data class Device(
     val ip: String? = null,
     val name: String? = null,
     val model: String? = null,
@@ -23,12 +23,12 @@ data class DeviceInfo(
         /**
          * 创建空设备信息
          */
-        fun empty(): DeviceInfo = DeviceInfo()
+        fun empty(): Device = Device()
         
         /**
          * 创建连接状态的设备信息
          */
-        fun connected(ip: String, name: String? = null): DeviceInfo = DeviceInfo(
+        fun connected(ip: String, name: String? = null): Device = Device(
             ip = ip,
             name = name,
             isConnected = true,
@@ -48,7 +48,7 @@ data class DeviceInfo(
             brand: String = "",
             device: String = "",
             product: String = ""
-        ): DeviceInfo = DeviceInfo(
+        ): Device = Device(
             ip = ip,
             name = name,
             model = model,
@@ -71,7 +71,7 @@ data class DeviceInfo(
     /**
      * 断开设备连接
      */
-    fun disconnected(): DeviceInfo = this.copy(
+    fun disconnected(): Device = this.copy(
         isConnected = false,
         lastSeen = System.currentTimeMillis()
     )
@@ -88,7 +88,7 @@ data class DeviceInfo(
         brand: String? = this.brand,
         device: String? = this.device,
         product: String? = this.product
-    ): DeviceInfo = this.copy(
+    ): Device = this.copy(
         name = name,
         model = model,
         manufacturer = manufacturer,

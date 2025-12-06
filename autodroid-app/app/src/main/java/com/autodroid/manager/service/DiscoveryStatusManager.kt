@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.model.DiscoveryStatus
+import com.autodroid.manager.model.Server
 
 /**
  * Singleton for managing global discovery status that can be observed by any component
@@ -15,7 +16,7 @@ import com.autodroid.manager.model.DiscoveryStatus
  */
 object DiscoveryStatusManager {
     // Server information
-    val serverInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    val serverInfo = MutableLiveData<Server?>()
     
     // Discovery status information (encapsulated)
     val discoveryStatus = MutableLiveData<DiscoveryStatus>()
@@ -83,20 +84,26 @@ object DiscoveryStatusManager {
     fun updateServerInfo(server: DiscoveredServer?) {
         Handler(Looper.getMainLooper()).post {
             if (server != null) {
-                val info = mutableMapOf<String?, Any?>()
-                info["name"] = server.serviceName
-                info["ip"] = server.host
-                info["port"] = server.port
-                info["connected"] = true
-                info["discovery_method"] = "mDNS"
-                info["api_endpoint"] = "http://${server.host}:${server.port}/api"
-                serverInfo.value = info
+                val serverInfoObj = Server(
+                    serviceName = server.serviceName,
+                    name = server.serviceName,
+                    ip = server.host,
+                    port = server.port,
+                    connected = true,
+                    discoveryMethod = "mDNS",
+                    api_endpoint = "http://${server.host}:${server.port}/api"
+                )
+                serverInfo.value = serverInfoObj
                 Log.d("DiscoveryStatusManager", "Server info updated via mDNS: ${server.host}:${server.port}")
             } else {
                 // Mark as disconnected
-                val currentInfo = serverInfo.value?.toMutableMap() ?: mutableMapOf()
-                currentInfo["connected"] = false
-                serverInfo.value = currentInfo
+                val currentInfo = serverInfo.value
+                if (currentInfo != null) {
+                    val disconnectedServer = currentInfo.copy(connected = false)
+                    serverInfo.value = disconnectedServer
+                } else {
+                    serverInfo.value = null
+                }
                 Log.d("DiscoveryStatusManager", "Server disconnected")
             }
         }
@@ -105,7 +112,7 @@ object DiscoveryStatusManager {
     /**
      * Set server information directly
      */
-    fun setServerInfo(info: MutableMap<String?, Any?>?) {
+    fun setServerInfo(info: Server?) {
         Handler(Looper.getMainLooper()).post {
             serverInfo.value = info
         }
@@ -197,5 +204,66 @@ object DiscoveryStatusManager {
         } else {
             context.startService(intent)
         }
+    }
+    
+    /**
+     * Start discovery with automatic retry mechanism
+     */
+    fun startDiscoveryWithRetry(maxRetries: Int = 3, retryDelay: Long = 5000) {
+        // Reset retry count and start discovery
+        updateDiscoveryStatus(inProgress = true, retryCount = 0, maxRetries = maxRetries)
+        startNetworkService()
+        
+        // Schedule retry check after delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            checkAndRetryDiscovery(maxRetries, retryDelay)
+        }, retryDelay)
+    }
+    
+    /**
+     * Check if discovery has succeeded and retry if needed
+     */
+    private fun checkAndRetryDiscovery(maxRetries: Int, retryDelay: Long) {
+        val currentStatus = discoveryStatus.value ?: DiscoveryStatus.initial(maxRetries)
+        val currentServerInfo = serverInfo.value
+        
+        // Check if server is already connected
+        val isConnected = currentServerInfo?.connected ?: false
+        
+        if (isConnected) {
+            // Discovery succeeded, no need to retry
+            Log.d("DiscoveryStatusManager", "Discovery succeeded, stopping retry mechanism")
+            return
+        }
+        
+        // Check if we should retry
+        if (currentStatus.retryCount < maxRetries) {
+            val nextRetryCount = currentStatus.retryCount + 1
+            Log.d("DiscoveryStatusManager", "Discovery attempt ${nextRetryCount}/$maxRetries failed, retrying...")
+            
+            // Update status with incremented retry count
+            updateDiscoveryStatus(inProgress = true, retryCount = nextRetryCount, maxRetries = maxRetries)
+            
+            // Restart discovery
+            restartDiscovery()
+            
+            // Schedule next retry check
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkAndRetryDiscovery(maxRetries, retryDelay)
+            }, retryDelay)
+        } else {
+            // Max retries reached, mark as failed
+            Log.d("DiscoveryStatusManager", "Discovery failed after $maxRetries attempts")
+            updateDiscoveryFailed(failed = true)
+        }
+    }
+    
+    /**
+     * Stop discovery and cancel any pending retries
+     */
+    fun stopDiscoveryWithRetry() {
+        stopNetworkService()
+        updateDiscoveryStatus(inProgress = false)
+        Log.d("DiscoveryStatusManager", "Discovery stopped, retry mechanism cancelled")
     }
 }

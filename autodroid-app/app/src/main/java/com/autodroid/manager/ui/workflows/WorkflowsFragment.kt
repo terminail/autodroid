@@ -12,17 +12,18 @@ import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
 import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.model.Workflow
 import com.google.gson.Gson
 
 class WorkflowsFragment : BaseFragment() {
     private var workflowsTitleTextView: TextView? = null
     private var workflowsRecyclerView: RecyclerView? = null
-    private var adapter: BaseItemAdapter? = null
-    private var workflowItems: MutableList<MutableMap<String?, Any?>?>? = null
+    private var adapter: WorkflowAdapter? = null
+    private var workflowItems: MutableList<Workflow>? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        workflowItems = ArrayList<MutableMap<String?, Any?>?>()
+        workflowItems = ArrayList<Workflow>()
         setupMockData()
     }
 
@@ -37,15 +38,14 @@ class WorkflowsFragment : BaseFragment() {
 
         // Set up RecyclerView
         workflowsRecyclerView!!.setLayoutManager(LinearLayoutManager(getContext()))
-        adapter = BaseItemAdapter(
+        adapter = WorkflowAdapter(
             workflowItems,
-            object : BaseItemAdapter.OnItemClickListener {
-                override fun onItemClick(item: MutableMap<String?, Any?>?) {
+            object : WorkflowAdapter.OnWorkflowClickListener {
+                override fun onWorkflowClick(workflow: Workflow?) {
                     // Handle item click - open workflow detail
-                    openWorkflowDetail(item)
+                    openWorkflowDetail(workflow)
                 }
-            },
-            R.layout.item_generic
+            }
         )
         workflowsRecyclerView!!.setAdapter(adapter)
     }
@@ -56,31 +56,34 @@ class WorkflowsFragment : BaseFragment() {
 
     private fun setupMockData() {
         // Add mock workflow items
-        val workflow1: MutableMap<String?, Any?> = HashMap<String?, Any?>()
-        workflow1.put("title", "Login Workflow")
-        workflow1.put("subtitle", "com.example.app")
-        workflow1.put("status", "Active")
-        workflow1.put("id", "1")
+        val workflow1 = Workflow(
+            id = "1",
+            title = "Login Workflow",
+            subtitle = "com.example.app",
+            status = "Active"
+        )
         workflowItems!!.add(workflow1)
 
-        val workflow2: MutableMap<String?, Any?> = HashMap<String?, Any?>()
-        workflow2.put("title", "Purchase Workflow")
-        workflow2.put("subtitle", "com.shopping.app")
-        workflow2.put("status", "Inactive")
-        workflow2.put("id", "2")
+        val workflow2 = Workflow(
+            id = "2",
+            title = "Purchase Workflow",
+            subtitle = "com.shopping.app",
+            status = "Inactive"
+        )
         workflowItems!!.add(workflow2)
 
-        val workflow3: MutableMap<String?, Any?> = HashMap<String?, Any?>()
-        workflow3.put("title", "Settings Workflow")
-        workflow3.put("subtitle", "com.settings.app")
-        workflow3.put("status", "Active")
-        workflow3.put("id", "3")
+        val workflow3 = Workflow(
+            id = "3",
+            title = "Settings Workflow",
+            subtitle = "com.settings.app",
+            status = "Active"
+        )
         workflowItems!!.add(workflow3)
     }
 
-    private fun openWorkflowDetail(workflow: MutableMap<String?, Any?>?) {
+    private fun openWorkflowDetail(workflow: Workflow?) {
         // Get workflow ID
-        val workflowId = workflow?.get("id") as String?
+        val workflowId = workflow?.id
         
         // Navigate to WorkflowDetailFragment using Navigation Component
         if (workflowId != null) {

@@ -1,31 +1,39 @@
-// DeviceInfoManager.kt
+// DeviceManager.kt
 package com.autodroid.manager.managers
 
 import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.model.Device
 import java.io.*
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.*
 
-class DeviceInfoManager(private val context: Context?, private val viewModel: AppViewModel) {
-    val deviceInfo: String
+class DeviceManager(private val context: Context?, private val appViewModel: AppViewModel) {
+    val device: Device
         get() {
             val deviceName = Build.MODEL
             val androidVersion = Build.VERSION.RELEASE
             val localIp = this.localIpAddress
 
-            return String.format(
-                "Device: %s\nAndroid: %s\nNetwork IP: %s",
-                deviceName, androidVersion, localIp
+            return Device.detailed(
+                ip = localIp ?: "Not Available",
+                name = deviceName,
+                model = Build.MODEL,
+                manufacturer = Build.MANUFACTURER,
+                androidVersion = androidVersion,
+                platform = "Android",
+                brand = Build.BRAND,
+                device = Build.DEVICE,
+                product = Build.PRODUCT
             )
         }
 
-    fun updateDeviceInfo() {
-        val deviceInfo = this.deviceInfo
-        viewModel.setDeviceIp(this.localIpAddress)
+    fun updateDevice() {
+        val device = this.device
+        appViewModel.setDevice(device)
         // You can return this or use a callback to update UI
     }
 
@@ -52,6 +60,6 @@ class DeviceInfoManager(private val context: Context?, private val viewModel: Ap
         }
 
     companion object {
-        private const val TAG = "DeviceInfoManager"
+        private const val TAG = "DeviceManager"
     }
 }

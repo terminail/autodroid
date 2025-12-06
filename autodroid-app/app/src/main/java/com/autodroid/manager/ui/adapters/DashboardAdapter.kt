@@ -12,12 +12,11 @@ import com.autodroid.manager.model.DashboardItem
 class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     companion object {
-        const val TYPE_SERVER_CONNECTION = 0
+        const val TYPE_SERVER = 0
         const val TYPE_WIFI = 1
         const val TYPE_DEVICE = 2
         const val TYPE_APK_SCANNER = 3
         const val TYPE_APK = 4
-        const val TYPE_APK_INFO = 5
     }
     
     private val items = mutableListOf<DashboardItem>()
@@ -25,8 +24,10 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // 点击监听器接口
     interface OnItemClickListener {
         fun onScanQrCodeClick()
+        fun onManualInputClick()
+        fun onStartMdnsClick()
         fun onScanApksClick()
-        fun onApkItemClick(apkInfo: DashboardItem.ApkInfo)
+        fun onApkItemClick(apkInfo: com.autodroid.manager.model.Apk)
     }
     
     private var listener: OnItemClickListener? = null
@@ -48,9 +49,9 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            TYPE_SERVER_CONNECTION -> {
-                val view = inflater.inflate(R.layout.item_server_connection, parent, false)
-                ServerConnectionViewHolder(view)
+            TYPE_SERVER -> {
+                val view = inflater.inflate(R.layout.item_server, parent, false)
+                ServerViewHolder(view)
             }
             TYPE_WIFI -> {
                 val view = inflater.inflate(R.layout.item_wifi, parent, false)
@@ -68,10 +69,6 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.item_apk, parent, false)
                 ApkViewHolder(view)
             }
-            TYPE_APK_INFO -> {
-                val view = inflater.inflate(R.layout.item_apk, parent, false)
-                ApkInfoViewHolder(view)
-            }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -79,40 +76,61 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
         when (holder) {
-            is ServerConnectionViewHolder -> holder.bind(item as DashboardItem.ServerConnectionItem)
-            is WiFiViewHolder -> holder.bind(item as DashboardItem.WiFiInfoItem)
-            is DeviceViewHolder -> holder.bind(item as DashboardItem.DeviceInfoItem)
+            is ServerViewHolder -> holder.bind(item as DashboardItem.ServerItem)
+            is WiFiViewHolder -> holder.bind(item as DashboardItem.WiFiItem)
+            is DeviceViewHolder -> holder.bind(item as DashboardItem.DeviceItem)
             is ApkScannerViewHolder -> holder.bind(item as DashboardItem.ApkScannerItem)
             is ApkViewHolder -> holder.bind(item as DashboardItem.ApkItem)
-            is ApkInfoViewHolder -> holder.bind(item as DashboardItem.ApkInfo)
         }
     }
     
     override fun getItemCount(): Int = items.size
     
     // ViewHolder 类定义
-    inner class ServerConnectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ServerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val connectionStatus: TextView = itemView.findViewById(R.id.connection_status)
-        private val serverIp: TextView = itemView.findViewById(R.id.server_ip)
-        private val serverPort: TextView = itemView.findViewById(R.id.server_port)
         private val serverStatus: TextView = itemView.findViewById(R.id.server_status)
+        private val serverName: TextView = itemView.findViewById(R.id.server_name)
+        private val serverHostname: TextView = itemView.findViewById(R.id.server_hostname)
+        private val serverPlatform: TextView = itemView.findViewById(R.id.server_platform)
         private val apiEndpoint: TextView = itemView.findViewById(R.id.api_endpoint)
+        private val discoveryMethod: TextView = itemView.findViewById(R.id.discovery_method)
+        private val startMdnsButton: Button = itemView.findViewById(R.id.start_mdns_button)
         private val scanQrButton: Button = itemView.findViewById(R.id.scan_qr_button)
+        private val manualInputButton: Button = itemView.findViewById(R.id.manual_input_button)
         
         init {
+            startMdnsButton.setOnClickListener {
+                listener?.onStartMdnsClick()
+            }
+            
             scanQrButton.setOnClickListener {
                 listener?.onScanQrCodeClick()
             }
+            
+            manualInputButton.setOnClickListener {
+                listener?.onManualInputClick()
+            }
         }
         
-        fun bind(item: DashboardItem.ServerConnectionItem) {
+        fun bind(item: DashboardItem.ServerItem) {
             connectionStatus.text = item.status
-            serverIp.text = item.serverIp
-            serverPort.text = item.serverPort
             serverStatus.text = item.serverStatus
+            serverName.text = item.serverName
+            serverHostname.text = item.hostname
+            serverPlatform.text = item.platform
             apiEndpoint.text = item.apiEndpoint
-            scanQrButton.visibility = if (item.showQrButton) View.VISIBLE else View.GONE
-            scanQrButton.isEnabled = item.isQrButtonEnabled
+            discoveryMethod.text = item.discoveryMethod
+            
+            // 按钮始终显示且始终可以点击
+            startMdnsButton.visibility = View.VISIBLE
+            startMdnsButton.isEnabled = true
+            
+            scanQrButton.visibility = View.VISIBLE
+            scanQrButton.isEnabled = true
+            
+            manualInputButton.visibility = View.VISIBLE
+            manualInputButton.isEnabled = true
         }
     }
     
@@ -121,7 +139,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val wifiIp: TextView = itemView.findViewById(R.id.wifi_ip)
         private val wifiStatus: TextView = itemView.findViewById(R.id.wifi_status)
         
-        fun bind(item: DashboardItem.WiFiInfoItem) {
+        fun bind(item: DashboardItem.WiFiItem) {
             wifiName.text = item.ssid
             wifiIp.text = item.ipAddress
             wifiStatus.text = if (item.isConnected) "Connected" else "Disconnected"
@@ -137,7 +155,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val deviceStatus: TextView = itemView.findViewById(R.id.device_status)
         private val connectionTime: TextView = itemView.findViewById(R.id.connection_time)
         
-        fun bind(item: DashboardItem.DeviceInfoItem) {
+        fun bind(item: DashboardItem.DeviceItem) {
             deviceUdid.text = item.udid
             userId.text = item.userId
             deviceName.text = item.name
@@ -195,28 +213,5 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
     
-    inner class ApkInfoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val apkAppName: TextView = itemView.findViewById(R.id.apk_app_name)
-        private val apkPackageName: TextView = itemView.findViewById(R.id.apk_package_name)
-        private val apkVersion: TextView = itemView.findViewById(R.id.apk_version)
-        private val apkVersionCode: TextView = itemView.findViewById(R.id.apk_version_code)
-        
-        init {
-            itemView.setOnClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    val item = items[position] as DashboardItem.ApkInfo
-                    listener?.onApkItemClick(item)
-                }
-            }
-        }
-        
-        fun bind(item: DashboardItem.ApkInfo) {
-            // 显示APK信息
-            apkAppName.text = item.appName
-            apkPackageName.text = "Package: ${item.packageName}"
-            apkVersion.text = "Version: ${item.version}"
-            apkVersionCode.text = "Code: ${item.versionCode}"
-        }
-    }
+
 }

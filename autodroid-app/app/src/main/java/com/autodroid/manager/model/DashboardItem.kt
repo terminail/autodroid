@@ -1,19 +1,21 @@
 package com.autodroid.manager.model
 
+import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 
 sealed class DashboardItem(val type: Int) {
-    data class ServerConnectionItem(
+    data class ServerItem(
         val status: String = "Discovering servers...",
-        val serverIp: String = "Searching...",
-        val serverPort: String = "-",
         val serverStatus: String = "Disconnected",
         val apiEndpoint: String = "-",
-        val showQrButton: Boolean = true,
-        val isQrButtonEnabled: Boolean = true
-    ) : DashboardItem(DashboardAdapter.TYPE_SERVER_CONNECTION)
+        val discoveryMethod: String = "Auto Discovery",
+        val isStartMdnsButtonEnabled: Boolean = true,
+        val serverName: String = "-",
+        val hostname: String = "-",
+        val platform: String = "-"
+    ) : DashboardItem(DashboardAdapter.TYPE_SERVER)
     
-    data class WiFiInfoItem(
+    data class WiFiItem(
         val ssid: String = "Not connected",
         val bssid: String = "Unknown",
         val signalStrength: Int = 0,
@@ -23,7 +25,7 @@ sealed class DashboardItem(val type: Int) {
         val isConnected: Boolean = false
     ) : DashboardItem(DashboardAdapter.TYPE_WIFI)
     
-    data class DeviceInfoItem(
+    data class DeviceItem(
         val udid: String = "KNT-AL10-1234567890",
         val userId: String = "user001",
         val name: String = "KNT-AL10",
@@ -40,15 +42,6 @@ sealed class DashboardItem(val type: Int) {
     ) : DashboardItem(DashboardAdapter.TYPE_APK_SCANNER)
     
     data class ApkItem(
-        val apkInfo: ApkInfo
+        val apkInfo: com.autodroid.manager.model.Apk
     ) : DashboardItem(DashboardAdapter.TYPE_APK)
-    
-    data class ApkInfo(
-        val packageName: String,
-        val appName: String,
-        val version: String,
-        val versionCode: Int,
-        val installTime: String = "Unknown",
-        val updateTime: String = "Unknown"
-    ) : DashboardItem(DashboardAdapter.TYPE_APK_INFO)
 }

@@ -8,7 +8,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import com.autodroid.manager.R
-import com.autodroid.manager.model.DashboardItem
+import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.ui.BaseFragment
 
 class ApkDetailFragment : BaseFragment() {
@@ -17,15 +17,15 @@ class ApkDetailFragment : BaseFragment() {
         private const val ARG_APK_INFO = "apkInfo"
         
         // Helper method to create fragment with arguments
-        fun newInstance(apkInfo: DashboardItem.ApkInfo): ApkDetailFragment {
+        fun newInstance(apkInfo: com.autodroid.manager.model.Apk): ApkDetailFragment {
             val fragment = ApkDetailFragment()
             val args = Bundle()
             args.putString("appName", apkInfo.appName)
             args.putString("packageName", apkInfo.packageName)
             args.putString("version", apkInfo.version)
             args.putInt("versionCode", apkInfo.versionCode)
-            args.putString("installTime", apkInfo.installTime)
-            args.putString("updateTime", apkInfo.updateTime)
+            args.putString("installTime", apkInfo.installedTime.toString())
+            args.putString("updateTime", "Unknown") // ApkScannerManager.ApkInfo doesn't have updateTime
             fragment.arguments = args
             return fragment
         }

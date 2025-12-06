@@ -128,13 +128,16 @@ class ApkScannerItemManager(
                             
                             // Update APK info with scan results
                             val apkInfoList = apkList.map { apkInfo ->
-                                DashboardItem.ApkInfo(
-                                    packageName = apkInfo.packageName ?: "Unknown",
-                                    appName = apkInfo.appName ?: "Unknown App",
-                                    version = apkInfo.version ?: "Unknown",
-                                    versionCode = apkInfo.versionCode ?: 0
-                                )
-                            }
+                com.autodroid.manager.model.Apk(
+                    packageName = apkInfo.packageName ?: "Unknown",
+                    appName = apkInfo.appName ?: "Unknown App",
+                    version = apkInfo.version ?: "Unknown",
+                    versionCode = apkInfo.versionCode ?: 0,
+                    installedTime = apkInfo.installedTime ?: 0L,
+                    isSystem = apkInfo.isSystem ?: false,
+                    iconPath = apkInfo.iconPath ?: ""
+                )
+            }
                             
                             // Update ViewModel with APK list for display
                             viewModel.setApkList(apkInfoList)
@@ -143,11 +146,11 @@ class ApkScannerItemManager(
                             if (apkInfoList.isNotEmpty()) {
                                 // Trigger APK info display by selecting the first APK
                                 // This will be handled by the DashboardAdapter or Fragment
-                                // that manages both ApkScannerItemManager and ApkInfoItemManager
+                                // that manages both ApkScannerItemManager and ApkItemManager
                                 Log.d(TAG, "Scan completed: ${apkInfoList.size} APKs ready for display")
                                 
                                 // Auto-select the first APK to display its information
-                                // This triggers the ApkInfoItemManager to show the first APK details
+                                // This triggers the ApkItemManager to show the first APK details
                                 viewModel.setSelectedApkIndex(0)
                             }
                         }
@@ -205,7 +208,7 @@ class ApkScannerItemManager(
                     dashboardItems[existingIndex] = item
                 } else {
                     // Add new item after device info item
-                    val deviceInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceInfoItem }
+                    val deviceInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceItem }
                     if (deviceInfoIndex != -1) {
                         dashboardItems.add(deviceInfoIndex + 1, item)
                     } else {
@@ -214,8 +217,8 @@ class ApkScannerItemManager(
                     }
                 }
                 
-                // Update adapter
-                dashboardAdapter?.notifyDataSetChanged()
+                // Update adapter - use updateItems to sync both lists
+                dashboardAdapter?.updateItems(dashboardItems)
                 true
             } else {
                 Log.e(TAG, "Invalid item type for APK scanner: ${item::class.simpleName}")

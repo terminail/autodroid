@@ -4,7 +4,7 @@ package com.autodroid.manager.model
  * 用户信息类，封装登录成功的用户数据
  * 这是一个数据类，用于在全局共享状态中存储用户认证信息
  */
-data class UserInfo(
+data class User(
     val userId: String? = null,
     val email: String? = null,
     val token: String? = null,
@@ -21,8 +21,8 @@ data class UserInfo(
      * 创建空的用户信息（用于登出或初始化状态）
      */
     companion object {
-        fun empty(): UserInfo {
-            return UserInfo(isAuthenticated = false)
+        fun empty(): User {
+            return User(isAuthenticated = false)
         }
     }
 }

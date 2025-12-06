@@ -30,3 +30,15 @@ data class WorkflowStep(
     val description: String? = null,
     val parameters: Map<String, Any>? = null
 )
+
+/**
+ * 工作流列表项数据类
+ */
+data class Workflow(
+    val id: String? = null,
+    val name: String? = null,
+    val title: String? = null,
+    val subtitle: String? = null,
+    val description: String? = null,
+    val status: String? = null
+)

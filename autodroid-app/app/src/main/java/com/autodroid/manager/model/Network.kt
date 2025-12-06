@@ -4,7 +4,7 @@ package com.autodroid.manager.model
  * 网络信息封装类
  * 封装网络连接相关的属性和状态
  */
-data class NetworkInfo(
+data class Network(
     val isConnected: Boolean = false,
     val connectionType: ConnectionType = ConnectionType.NONE,
     val ipAddress: String? = null,
@@ -22,12 +22,12 @@ data class NetworkInfo(
         /**
          * 创建空网络信息
          */
-        fun empty(): NetworkInfo = NetworkInfo()
+        fun empty(): Network = Network()
         
         /**
          * 创建WiFi连接的网络信息
          */
-        fun wifiConnected(ipAddress: String, networkName: String? = null): NetworkInfo = NetworkInfo(
+        fun wifiConnected(ipAddress: String, networkName: String? = null): Network = Network(
             isConnected = true,
             connectionType = ConnectionType.WIFI,
             ipAddress = ipAddress,
@@ -38,7 +38,7 @@ data class NetworkInfo(
         /**
          * 创建移动数据连接的网络信息
          */
-        fun mobileConnected(ipAddress: String, isRoaming: Boolean = false): NetworkInfo = NetworkInfo(
+        fun mobileConnected(ipAddress: String, isRoaming: Boolean = false): Network = Network(
             isConnected = true,
             connectionType = ConnectionType.MOBILE,
             ipAddress = ipAddress,
@@ -57,7 +57,7 @@ data class NetworkInfo(
             isMetered: Boolean,
             isRoaming: Boolean,
             isFailover: Boolean
-        ): NetworkInfo = NetworkInfo(
+        ): Network = Network(
             isConnected = isConnected,
             connectionType = connectionType,
             ipAddress = ipAddress,
@@ -90,7 +90,7 @@ data class NetworkInfo(
     /**
      * 断开网络连接
      */
-    fun disconnected(): NetworkInfo = this.copy(
+    fun disconnected(): Network = this.copy(
         isConnected = false,
         isAvailable = false
     )
@@ -101,7 +101,7 @@ data class NetworkInfo(
     fun updateConnectionStatus(
         isConnected: Boolean,
         connectionType: ConnectionType
-    ): NetworkInfo = this.copy(
+    ): Network = this.copy(
         isConnected = isConnected,
         connectionType = connectionType,
         isAvailable = isConnected

@@ -19,8 +19,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
 import com.autodroid.manager.R
-import com.autodroid.manager.model.ServerInfo
-import com.autodroid.manager.model.UserInfo
+import com.autodroid.manager.model.Server
+import com.autodroid.manager.model.User
 import com.autodroid.manager.AppViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ViewModels
-    private lateinit var viewModel: AppViewModel
+    private lateinit var appViewModel: AppViewModel
 
     // Navigation
     private lateinit var navController: NavController
@@ -64,42 +64,23 @@ class MainActivity : AppCompatActivity() {
         // Check and request permissions (NetworkService is auto-started in MyApplication)
         checkAndRequestPermissions()
         
-        // New flow: Start with DashboardFragment and check server connection first
-        checkServerConnectionAndAuthentication()
+        // Optimized flow: Start with DashboardFragment for server discovery
+        // Login will only be triggered after server connection is established
+        setupServerConnectionObserver()
     }
 
     private fun initializeViewModels() {
-        viewModel = ViewModelProvider(this)[AppViewModel::class.java]
+        appViewModel = ViewModelProvider(this)[AppViewModel::class.java]
     }
 
-    private fun checkServerConnectionAndAuthentication() {
-        Log.d(TAG, "Checking server connection and authentication status")
-        
-        // Check if we have valid authentication data from LoginActivity
-        val isAuthenticatedFromIntent = intent.getBooleanExtra("isAuthenticated", false)
-
-        if (isAuthenticatedFromIntent) {
-            // We came from LoginActivity with authentication - update ViewModel
-            val userId = intent.getStringExtra("userId")
-            val email = intent.getStringExtra("email")
-            val token = intent.getStringExtra("token")
-
-            if (userId != null && email != null && token != null) {
-                val userInfo = UserInfo(
-                    userId = userId,
-                    email = email,
-                    token = token,
-                    isAuthenticated = true
-                )
-                viewModel.setUserInfo(userInfo)
-            }
-        }
+    private fun setupServerConnectionObserver() {
+        Log.d(TAG, "Setting up server connection observer")
         
         // Observe server connection status from AppViewModel
-        viewModel.serverInfo.observe(this) { serverInfo ->
-            Log.d(TAG, "Server info changed: $serverInfo")
+        appViewModel.server.observe(this) { server ->
+            Log.d(TAG, "Server info changed: $server")
             
-            val isConnected = serverInfo?.get("connected") as? Boolean ?: false
+            val isConnected = server != null
             
             // Update server connection state
             isServerConnected = isConnected
@@ -109,19 +90,18 @@ class MainActivity : AppCompatActivity() {
             
             if (isConnected) {
                 // Server is connected, check authentication
-                val serverHost = serverInfo["ip"] as? String
-                val serverPort = serverInfo["port"] as? Int
+                val serverName = server?.name ?: "Unknown Server"
+                val serverHostname = server?.hostname ?: "Unknown Host"
+                val apiEndpoint = server?.api_endpoint ?: "Unknown"
                 
-                Log.d(TAG, "Server connected: $serverHost:$serverPort")
+                Log.d(TAG, "Server connected: $serverName ($serverHostname) - $apiEndpoint")
                 
-                // Check if user is authenticated
-                if (!viewModel.isAuthenticated()) {
-                    Log.d(TAG, "User not authenticated, navigating to LoginActivity")
-                    navigateToLoginActivity()
-                } else {
-                    Log.d(TAG, "User already authenticated, staying in DashboardFragment")
-                    // User is authenticated, stay in DashboardFragment
-                }
+                // Server is connected, user can stay in Dashboard as long as they want
+                // Authentication check will only happen when user tries to access protected pages
+                Log.d(TAG, "Server connected, user can stay in DashboardFragment")
+                
+                // Update navigation items state: enable protected pages
+                updateNavigationItemsState()
             } else {
                 // Server not connected, stay in DashboardFragment for server discovery
                 Log.d(TAG, "Server not connected, staying in DashboardFragment for discovery")
@@ -133,12 +113,47 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
+        // Also observe discovery status for better state management
+        appViewModel.discoveryStatus.observe(this) { discoveryStatus ->
+            Log.d(TAG, "Discovery status changed: $discoveryStatus")
+            
+            // Update navigation items based on connection state
+            updateNavigationItemsState()
+            
+            // Get current server connection state
+            val connectionState = appViewModel.getServerConnectionState()
+            Log.d(TAG, "Current server connection state: $connectionState")
+            
+            // Handle different connection states
+            when (connectionState) {
+                AppViewModel.ServerConnectionState.DISCOVERING -> {
+                    Log.d(TAG, "Server discovery in progress, staying in DashboardFragment")
+                    // Stay in DashboardFragment during discovery
+                    if (navController.currentDestination?.id != R.id.nav_dashboard) {
+                        navController.navigate(R.id.nav_dashboard)
+                    }
+                }
+                AppViewModel.ServerConnectionState.FAILED -> {
+                    Log.d(TAG, "Server discovery failed, staying in DashboardFragment")
+                    // Stay in DashboardFragment to show retry options
+                    if (navController.currentDestination?.id != R.id.nav_dashboard) {
+                        navController.navigate(R.id.nav_dashboard)
+                    }
+                }
+                else -> {
+                    // Other states handled by serverInfo observer
+                }
+            }
+        }
+        
         // DashboardFragment is the primary page for server discovery
         Log.d(TAG, "Starting with DashboardFragment as primary page for server discovery")
     }
 
     private fun navigateToLoginActivity() {
         val intent = Intent(this, com.autodroid.manager.auth.activity.LoginActivity::class.java)
+        // Pass authentication state to prevent duplicate observation
+        intent.putExtra("isAuthenticated", false)
         // Use standard activity transition without clearing the task
         startActivity(intent)
         // Don't finish() MainActivity to allow returning to Dashboard
@@ -176,18 +191,36 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation = findViewById(R.id.bottom_navigation)
         NavigationUI.setupWithNavController(bottomNavigation, navController)
         
-        // Add navigation listener to intercept navigation when server is disconnected
+        // Add navigation listener to intercept navigation based on server connection and authentication
+        setupNavigationInterception()
+    }
+    
+    private fun setupNavigationInterception() {
         bottomNavigation.setOnItemSelectedListener { item ->
-            // Check if server is connected for non-dashboard items
-            if (!isServerConnected && item.itemId != R.id.nav_dashboard) {
-                // Show toast message and prevent navigation
-                Toast.makeText(this, "请先连接服务器", Toast.LENGTH_SHORT).show()
-                return@setOnItemSelectedListener false
+            when (item.itemId) {
+                R.id.nav_dashboard -> {
+                    // Dashboard always allows navigation
+                    NavigationUI.onNavDestinationSelected(item, navController)
+                    true
+                }
+                else -> {
+                    // Protected pages: check server connection and authentication
+                    if (!isServerConnected) {
+                        // Server not connected, show message and prevent navigation
+                        Toast.makeText(this, "请先连接服务器", Toast.LENGTH_SHORT).show()
+                        false
+                    } else if (!appViewModel.isAuthenticated()) {
+                        // Server connected but not authenticated, navigate to login
+                        Log.d(TAG, "User not authenticated, navigating to LoginActivity")
+                        navigateToLoginActivity()
+                        false
+                    } else {
+                        // Connected and authenticated, allow navigation
+                        NavigationUI.onNavDestinationSelected(item, navController)
+                        true
+                    }
+                }
             }
-            
-            // Allow navigation for dashboard or when server is connected
-            NavigationUI.onNavDestinationSelected(item, navController)
-            return@setOnItemSelectedListener true
         }
     }
 

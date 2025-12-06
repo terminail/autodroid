@@ -242,10 +242,14 @@ class NetworkService : Service() {
                 mdnsFallbackManager?.startDiscovery(
                     discoveryCallback = { serverInfo ->
                         // Handle service found
-                        Log.d(TAG, "Service found: ${serverInfo.serviceName} at ${serverInfo.host}:${serverInfo.port}")
-                        discoveredServer = DiscoveredServer(serverInfo.serviceName, serverInfo.host, serverInfo.port)
+                        Log.d(TAG, "Service found: ${serverInfo.serviceName} at ${serverInfo.ip}:${serverInfo.port}")
+                        // Ensure non-null values for DiscoveredServer constructor
+                        val serviceName = serverInfo.serviceName ?: "Unknown Service"
+                        val ip = serverInfo.ip ?: "unknown"
+                        val port = serverInfo.port ?: 0
+                        discoveredServer = DiscoveredServer(serviceName, ip, port)
                         // Update discovery status to completed
-                        DiscoveryStatusManager.updateDiscoveryStatus(false, 0, 0)
+                        DiscoveryStatusManager.updateDiscoveryStatus(false)
                         // Update server info for UI
                         DiscoveryStatusManager.updateServerInfo(discoveredServer)
                         // Notify UI or other components

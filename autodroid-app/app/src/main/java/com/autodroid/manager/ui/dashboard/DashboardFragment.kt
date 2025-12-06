@@ -34,6 +34,7 @@ import com.autodroid.manager.R
 import com.autodroid.manager.managers.WorkflowManager
 import com.autodroid.manager.apk.ApkScannerManager
 import com.autodroid.manager.model.DiscoveredServer
+import com.autodroid.manager.model.Server
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
 import com.autodroid.manager.service.DiscoveryStatusManager
@@ -44,6 +45,8 @@ import com.autodroid.manager.utils.NetworkUtils
 import com.autodroid.manager.utils.DeviceUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DashboardFragment : BaseFragment() {
     private val TAG = "DashboardFragment"
@@ -67,11 +70,11 @@ class DashboardFragment : BaseFragment() {
     private val dashboardItems = mutableListOf<DashboardItem>()
     
     // Item managers for modular architecture
-    private lateinit var serverConnectionItemManager: ServerConnectionItemManager
-    private lateinit var deviceInfoItemManager: DeviceInfoItemManager
-    private lateinit var wifiInfoItemManager: WiFiInfoItemManager
+    private lateinit var serverConnectionItemManager: ServerItemManager
+    private lateinit var deviceInfoItemManager: DeviceItemManager
+    private lateinit var wifiItemManager: WiFiItemManager
     private lateinit var apkScannerItemManager: ApkScannerItemManager
-    private lateinit var apkInfoItemManager: ApkInfoItemManager
+    private lateinit var apkItemManager: ApkItemManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,21 +109,21 @@ class DashboardFragment : BaseFragment() {
         dashboardRecyclerView?.layoutManager = LinearLayoutManager(context)
         
         // Initialize item managers FIRST
-        serverConnectionItemManager = ServerConnectionItemManager(
+        serverConnectionItemManager = ServerItemManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
             ::onServerConnectionItemUpdate
         )
         
-        deviceInfoItemManager = DeviceInfoItemManager(
+        deviceInfoItemManager = DeviceItemManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
             ::onDeviceInfoItemUpdate
         )
         
-        wifiInfoItemManager = WiFiInfoItemManager(
+        wifiItemManager = WiFiItemManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
@@ -134,7 +137,7 @@ class DashboardFragment : BaseFragment() {
             ::onApkScannerItemUpdate
         )
         
-        apkInfoItemManager = ApkInfoItemManager(
+        apkItemManager = ApkItemManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
@@ -144,8 +147,17 @@ class DashboardFragment : BaseFragment() {
         // Initialize DashboardAdapter
         dashboardAdapter = DashboardAdapter()
         dashboardAdapter?.setOnItemClickListener(object : DashboardAdapter.OnItemClickListener {
+            override fun onStartMdnsClick() {
+                serverConnectionItemManager.handleStartMdnsDiscovery()
+            }
+            
             override fun onScanQrCodeClick() {
                 serverConnectionItemManager.checkCameraPermissionAndScanQR()
+            }
+            
+            override fun onManualInputClick() {
+                // 委托给ServerConnectionItemManager处理手动输入
+                this@DashboardFragment.onManualInputClick()
             }
             
             override fun onScanApksClick() {
@@ -153,7 +165,7 @@ class DashboardFragment : BaseFragment() {
                 apkScannerItemManager?.handleScanApksClick()
             }
             
-            override fun onApkItemClick(apkInfo: DashboardItem.ApkInfo) {
+            override fun onApkItemClick(apkInfo: com.autodroid.manager.model.Apk) {
                 // Navigate to detail fragment with APK information
                 navigateToApkDetail(apkInfo)
             }
@@ -167,9 +179,9 @@ class DashboardFragment : BaseFragment() {
          // Start item managers
         serverConnectionItemManager.initialize()
         deviceInfoItemManager.initialize()
-        wifiInfoItemManager.initialize()
+        wifiItemManager.initialize()
         apkScannerItemManager.initialize()
-        apkInfoItemManager.initialize()
+        apkItemManager.initialize()
 
         // Debug: Check if NetworkService is running
         Log.d("DashboardFragment", "Initializing views - checking NetworkService status")
@@ -197,8 +209,15 @@ class DashboardFragment : BaseFragment() {
     /**
      * Simplified callback for server connection item updates
      */
-    private fun onServerConnectionItemUpdate(item: DashboardItem) {
-        serverConnectionItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    private fun onServerConnectionItemUpdate(item: DashboardItem.ServerItem) {
+        Log.d("DashboardFragment", "onServerConnectionItemUpdate called: status=${item.status}, serverStatus=${item.serverStatus}")
+        
+        try {
+            val result = serverConnectionItemManager.handleServerConnectionUpdate(item, dashboardItems, dashboardAdapter)
+            Log.d("DashboardFragment", "handleServerConnectionUpdate result: $result")
+        } catch (e: Exception) {
+            Log.e("DashboardFragment", "Error in handleServerConnectionUpdate: ${e.message}", e)
+        }
     }
     
     /**
@@ -212,7 +231,7 @@ class DashboardFragment : BaseFragment() {
      * Simplified callback for WiFi info item updates
      */
     private fun onWiFiInfoItemUpdate(item: DashboardItem) {
-        wifiInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+        wifiItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
     }
     
     /**
@@ -227,18 +246,20 @@ class DashboardFragment : BaseFragment() {
         dashboardItems.clear()
         
         // Add initial items in the correct order:
-        // 1. Connection Status - Initialize with mDNS discovery state
-        dashboardItems.add(DashboardItem.ServerConnectionItem(
+        // 1. Connection Status - Add server connection item as first item
+        dashboardItems.add(DashboardItem.ServerItem(
             status = "Discovering servers via mDNS...",
-            serverIp = "Searching...",
-            serverPort = "-",
             serverStatus = "DISCONNECTED",
             apiEndpoint = "-",
-            showQrButton = false  // Initially hide QR button during mDNS discovery
+            discoveryMethod = "Auto mDNS Discovery",
+            isStartMdnsButtonEnabled = false,
+            serverName = "Autodroid Server",
+            hostname = "-",
+            platform = "-"
         ))
         
         // 2. Wifi Information
-        dashboardItems.add(DashboardItem.WiFiInfoItem(
+        dashboardItems.add(DashboardItem.WiFiItem(
             ssid = "Unknown",
             bssid = "Unknown",
             signalStrength = 0,
@@ -249,7 +270,7 @@ class DashboardFragment : BaseFragment() {
         ))
         
         // 3. Device Information
-        dashboardItems.add(DashboardItem.DeviceInfoItem(
+        dashboardItems.add(DashboardItem.DeviceItem(
             udid = "Unknown",
             userId = "user001",
             name = "Unknown",
@@ -265,13 +286,16 @@ class DashboardFragment : BaseFragment() {
         ))
         
         // 5. Add empty APK info item as placeholder (will be updated when APKs are scanned)
-        dashboardItems.add(DashboardItem.ApkInfo(
-            packageName = "",
-            appName = "",
-            version = "",
-            versionCode = 0,
-            installTime = "",
-            updateTime = ""
+        dashboardItems.add(DashboardItem.ApkItem(
+            apkInfo = com.autodroid.manager.model.Apk(
+                packageName = "",
+                appName = "",
+                version = "",
+                versionCode = 0,
+                installedTime = 0L,
+                isSystem = false,
+                iconPath = ""
+            )
         ))
         
         // 6. Static Dashboard Items (add any additional static items here if needed)
@@ -280,13 +304,72 @@ class DashboardFragment : BaseFragment() {
         dashboardAdapter?.updateItems(dashboardItems)
         
         // Trigger initial updates from item managers
+        // These will update the dashboardItems list with current data
+        // Start with server connection to ensure it's immediately visible
         serverConnectionItemManager.refresh()
-        wifiInfoItemManager.refresh()
+        wifiItemManager.refresh()
         deviceInfoItemManager.refresh()
         apkScannerItemManager.refresh()
+        
+        // Force immediate UI update to show current server state
+        forceServerItemUpdate()
+    }
+    
+    /**
+     * Force immediate update of server connection item with current state
+     */
+    private fun forceServerItemUpdate() {
+        // Get the current server state from the view model
+        val currentServer = appViewModel.server.value
+        val currentDiscoveryStatus = appViewModel.discoveryStatus.value
+
+        if (currentServer != null) {
+            // Server is connected or discovered, update UI immediately
+            val serverItem = DashboardItem.ServerItem(
+                status = when {
+                    currentServer.connected -> "Connected via ${currentServer.discoveryMethod ?: "Unknown"}"
+                    currentServer.discoveryMethod == "mDNS" -> "mDNS Discovery Successful"
+                    currentServer.discoveryMethod == "QRCode" -> "QR Code Scanned"
+                    else -> "Server Found"
+                },
+                serverStatus = if (currentServer.connected) "CONNECTED" else "DISCOVERED",
+                apiEndpoint = currentServer.api_endpoint ?: "-",
+                discoveryMethod = currentServer.discoveryMethod ?: "Auto mDNS Discovery",
+                isStartMdnsButtonEnabled = currentDiscoveryStatus?.isDiscovering() != true,
+                serverName = currentServer.name ?: "Autodroid Server",
+                hostname = currentServer.hostname ?: "-",
+                platform = currentServer.platform ?: "-"
+            )
+            
+            // Update the server item in the list
+            serverConnectionItemManager.handleServerConnectionUpdate(serverItem, dashboardItems, dashboardAdapter)
+        } else {
+            // No server info available, show discovery status
+            val isDiscovering = currentDiscoveryStatus?.isDiscovering() ?: false
+            val retryCount = currentDiscoveryStatus?.retryCount ?: 0
+            
+            val serverItem = DashboardItem.ServerItem(
+                status = when {
+                    isDiscovering -> if (retryCount > 0) "mDNS Discovery (Retry $retryCount)..." else "Discovering servers via mDNS..."
+                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "mDNS Discovery Failed"
+                    else -> "Discovering servers via mDNS..."
+                },
+                serverStatus = when {
+                    isDiscovering -> "DISCOVERING"
+                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "FAILED"
+                    else -> "DISCONNECTED"
+                },
+                apiEndpoint = "-",
+                discoveryMethod = "Auto mDNS Discovery",
+                isStartMdnsButtonEnabled = !isDiscovering
+            )
+            
+            // Update the server item in the list
+            serverConnectionItemManager.handleServerConnectionUpdate(serverItem, dashboardItems, dashboardAdapter)
+        }
     }
 
-    // updateWiFiInfo method removed - WiFi information updates are handled by WiFiInfoItemManager
+    // updateWiFiInfo method removed - WiFi information updates are handled by WiFiItemManager
 
     // getDeviceUDID method removed - use DeviceUtils.getDeviceUDID() instead
 
@@ -310,10 +393,10 @@ class DashboardFragment : BaseFragment() {
      * Simplified callback for APK information item updates
      */
     private fun onApkInfoItemUpdate(item: DashboardItem) {
-        apkInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+        apkItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
     }
     
-    private fun navigateToApkDetail(apkInfo: DashboardItem.ApkInfo) {
+    private fun navigateToApkDetail(apkInfo: com.autodroid.manager.model.Apk) {
         try {
             // Create bundle with APK info arguments
             val bundle = Bundle().apply {
@@ -321,8 +404,9 @@ class DashboardFragment : BaseFragment() {
             putString("packageName", apkInfo.packageName)
             putString("version", apkInfo.version)
             putInt("versionCode", apkInfo.versionCode)
-            putString("installTime", apkInfo.installTime)
-            putString("updateTime", apkInfo.updateTime)
+            putLong("installTime", apkInfo.installedTime)
+            putBoolean("isSystem", apkInfo.isSystem)
+            putString("iconPath", apkInfo.iconPath)
             }
             
             // Navigate to APK detail fragment
@@ -332,6 +416,13 @@ class DashboardFragment : BaseFragment() {
             // Fallback: show error message
             android.widget.Toast.makeText(requireContext(), "无法打开APK详情页面", android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /**
+     * 处理手动输入按钮点击事件 - 委托给ServerConnectionItemManager
+     */
+    private fun onManualInputClick() {
+        serverConnectionItemManager.handleManualInputClick()
     }
 
     override fun onDestroy() {

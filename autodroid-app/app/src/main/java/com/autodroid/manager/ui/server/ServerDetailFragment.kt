@@ -9,24 +9,22 @@ import androidx.lifecycle.ViewModelProvider
 import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.model.Server
 
 class ServerDetailFragment : BaseFragment() {
     // UI Components
     private var serverNameTextView: TextView? = null
-    private var serverIpTextView: TextView? = null
-    private var serverPortTextView: TextView? = null
+    private var apiEndpointTextView: TextView? = null
     private var connectButton: Button? = null
     private var disconnectButton: Button? = null
 
-    private var serverIp: String? = null
-    private var serverPort: Int = 0
+    private var apiEndpoint: String? = null
 
    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Get server info from arguments
         arguments?.let { args ->
-            serverIp = args.getString("serverIp")
-            serverPort = args.getInt("serverPort")
+            apiEndpoint = args.getString("apiEndpoint")
         }
     }
 
@@ -36,8 +34,7 @@ class ServerDetailFragment : BaseFragment() {
 
     override fun initViews(view: View) {
         serverNameTextView = view?.findViewById(R.id.server_name_text_view)
-        serverIpTextView = view?.findViewById(R.id.server_ip_text_view)
-        serverPortTextView = view?.findViewById(R.id.server_port_text_view)
+        apiEndpointTextView = view?.findViewById(R.id.api_endpoint_text_view)
         connectButton = view?.findViewById(R.id.connect_button)
         disconnectButton = view?.findViewById(R.id.disconnect_button)
 
@@ -55,15 +52,14 @@ class ServerDetailFragment : BaseFragment() {
     }
 
     override fun setupObservers() {
-        // Observe the unified serverInfo object to ensure consistent state
-        appViewModel.serverInfo.observe(viewLifecycleOwner) { serverInfo ->
-            if (serverInfo != null) {
-                val connected = serverInfo["connected"] as? Boolean ?: false
-                val currentIp = serverInfo["ip"]?.toString()
-                val currentPort = serverInfo["port"] as? Int ?: 0
+        // Observe the unified server object to ensure consistent state
+        appViewModel.server.observe(viewLifecycleOwner) { server ->
+            if (server != null) {
+                val connected = server.connected
+                val currentApiEndpoint = server.api_endpoint
                 
                 // Update connection buttons based on whether this server is the connected one
-                val isThisServerConnected = connected && currentIp == serverIp && currentPort == serverPort
+                val isThisServerConnected = connected && currentApiEndpoint == apiEndpoint
                 updateConnectionButtons(isThisServerConnected)
             } else {
                 updateConnectionButtons(false)
@@ -73,31 +69,31 @@ class ServerDetailFragment : BaseFragment() {
 
     private fun updateServerInfoUI() {
         serverNameTextView?.text = "Autodroid Server"
-        serverIpTextView?.text = "IP: $serverIp"
-        serverPortTextView?.text = "Port: $serverPort"
+        apiEndpointTextView?.text = "API Endpoint: $apiEndpoint"
     }
 
     private fun connectToServer() {
-        if (serverIp.isNullOrEmpty() || serverPort <= 0) {
+        if (apiEndpoint.isNullOrEmpty()) {
             Toast.makeText(context, "Invalid server information", Toast.LENGTH_SHORT).show()
             return
         }
 
         // Set this server as the current connected server using unified serverInfo
-        val serverInfo = mutableMapOf<String?, Any?>()
-        serverInfo["name"] = "Autodroid Server"
-        serverInfo["ip"] = serverIp!!
-        serverInfo["port"] = serverPort
-        serverInfo["connected"] = true
+        val serverInfo = Server(
+            serviceName = "Autodroid Server",
+            name = "Autodroid Server",
+            api_endpoint = apiEndpoint!!,
+            connected = true
+        )
         
-        appViewModel.setServerInfo(serverInfo)
+        appViewModel.setServer(serverInfo)
 
-        Toast.makeText(context, "Connected to server $serverIp:$serverPort", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Connected to server via API Endpoint", Toast.LENGTH_SHORT).show()
     }
 
     private fun disconnectFromServer() {
         // Disconnect from current server by clearing serverInfo
-        appViewModel.setServerInfo(null)
+        appViewModel.setServer(null)
         Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
     }
 

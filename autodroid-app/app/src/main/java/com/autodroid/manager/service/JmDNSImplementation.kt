@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.model.Server
 import java.io.IOException
 import java.net.InetAddress
 import javax.jmdns.JmDNS
@@ -80,7 +80,12 @@ class JmDNSImplementation(
                             val port = info.port
                             
                             Log.d(TAG, "Resolved service: ${info.name} at $host:$port")
-                            val serverInfo = ServerInfo(info.name, host, port)
+                            // Create API endpoint from discovered host and port
+                            val apiEndpoint = "http://$host:$port/api"
+                            val serverInfo = Server(
+                                serviceName = info.name,
+                                api_endpoint = apiEndpoint
+                            )
                             callback.onServiceFound(serverInfo)
                         }
                     }
@@ -100,7 +105,12 @@ class JmDNSImplementation(
                     val port = service.port
                     
                     Log.d(TAG, "Resolved existing service: ${service.name} at $host:$port")
-                    val serverInfo = ServerInfo(service.name, host, port)
+                    // Create API endpoint from discovered host and port
+                    val apiEndpoint = "http://$host:$port/api"
+                    val serverInfo = Server(
+                        serviceName = service.name,
+                        api_endpoint = apiEndpoint
+                    )
                     callback.onServiceFound(serverInfo)
                 }
             }

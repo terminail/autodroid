@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DiscoveredServer
-import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.model.Server
 import java.util.*
 import java.util.concurrent.Executor
 
@@ -32,7 +32,7 @@ class MdnsFallbackManager(private val context: Context) {
     private val implementations = mutableListOf<MdnsImplementation>()
     private var currentImplementationIndex = 0
     private var isDiscoveryInProgress = false
-    private var discoveryCallback: ((ServerInfo) -> Unit)? = null
+    private var discoveryCallback: ((Server) -> Unit)? = null
     private var failureCallback: (() -> Unit)? = null
     private val weightManager = MdnsWeightManager(context)
     
@@ -73,7 +73,7 @@ class MdnsFallbackManager(private val context: Context) {
     /**
      * Start service discovery with fallback mechanism
      */
-    fun startDiscovery(discoveryCallback: (ServerInfo) -> Unit, failureCallback: () -> Unit) {
+    fun startDiscovery(discoveryCallback: (Server) -> Unit, failureCallback: () -> Unit) {
         if (isDiscoveryInProgress) {
             Log.w(TAG, "Discovery already in progress with ${implementations.getOrNull(currentImplementationIndex)?.javaClass?.simpleName ?: "unknown"} implementation")
             return
@@ -134,8 +134,8 @@ class MdnsFallbackManager(private val context: Context) {
         
         // Create a callback for the current implementation
         val implementationCallback = object : MdnsImplementation.Callback {
-            override fun onServiceFound(serverInfo: ServerInfo) {
-                Log.d(TAG, "Service found using $implementationName: ${serverInfo.host}:${serverInfo.port}")
+            override fun onServiceFound(serverInfo: Server) {
+                Log.d(TAG, "Service found using $implementationName: ${serverInfo.ip}:${serverInfo.port}")
                 discoveryCallback?.invoke(serverInfo)
             }
             
@@ -217,7 +217,7 @@ interface MdnsImplementation {
      * Callback interface for mDNS implementations
      */
     interface Callback {
-        fun onServiceFound(serverInfo: ServerInfo)
+        fun onServiceFound(serverInfo: Server)
         fun onDiscoveryFailed()
     }
 }

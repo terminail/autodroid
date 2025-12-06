@@ -7,14 +7,15 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.manager.R
+import com.autodroid.manager.model.Workflow
 import com.autodroid.manager.ui.workflows.WorkflowAdapter.WorkflowViewHolder
 
 class WorkflowAdapter(
-    private var workflows: MutableList<MutableMap<String?, Any?>>?,
+    private var workflows: MutableList<Workflow>?,
     private val listener: OnWorkflowClickListener?
 ) : RecyclerView.Adapter<WorkflowViewHolder?>() {
     interface OnWorkflowClickListener {
-        fun onWorkflowClick(workflow: MutableMap<String?, Any?>?)
+        fun onWorkflowClick(workflow: Workflow?)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WorkflowViewHolder {
@@ -32,7 +33,7 @@ class WorkflowAdapter(
         return if (workflows != null) workflows!!.size else 0
     }
 
-    fun updateWorkflows(newWorkflows: MutableList<MutableMap<String?, Any?>>?) {
+    fun updateWorkflows(newWorkflows: MutableList<Workflow>?) {
         this.workflows = newWorkflows
         notifyDataSetChanged()
     }
@@ -48,26 +49,24 @@ class WorkflowAdapter(
             packageTextView = itemView.findViewById<TextView>(R.id.workflow_item_package)
         }
 
-        fun bind(workflow: MutableMap<String?, Any?>) {
-            nameTextView.setText(workflow.getOrDefault("name", "Unknown Workflow") as String?)
+        fun bind(workflow: Workflow) {
+            // Use title if available, otherwise use name
+            val displayName = workflow.title ?: workflow.name ?: "Unknown Workflow"
+            nameTextView.setText(displayName)
 
-            val description = workflow.getOrDefault("description", "") as String?
-            if (description!!.isEmpty()) {
+            // Use subtitle if available, otherwise use description
+            val displayDescription = workflow.subtitle ?: workflow.description ?: ""
+            if (displayDescription.isEmpty()) {
                 descriptionTextView.setVisibility(View.GONE)
             } else {
                 descriptionTextView.setVisibility(View.VISIBLE)
-                descriptionTextView.setText(description)
+                descriptionTextView.setText(displayDescription)
             }
 
-            val metadata = workflow.getOrDefault("metadata", null) as? MutableMap<String?, Any?>
-            if (metadata != null) {
-                val packageName = metadata.getOrDefault("app_package", "") as? String
-                if (!packageName.isNullOrEmpty()) {
-                    packageTextView.setText(packageName)
-                    packageTextView.setVisibility(View.VISIBLE)
-                } else {
-                    packageTextView.setVisibility(View.GONE)
-                }
+            // Show status if available
+            if (!workflow.status.isNullOrEmpty()) {
+                packageTextView.setText(workflow.status)
+                packageTextView.setVisibility(View.VISIBLE)
             } else {
                 packageTextView.setVisibility(View.GONE)
             }

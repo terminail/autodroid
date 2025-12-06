@@ -72,8 +72,8 @@ class RegisterActivity : BaseActivity() {
 
     private fun observeViewModel() {
         // Observe authentication state from AppViewModel
-        appViewModel.userInfo.observe(this, Observer { userInfo ->
-            if (userInfo?.isAuthenticated == true) {
+        appViewModel.user.observe(this, Observer { user ->
+            if (user?.isAuthenticated == true) {
                 // Navigate to main activity on successful registration
                 val intent = Intent(this@RegisterActivity, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)

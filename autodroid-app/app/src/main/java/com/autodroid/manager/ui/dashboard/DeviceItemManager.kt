@@ -1,4 +1,4 @@
-// DeviceInfoItemManager.kt
+// DeviceItemManager.kt
 package com.autodroid.manager.ui.dashboard
 
 import android.content.Context
@@ -9,61 +9,61 @@ import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.utils.NetworkUtils
 import com.autodroid.manager.ui.adapters.DashboardAdapter
-import com.autodroid.manager.model.NetworkInfo
-import com.autodroid.manager.model.DeviceInfo
+import com.autodroid.manager.model.Network
+import com.autodroid.manager.model.Device
 
 /**
- * Manager class for handling Device Information dashboard item functionality
+ * Manager class for handling Device dashboard item functionality
  */
-class DeviceInfoItemManager(
+class DeviceItemManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val viewModel: AppViewModel,
+    private val appViewModel: AppViewModel,
     private val onItemUpdate: (DashboardItem) -> Unit
 ) {
     
     companion object {
-        private const val TAG = "DeviceInfoItemManager"
+        private const val TAG = "DeviceItemManager"
     }
     
     /**
-     * Initialize the DeviceInfoItemManager
+     * Initialize the DeviceItemManager
      */
     fun initialize() {
-        setupDeviceInfoObservers()
-        updateDeviceInfo()
+        setupDeviceObservers()
+        updateDevice()
     }
     
     /**
-     * Set up observers for device information changes
+     * Set up observers for device changes
      */
-    private fun setupDeviceInfoObservers() {
+    private fun setupDeviceObservers() {
         // Observe device information changes from ViewModel
-        viewModel.deviceInfo.observe(lifecycleOwner) { deviceInfo ->
-            deviceInfo?.let {
+        appViewModel.device.observe(lifecycleOwner) { device ->
+            device?.let {
                 updateDeviceItem(it)
             }
         }
         
         // Observe network connectivity changes
-        viewModel.networkInfo.observe(lifecycleOwner) { networkInfo ->
-            networkInfo?.let {
+        appViewModel.network.observe(lifecycleOwner) { network ->
+            network?.let {
                 updateDeviceItemWithNetworkInfo(it)
             }
         }
     }
     
     /**
-     * Update device information and refresh the dashboard item
+     * Update device and refresh the dashboard item
      */
-    fun updateDeviceInfo() {
+    fun updateDevice() {
         try {
             val deviceName = Build.MODEL
             val androidVersion = Build.VERSION.RELEASE
             val localIp = NetworkUtils.getLocalIpAddress() ?: "Not Available"
             
-            // Create DeviceInfo object directly
-            val deviceInfo = DeviceInfo(
+            // Create Device object directly
+            val device = Device(
                 ip = localIp,
                 name = deviceName,
                 model = Build.MODEL,
@@ -76,10 +76,10 @@ class DeviceInfoItemManager(
             )
             
             // Update ViewModel with device info
-            viewModel.setDeviceInfo(deviceInfo)
+            appViewModel.setDevice(device)
             
             // Create and update dashboard item
-            val deviceItem = DashboardItem.DeviceInfoItem(
+            val deviceItem = DashboardItem.DeviceItem(
                 udid = "KNT-AL10-1234567890",
                 userId = "user001",
                 name = deviceName,
@@ -99,16 +99,16 @@ class DeviceInfoItemManager(
     /**
      * Update device item with network information
      */
-    private fun updateDeviceItemWithNetworkInfo(networkInfo: NetworkInfo) {
+    private fun updateDeviceItemWithNetworkInfo(network: Network) {
         try {
-            val currentDeviceInfo = viewModel.deviceInfo.value
+            val currentDevice = appViewModel.device.value
             
-            val deviceItem = DashboardItem.DeviceInfoItem(
+            val deviceItem = DashboardItem.DeviceItem(
                 udid = "KNT-AL10-1234567890",
                 userId = "user001",
-                name = currentDeviceInfo?.name ?: Build.MODEL,
+                name = currentDevice?.name ?: Build.MODEL,
                 platform = "Android",
-                deviceModel = currentDeviceInfo?.model ?: Build.MODEL,
+                deviceModel = currentDevice?.model ?: Build.MODEL,
                 deviceStatus = "在线",
                 connectionTime = "2024-01-01 00:00:00"
             )
@@ -123,9 +123,9 @@ class DeviceInfoItemManager(
     /**
      * Update device item with device information
      */
-    private fun updateDeviceItem(deviceInfo: DeviceInfo) {
+    private fun updateDeviceItem(deviceInfo: Device) {
         try {
-            val deviceItem = DashboardItem.DeviceInfoItem(
+            val deviceItem = DashboardItem.DeviceItem(
                 udid = "KNT-AL10-1234567890",
                 userId = "user001",
                 name = deviceInfo.name ?: Build.MODEL,
@@ -148,7 +148,7 @@ class DeviceInfoItemManager(
      * Refresh device information manually
      */
     fun refresh() {
-        updateDeviceInfo()
+        updateDevice()
     }
     
     /**
@@ -163,16 +163,16 @@ class DeviceInfoItemManager(
      */
     fun handleListUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
         return try {
-            if (item is DashboardItem.DeviceInfoItem) {
+            if (item is DashboardItem.DeviceItem) {
                 // Find existing device info item in the list
-                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceInfoItem }
+                val existingIndex = dashboardItems.indexOfFirst { it is DashboardItem.DeviceItem }
                 
                 if (existingIndex != -1) {
                     // Update existing item
                     dashboardItems[existingIndex] = item
                 } else {
                     // Add new item after WiFi info item
-                    val wifiInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiInfoItem }
+                    val wifiInfoIndex = dashboardItems.indexOfFirst { it is DashboardItem.WiFiItem }
                     if (wifiInfoIndex != -1) {
                         dashboardItems.add(wifiInfoIndex + 1, item)
                     } else {
@@ -181,8 +181,8 @@ class DeviceInfoItemManager(
                     }
                 }
                 
-                // Update adapter
-                dashboardAdapter?.notifyDataSetChanged()
+                // Update adapter - use updateItems to sync both lists
+                dashboardAdapter?.updateItems(dashboardItems)
                 true
             } else {
                 Log.e(TAG, "Invalid item type for device info: ${item::class.simpleName}")

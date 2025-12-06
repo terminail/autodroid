@@ -47,10 +47,10 @@ Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于�
 
 ```bash
 # 安装 Debug 版本
-cd 'd:/git/autodroid/autodroid-app';./gradlew installDebug
+cd 'd:/git/autodroid/autodroid-app'; ./gradlew installDebug
 
 # 或使用 adb 命令
-adb install app/build/outputs/apk/debug/app-debug.apk
+cd 'd:/git/autodroid/autodroid-app'; adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### 3. 启动应用
@@ -151,7 +151,7 @@ autodroid-app/
 
 处理与服务器的网络通信。
 
-### 3. DeviceInfoManager
+### 3. DeviceManager
 
 管理设备信息和状态。
 

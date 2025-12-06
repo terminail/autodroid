@@ -7,7 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
-import com.autodroid.manager.model.WifiInfo
+import com.autodroid.manager.model.Wifi
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
@@ -217,9 +217,9 @@ object NetworkUtils {
      * Get detailed WiFi information including SSID, BSSID, signal strength, frequency, IP address, link speed, and connection status
      * 
      * @param context The application context
-     * @return A WifiInfo object containing detailed WiFi information
+     * @return A Wifi object containing detailed WiFi information
      */
-    fun getDetailedWiFiInfo(context: Context): WifiInfo {
+    fun getDetailedWiFiInfo(context: Context): Wifi {
         return try {
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
@@ -227,7 +227,7 @@ object NetworkUtils {
             val isWifiConnected = isWifiConnected(context)
             
             if (isWifiConnected && wifiInfo != null) {
-                WifiInfo(
+                Wifi(
                     ssid = wifiInfo.ssid?.removeSurrounding("\"") ?: "Unknown",
                     bssid = wifiInfo.bssid ?: "Unknown",
                     signalStrength = WifiManager.calculateSignalLevel(wifiInfo.rssi, 5),
@@ -237,7 +237,7 @@ object NetworkUtils {
                     isConnected = true
                 )
             } else {
-                WifiInfo(
+                Wifi(
                     ssid = "Not Connected",
                     bssid = "Unknown",
                     signalStrength = 0,
@@ -249,7 +249,7 @@ object NetworkUtils {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting detailed WiFi info: ${e.message}")
-            WifiInfo.empty()
+            Wifi.empty()
         }
     }
     

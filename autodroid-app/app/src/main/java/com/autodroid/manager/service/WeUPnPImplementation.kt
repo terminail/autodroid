@@ -6,7 +6,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.model.Server
 import org.bitlet.weupnp.GatewayDevice
 import org.bitlet.weupnp.GatewayDiscover
 import java.net.InetAddress

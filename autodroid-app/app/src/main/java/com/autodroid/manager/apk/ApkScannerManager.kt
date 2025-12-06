@@ -25,8 +25,8 @@ class ApkScannerManager(private val context: Context) {
     /**
      * Scan all installed APKs on the device
      */
-    suspend fun scanInstalledApks(): List<ApkInfo> = withContext(Dispatchers.IO) {
-        val apkMap = mutableMapOf<String, ApkInfo>() // Use packageName as key for deduplication
+    suspend fun scanInstalledApks(): List<com.autodroid.manager.model.Apk> = withContext(Dispatchers.IO) {
+        val apkMap = mutableMapOf<String, com.autodroid.manager.model.Apk>() // Use packageName as key for deduplication
         
         try {
             val packageManager = context.packageManager
@@ -121,7 +121,7 @@ class ApkScannerManager(private val context: Context) {
     /**
      * Extract APK information from PackageInfo
      */
-    private fun extractApkInfo(packageInfo: PackageInfo, packageManager: PackageManager): ApkInfo {
+    private fun extractApkInfo(packageInfo: PackageInfo, packageManager: PackageManager): com.autodroid.manager.model.Apk {
         val applicationInfo = packageInfo.applicationInfo
         
         // Get app icon as base64 string
@@ -132,7 +132,7 @@ class ApkScannerManager(private val context: Context) {
             (it.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 
         } ?: false
         
-        return ApkInfo(
+        return com.autodroid.manager.model.Apk(
             packageName = packageInfo.packageName,
             appName = applicationInfo?.let { packageManager.getApplicationLabel(it).toString() } ?: packageInfo.packageName,
             version = packageInfo.versionName ?: "1.0",
@@ -177,25 +177,23 @@ class ApkScannerManager(private val context: Context) {
         try {
             val apiClient = ApiClient.getInstance()
             
-            // Create DeviceRegistrationInfo object
-            val deviceInfo = com.autodroid.manager.model.DeviceRegistrationInfo(
+            // Create DeviceRegistrationRequest object
+            val deviceInfo = com.autodroid.manager.network.DeviceRegistrationRequest(
                 udid = deviceUdid,
                 name = Build.MODEL,
                 model = Build.MODEL,
                 manufacturer = Build.MANUFACTURER,
-                androidVersion = Build.VERSION.RELEASE,
-                ipAddress = "unknown", // Default value
-                isConnected = true
+                android_version = Build.VERSION.RELEASE
             )
             
             // Register device with server
             val response = apiClient.registerDevice(deviceInfo)
             
-            if (response.isSuccessful) {
+            if (response.success) {
                 Log.d(TAG, "Device registered successfully with UDID: $deviceUdid")
                 return@withContext true
             } else {
-                Log.e(TAG, "Failed to register device with UDID: $deviceUdid, response code: ${response.code}")
+                Log.e(TAG, "Failed to register device with UDID: $deviceUdid, response message: ${response.message}")
                 return@withContext false
             }
             
@@ -208,13 +206,12 @@ class ApkScannerManager(private val context: Context) {
     /**
      * Register scanned APKs with the server for a specific device
      */
-    suspend fun registerApksWithServer(apkList: List<ApkInfo>, deviceUdid: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun registerApksWithServer(apkList: List<com.autodroid.manager.model.Apk>, deviceUdid: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val apiClient = ApiClient.getInstance()
             
             // Debug: Log the device UDID and URL being constructed
             Log.d(TAG, "Registering APKs for device UDID: '$deviceUdid'")
-            Log.d(TAG, "Constructed URL: ${ApiClient.BASE_URL}/api/devices/$deviceUdid/apks")
             
             // Convert APK list to data format for bulk registration
             val apkDataList = apkList.map { apkInfo ->
@@ -232,11 +229,11 @@ class ApkScannerManager(private val context: Context) {
             // Use unified registration endpoint that always expects a list
             val response = apiClient.registerApksForDevice(deviceUdid, apkDataList)
             
-            if (response.isSuccessful) {
+            if (response.success) {
                 Log.d(TAG, "Registered ${apkList.size} APKs for device $deviceUdid")
                 return@withContext true
             } else {
-                Log.e(TAG, "Failed to register APKs for device $deviceUdid")
+                Log.e(TAG, "Failed to register APKs for device $deviceUdid, response message: ${response.message}")
                 return@withContext false
             }
             
@@ -246,16 +243,3 @@ class ApkScannerManager(private val context: Context) {
         }
     }
 }
-
-/**
-     * Data class representing APK information
-     */
-    data class ApkInfo(
-        val packageName: String,
-        val appName: String,
-        val version: String,
-        val versionCode: Int,
-        val installedTime: Long,
-        val isSystem: Boolean,
-        val iconPath: String
-    )

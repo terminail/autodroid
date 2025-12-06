@@ -3,67 +3,69 @@ package com.autodroid.manager
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.autodroid.manager.model.UserInfo
+import com.autodroid.manager.model.User
 import com.autodroid.manager.model.DiscoveryStatus
-import com.autodroid.manager.model.DeviceInfo
-import com.autodroid.manager.model.WifiInfo
-import com.autodroid.manager.model.NetworkInfo
-import com.autodroid.manager.model.ApkInfo
+import com.autodroid.manager.model.Device
+import com.autodroid.manager.model.Network
+import com.autodroid.manager.model.Apk
+import com.autodroid.manager.model.Server
+import com.autodroid.manager.model.Wifi
+import com.autodroid.manager.model.Workflow
 
 class AppViewModel : ViewModel() {
     // Getters for LiveData
     // Server information - unified object from mDNS discovery
-    val serverInfo = MutableLiveData<MutableMap<String?, Any?>?>()
+    val server = MutableLiveData<Server?>()
     
     // Discovery status information (encapsulated)
     val discoveryStatus = MutableLiveData<DiscoveryStatus>()
 
     // User authentication information (global shared state)
-    val userInfo = MutableLiveData<UserInfo>()
+    val user = MutableLiveData<User>()
     val errorMessage = MutableLiveData<String?>()
 
     // Device information (global shared state)
-    val deviceInfo = MutableLiveData<DeviceInfo>()
+    val device = MutableLiveData<Device>()
 
     // WiFi information (global shared state)
-    val wifiInfo = MutableLiveData<WifiInfo>()
+    val wifi = MutableLiveData<Wifi>()
     
     // Network information (global shared state)
-    val networkInfo = MutableLiveData<NetworkInfo>()
+    val network = MutableLiveData<Network>()
     
     // APK information (global shared state)
-    val apkInfo = MutableLiveData<ApkInfo>()
+    val apk = MutableLiveData<Apk>()
     val apkScanStatus = MutableLiveData<String?>()
-    val apkList = MutableLiveData<List<com.autodroid.manager.model.DashboardItem.ApkInfo>?>()
+    val apkList = MutableLiveData<List<com.autodroid.manager.model.Apk>?>()
     val selectedApkIndex = MutableLiveData<Int>()
     
     // Workflows information
-    val availableWorkflows = MutableLiveData<MutableList<MutableMap<String?, Any?>?>>()
+    val availableWorkflows = MutableLiveData<MutableList<Workflow>>()
 
     // Setters
-    fun setServerInfo(info: MutableMap<String?, Any?>?) {
-        serverInfo.setValue(info)
+    fun setServer(info: Server?) {
+        server.setValue(info)
     }
     
     // User authentication setters
-    fun setUserInfo(userInfo: UserInfo) {
-        this.userInfo.setValue(userInfo)
+    fun setUser(userInfo: User) {
+        this.user.setValue(userInfo)
     }
     
     fun setErrorMessage(message: String?) {
         errorMessage.setValue(message)
     }
     
-    fun setWifiInfo(info: WifiInfo) {
-        wifiInfo.setValue(info)
+    fun setWifi(info: Wifi) {
+        wifi.setValue(info)
     }
     
-    fun setNetworkInfo(info: NetworkInfo) {
-        networkInfo.setValue(info)
+    fun setNetwork(info: Network) {
+        network.setValue(info)
     }
     
-    fun setDeviceInfo(info: DeviceInfo) {
-        deviceInfo.setValue(info)
+    fun setDevice(info: Device) {
+        device.setValue(info)
     }
     
     fun setDiscoveryStatus(status: DiscoveryStatus) {
@@ -91,15 +93,15 @@ class AppViewModel : ViewModel() {
         setDiscoveryStatus(currentStatus.withIncrementedRetry())
     }
     
-    fun setApkInfo(info: ApkInfo) {
-        apkInfo.setValue(info)
+    fun setApk(info: Apk) {
+        apk.setValue(info)
     }
     
     fun setApkScanStatus(status: String?) {
         apkScanStatus.setValue(status)
     }
     
-    fun setApkList(apkList: List<com.autodroid.manager.model.DashboardItem.ApkInfo>?) {
+    fun setApkList(apkList: List<com.autodroid.manager.model.Apk>?) {
         this.apkList.setValue(apkList)
     }
     
@@ -109,19 +111,45 @@ class AppViewModel : ViewModel() {
     
     // Server connection status helper methods
     fun isServerConnected(): Boolean {
-        return serverInfo.value?.get("connected") as? Boolean ?: false
+        return server.value != null
     }
     
     fun getServerHost(): String? {
-        return serverInfo.value?.get("ip") as? String
+        return server.value?.ip
     }
     
     fun getServerPort(): Int? {
-        return serverInfo.value?.get("port") as? Int
+        // Extract port from api_endpoint URL
+        return server.value?.api_endpoint?.let { endpoint ->
+            try {
+                val url = java.net.URL(endpoint)
+                url.port
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
     
     fun getServerConnectionStatus(): Boolean {
         return isServerConnected()
+    }
+    
+    // Enhanced server connection state management
+    fun getServerConnectionState(): ServerConnectionState {
+        return when {
+            isServerConnected() -> ServerConnectionState.CONNECTED
+            isDiscoveryInProgress() -> ServerConnectionState.DISCOVERING
+            isDiscoveryFailed() -> ServerConnectionState.FAILED
+            else -> ServerConnectionState.DISCONNECTED
+        }
+    }
+    
+    // Server connection state enum
+    enum class ServerConnectionState {
+        DISCONNECTED,    // Server not connected and not discovering
+        DISCOVERING,     // Actively searching for server
+        CONNECTED,       // Server connected successfully
+        FAILED           // Server discovery failed
     }
     
     // Discovery status helper methods
@@ -143,71 +171,71 @@ class AppViewModel : ViewModel() {
     
     // Device information helper methods
     fun getDeviceIp(): String? {
-        return deviceInfo.value?.ip
+        return device.value?.ip
     }
     
     fun isDeviceConnected(): Boolean {
-        return deviceInfo.value?.isAvailable() ?: false
+        return device.value?.isAvailable() ?: false
     }
     
     fun getDeviceName(): String? {
-        return deviceInfo.value?.name
+        return device.value?.name
     }
     
     // WiFi information helper methods
     fun isWifiConnected(): Boolean {
-        return wifiInfo.value?.isWifiConnected() ?: false
+        return wifi.value?.isWifiConnected() ?: false
     }
     
     fun getWifiSsid(): String? {
-        return wifiInfo.value?.ssid
+        return wifi.value?.ssid
     }
     
     fun getWifiIpAddress(): String? {
-        return wifiInfo.value?.ipAddress
+        return wifi.value?.ipAddress
     }
     
     // Network information helper methods
     fun isNetworkAvailable(): Boolean {
-        return networkInfo.value?.isNetworkAvailable() ?: false
+        return network.value?.isNetworkAvailable() ?: false
     }
     
-    fun getNetworkConnectionType(): NetworkInfo.ConnectionType {
-        return networkInfo.value?.connectionType ?: NetworkInfo.ConnectionType.NONE
+    fun getNetworkConnectionType(): Network.ConnectionType {
+        return network.value?.connectionType ?: Network.ConnectionType.NONE
     }
     
     fun getNetworkIpAddress(): String? {
-        return networkInfo.value?.ipAddress
+        return network.value?.ipAddress
     }
     
     // APK information helper methods
     fun getApkPackageName(): String? {
-        return apkInfo.value?.packageName
+        return apk.value?.packageName
     }
     
     fun getApkVersion(): String? {
-        return apkInfo.value?.getVersionInfo()
+        return apk.value?.let { "${it.version} (${it.versionCode})" }
     }
     
     fun isApkComplete(): Boolean {
-        return apkInfo.value?.isComplete() ?: false
+        return apk.value?.let { it.packageName.isNotEmpty() && it.appName.isNotEmpty() } ?: false
     }
     
     // User authentication helper methods
     fun isAuthenticated(): Boolean {
-        return userInfo.value?.isAuthenticated ?: false
+        return user.value?.isAuthenticated ?: false
     }
     
     fun getUserId(): String? {
-        return userInfo.value?.userId
+        return user.value?.userId
     }
     
     fun getEmail(): String? {
-        return userInfo.value?.email
+        return user.value?.email
     }
     
     fun getToken(): String? {
-        return userInfo.value?.token
+        return user.value?.token
     }
     
     fun getErrorMessage(): String? {
@@ -216,7 +244,7 @@ class AppViewModel : ViewModel() {
     
     // Clear authentication data (for logout)
     fun clearAuthentication() {
-        setUserInfo(UserInfo.empty())
+        setUser(User.empty())
         setErrorMessage(null)
     }
     
@@ -226,76 +254,76 @@ class AppViewModel : ViewModel() {
     // Server connection status observer for authentication state coordination
     // This is the only authentication-related state that should be in AppViewModel
     // as it's needed for server change detection
-    private var previousServerInfo: MutableMap<String?, Any?>? = null
-    
+    private var previousServer: Server? = null
+
     // Server change detection callback - can be used by AuthViewModel
-    var onServerChanged: ((oldServer: MutableMap<String?, Any?>?, newServer: MutableMap<String?, Any?>?) -> Unit)? = null
+    var onServerChanged: ((oldServer: Server?, newServer: Server?) -> Unit)? = null
     
     // Convenience methods for initializing encapsulated states
-    fun initializeDeviceInfo(ip: String? = null, name: String? = null) {
-        setDeviceInfo(DeviceInfo.empty().copy(ip = ip, name = name))
+    fun initializeDevice(ip: String? = null, name: String? = null) {
+        setDevice(Device.empty().copy(ip = ip, name = name))
     }
     
-    fun initializeWifiInfo(ssid: String? = null, ipAddress: String? = null) {
-        setWifiInfo(WifiInfo.empty().copy(ssid = ssid, ipAddress = ipAddress))
+    fun initializeWifi(ssid: String? = null, ipAddress: String? = null) {
+        setWifi(Wifi.empty().copy(ssid = ssid, ipAddress = ipAddress))
     }
     
-    fun initializeNetworkInfo(connectionType: NetworkInfo.ConnectionType = NetworkInfo.ConnectionType.NONE) {
-        setNetworkInfo(NetworkInfo.empty().copy(connectionType = connectionType))
+    fun initializeNetwork(connectionType: Network.ConnectionType = Network.ConnectionType.NONE) {
+        setNetwork(Network.empty().copy(connectionType = connectionType))
     }
     
-    fun initializeApkInfo(packageName: String? = null, appName: String? = null) {
-        setApkInfo(ApkInfo.empty().copy(packageName = packageName, appName = appName))
+    fun initializeApk(packageName: String? = null, appName: String? = null) {
+        setApk(Apk.empty().copy(packageName = packageName ?: "", appName = appName ?: ""))
     }
     
     // Convenience methods for common operations
     fun connectDevice(ip: String, name: String? = null) {
-        setDeviceInfo(DeviceInfo.connected(ip, name))
+        setDevice(Device.connected(ip, name))
     }
     
     fun disconnectDevice() {
-        deviceInfo.value?.let { currentInfo ->
-            setDeviceInfo(currentInfo.disconnected())
+        device.value?.let { currentInfo ->
+            setDevice(currentInfo.disconnected())
         }
     }
     
-    fun connectToWifi(ssid: String, ipAddress: String, signalStrength: Int? = null) {
-        setWifiInfo(WifiInfo.connected(ssid, ipAddress, signalStrength))
+    fun setWifiConnected(ssid: String, ipAddress: String, signalStrength: Int? = null) {
+        setWifi(Wifi.connected(ssid, ipAddress, signalStrength))
     }
     
     fun disconnectWifi() {
-        wifiInfo.value?.let { currentInfo ->
-            setWifiInfo(currentInfo.disconnected())
+        wifi.value?.let { currentInfo ->
+            setWifi(currentInfo.disconnected())
         }
     }
     
-    fun updateApkVersion(packageName: String, versionName: String, versionCode: Long) {
-        apkInfo.value?.let { currentInfo ->
+    fun updateApkVersion(packageName: String, versionName: String, versionCode: Int) {
+        apk.value?.let { currentInfo ->
             if (currentInfo.packageName == packageName) {
-                setApkInfo(currentInfo.updateVersion(versionName, versionCode))
+                setApk(currentInfo.copy(version = versionName, versionCode = versionCode))
             }
         }
     }
     
     // Missing methods to fix compilation errors
     fun register(email: String, password: String, confirmPassword: String) {
-        // Create a new UserInfo object with the provided credentials
-        val userInfo = UserInfo(
+        // Create a new User object with the provided credentials
+        val userInfo = User(
             userId = null,
             email = email,
             token = null,
             isAuthenticated = false
         )
-        setUserInfo(userInfo)
+        setUser(userInfo)
     }
     
     fun setDeviceIp(ip: String?) {
-        deviceInfo.value?.let { currentInfo ->
-            setDeviceInfo(currentInfo.copy(ip = ip))
+        device.value?.let { currentInfo ->
+            setDevice(currentInfo.copy(ip = ip))
         }
     }
     
-    fun setAvailableWorkflows(workflows: MutableList<MutableMap<String?, Any?>?>) {
+    fun setAvailableWorkflows(workflows: MutableList<Workflow>) {
         availableWorkflows.setValue(workflows)
     }
 }

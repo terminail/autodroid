@@ -21,7 +21,8 @@ import com.autodroid.manager.MainActivity
 import com.autodroid.manager.service.DiscoveryStatusManager
 import com.autodroid.manager.auth.viewmodel.AuthViewModel
 import com.autodroid.manager.auth.viewmodel.SharedViewModelFactory
-import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.model.Server
+import com.autodroid.manager.model.User
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.ui.BaseActivity
 import com.autodroid.manager.R
@@ -76,8 +77,13 @@ class LoginActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Observe authentication state
-        observeViewModel()
+        // Check if we have valid authentication data from MainActivity
+        val isAuthenticatedFromIntent = intent.getBooleanExtra("isAuthenticated", false)
+        
+        if (!isAuthenticatedFromIntent) {
+            // Only observe authentication state if not already authenticated
+            observeViewModel()
+        }
         
         // Setup biometric authentication if available
         setupBiometricAuthentication()
@@ -99,19 +105,22 @@ class LoginActivity : BaseActivity() {
         authViewModel!!.isAuthenticated.observe(this, Observer { isAuthenticated: Boolean? ->
             Log.d("LoginActivity", "Authentication state changed: " + isAuthenticated)
             if (isAuthenticated != null && isAuthenticated) {
-                Log.d("LoginActivity", "Login successful, navigating to MainActivity")
+                Log.d("LoginActivity", "Login successful, updating AppViewModel and navigating to MainActivity")
 
-                // Navigate to main activity with authentication data
+                // Update AppViewModel directly with authentication data
+                val userInfo = User(
+                    userId = authViewModel!!.userId.getValue(),
+                    email = authViewModel!!.email.getValue(),
+                    token = authViewModel!!.token.getValue(),
+                    isAuthenticated = true
+                )
+                appViewModel.setUser(userInfo)
+
+                // Navigate to main activity (no need to pass authentication data via Intent)
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
 
-                // Pass authentication data from AuthViewModel
-                intent.putExtra("isAuthenticated", true)
-                intent.putExtra("userId", authViewModel!!.userId.getValue())
-                intent.putExtra("email", authViewModel!!.email.getValue())
-                intent.putExtra("token", authViewModel!!.token.getValue())
-
-                Log.d("LoginActivity", "Starting MainActivity with authentication data")
+                Log.d("LoginActivity", "Starting MainActivity with AppViewModel already updated")
                 startActivity(intent)
                 finish()
             }
@@ -169,7 +178,8 @@ class LoginActivity : BaseActivity() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED) {
-                        errorTextView.text = getString(R.string.biometric_error) + errString
+                        val errorMessage = getString(R.string.biometric_error) ?: ""
+                        errorTextView.text = "$errorMessage$errString"
                         errorTextView.visibility = View.VISIBLE
                     }
                 }

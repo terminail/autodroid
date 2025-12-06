@@ -4,7 +4,7 @@ package com.autodroid.manager.model
  * WiFi信息封装类
  * 封装WiFi网络相关的属性和状态
  */
-data class WifiInfo(
+data class Wifi(
     val ssid: String? = null,
     val bssid: String? = null,
     val signalStrength: Int? = null,
@@ -18,7 +18,7 @@ data class WifiInfo(
         /**
          * 创建空WiFi信息
          */
-        fun empty(): WifiInfo = WifiInfo()
+        fun empty(): Wifi = Wifi()
         
         /**
          * 创建连接状态的WiFi信息
@@ -27,7 +27,7 @@ data class WifiInfo(
             ssid: String,
             ipAddress: String,
             signalStrength: Int? = null
-        ): WifiInfo = WifiInfo(
+        ): Wifi = Wifi(
             ssid = ssid,
             ipAddress = ipAddress,
             signalStrength = signalStrength,
@@ -45,7 +45,7 @@ data class WifiInfo(
             ipAddress: String,
             securityType: String,
             linkSpeed: Int
-        ): WifiInfo = WifiInfo(
+        ): Wifi = Wifi(
             ssid = ssid,
             bssid = bssid,
             signalStrength = signalStrength,
@@ -79,14 +79,14 @@ data class WifiInfo(
     /**
      * 断开WiFi连接
      */
-    fun disconnected(): WifiInfo = this.copy(
+    fun disconnected(): Wifi = this.copy(
         isConnected = false
     )
     
     /**
      * 更新信号强度
      */
-    fun updateSignalStrength(strength: Int): WifiInfo = this.copy(
+    fun updateSignalStrength(strength: Int): Wifi = this.copy(
         signalStrength = strength
     )
 }

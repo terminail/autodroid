@@ -7,7 +7,13 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import com.autodroid.manager.model.DeviceRegistrationInfo
+import com.autodroid.manager.model.Server
+import com.autodroid.manager.network.ServerInfoResponse
+import com.autodroid.manager.network.DeviceRegistrationRequest
+import com.autodroid.manager.network.DeviceRegistrationResponse
+import com.autodroid.manager.network.DeviceInfoResponse
+import com.autodroid.manager.network.ApkRegistrationResponse
+import com.autodroid.manager.network.HealthCheckResponse
 
 /**
  * ApiClient for communicating with the Autodroid container server
@@ -15,9 +21,6 @@ import com.autodroid.manager.model.DeviceRegistrationInfo
 class ApiClient private constructor() {
     companion object {
         private const val TAG = "ApiClient"
-        // For Android emulator: use 10.0.2.2 to access host machine
-        // For physical device: use actual host IP address (e.g., 192.168.1.59)
-        const val BASE_URL = "http://10.0.2.2:8004" // Server URL for Android emulator
         private var instance: ApiClient? = null
         
         fun getInstance(): ApiClient {
@@ -30,7 +33,9 @@ class ApiClient private constructor() {
     
     private val client: OkHttpClient
     private val gson: Gson
-    private var serverBaseUrl: String = BASE_URL
+    // For Android emulator: use 10.0.2.2 to access host machine
+    // For physical device: use actual host IP address (e.g., 192.168.1.59)
+    private var apiEndpoint: String = "http://10.0.2.2:8004/api" // Default API endpoint for Android emulator
     
     init {
         this.client = OkHttpClient.Builder()
@@ -43,43 +48,155 @@ class ApiClient private constructor() {
     }
     
     /**
-     * Set the server base URL (for dynamic server discovery)
+     * Set the API endpoint (for dynamic server discovery)
      */
-    fun setServerBaseUrl(url: String) {
-        serverBaseUrl = url
-        Log.d(TAG, "Server base URL set to: $url")
+    fun setApiEndpoint(url: String) {
+        // Validate API endpoint format
+        if (!isValidApiEndpoint(url)) {
+            throw IllegalArgumentException("Invalid API endpoint format: $url")
+        }
+        
+        apiEndpoint = url.trim();
+        Log.d(TAG, "API endpoint set to: $apiEndpoint")
+    }
+    
+    /**
+     * Validate API endpoint format
+     */
+    private fun isValidApiEndpoint(endpoint: String): Boolean {
+        return endpoint.startsWith("http://") || endpoint.startsWith("https://")
+    }
+    
+    /**
+     * Build API URL with consistent path handling
+     */
+    private fun buildApiUrl(path: String): String {
+        return "$apiEndpoint$path"
     }
     
     /**
      * Register APKs for a device (supports both single APK and list of APKs)
      */
-    fun registerApksForDevice(deviceUdid: String, apkData: Any): Response {
-        val url = "$serverBaseUrl/api/devices/$deviceUdid/apks"
-        return makePostRequest(url, apkData)
+    fun registerApksForDevice(deviceUdid: String, apkData: Any): ApkRegistrationResponse {
+        val url = buildApiUrl("/devices/$deviceUdid/apks")
+        val response = makePostRequest(url, apkData)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to register APKs: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from APK registration endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, ApkRegistrationResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing APK registration response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse APK registration response", e)
+        }
     }
     
     /**
      * Get device information
      */
-    fun getDeviceInfo(deviceUdid: String): Response {
-        val url = "$serverBaseUrl/api/devices/$deviceUdid"
-        return makeGetRequest(url)
+    fun getDeviceInfo(deviceUdid: String): DeviceInfoResponse {
+        val url = buildApiUrl("/devices/$deviceUdid")
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to get device info: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from device info endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, DeviceInfoResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing device info response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse device info response", e)
+        }
     }
     
     /**
      * Register a device with the server
      */
-    fun registerDevice(deviceInfo: DeviceRegistrationInfo): Response {
-        val url = "$serverBaseUrl/api/devices/register"
-        return makePostRequest(url, deviceInfo)
+    fun registerDevice(deviceInfo: DeviceRegistrationRequest): DeviceRegistrationResponse {
+        val url = buildApiUrl("/devices/register")
+        val response = makePostRequest(url, deviceInfo)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to register device: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from device registration endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, DeviceRegistrationResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing device registration response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse device registration response", e)
+        }
     }
     
     /**
      * Health check for the server
      */
-    fun healthCheck(): Response {
-        val url = "$serverBaseUrl/api/health"
-        return makeGetRequest(url)
+    fun healthCheck(): HealthCheckResponse {
+        val url = buildApiUrl("/health")
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to perform health check: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from health check endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, HealthCheckResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing health check response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse health check response", e)
+        }
+    }
+    
+    /**
+     * Get server information from FastAPI
+     */
+    fun getServerInfo(): ServerInfoResponse? {
+        val url = buildApiUrl("/server")
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from server info endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, ServerInfoResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing server info response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse server info response", e)
+        }
     }
     
     private fun makePostRequest(url: String, data: Any): Response {
@@ -123,7 +240,8 @@ class ApiClient private constructor() {
     
     /**
      * Response extension to check if request was successful
+     * Note: This extension is redundant as OkHttp Response already has isSuccessful property
      */
-    val Response.isSuccessful: Boolean
-        get() = this.isSuccessful
+    // val Response.isSuccessful: Boolean
+    //     get() = this.isSuccessful
 }

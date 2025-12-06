@@ -5,7 +5,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.util.Log
-import com.autodroid.manager.model.ServerInfo
+import com.autodroid.manager.model.Server
 
 /**
  * Legacy NsdManager implementation for older Android versions
@@ -200,7 +200,12 @@ class LegacyNsdImplementation(
                 Log.d(TAG, "Resolved service: $serviceName at $host:$port")
                 
                 host?.let {
-                    val serverInfo = ServerInfo(serviceName, it, port)
+                    // Create API endpoint from discovered host and port
+                    val apiEndpoint = "http://$it:$port/api"
+                    val serverInfo = Server(
+                        serviceName = serviceName,
+                        api_endpoint = apiEndpoint
+                    )
                     callback.onServiceFound(serverInfo)
                 }
             }

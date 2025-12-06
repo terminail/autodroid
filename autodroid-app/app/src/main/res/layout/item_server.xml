@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Server Connection"
+            android:text="Server Info"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -53,54 +53,6 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Server IP:"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginEnd="8dp" />
-                
-            <TextView
-                android:id="@+id/server_ip"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Searching..."
-                android:textSize="14sp" />
-                
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Server Port:"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginEnd="8dp" />
-                
-            <TextView
-                android:id="@+id/server_port"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="-"
-                android:textSize="14sp" />
-                
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="Server Health:"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -120,12 +72,84 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
             
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Server API:"
+                android:text="Server Name:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/server_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-"
+                android:textSize="14sp" />
+                
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hostname:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/server_hostname"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-"
+                android:textSize="14sp" />
+                
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Platform:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/server_platform"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-"
+                android:textSize="14sp" />
+                
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="API Endpoint:"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
@@ -140,15 +164,71 @@
                 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/scan_qr_button"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Scan QR Code"
-            android:background="@drawable/button_background"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="8dp"
-            android:visibility="gone" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Discovery Method:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/discovery_method"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Auto Discovery"
+                android:textSize="14sp" />
+                
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+            
+            <Button
+                android:id="@+id/start_mdns_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="START mDNS"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="4dp"
+                android:visibility="visible" />
+                
+            <Button
+                android:id="@+id/scan_qr_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SCAN QRCODE"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="4dp"
+                android:layout_marginStart="4dp"
+                android:visibility="visible" />
+                
+            <Button
+                android:id="@+id/manual_input_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="MANUAL INPUT"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp"
+                android:visibility="visible" />
+                
+        </LinearLayout>
 
     </LinearLayout>
 
