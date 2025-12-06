@@ -67,7 +67,7 @@ class ServerInfo(BaseModel):
     hostname: str
     ip_address: str
     platform: str
-    api_base_url: str
+    api_endpoint: str
     services: Dict[str, str]
     capabilities: Dict[str, bool]
 

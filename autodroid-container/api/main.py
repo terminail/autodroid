@@ -141,6 +141,39 @@ app.include_router(workflows_router)
 app.include_router(server_router)
 app.include_router(apks_router)
 
+# Add API root endpoint
+@app.get("/api")
+async def api_root():
+    """Get API information and available endpoints"""
+    return {
+        "name": "Autodroid API",
+        "version": "1.0.0",
+        "description": "RESTful API for Autodroid Android Automation System",
+        "endpoints": {
+            "auth": "/api/auth",
+            "devices": "/api/devices",
+            "workflows": "/api/workflows", 
+            "server": "/api/server",
+            "apks": "/api/apks",
+            "config": "/api/config",
+            "health": "/api/health"
+        },
+        "documentation": "/docs",
+        "frontend": "/app"
+    }
+
+# Add favicon endpoint
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve the favicon"""
+    favicon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path, media_type="image/x-icon")
+    else:
+        # Return a simple default favicon if file doesn't exist
+        from fastapi.responses import Response
+        return Response(content=b"", media_type="image/x-icon")
+
 # Add configuration endpoint
 @app.get("/api/config")
 async def get_config():

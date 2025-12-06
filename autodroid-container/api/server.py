@@ -69,7 +69,7 @@ async def get_server_info():
         "hostname": hostname,
         "ip_address": ip_address,
         "platform": platform.platform(),
-        "api_base_url": f"http://{ip_address}:{fastapi_port}/api",
+        "api_endpoint": f"http://{ip_address}:{fastapi_port}/api",
         "services": {
             "device_manager": "running",
             "workflow_engine": "running",
