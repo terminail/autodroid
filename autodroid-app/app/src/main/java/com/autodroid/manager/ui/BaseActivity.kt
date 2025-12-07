@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.MyApplication
 
 /**
  * BaseActivity类提供所有Activity的通用功能
@@ -75,7 +76,7 @@ abstract class BaseActivity : AppCompatActivity() {
      * 初始化ViewModel
      */
     protected open fun initializeViewModel() {
-        appViewModel = ViewModelProvider(this)[AppViewModel::class.java]
+        appViewModel = (application as MyApplication).getAppViewModel()
     }
     
     protected open fun onActivitySetupComplete() {

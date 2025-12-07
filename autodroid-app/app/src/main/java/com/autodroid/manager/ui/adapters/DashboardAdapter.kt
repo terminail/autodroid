@@ -26,6 +26,9 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onScanQrCodeClick()
         fun onManualInputClick()
         fun onStartMdnsClick()
+        fun onSavedServersClick()
+        fun onAddServerClick()
+        fun onDisconnectClick()
         fun onScanApksClick()
         fun onApkItemClick(apkInfo: com.autodroid.manager.model.Apk)
     }
@@ -98,6 +101,9 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val startMdnsButton: Button = itemView.findViewById(R.id.start_mdns_button)
         private val scanQrButton: Button = itemView.findViewById(R.id.scan_qr_button)
         private val manualInputButton: Button = itemView.findViewById(R.id.manual_input_button)
+        private val savedServersButton: Button = itemView.findViewById(R.id.saved_servers_button)
+        private val addServerButton: Button = itemView.findViewById(R.id.add_server_button)
+        private val disconnectButton: Button = itemView.findViewById(R.id.disconnect_button)
         
         init {
             startMdnsButton.setOnClickListener {
@@ -110,6 +116,18 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             
             manualInputButton.setOnClickListener {
                 listener?.onManualInputClick()
+            }
+            
+            savedServersButton.setOnClickListener {
+                listener?.onSavedServersClick()
+            }
+            
+            addServerButton.setOnClickListener {
+                listener?.onAddServerClick()
+            }
+            
+            disconnectButton.setOnClickListener {
+                listener?.onDisconnectClick()
             }
         }
         
@@ -124,13 +142,24 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             
             // 按钮始终显示且始终可以点击
             startMdnsButton.visibility = View.VISIBLE
-            startMdnsButton.isEnabled = true
+            startMdnsButton.isEnabled = item.isStartMdnsButtonEnabled
             
             scanQrButton.visibility = View.VISIBLE
             scanQrButton.isEnabled = true
             
             manualInputButton.visibility = View.VISIBLE
             manualInputButton.isEnabled = true
+            
+            // 新增按钮的可见性和启用状态
+            savedServersButton.visibility = View.VISIBLE
+            savedServersButton.isEnabled = true
+            
+            addServerButton.visibility = View.VISIBLE
+            addServerButton.isEnabled = true
+            
+            // 断开连接按钮仅在连接到服务器时显示
+            disconnectButton.visibility = if (item.serverStatus == "CONNECTED") View.VISIBLE else View.GONE
+            disconnectButton.isEnabled = true
         }
     }
     

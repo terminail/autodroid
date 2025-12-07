@@ -14,8 +14,15 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.autodroid.manager.model.DiscoveredServer
+import com.autodroid.data.database.ServerProvider
+import com.autodroid.data.repository.ServerRepository
+import com.autodroid.manager.model.Server
+import com.autodroid.manager.network.ApiClient
+import com.autodroid.manager.network.HealthCheckResponse
 import com.autodroid.manager.service.NsdHelper.ServiceDiscoveryCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,12 +44,11 @@ class NetworkService : Service() {
     private var nsdHelper: NsdHelper? = null
     private var mdnsFallbackManager: MdnsFallbackManager? = null
     private var httpClient: OkHttpClient? = null
-    var discoveredServer: DiscoveredServer? = null
+    private var serverRepository: ServerRepository? = null
+    var discoveredServer: Server? = null
         private set
 
-    // mDNS discovery retry mechanism
-    private var currentRetryCount = 0
-    private var maxRetries = 3
+    // mDNS discovery state
     private var isDiscoveryInProgress = false
 
     inner class LocalBinder : Binder() {
@@ -55,8 +61,11 @@ class NetworkService : Service() {
         Log.d(TAG, "NetworkService created")
         Log.d(TAG, "Starting mDNS discovery process...")
 
-        // Initialize the DiscoveryStatusManager with application context
-        DiscoveryStatusManager.initialize(this)
+        // Initialize ServerRepository
+        serverRepository = ServerRepository.getInstance(applicationContext as android.app.Application)
+
+        // DiscoveryStatusManager is already initialized in MyApplication
+        // Do NOT re-initialize here to avoid state loss
 
         // Create notification channel for foreground service
         createNotificationChannel()
@@ -91,6 +100,9 @@ class NetworkService : Service() {
         
         // Clean up resources
         try {
+            // Disconnect from server
+            disconnectFromServer()
+            
             executorService?.shutdownNow()
             mdnsFallbackManager?.stopDiscovery()
             mdnsFallbackManager = null
@@ -159,7 +171,7 @@ class NetworkService : Service() {
             Log.e(TAG, "Network not connected, cannot start mDNS discovery")
             
             // Update DiscoveryStatusManager about network connectivity failure
-            DiscoveryStatusManager.updateDiscoveryStatus(false, currentRetryCount, maxRetries)
+            DiscoveryStatusManager.updateDiscoveryStatus(false)
             DiscoveryStatusManager.updateNetworkStatus(false)
             
             // Auto-stop the service after network failure
@@ -177,14 +189,11 @@ class NetworkService : Service() {
         
         // Network is connected, update status
         DiscoveryStatusManager.updateNetworkStatus(true)
-        Log.d(TAG, "Network connected, starting mDNS discovery")
+        Log.d(TAG, "Network connected - mDNS discovery will be started manually by user")
         
-        // Use the new MdnsFallbackManager instead of directly using NsdHelper
+        // Initialize MdnsFallbackManager but do not start discovery automatically
         mdnsFallbackManager = MdnsFallbackManager(this)
-        Log.d(TAG, "mDNS fallback manager initialized")
-        
-        // Start discovery with retry mechanism
-        startDiscoveryWithRetry()
+        Log.d(TAG, "mDNS fallback manager initialized (manual mode)")
     }
     
     /**
@@ -231,27 +240,44 @@ class NetworkService : Service() {
         }
     }
     
-    private fun startDiscoveryWithRetry() {
-        // Initial delay before starting discovery
+    private fun startDiscovery() {
+        // Start discovery immediately without delay
         executorService!!.submit(Runnable {
             try {
-                Thread.sleep(1000) // 1 second initial delay
                 isDiscoveryInProgress = true
                 // Update discovery status to notify UI
                 DiscoveryStatusManager.updateDiscoveryStatus(true)
                 mdnsFallbackManager?.startDiscovery(
                     discoveryCallback = { serverInfo ->
                         // Handle service found
-                        Log.d(TAG, "Service found: ${serverInfo.serviceName} at ${serverInfo.ip}:${serverInfo.port}")
-                        // Ensure non-null values for DiscoveredServer constructor
+                        Log.d(TAG, "Service found: ${serverInfo.serviceName}")
+                        // Ensure non-null values for Server constructor
                         val serviceName = serverInfo.serviceName ?: "Unknown Service"
-                        val ip = serverInfo.ip ?: "unknown"
-                        val port = serverInfo.port ?: 0
-                        discoveredServer = DiscoveredServer(serviceName, ip, port)
-                        // Update discovery status to completed
-                        DiscoveryStatusManager.updateDiscoveryStatus(false)
-                        // Update server info for UI
+                        val hostname = serverInfo.hostname ?: "unknown"
+                        val apiEndpoint = serverInfo.apiEndpoint ?: "http://unknown:8000"
+                        discoveredServer = Server(
+                            serviceName = serviceName,
+                            name = serviceName,
+                            hostname = hostname,
+                            platform = "Autodroid Server",
+                            apiEndpoint = apiEndpoint,
+                            discoveryMethod = "mDNS"
+                        )
+                        
+                        // Save to repository using coroutine scope
+                        CoroutineScope(Dispatchers.IO).launch {
+                            serverRepository?.addDiscoveredServer(discoveredServer!!)
+                        }
+                        
+                        // Perform health check
+                        performHealthCheck(discoveredServer!!)
+                        
+                        // Keep discovery status as true to maintain connection
+                        DiscoveryStatusManager.updateDiscoveryStatus(true)
+                        // Update server info for UI (this will preserve current connection status)
                         DiscoveryStatusManager.updateServerInfo(discoveredServer)
+                        // Mark as connected
+                        DiscoveryStatusManager.setServerConnected(true)
                         // Notify UI or other components
                         notifyServiceDiscoveryListeners()
                     },
@@ -261,27 +287,16 @@ class NetworkService : Service() {
                         isDiscoveryInProgress = false
                         // Update discovery status to notify UI
                         DiscoveryStatusManager.updateDiscoveryStatus(false)
+                        // Mark server as disconnected
+                        DiscoveryStatusManager.setServerConnected(false)
                         // Notify failure to UI or other components
                         notifyDiscoveryFailedListeners()
                     }
                 )
-            } catch (e: InterruptedException) {
-                Log.e(TAG, "Initial discovery interrupted", e)
+            } catch (e: Exception) {
+                Log.e(TAG, "Discovery error: ${e.message}", e)
                 // Update discovery status on error
                 DiscoveryStatusManager.updateDiscoveryStatus(false)
-            }
-        })
-        
-        // Fallback retry mechanism in case the initial discovery fails to trigger callbacks
-        executorService!!.submit(Runnable {
-            try {
-                Thread.sleep(3000) // 3 seconds fallback delay
-                if (isDiscoveryInProgress) {
-                    Log.d(TAG, "Discovery still in progress after 3 seconds, checking status")
-                    // If discovery is still in progress, we'll rely on the retry mechanism in the callback
-                }
-            } catch (e: InterruptedException) {
-                Log.e(TAG, "Fallback check interrupted", e)
             }
         })
     }
@@ -386,9 +401,6 @@ class NetworkService : Service() {
     fun restartMdnsDiscovery() {
         Log.d(TAG, "Restarting mDNS discovery")
         try {
-            // Reset retry count
-            currentRetryCount = 0
-            
             // Stop current discovery
             mdnsFallbackManager?.stopDiscovery()
             
@@ -399,7 +411,120 @@ class NetworkService : Service() {
         }
     }
 
-    val discoveredServers: List<DiscoveredServer>?
+    /**
+     * Perform health check on discovered server
+     */
+    private fun performHealthCheck(server: Server) {
+        executorService!!.submit {
+            try {
+                // Use coroutine scope for suspend functions
+                CoroutineScope(Dispatchers.IO).launch {
+                    // Create ApiClient instance for health check
+                    val apiClient = ApiClient.getInstance()
+                    
+                    try {
+                        val healthResponse = apiClient.healthCheck()
+                        
+                        // Update server info in repository using server key from repository
+                        val currentServer = serverRepository?.currentServer?.value
+                        if (currentServer != null) {
+                            // 使用serviceName作为serverKey来更新服务器信息
+                            serverRepository?.updateServerInfo(currentServer.serviceName, healthResponse.version ?: "unknown")
+                        }
+                        
+                        // Update DiscoveryStatusManager
+                        DiscoveryStatusManager.updateServerInfo(server)
+                        DiscoveryStatusManager.setServerConnected(true)
+                        Log.d(TAG, "Server health check successful: ${healthResponse}")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Server health check failed: ${e.message}")
+                        DiscoveryStatusManager.setServerConnected(false)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during health check: ${e.message}", e)
+                DiscoveryStatusManager.setServerConnected(false)
+            }
+        }
+    }
+
+    /**
+     * Add server manually (e.g., from QR code or manual input)
+     */
+    fun addServerManually(server: Server) {
+        executorService!!.submit {
+            try {
+                // Save to repository using coroutine scope
+                CoroutineScope(Dispatchers.IO).launch {
+                    serverRepository?.addDiscoveredServer(server)
+                }
+                
+                // Perform health check
+                performHealthCheck(server)
+                
+                // Update DiscoveryStatusManager
+                DiscoveryStatusManager.updateServerInfo(server)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding server manually: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
+     * Connect to existing server from repository
+     */
+    fun connectToServer(serverKey: String) {
+        executorService!!.submit {
+            try {
+                // Use coroutine scope for suspend function
+                CoroutineScope(Dispatchers.IO).launch {
+                    val success = serverRepository?.connectToServer(serverKey) ?: false
+                    if (success) {
+                        val currentServer = serverRepository?.currentServer?.value
+                        if (currentServer != null) {
+                            discoveredServer = currentServer
+                            DiscoveryStatusManager.updateServerInfo(currentServer)
+                            DiscoveryStatusManager.setServerConnected(true)
+                            
+                            // Perform health check
+                            performHealthCheck(currentServer)
+                        }
+                    } else {
+                        Log.w(TAG, "Failed to connect to server with key: $serverKey")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error connecting to server: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
+     * Disconnect from current server
+     */
+    fun disconnectFromServer() {
+        executorService!!.submit {
+            try {
+                // Use coroutine scope for suspend function
+                CoroutineScope(Dispatchers.IO).launch {
+                    serverRepository?.disconnectServer()
+                }
+                DiscoveryStatusManager.setServerConnected(false)
+                DiscoveryStatusManager.updateServerInfo(null)
+                discoveredServer = null
+                Log.d(TAG, "Disconnected from server")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error disconnecting from server: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
+     * Get all saved servers from repository
+     */
+    fun getSavedServers() = serverRepository?.getAllServers()
+
+    val discoveredServers: List<Server>?
         get() {
             // Return the currently discovered server if available
             return if (discoveredServer != null) {

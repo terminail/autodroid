@@ -259,7 +259,8 @@ class StandardNsdImplementation(
                     val apiEndpoint = "http://$it:$port/api"
                     val serverInfo = Server(
                         serviceName = serviceName,
-                        api_endpoint = apiEndpoint
+                        apiEndpoint = apiEndpoint,
+                        discoveryMethod = "mDNS"
                     )
                     callback.onServiceFound(serverInfo)
                 }

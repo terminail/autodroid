@@ -39,7 +39,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Discovering servers..."
+                android:text="Please select discovery method below"
                 android:textSize="14sp" />
                 
         </LinearLayout>
@@ -63,7 +63,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Checking..."
+                android:text="-"
                 android:textSize="14sp" />
                 
         </LinearLayout>
@@ -183,7 +183,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Auto Discovery"
+                android:text="Select discovery method"
                 android:textSize="14sp" />
                 
         </LinearLayout>
@@ -227,6 +227,47 @@
                 android:textColor="@android:color/white"
                 android:layout_marginStart="4dp"
                 android:visibility="visible" />
+                
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+            
+            <Button
+                android:id="@+id/saved_servers_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SAVED SERVERS"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="4dp"
+                android:visibility="visible" />
+                
+            <Button
+                android:id="@+id/add_server_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ADD SERVER"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp"
+                android:visibility="visible" />
+                
+            <Button
+                android:id="@+id/disconnect_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DISCONNECT"
+                android:background="@drawable/button_background"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp"
+                android:visibility="gone" />
                 
         </LinearLayout>
 

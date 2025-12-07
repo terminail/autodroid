@@ -5,7 +5,8 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
-import com.autodroid.manager.model.DiscoveredServer
+// import com.autodroid.manager.model.DiscoveredServer
+import com.autodroid.manager.model.Server
 import java.util.*
 
 class NsdHelper(context: Context, callback: ServiceDiscoveryCallback?) {
@@ -14,7 +15,7 @@ class NsdHelper(context: Context, callback: ServiceDiscoveryCallback?) {
     private var discoveryListener: NsdManager.DiscoveryListener? = null
     private var resolveListener: NsdManager.ResolveListener? = null
     private val callback: ServiceDiscoveryCallback?
-    val discoveredServers: MutableList<DiscoveredServer?> = ArrayList<DiscoveredServer?>()
+    val discoveredServers: MutableList<Server?> = ArrayList<Server?>()
 
     interface ServiceDiscoveryCallback {
         fun onServiceFound(serviceName: String?, host: String?, port: Int)

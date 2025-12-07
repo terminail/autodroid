@@ -10,6 +10,7 @@ import com.autodroid.manager.R
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.model.Server
+import com.autodroid.manager.service.DiscoveryStatusManager
 
 class ServerDetailFragment : BaseFragment() {
     // UI Components
@@ -52,11 +53,12 @@ class ServerDetailFragment : BaseFragment() {
     }
 
     override fun setupObservers() {
-        // Observe the unified server object to ensure consistent state
-        appViewModel.server.observe(viewLifecycleOwner) { server ->
+        // Observe the server from AppViewModel to ensure consistent state
+        val viewModel = ViewModelProvider(requireActivity()).get(AppViewModel::class.java)
+        viewModel.server.observe(viewLifecycleOwner) { server ->
             if (server != null) {
                 val connected = server.connected
-                val currentApiEndpoint = server.api_endpoint
+                val currentApiEndpoint = server.apiEndpoint
                 
                 // Update connection buttons based on whether this server is the connected one
                 val isThisServerConnected = connected && currentApiEndpoint == apiEndpoint
@@ -78,22 +80,36 @@ class ServerDetailFragment : BaseFragment() {
             return
         }
 
-        // Set this server as the current connected server using unified serverInfo
-        val serverInfo = Server(
-            serviceName = "Autodroid Server",
-            name = "Autodroid Server",
-            api_endpoint = apiEndpoint!!,
-            connected = true
-        )
-        
-        appViewModel.setServer(serverInfo)
+        // Extract host and port from API endpoint to create serverKey
+        val serverKey = extractServerKeyFromApiEndpoint(apiEndpoint!!)
+        if (serverKey == null) {
+            Toast.makeText(context, "Invalid API endpoint format", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Connect to server using AppViewModel
+        val viewModel = ViewModelProvider(requireActivity()).get(AppViewModel::class.java)
+        viewModel.connectToSavedServer(serverKey)
 
         Toast.makeText(context, "Connected to server via API Endpoint", Toast.LENGTH_SHORT).show()
     }
+    
+    private fun extractServerKeyFromApiEndpoint(apiEndpoint: String): String? {
+        return try {
+            // Parse API endpoint to extract host and port
+            val url = java.net.URL(apiEndpoint)
+            val host = url.host
+            val port = if (url.port != -1) url.port else url.defaultPort
+            "$host:$port"
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     private fun disconnectFromServer() {
-        // Disconnect from current server by clearing serverInfo
-        appViewModel.setServer(null)
+        // Disconnect from current server using AppViewModel
+        val viewModel = ViewModelProvider(requireActivity()).get(AppViewModel::class.java)
+        viewModel.disconnectFromServer()
         Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
     }
 

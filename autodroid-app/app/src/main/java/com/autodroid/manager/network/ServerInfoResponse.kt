@@ -7,9 +7,9 @@ package com.autodroid.manager.network
 data class ServerInfoResponse(
     val name: String? = null,
     val hostname: String? = null,
-    val ip_address: String? = null,
+    val ipAddress: String? = null,
     val platform: String? = null,
-    val api_endpoint: String? = null,
+    val apiEndpoint: String? = null,
     val services: Map<String, String> = emptyMap(),
     val capabilities: Map<String, Boolean> = emptyMap()
 ) {
@@ -17,7 +17,7 @@ data class ServerInfoResponse(
      * Check if the server info response is valid
      */
     fun isValid(): Boolean {
-        return name != null && hostname != null && ip_address != null && api_endpoint != null
+        return name != null && hostname != null && ipAddress != null && apiEndpoint != null
     }
     
     /**
@@ -51,13 +51,12 @@ data class ServerInfoResponse(
     /**
      * Get the API endpoint URL
      */
-    fun getApiEndpoint(): String {
-        return api_endpoint ?: ""
+    fun getApiEndpointUrl(): String {
+        return apiEndpoint ?: throw IllegalArgumentException("服务器API端点不能为空")
     }
     
     override fun toString(): String {
-        return "ServerInfoResponse(name='$name', hostname='$hostname', ip_address='$ip_address', " +
-               "platform='$platform', api_endpoint='$api_endpoint', " +
-               "services=$services, capabilities=$capabilities)"
+        return "ServerInfoResponse(name='$name', hostname='$hostname', ipAddress='$ipAddress', " +
+                "platform='$platform', apiEndpoint='$apiEndpoint', services=$services, capabilities=$capabilities)"
     }
 }

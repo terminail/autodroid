@@ -5,14 +5,14 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.manager.model.DashboardItem
 import com.autodroid.manager.model.Server
-import com.autodroid.manager.network.ServerInfoResponse
+// import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.ui.adapters.DashboardAdapter
 import com.autodroid.manager.service.DiscoveryStatusManager
+import com.autodroid.data.repository.ServerRepository
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.widget.Toast
 import java.util.concurrent.TimeUnit
@@ -28,12 +28,15 @@ import kotlinx.coroutines.withContext
 class ServerItemManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val viewModel: AppViewModel,
+    private val appViewModel: AppViewModel,
     private val onItemUpdate: (DashboardItem.ServerItem) -> Unit
 ) {
     private val TAG = "ServerItemManager"
     
     private var currentItem = DashboardItem.ServerItem()
+    
+    // Server repository for database operations
+    private val serverRepository = ServerRepository.getInstance(context.applicationContext as android.app.Application)
     
     // Activity Result API launchers for QR code scanning
     private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
@@ -148,56 +151,49 @@ class ServerItemManager(
      * Initialize the manager and start observing server status
      */
     fun initialize() {
-        setupObservers()
-        updateItem(
-            status = "Discovering servers via mDNS...",
-            serverStatus = "Disconnected",
-            apiEndpoint = "-",
-            discoveryMethod = "Auto mDNS Discovery",
-            isStartMdnsButtonEnabled = false // 仅mDNS按钮在发现过程中禁用
-        )
+
         
-        // Start mDNS discovery if not already running
-        if (!DiscoveryStatusManager.isQrCodeChosenAsFallback()) {
-            DiscoveryStatusManager.startNetworkService()
-        }
+        setupObservers()
+        
+        // mDNS discovery will be started manually by user - do not auto-start
     }
     
     /**
      * Set up observers for server discovery status
      */
     private fun setupObservers() {
-        // Observe server info from AppViewModel
-        viewModel.server.observe(lifecycleOwner) { server ->
+        // Observe server info from AppViewModel (single source of truth)
+        appViewModel.server.observe(lifecycleOwner) { server ->
             server?.let {
                 val connected = it.connected
-                val discoveryMethod = it.discoveryMethod ?: ""
-                val ip = it.ip ?: ""
-                val port = it.port ?: 0
-                val apiEndpoint = it.api_endpoint ?: "-"
+                val hostname = it.hostname ?: ""
+                val apiEndpoint = it.apiEndpoint ?: "-"
                 
                 isServerConnected = connected
-                serverConnectionMethod = discoveryMethod
                 
-                // 根据连接状态更新按钮行为
-                val isDiscoveryInProgress = viewModel.discoveryStatus.value?.isDiscovering() ?: false
+                // 根据连接状态更新UI
+                val isDiscoveryInProgress = false // Discovery status management moved to AppViewModel
                 
                 updateItem(
                     status = when {
-                        connected -> "Connected via $discoveryMethod"
-                        discoveryMethod == "mDNS" -> "mDNS Discovery Successful"
-                        discoveryMethod == "QRCode" -> "QR Code Scanned"
-                        else -> "Server Found"
+                        connected -> "Connected"
+                        isDiscoveryInProgress -> "Discovering servers via mDNS..."
+                        else -> "Server Discovered"
                     },
                     serverStatus = if (connected) "CONNECTED" else "DISCOVERED",
                     apiEndpoint = apiEndpoint,
-                    discoveryMethod = when {
+                    discoveryMethod = it.discoveryMethod ?: when {
                         connected -> "Connected"
                         isDiscoveryInProgress -> "Discovery via mDNS..."
-                        else -> discoveryMethod
+                        else -> "Discovered"
                     },
-                    isStartMdnsButtonEnabled = !isDiscoveryInProgress // 仅mDNS按钮在发现过程中禁用
+                    serverName = it.name,
+                    hostname = it.hostname ?: "",
+                    platform = it.platform ?: "Unknown",
+                    isStartMdnsButtonEnabled = !isDiscoveryInProgress
                 )
+                
+                Log.d(TAG, "AppViewModel server updated: ${it.name}, connected: $connected, platform: ${it.platform}")
                 
                 // Check server health if we have an API endpoint
                 if (apiEndpoint != "-" && !connected) {
@@ -208,7 +204,7 @@ class ServerItemManager(
                             
                             // If server is healthy, automatically connect to it
                             if (isHealthy) {
-                                connectToServer(ip, port, apiEndpoint)
+                                connectToServer(apiEndpoint)
                             }
                         }
                     }
@@ -218,37 +214,51 @@ class ServerItemManager(
                 isServerConnected = false
                 serverConnectionMethod = "none"
                 
+                // 在手动模式下，应用启动时完全不设置任何状态
+                // 只有在用户交互或实际状态变化时才更新UI
+                // 避免在启动时自动显示任何状态信息
+                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
+                    // 保持空白状态，不自动设置任何文本
+                    return@run
+                }
+                
+                // 只有在实际有状态变化时才更新
                 updateItem(
-                    status = "Discovering servers via mDNS...",
+                    status = "请从下面选择发现服务器方式",
                     serverStatus = "DISCONNECTED",
                     apiEndpoint = "-",
-                    discoveryMethod = "Auto mDNS Discovery",
-                    isStartMdnsButtonEnabled = false // 仅mDNS按钮在发现过程中禁用
+                    discoveryMethod = "选择发现方式",
+                    isStartMdnsButtonEnabled = true // mDNS按钮启用
                 )
+                
+                Log.d(TAG, "AppViewModel server is null, UI cleared")
             }
         }
         
-        // Observe discovery status from AppViewModel
-        viewModel.discoveryStatus.observe(lifecycleOwner) { discoveryStatus ->
+        // Note: Discovery status management is handled by DiscoveryStatusManager
+        // Observe discovery status from DiscoveryStatusManager
+        DiscoveryStatusManager.discoveryStatus.observe(lifecycleOwner) { discoveryStatus ->
             discoveryStatus?.let { status ->
-                val isDiscovering = status.isDiscovering()
-                val retryCount = status.retryCount
+                val isDiscovering = status.inProgress
+                
+                // 在应用启动时，如果当前状态是初始状态，则不自动显示mDNS状态
+                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
+                    // 保持空白状态，不自动设置任何mDNS相关文本
+                    return@let
+                }
                 
                 // Update UI based on discovery status
                 when {
                     isDiscovering -> {
                         updateItem(
-                            status = when {
-                                retryCount > 0 -> "mDNS Discovery (Retry $retryCount)..."
-                                else -> "Discovering servers via mDNS..."
-                            },
+                            status = "Discovering servers via mDNS...",
                             serverStatus = "DISCOVERING",
                             apiEndpoint = "-",
                             discoveryMethod = "Auto mDNS Discovery",
                             isStartMdnsButtonEnabled = false // 仅mDNS按钮在发现过程中禁用
                         )
                     }
-                    status.isDiscoveryFailed() -> {
+                    status.failed -> {
                         updateItem(
                             status = "mDNS Discovery Failed",
                             serverStatus = "FAILED",
@@ -260,6 +270,18 @@ class ServerItemManager(
                     else -> {
                         // Other cases are handled by serverInfo observer
                     }
+                }
+            }
+        }
+        
+        // Note: Saved servers management has been moved to AppViewModel
+        // Observe saved servers from AppViewModel
+        appViewModel.savedServers.observe(lifecycleOwner) { servers ->
+            servers?.let {
+                Log.d(TAG, "Saved servers updated: ${it.size} servers")
+                // Update UI to show saved servers count or other relevant info
+                if (it.isNotEmpty()) {
+                    updateItem(status = "已保存 ${it.size} 个服务器")
                 }
             }
         }
@@ -299,13 +321,14 @@ class ServerItemManager(
             
             // Extract server information from JSON
             val serverName = jsonObject.optString("server_name", "Unknown Server")
-            val apiEndpoint = jsonObject.optString("api_endpoint", "")
-            val ipAddress = jsonObject.optString("ip_address", "")
+            val apiEndpoint = jsonObject.optString("apiEndpoint", "")
+            val ipAddress = jsonObject.optString("ipAddress", "")
             val port = jsonObject.optInt("port", 0)
             
             if (apiEndpoint.isNotEmpty() && ipAddress.isNotEmpty() && port > 0) {
+                // Note: QR code fallback management has been moved to AppViewModel
                 // Mark QR code as chosen as fallback to prevent mDNS restart
-                DiscoveryStatusManager.setQrCodeChosenAsFallback(true)
+                // DiscoveryStatusManager.setQrCodeChosenAsFallback(true) - REMOVED in architecture refactoring
 
                 updateItem(
                     status = "QR Code Scanned Successfully",
@@ -317,14 +340,14 @@ class ServerItemManager(
                 val serverObj = Server(
                     serviceName = "Autodroid Server",
                     name = serverName,
-                    ip = ipAddress,
-                    port = port,
-                    api_endpoint = apiEndpoint,
+                    hostname = ipAddress,
+                    apiEndpoint = apiEndpoint,
                     connected = false, // Not connected yet
                     discoveryMethod = "QRCode"
                 )
                 
-                viewModel.setServer(serverObj)
+                // Server data management is now handled by AppViewModel
+                // The actual server connection should be initiated by UI components through AppViewModel
                 
                 // Check server health
                 checkServerHealth(apiEndpoint) { isHealthy ->
@@ -336,7 +359,7 @@ class ServerItemManager(
                         
                         // If server is healthy, connect to it
                         if (isHealthy) {
-                            connectToServer(ipAddress, port, apiEndpoint)
+                            connectToServer(apiEndpoint)
                         }
                     }
                 }
@@ -377,36 +400,24 @@ class ServerItemManager(
     /**
      * Connect to server using IP and port
      */
-    private fun connectToServer(serverIp: String, serverPort: Int, apiEndpoint: String) {
-        Log.i(TAG, "Connecting to server: $serverIp:$serverPort")
+    private fun connectToServer(apiEndpoint: String) {
+        Log.i(TAG, "Connecting to server via API endpoint: $apiEndpoint")
         
+        // Note: Server info management has been moved to AppViewModel
         // Get the discovery method from the server info
-        val discoveryMethod = viewModel.server.value?.discoveryMethod ?: "unknown"
+        val discoveryMethod = appViewModel.server.value?.discoveryMethod ?: "unknown"
         
         // Ensure UI updates run on main thread
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             updateItem(
                 status = "Connected to server via $discoveryMethod",
-                serverStatus = "CONNECTED"
+                serverStatus = "CONNECTED",
+                discoveryMethod = discoveryMethod
             )
         }
         
-        // Update DiscoveryStatusManager with server info
-        val serverObj = Server(
-            serviceName = "Autodroid Server",
-            name = "Autodroid Server",
-            hostname = null,
-            platform = null,
-            api_endpoint = apiEndpoint,
-            services = emptyMap(),
-            capabilities = emptyMap(),
-            connected = true,
-            ip = serverIp,
-            port = serverPort,
-            discoveryMethod = discoveryMethod
-        )
-        
-        viewModel.setServer(serverObj)
+        // Note: Server management responsibility has been moved to AppViewModel
+        // UI components should initiate connections through AppViewModel
         
         // Check server health
         checkServerHealth(apiEndpoint) { isHealthy ->
@@ -474,6 +485,13 @@ class ServerItemManager(
     }
     
     /**
+     * Get the current server connection item
+     */
+    fun getCurrentItem(): DashboardItem.ServerItem {
+        return currentItem
+    }
+    
+    /**
      * Update the current item and notify listeners
      */
     private fun updateItem(
@@ -511,17 +529,284 @@ class ServerItemManager(
     }
     
     /**
-     * Get the current server connection item
+     * Show saved servers dialog
      */
-    fun getCurrentItem(): DashboardItem.ServerItem {
-        return currentItem
+    fun showSavedServersDialog() {
+        val savedServers = appViewModel.savedServers.value ?: return
+        
+        if (savedServers.isEmpty()) {
+            showDetailedToast("没有已保存的服务器", "", Toast.LENGTH_SHORT)
+            return
+        }
+        
+        val serverNames = savedServers.mapIndexed { index, server ->
+            "${index + 1}. ${server.name} (${server.hostname})"
+        }.toTypedArray()
+        
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("选择已保存的服务器")
+            .setItems(serverNames) { _, which ->
+                val selectedServer = savedServers[which]
+                connectToSavedServer(selectedServer)
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
     
     /**
-     * Check if server is currently connected
+     * Connect to a saved server
+     */
+    private fun connectToSavedServer(server: Server) {
+        val apiEndpoint = server.apiEndpoint ?: return
+        
+        // Update UI to show connection attempt
+        updateItem(
+            status = "连接到已保存服务器: ${server.name}",
+            serverStatus = "CONNECTING",
+            apiEndpoint = apiEndpoint,
+            discoveryMethod = server.discoveryMethod ?: "手动连接",
+            isStartMdnsButtonEnabled = false
+        )
+        
+        // Check server health before connecting
+        checkServerHealth(apiEndpoint) { isHealthy ->
+            // Ensure UI updates run on main thread
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                if (isHealthy) {
+                    // Note: Server connection management has been moved to AppViewModel
+                    // Connect to the server through AppViewModel
+                    appViewModel.connectToSavedServer(server.hostname ?: "")
+                } else {
+                    updateItem(
+                        status = "服务器健康检查失败: ${server.name}",
+                        serverStatus = "HEALTH_CHECK_FAILED",
+                        isStartMdnsButtonEnabled = true
+                    )
+                }
+            }
+        }
+    }
+    
+    /**
+     * Show add server dialog
+     */
+    fun showAddServerDialog() {
+        val editText = android.widget.EditText(context)
+        editText.hint = "服务器地址 (IP:Port)"
+        
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("添加服务器")
+            .setView(editText)
+            .setPositiveButton("添加") { _, _ ->
+                val input = editText.text.toString().trim()
+                if (input.isNotEmpty()) {
+                    addServerManually(input)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+    
+    /**
+     * Add a server manually
+     */
+    private fun addServerManually(apiEndpoint: String) {
+        // Show progress toast
+        showDetailedToast("正在连接服务器...", "", Toast.LENGTH_SHORT)
+        
+        // Use coroutine to perform server connection in background
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                // Set API endpoint and get server info
+                com.autodroid.manager.network.ApiClient.getInstance().setApiEndpoint(apiEndpoint)
+                
+                // Fetch server information from FastAPI
+                val serverInfo = com.autodroid.manager.network.ApiClient.getInstance().getServerInfo()
+                
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    if (serverInfo != null) {
+                        // Extract host and port from api_endpoint
+                        val (host, port) = try {
+                            val endpoint = serverInfo.apiEndpoint ?: apiEndpoint
+                            val url = java.net.URL(endpoint)
+                            url.host to url.port
+                        } catch (e: Exception) {
+                            // Fallback parsing if URL parsing fails
+                            val hostRegex = "//([^:/]+)".toRegex()
+                            val portRegex = ":(\\d+)(/|$)".toRegex()
+                            val hostMatch = hostRegex.find(apiEndpoint)
+                            val portMatch = portRegex.find(apiEndpoint)
+                            val host = hostMatch?.groupValues?.get(1) ?: "localhost"
+                            val port = portMatch?.groupValues?.get(1)?.toInt() ?: 8000
+                            host to port
+                        }
+                        
+                        // Create a Server with all the information we already have
+                        val server = Server(
+                            serviceName = serverInfo.name ?: "Manual Server",
+                            name = serverInfo.name ?: "Manual Server",
+                            hostname = host,
+                            platform = serverInfo.platform,
+                            apiEndpoint = serverInfo.apiEndpoint ?: apiEndpoint,
+                            discoveryMethod = "manual"
+                        )
+                        
+                        // Add server using repository
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                serverRepository.addDiscoveredServer(server)
+                                withContext(Dispatchers.Main) {
+                                    // 更新UI显示服务器连接成功状态
+                                    updateItem(
+                                        status = "已连接到手动输入服务器: ${server.name}",
+                                        serverStatus = "CONNECTED",
+                                        apiEndpoint = server.apiEndpoint ?: "-",
+                                        discoveryMethod = "手动输入",
+                                        isStartMdnsButtonEnabled = false,
+                                        serverName = server.name ?: "手动服务器",
+                                        hostname = server.hostname ?: "-",
+                                        platform = server.platform ?: "-"
+                                    )
+                                    showDetailedToast("服务器连接成功", "", Toast.LENGTH_SHORT)
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    // 更新UI显示连接失败状态
+                                    updateItem(
+                                        status = "手动输入服务器添加失败: ${e.message}",
+                                        serverStatus = "FAILED",
+                                        isStartMdnsButtonEnabled = true
+                                    )
+                                    showDetailedToast("添加服务器失败: ${e.message}", "", Toast.LENGTH_SHORT)
+                                }
+                            }
+                        }
+                    } else {
+                        showDetailedToast("无法获取服务器信息", "", Toast.LENGTH_SHORT)
+                    }
+                }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    showDetailedToast("服务器连接失败: ${e.message}", "", Toast.LENGTH_SHORT)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Show server management dialog
+     */
+    fun showServerManagementDialog() {
+        val options = arrayOf("查看已保存服务器", "添加服务器", "刷新服务器列表")
+        
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("服务器管理")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showSavedServersDialog()
+                    1 -> showAddServerDialog()
+                    2 -> {
+                        // Note: Server refresh management has been moved to AppViewModel
+                        appViewModel.refreshSavedServers()
+                        showDetailedToast("服务器列表已刷新", "", Toast.LENGTH_SHORT)
+                    }
+                }
+            }
+            .show()
+    }
+    
+    /**
+     * Disconnect from current server
+     */
+    fun disconnectFromServer() {
+        // Note: Server disconnection management has been moved to AppViewModel
+        appViewModel.disconnectFromServer()
+        showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)
+    }
+    
+    /**
+     * Handle server management button click
+     */
+    fun onServerManagementButtonClick() {
+        showServerManagementDialog()
+    }
+    
+    /**
+     * Handle saved servers button click
+     */
+    fun onSavedServersButtonClick() {
+        showSavedServersDialog()
+    }
+    
+    /**
+     * Handle add server button click
+     */
+    fun onAddServerButtonClick() {
+        showAddServerDialog()
+    }
+    
+    /**
+     * Handle disconnect button click
+     */
+    fun onDisconnectButtonClick() {
+        if (isServerConnected()) {
+            disconnectFromServer()
+        }
+    }
+    
+    /**
+     * Get current server info
+     */
+    fun getCurrentServer(): Server? {
+        // Note: Server info management has been moved to AppViewModel
+        return appViewModel.server.value
+    }
+    
+    /**
+     * Get saved servers list
+     */
+    fun getSavedServers(): List<Server> {
+        // Note: Saved servers management has been moved to AppViewModel
+        return appViewModel.savedServers.value ?: emptyList()
+    }
+    
+    /**
+     * Refresh server list
+     */
+    fun refreshServerList() {
+        // Note: Server refresh management has been moved to AppViewModel
+        appViewModel.refreshSavedServers()
+        showDetailedToast("服务器列表已刷新", "", Toast.LENGTH_SHORT)
+    }
+    
+    /**
+     * Delete a saved server
+     */
+    fun deleteSavedServer(serverKey: String) {
+        // Note: Server deletion management has been moved to AppViewModel
+        appViewModel.deleteSavedServer(serverKey)
+        showDetailedToast("服务器已删除", "", Toast.LENGTH_SHORT)
+    }
+    
+    /**
+     * Update server status in UI
+     */
+    private fun updateServerStatusUI(server: Server, status: String) {
+        updateItem(
+            status = status,
+            serverStatus = if (server.connected) "CONNECTED" else "DISCONNECTED",
+            apiEndpoint = server.apiEndpoint ?: "-",
+            discoveryMethod = server.discoveryMethod ?: "Unknown",
+            isStartMdnsButtonEnabled = !server.connected
+        )
+    }
+    
+    /**
+     * Check if connected to server
      */
     fun isServerConnected(): Boolean {
-        return isServerConnected
+        // Note: Server info management has been moved to AppViewModel
+        return appViewModel.server.value?.connected == true
     }
     
     /**
@@ -539,8 +824,9 @@ class ServerItemManager(
         isServerConnected = false
         serverConnectionMethod = "none"
         
+        // Note: QR code fallback management has been moved to AppViewModel
         // Reset QR code fallback flag to allow mDNS discovery
-        DiscoveryStatusManager.resetQrCodeFallback()
+        // DiscoveryStatusManager.resetQrCodeFallback() - REMOVED in architecture refactoring
         
         // Immediately update UI to show refreshing state
         updateItem(
@@ -559,43 +845,44 @@ class ServerItemManager(
     }
     
     /**
-     * Force immediate update with current server state from ViewModel
+     * Force immediate update with current server state from DiscoveryStatusManager
      */
     private fun forceUpdateWithCurrentState() {
-        val currentServer = viewModel.server.value
-        val currentDiscoveryStatus = viewModel.discoveryStatus.value
+        // Note: Discovery status management has been moved to AppViewModel
+        // Get server information from DiscoveryStatusManager (single source of truth)
+        val currentDiscoveryStatus = DiscoveryStatusManager.discoveryStatus.value
+        val currentServer = appViewModel.server.value
         
         if (currentServer != null) {
             // Server is connected or discovered, update UI immediately
             updateItem(
                 status = when {
-                    currentServer.connected -> "Connected via ${currentServer.discoveryMethod}"
+                    currentServer.connected -> "Connected via ${currentServer.discoveryMethod ?: "Unknown"}"
                     currentServer.discoveryMethod == "mDNS" -> "mDNS Discovery Successful"
                     currentServer.discoveryMethod == "QRCode" -> "QR Code Scanned"
                     else -> "Server Found"
                 },
                 serverStatus = if (currentServer.connected) "CONNECTED" else "DISCOVERED",
-                apiEndpoint = currentServer.api_endpoint ?: "-",
+                apiEndpoint = currentServer.apiEndpoint ?: "-",
                 discoveryMethod = currentServer.discoveryMethod ?: "Auto mDNS Discovery",
-                isStartMdnsButtonEnabled = currentDiscoveryStatus?.isDiscovering() != true,
+                isStartMdnsButtonEnabled = currentDiscoveryStatus?.inProgress != true,
                 serverName = currentServer.name ?: "Autodroid Server",
                 hostname = currentServer.hostname ?: "-",
                 platform = currentServer.platform ?: "-"
             )
         } else {
             // No server info available, show discovery status
-            val isDiscovering = currentDiscoveryStatus?.isDiscovering() ?: false
-            val retryCount = currentDiscoveryStatus?.retryCount ?: 0
+            val isDiscovering = currentDiscoveryStatus?.inProgress ?: false
             
             updateItem(
                 status = when {
-                    isDiscovering -> if (retryCount > 0) "mDNS Discovery (Retry $retryCount)..." else "Discovering servers via mDNS..."
-                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "mDNS Discovery Failed"
+                    isDiscovering -> "Discovering servers via mDNS..."
+                    currentDiscoveryStatus?.failed == true -> "mDNS Discovery Failed"
                     else -> "Discovering servers via mDNS..."
                 },
                 serverStatus = when {
                     isDiscovering -> "DISCOVERING"
-                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "FAILED"
+                    currentDiscoveryStatus?.failed == true -> "FAILED"
                     else -> "DISCONNECTED"
                 },
                 apiEndpoint = "-",
@@ -638,85 +925,28 @@ class ServerItemManager(
             false
         }
     }
-    
+
     /**
-     * Handle manual input connection from user
-     */
-    fun handleManualInputConnection(apiEndpoint: String, serverInfo: com.autodroid.manager.network.ServerInfoResponse) {
-        Log.i(TAG, "Handling manual input connection: $apiEndpoint")
-        
-        // Show loading indicator
-        showLoadingIndicator("正在验证服务器连接")
-        
-        try {
-            // Use serverInfo directly instead of parsing API endpoint
-            if (serverInfo.isValid()) {
-                // Update UI to show manual input connection with server details
-                updateItem(
-                    status = "Connected via Manual Input",
-                    serverStatus = "CONNECTED",
-                    apiEndpoint = serverInfo.getApiEndpoint(),
-                    discoveryMethod = "Manual Input",
-                    isStartMdnsButtonEnabled = true,
-                    serverName = serverInfo.name ?: "Autodroid Server",
-                    hostname = serverInfo.hostname ?: "-",
-                    platform = serverInfo.platform ?: "-"
-                )
-                
-                // Update DiscoveryStatusManager with server info using type-safe data
-                // Create Server object instead of Map
-                val serverObj = Server(
-                    serviceName = serverInfo.name ?: "Autodroid Server (Manual)",
-                    name = serverInfo.name ?: "Autodroid Server (Manual)",
-                    hostname = serverInfo.hostname,
-                    api_endpoint = serverInfo.api_endpoint ?: "",
-                    connected = true,
-                    discoveryMethod = "Manual Input"
-                )
-                
-                viewModel.setServer(serverObj)
-                
-                // Check server health
-                checkServerHealth(serverInfo.api_endpoint ?: "") { isHealthy ->
-                    // Ensure UI updates run on main thread
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        updateItem(
-                            serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
-                        )
-                    }
-                }
-                
-                // Show success message
-                showSuccessMessage("手动连接成功", "服务器信息已成功获取")
-            } else {
-                showErrorMessage("服务器信息无效", "请检查服务器返回的信息格式是否正确")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error handling manual input connection: ${e.message}", e)
-            showErrorMessage("手动连接失败", e.message)
-        }
-    }
-    
-    /**
-     * Handle START mDNS button click with retry mechanism
+     * Handle START mDNS button click (manual mode without retry)
      */
     fun handleStartMdnsDiscovery() {
-        // Start mDNS discovery with retry mechanism
-        DiscoveryStatusManager.startDiscoveryWithRetry()
+        // Note: Discovery management is handled directly by DiscoveryStatusManager
+        // Start mDNS discovery (manual mode without retry)
+        DiscoveryStatusManager.startDiscovery()
         
         // Update UI to show discovery started
         updateItem(
             status = "Starting mDNS Discovery...",
             serverStatus = "DISCOVERING",
             apiEndpoint = "-",
-            discoveryMethod = "Manual mDNS Discovery (with Retry)",
+            discoveryMethod = "Manual mDNS Discovery",
             isStartMdnsButtonEnabled = true
         )
         
         // Show detailed feedback to user
         showDetailedToast("开始mDNS发现服务", "正在搜索网络中的Autodroid服务器...", Toast.LENGTH_LONG)
         
-        Log.d(TAG, "START mDNS discovery with retry mechanism initiated")
+        Log.d(TAG, "START mDNS discovery initiated (manual mode)")
     }
     
     /**
@@ -724,13 +954,7 @@ class ServerItemManager(
      */
     fun handleManualInputClick() {
         // Show manual input dialog
-        showManualInputDialog()
-    }
-    
-    /**
-     * Show manual input dialog for server address
-     */
-    private fun showManualInputDialog() {
+
         // Create dialog layout
         val inputLayout = android.widget.LinearLayout(context).apply {
             orientation = android.widget.LinearLayout.VERTICAL
@@ -742,7 +966,7 @@ class ServerItemManager(
         
         // Add API endpoint input field
         val apiEndpointInput = android.widget.EditText(context).apply {
-            hint = "输入API端点 (例如: http://192.168.1.59:8004/api)"
+            hint = "输入API Endpoint (例如: http://192.168.1.59:8004/api)"
             setText("http://192.168.1.59:8004/api")
             layoutParams = android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
@@ -761,10 +985,10 @@ class ServerItemManager(
             .setPositiveButton("连接") { dialog, _ ->
                 val apiEndpoint = apiEndpointInput.text.toString().trim()
                 if (apiEndpoint.isNotEmpty()) {
-                    // Validate and connect to server
-                    validateAndConnectToServer(apiEndpoint)
+                    // Add server manually
+                    addServerManually(apiEndpoint)
                 } else {
-                    android.widget.Toast.makeText(context, "请输入API端点", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, "请输入服务器地址", android.widget.Toast.LENGTH_SHORT).show()
                 }
                 dialog.dismiss()
             }
@@ -773,96 +997,7 @@ class ServerItemManager(
             }
             .show()
     }
-    
-    /**
-     * Validate API endpoint and connect to server
-     */
-    private fun validateAndConnectToServer(apiEndpoint: String) {
-        // Show connection progress
-        android.widget.Toast.makeText(context, "正在验证服务器连接...", android.widget.Toast.LENGTH_SHORT).show()
-        
-        // Use coroutine to perform validation in background
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            try {
-                // Set API endpoint - validation is now handled by ApiClient
-                com.autodroid.manager.network.ApiClient.getInstance().setApiEndpoint(apiEndpoint)
-                
-                // Fetch server info from FastAPI
-                val serverInfo = getServerInfo()
-                
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    if (serverInfo != null) {
-                        // Successfully fetched server info, update UI and connect to server
-                        handleSuccessfulServerConnection(apiEndpoint, serverInfo)
-                    } else {
-                        android.widget.Toast.makeText(context, "无法连接到服务器", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: IllegalArgumentException) {
-                // Handle invalid API endpoint format
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "API端点格式无效: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "连接失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-    
 
-    
-    /**
-     * Get server info from FastAPI using the type-safe ApiClient
-     */
-    private suspend fun getServerInfo(): com.autodroid.manager.network.ServerInfoResponse? {
-        return try {
-            // Get server info using type-safe ApiClient
-            com.autodroid.manager.network.ApiClient.getInstance().getServerInfo()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting server info: ${e.message}", e)
-            null
-        }
-    }
-    
-    /**
-     * Handle successful server connection from manual input
-     */
-    private fun handleSuccessfulServerConnection(apiEndpoint: String, serverInfo: com.autodroid.manager.network.ServerInfoResponse) {
-        // Parse server info and update UI
-        try {
-            // For now, simply show success message
-            android.widget.Toast.makeText(context, "服务器连接成功", android.widget.Toast.LENGTH_SHORT).show()
-            
-            // Update server connection status
-            handleManualInputConnection(apiEndpoint, serverInfo)
-            
-        } catch (e: Exception) {
-            android.widget.Toast.makeText(context, "服务器信息解析失败", android.widget.Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    /**
-     * Parse API endpoint to extract IP and port
-     */
-    private fun parseApiEndpoint(apiEndpoint: String): Pair<String?, Int?> {
-        return try {
-            // Remove http:// or https:// prefix
-            val cleanEndpoint = apiEndpoint.replace("^https?://".toRegex(), "")
-            
-            // Split by colon to get IP and port
-            val parts = cleanEndpoint.split(":")
-            if (parts.size >= 2) {
-                val ip = parts[0]
-                val port = parts[1].toInt()
-                Pair(ip, port)
-            } else {
-                Pair(null, null)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing API endpoint: $apiEndpoint", e)
-            Pair(null, null)
-        }
-    }
+
 }
+    

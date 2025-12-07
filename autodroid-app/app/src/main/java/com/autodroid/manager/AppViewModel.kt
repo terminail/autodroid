@@ -1,8 +1,13 @@
 package com.autodroid.manager
 
+import android.app.Application
+import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
+import com.autodroid.data.repository.ServerRepository
 import com.autodroid.manager.model.User
 import com.autodroid.manager.model.DiscoveryStatus
 import com.autodroid.manager.model.Device
@@ -11,17 +16,77 @@ import com.autodroid.manager.model.Apk
 import com.autodroid.manager.model.Server
 import com.autodroid.manager.model.Wifi
 import com.autodroid.manager.model.Workflow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+/**
+ * AppViewModel - 应用级共享状态管理ViewModel
+ * 
+ * 职责说明：
+ * - 管理全局应用状态和数据，如用户认证信息、设备信息、网络状态等
+ * - 提供跨Activity/Fragment共享的LiveData，确保数据一致性
+ * - 协调不同模块之间的数据共享和状态同步
+ * 
+ * 设计原则：
+ * 1. 单一职责原则：只管理全局共享状态，不处理具体业务逻辑
+ * 2. 避免God ViewModel：每个Activity/Fragment应有自己的ViewModel处理本地状态
+ * 3. 数据驱动：通过LiveData提供响应式数据更新
+ * 4. 依赖倒置：通过Repository层访问数据，不直接操作数据源
+ * 
+ * 使用场景：
+ * - 用户认证状态（登录/登出）
+ * - 设备连接状态
+ * - 网络连接状态
+ * - 全局配置信息
+ * - 跨页面共享的数据
+ * 
+ * 注意事项：
+ * - 每个Activity/Fragment除了使用AppViewModel外，应有自己的ViewModel处理本地UI状态
+ * - 具体业务逻辑应由对应的Manager层（如DiscoveryStatusManager）处理
+ * - UI组件应直接调用Manager层方法，AppViewModel仅提供状态观察
+ */
 class AppViewModel : ViewModel() {
-    // Getters for LiveData
-    // Server information - unified object from mDNS discovery
-    val server = MutableLiveData<Server?>()
     
-    // Discovery status information (encapsulated)
-    val discoveryStatus = MutableLiveData<DiscoveryStatus>()
+    companion object {
+        @Volatile
+        private var instance: AppViewModel? = null
+        
+        fun getInstance(): AppViewModel {
+            return instance ?: synchronized(this) {
+                instance ?: AppViewModel().also { instance = it }
+            }
+        }
+    }
+    
+    // Repository instances
+    private var serverRepository: ServerRepository? = null
+    
+    // Server information (single source of truth)
+    val server: LiveData<Server?> get() = serverRepository?.getConnectedServer()?.map { entity ->
+        if (entity != null) {
+            Server(
+                serviceName = entity.name,
+                name = entity.name,
+                connected = entity.isConnected,
+                apiEndpoint = if (entity.apiEndpoint.isNotEmpty()) entity.apiEndpoint else "http://localhost/api",
+                discoveryMethod = entity.discoveryType.ifEmpty { "Database" },
+                hostname = entity.hostname,
+                platform = entity.platform,
+                supportsDeviceRegistration = entity.supportsDeviceRegistration,
+                supportsApkManagement = entity.supportsApkManagement,
+                supportsWorkflowExecution = entity.supportsWorkflowExecution
+            )
+        } else {
+            null
+        }
+    } ?: MutableLiveData<Server?>().apply { value = null }
+    
+    // Saved servers list from repository
+    val savedServers = MutableLiveData<List<Server>>()
 
     // User authentication information (global shared state)
-    val user = MutableLiveData<User>()
+    val user = MutableLiveData<User>(User(isAuthenticated = false))
     val errorMessage = MutableLiveData<String?>()
 
     // Device information (global shared state)
@@ -42,10 +107,40 @@ class AppViewModel : ViewModel() {
     // Workflows information
     val availableWorkflows = MutableLiveData<MutableList<Workflow>>()
 
-    // Setters
-    fun setServer(info: Server?) {
-        server.setValue(info)
+    /**
+     * Initialize the ViewModel with application context
+     */
+    fun initialize(context: Context) {
+        serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
+        
+        // Load saved servers from repository
+        loadSavedServers()
     }
+    
+    /**
+     * Load saved servers from repository
+     */
+    private fun loadSavedServers() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val serversLiveData = serverRepository?.getAllServers()
+                serversLiveData?.observeForever { servers ->
+                    savedServers.value = (servers?.map { entity ->
+                        Server(
+                            serviceName = entity.name,
+                            name = entity.name,
+                            connected = entity.lastConnectedTime > 0,
+                            apiEndpoint = "http://localhost/api"
+                        )
+                    } ?: emptyList()) as List<Server>?
+                }
+            } catch (e: Exception) {
+                Log.e("AppViewModel", "Error loading saved servers: ${e.message}", e)
+            }
+        }
+    }
+
+    // Setters
     
     // User authentication setters
     fun setUser(userInfo: User) {
@@ -68,31 +163,6 @@ class AppViewModel : ViewModel() {
         device.setValue(info)
     }
     
-    fun setDiscoveryStatus(status: DiscoveryStatus) {
-        discoveryStatus.setValue(status)
-    }
-    
-    // Convenience methods for common discovery state changes
-    fun startDiscovery(maxRetries: Int = 3) {
-        setDiscoveryStatus(DiscoveryStatus.discovering(maxRetries))
-    }
-    
-    fun stopDiscovery(failed: Boolean = false) {
-        val currentStatus = discoveryStatus.value ?: DiscoveryStatus.initial()
-        setDiscoveryStatus(
-            if (failed) {
-                DiscoveryStatus.failed(currentStatus.maxRetries, currentStatus.retryCount)
-            } else {
-                currentStatus.copy(inProgress = false)
-            }
-        )
-    }
-    
-    fun incrementDiscoveryRetry() {
-        val currentStatus = discoveryStatus.value ?: DiscoveryStatus.initial()
-        setDiscoveryStatus(currentStatus.withIncrementedRetry())
-    }
-    
     fun setApk(info: Apk) {
         apk.setValue(info)
     }
@@ -107,66 +177,6 @@ class AppViewModel : ViewModel() {
     
     fun setSelectedApkIndex(index: Int) {
         selectedApkIndex.setValue(index)
-    }
-    
-    // Server connection status helper methods
-    fun isServerConnected(): Boolean {
-        return server.value != null
-    }
-    
-    fun getServerHost(): String? {
-        return server.value?.ip
-    }
-    
-    fun getServerPort(): Int? {
-        // Extract port from api_endpoint URL
-        return server.value?.api_endpoint?.let { endpoint ->
-            try {
-                val url = java.net.URL(endpoint)
-                url.port
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-    
-    fun getServerConnectionStatus(): Boolean {
-        return isServerConnected()
-    }
-    
-    // Enhanced server connection state management
-    fun getServerConnectionState(): ServerConnectionState {
-        return when {
-            isServerConnected() -> ServerConnectionState.CONNECTED
-            isDiscoveryInProgress() -> ServerConnectionState.DISCOVERING
-            isDiscoveryFailed() -> ServerConnectionState.FAILED
-            else -> ServerConnectionState.DISCONNECTED
-        }
-    }
-    
-    // Server connection state enum
-    enum class ServerConnectionState {
-        DISCONNECTED,    // Server not connected and not discovering
-        DISCOVERING,     // Actively searching for server
-        CONNECTED,       // Server connected successfully
-        FAILED           // Server discovery failed
-    }
-    
-    // Discovery status helper methods
-    fun isDiscoveryInProgress(): Boolean {
-        return discoveryStatus.value?.isDiscovering() ?: false
-    }
-    
-    fun isDiscoveryFailed(): Boolean {
-        return discoveryStatus.value?.isDiscoveryFailed() ?: false
-    }
-    
-    fun getDiscoveryRetryCount(): Int {
-        return discoveryStatus.value?.retryCount ?: 0
-    }
-    
-    fun getDiscoveryMaxRetries(): Int {
-        return discoveryStatus.value?.maxRetries ?: 3
     }
     
     // Device information helper methods
@@ -325,5 +335,71 @@ class AppViewModel : ViewModel() {
     
     fun setAvailableWorkflows(workflows: MutableList<Workflow>) {
         availableWorkflows.setValue(workflows)
+    }
+    
+    /**
+     * Connect to a saved server by key
+     */
+    fun connectToSavedServer(serverKey: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val success = serverRepository?.connectToServer(serverKey) ?: false
+                if (success) {
+                    Log.d("AppViewModel", "Connected to server with key: $serverKey")
+                } else {
+                    Log.w("AppViewModel", "Failed to connect to server with key: $serverKey")
+                }
+            } catch (e: Exception) {
+                Log.e("AppViewModel", "Error connecting to saved server: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * Disconnect from current server
+     */
+    fun disconnectFromServer() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                serverRepository?.disconnectServer()
+                Log.d("AppViewModel", "Disconnected from server")
+            } catch (e: Exception) {
+                Log.e("AppViewModel", "Error disconnecting from server: ${e.message}", e)
+            }
+        }
+    }
+    
+
+    
+    /**
+     * Delete a saved server
+     */
+    fun deleteSavedServer(serverKey: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                serverRepository?.deleteServer(serverKey)
+                // Refresh saved servers list
+                loadSavedServers()
+                Log.d("AppViewModel", "Deleted server with key: $serverKey")
+            } catch (e: Exception) {
+                Log.e("AppViewModel", "Error deleting server: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * Refresh saved servers list
+     */
+    fun refreshSavedServers() {
+        loadSavedServers()
+    }
+    
+    // Server connection state helper methods
+    fun isServerConnected(): Boolean {
+        return server.value?.connected ?: false
+    }
+    
+    fun getServerHost(): String? {
+        return server.value?.hostname
     }
 }

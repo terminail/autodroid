@@ -45,7 +45,10 @@
     "java.saveActions.organizeImports": true,
     "java.project.importOnFirstTimeStartup": "automatic",
     "java.project.importHint": true,
-    "java.project.resourceFilters": ["node_modules", ".git"],
+    "java.project.resourceFilters": [
+        "node_modules",
+        ".git"
+    ],
     "java.referencesCodeLens.enabled": true,
     "java.implementationsCodeLens.enabled": true,
     "java.configuration.updateBuildConfiguration": "interactive",

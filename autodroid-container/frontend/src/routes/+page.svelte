@@ -7,7 +7,7 @@
 	let serverData: ServerData = {
 		name: 'Loading...',
 		hostname: 'Loading...',
-		ip_address: 'Loading...',
+		ipAddress: 'Loading...',
 		platform: 'Loading...'
 	};
 	let qrCodeUrl = '';
@@ -25,7 +25,7 @@
 			serverData = {
 				name: data?.name || 'Unknown',
 				hostname: data?.hostname || 'Unknown',
-				ip_address: data?.ip_address || 'Unknown',
+				ipAddress: data?.ipAddress || 'Unknown',
 				platform: data?.platform || 'Unknown',
 				api_base_url: data?.api_base_url || `/api`
 			};
@@ -69,9 +69,9 @@
 							<span class="status-value">{serverData.hostname}</span>
 						</div>
 						<div class="status-item">
-							<span class="status-label">IP Address:</span>
-							<span class="status-value">{serverData.ip_address}</span>
-						</div>
+					<span class="status-label">IP Address:</span>
+					<span class="status-value">{serverData.ipAddress}</span>
+				</div>
 						<div class="status-item">
 							<span class="status-label">Platform:</span>
 							<span class="status-value">{serverData.platform}</span>

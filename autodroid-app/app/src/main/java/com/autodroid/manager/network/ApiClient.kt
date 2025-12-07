@@ -56,7 +56,8 @@ class ApiClient private constructor() {
             throw IllegalArgumentException("Invalid API endpoint format: $url")
         }
         
-        apiEndpoint = url.trim();
+        // Use user input as-is
+        apiEndpoint = url.trim()
         Log.d(TAG, "API endpoint set to: $apiEndpoint")
     }
     
@@ -178,7 +179,9 @@ class ApiClient private constructor() {
      * Get server information from FastAPI
      */
     fun getServerInfo(): ServerInfoResponse? {
+        // Build the complete URL by appending /server to the base API endpoint
         val url = buildApiUrl("/server")
+        
         val response = makeGetRequest(url)
         
         if (!response.isSuccessful) {

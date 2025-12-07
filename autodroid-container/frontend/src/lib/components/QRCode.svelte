@@ -8,8 +8,8 @@
 	let error: string = '';
 	let qrData = {
 		server_name: '',
-		api_endpoint: '',
-		ip_address: '',
+		apiEndpoint: '',
+		ipAddress: '',
 		port: 0,
 		protocol: '',
 		version: '',
@@ -62,11 +62,11 @@
 				</div>
 				<div class="info-item">
 					<span class="info-label">Endpoint:</span>
-					<span class="info-value">{qrData.api_endpoint}</span>
+					<span class="info-value">{qrData.apiEndpoint}</span>
 				</div>
 				<div class="info-item">
 					<span class="info-label">IP Address:</span>
-					<span class="info-value">{qrData.ip_address}:{qrData.port}</span>
+					<span class="info-value">{qrData.ipAddress}:{qrData.port}</span>
 				</div>
 			</div>
 		</div>

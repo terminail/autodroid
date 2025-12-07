@@ -34,10 +34,10 @@ class StandardNsdImplementationTest {
         countDownLatch = CountDownLatch(1)
         
         val callback = object : com.autodroid.manager.service.MdnsImplementation.Callback {
-            override fun onServiceFound(serverInfo: com.autodroid.manager.model.ServerInfo) {
+            override fun onServiceFound(serverInfo: com.autodroid.manager.model.Server) {
                 discoveredServiceName = serverInfo.serviceName
-                discoveredServiceHost = serverInfo.host
-                discoveredServicePort = serverInfo.port
+                discoveredServiceHost = serverInfo.hostname
+                discoveredServicePort = 8004 // Default port for autodroid server
                 countDownLatch.countDown()
             }
             
@@ -69,11 +69,11 @@ class StandardNsdImplementationTest {
         
         // Start discovery
         standardNsdImplementation.startDiscovery(object : com.autodroid.manager.service.MdnsImplementation.Callback {
-            override fun onServiceFound(serverInfo: com.autodroid.manager.model.ServerInfo) {
+            override fun onServiceFound(serverInfo: com.autodroid.manager.model.Server) {
                 discoveredServiceName = serverInfo.serviceName
-                discoveredServiceHost = serverInfo.host
-                discoveredServicePort = serverInfo.port
-                println("Service found: ${serverInfo.serviceName} at ${serverInfo.host}:${serverInfo.port}")
+                discoveredServiceHost = serverInfo.hostname
+                discoveredServicePort = 8004 // Default port for autodroid server
+                println("Service found: ${serverInfo.serviceName} at ${serverInfo.hostname}")
                 countDownLatch.countDown()
             }
             

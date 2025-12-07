@@ -2,7 +2,6 @@
 package com.autodroid.manager
 
 import android.app.Application
-import androidx.lifecycle.MutableLiveData
 import com.autodroid.manager.service.DiscoveryStatusManager
 
 class MyApplication : Application() {
@@ -14,12 +13,16 @@ class MyApplication : Application() {
         // Initialize the DiscoveryStatusManager with application context
         DiscoveryStatusManager.initialize(this)
         
-        // Auto-start NetworkService for mDNS discovery
-        DiscoveryStatusManager.startNetworkService()
+        // Do not auto-start NetworkService - mDNS discovery will be started manually by user
     }
 
     companion object {
         var instance: MyApplication? = null
             private set
+    }
+
+    // Helper method to get AppViewModel instance
+    fun getAppViewModel(): AppViewModel {
+        return AppViewModel.getInstance()
     }
 }

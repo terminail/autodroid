@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.autodroid.manager.AppViewModel
+import com.autodroid.manager.MyApplication
 
 /**
  * 统一的Fragment基类，提供标准化的生命周期管理和ViewModel初始化
@@ -25,7 +26,7 @@ abstract class BaseFragment : Fragment() {
      * 子类可以重写此方法来自定义ViewModel初始化逻辑
      */
     protected open fun initializeViewModel() {
-        appViewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
+        appViewModel = (requireActivity().application as MyApplication).getAppViewModel()
     }
     
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

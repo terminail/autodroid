@@ -55,8 +55,8 @@ class LoginActivity : BaseActivity() {
         fingerprintLoginButton = findViewById<Button>(R.id.fingerprint_login_button)
         registerLink = findViewById<TextView>(R.id.register_link)
 
-        // Set error text view for base class
-        // errorTextView is already set in BaseActivity
+        // Initialize error text view for base class
+        errorTextView = findViewById<TextView>(R.id.login_error)
 
         // Set focus on the Login button instead of the email field
         loginButton?.requestFocus()
@@ -116,12 +116,16 @@ class LoginActivity : BaseActivity() {
                 )
                 appViewModel.setUser(userInfo)
 
-                // Navigate to main activity (no need to pass authentication data via Intent)
-                val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                // Server information is automatically managed by ServerItemManager through DiscoveryStatusManager
+                // No need to manually update server info here - UI will refresh automatically
 
-                Log.d("LoginActivity", "Starting MainActivity with AppViewModel already updated")
-                startActivity(intent)
+                // Navigate back to MainActivity with the intended destination
+                // Use result to pass the intended destination back to MainActivity
+                Log.d("LoginActivity", "Login successful, returning to MainActivity with intended destination")
+                
+                val resultIntent = Intent()
+                resultIntent.putExtra("login_successful", true)
+                setResult(RESULT_OK, resultIntent)
                 finish()
             }
         })
@@ -179,7 +183,7 @@ class LoginActivity : BaseActivity() {
                     super.onAuthenticationError(errorCode, errString)
                     if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED) {
                         val errorMessage = getString(R.string.biometric_error) ?: ""
-                        errorTextView.text = "$errorMessage$errString"
+                    errorTextView.text = "$errorMessage${errString.toString()}"
                         errorTextView.visibility = View.VISIBLE
                     }
                 }

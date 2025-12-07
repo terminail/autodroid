@@ -3,7 +3,7 @@ export interface ServerInfo {
     name: string;
     version: string;
     hostname: string;
-    ip_address: string;
+    ipAddress: string;
     platform: string;
     python_version: string;
     services: {
@@ -30,7 +30,7 @@ export interface ServerInfo {
 export interface ServerData {
     name: string;
     hostname: string;
-    ip_address: string;
+    ipAddress: string;
     platform: string;
     api_base_url?: string;
 }
@@ -39,7 +39,7 @@ export interface WiFiNetwork {
     name: string;
     signal_strength: number;
     security: string;
-    ip_address?: string;
+    ipAddress?: string;
 }
 
 export interface ServerWiFiInfo {
@@ -57,7 +57,7 @@ export interface DeviceInfo {
     model: string;
     os_version: string;
     status: 'online' | 'offline' | 'busy';
-    ip_address: string;
+    ipAddress: string;
     last_seen: string;
     udid?: string;
     manufacturer?: string;

@@ -42,11 +42,11 @@ class JmDNSImplementationTest {
         
         // Create callback to handle service discovery events
         val callback = object : com.autodroid.manager.service.MdnsImplementation.Callback {
-            override fun onServiceFound(serverInfo: com.autodroid.manager.model.ServerInfo) {
-                Log.d(TAG, "Service found: ${serverInfo.serviceName} at ${serverInfo.host}:${serverInfo.port}")
+            override fun onServiceFound(serverInfo: com.autodroid.manager.model.Server) {
+                Log.d(TAG, "Service found: ${serverInfo.serviceName} at ${serverInfo.hostname}")
                 discoveredServiceName = serverInfo.serviceName
-                discoveredServiceHost = serverInfo.host
-                discoveredServicePort = serverInfo.port
+                discoveredServiceHost = serverInfo.hostname
+                discoveredServicePort = 8004 // Default port for autodroid server
                 discoveryLatch.countDown()
             }
             

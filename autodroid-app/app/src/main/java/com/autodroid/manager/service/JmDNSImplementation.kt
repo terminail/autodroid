@@ -84,7 +84,8 @@ class JmDNSImplementation(
                             val apiEndpoint = "http://$host:$port/api"
                             val serverInfo = Server(
                                 serviceName = info.name,
-                                api_endpoint = apiEndpoint
+                                apiEndpoint = apiEndpoint,
+                                discoveryMethod = "mDNS"
                             )
                             callback.onServiceFound(serverInfo)
                         }
@@ -109,7 +110,8 @@ class JmDNSImplementation(
                     val apiEndpoint = "http://$host:$port/api"
                     val serverInfo = Server(
                         serviceName = service.name,
-                        api_endpoint = apiEndpoint
+                        apiEndpoint = apiEndpoint,
+                        discoveryMethod = "mDNS"
                     )
                     callback.onServiceFound(serverInfo)
                 }

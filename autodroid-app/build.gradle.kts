@@ -15,7 +15,7 @@ buildscript {
         classpath("com.android.tools.build:gradle:8.13.1")
         
         // Kotlin plugin
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.21")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20")
         
         // Navigation Safe Args plugin
         classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.7.7")

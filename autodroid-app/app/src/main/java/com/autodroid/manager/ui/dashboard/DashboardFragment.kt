@@ -33,7 +33,7 @@ import java.util.Locale
 import com.autodroid.manager.R
 import com.autodroid.manager.managers.WorkflowManager
 import com.autodroid.manager.apk.ApkScannerManager
-import com.autodroid.manager.model.DiscoveredServer
+// import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.model.Server
 import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.ui.adapters.BaseItemAdapter
@@ -70,7 +70,7 @@ class DashboardFragment : BaseFragment() {
     private val dashboardItems = mutableListOf<DashboardItem>()
     
     // Item managers for modular architecture
-    private lateinit var serverConnectionItemManager: ServerItemManager
+    private lateinit var serverItemManager: ServerItemManager
     private lateinit var deviceInfoItemManager: DeviceItemManager
     private lateinit var wifiItemManager: WiFiItemManager
     private lateinit var apkScannerItemManager: ApkScannerItemManager
@@ -87,13 +87,13 @@ class DashboardFragment : BaseFragment() {
         requestCameraPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
-            serverConnectionItemManager.handleCameraPermissionResult(isGranted)
+            serverItemManager.handleCameraPermissionResult(isGranted)
         }
         
         startQRCodeScannerLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            serverConnectionItemManager.handleQrCodeScanResult(result)
+            serverItemManager.handleQrCodeScanResult(result)
         }
 
         // NetworkService is now auto-started in MyApplication
@@ -109,7 +109,7 @@ class DashboardFragment : BaseFragment() {
         dashboardRecyclerView?.layoutManager = LinearLayoutManager(context)
         
         // Initialize item managers FIRST
-        serverConnectionItemManager = ServerItemManager(
+        serverItemManager = ServerItemManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
@@ -148,16 +148,28 @@ class DashboardFragment : BaseFragment() {
         dashboardAdapter = DashboardAdapter()
         dashboardAdapter?.setOnItemClickListener(object : DashboardAdapter.OnItemClickListener {
             override fun onStartMdnsClick() {
-                serverConnectionItemManager.handleStartMdnsDiscovery()
+                serverItemManager.handleStartMdnsDiscovery()
             }
             
             override fun onScanQrCodeClick() {
-                serverConnectionItemManager.checkCameraPermissionAndScanQR()
+                serverItemManager.checkCameraPermissionAndScanQR()
             }
             
             override fun onManualInputClick() {
-                // 委托给ServerConnectionItemManager处理手动输入
-                this@DashboardFragment.onManualInputClick()
+                // 委托给ServerItemManager处理手动输入
+                serverItemManager.handleManualInputClick()
+            }
+            
+            override fun onSavedServersClick() {
+                serverItemManager.onSavedServersButtonClick()
+            }
+            
+            override fun onAddServerClick() {
+                serverItemManager.onAddServerButtonClick()
+            }
+            
+            override fun onDisconnectClick() {
+                serverItemManager.onDisconnectButtonClick()
             }
             
             override fun onScanApksClick() {
@@ -174,10 +186,10 @@ class DashboardFragment : BaseFragment() {
         dashboardRecyclerView?.adapter = dashboardAdapter
          
          // Initialize QR code scanning functionality
-         serverConnectionItemManager.initializeQRCodeScanning(requestCameraPermissionLauncher, startQRCodeScannerLauncher)
+         serverItemManager.initializeQRCodeScanning(requestCameraPermissionLauncher, startQRCodeScannerLauncher)
          
          // Start item managers
-        serverConnectionItemManager.initialize()
+        serverItemManager.initialize()
         deviceInfoItemManager.initialize()
         wifiItemManager.initialize()
         apkScannerItemManager.initialize()
@@ -185,7 +197,8 @@ class DashboardFragment : BaseFragment() {
 
         // Debug: Check if NetworkService is running
         Log.d("DashboardFragment", "Initializing views - checking NetworkService status")
-        Log.d("DashboardFragment", "QR code fallback flag: ${DiscoveryStatusManager.isQrCodeChosenAsFallback()}")
+        // Note: QR code fallback management has been moved to AppViewModel
+        // Log.d("DashboardFragment", "QR code fallback flag: ${DiscoveryStatusManager.isQrCodeChosenAsFallback()}") - REMOVED in architecture refactoring
 
         // Update UI with initial data
         updateUI()
@@ -213,7 +226,7 @@ class DashboardFragment : BaseFragment() {
         Log.d("DashboardFragment", "onServerConnectionItemUpdate called: status=${item.status}, serverStatus=${item.serverStatus}")
         
         try {
-            val result = serverConnectionItemManager.handleServerConnectionUpdate(item, dashboardItems, dashboardAdapter)
+            val result = serverItemManager.handleServerConnectionUpdate(item, dashboardItems, dashboardAdapter)
             Log.d("DashboardFragment", "handleServerConnectionUpdate result: $result")
         } catch (e: Exception) {
             Log.e("DashboardFragment", "Error in handleServerConnectionUpdate: ${e.message}", e)
@@ -246,17 +259,8 @@ class DashboardFragment : BaseFragment() {
         dashboardItems.clear()
         
         // Add initial items in the correct order:
-        // 1. Connection Status - Add server connection item as first item
-        dashboardItems.add(DashboardItem.ServerItem(
-            status = "Discovering servers via mDNS...",
-            serverStatus = "DISCONNECTED",
-            apiEndpoint = "-",
-            discoveryMethod = "Auto mDNS Discovery",
-            isStartMdnsButtonEnabled = false,
-            serverName = "Autodroid Server",
-            hostname = "-",
-            platform = "-"
-        ))
+        // 1. Connection Status - Use ServerItemManager to get the current server item
+        dashboardItems.add(serverItemManager.getCurrentItem())
         
         // 2. Wifi Information
         dashboardItems.add(DashboardItem.WiFiItem(
@@ -306,7 +310,7 @@ class DashboardFragment : BaseFragment() {
         // Trigger initial updates from item managers
         // These will update the dashboardItems list with current data
         // Start with server connection to ensure it's immediately visible
-        serverConnectionItemManager.refresh()
+        serverItemManager.refresh()
         wifiItemManager.refresh()
         deviceInfoItemManager.refresh()
         apkScannerItemManager.refresh()
@@ -319,54 +323,9 @@ class DashboardFragment : BaseFragment() {
      * Force immediate update of server connection item with current state
      */
     private fun forceServerItemUpdate() {
-        // Get the current server state from the view model
-        val currentServer = appViewModel.server.value
-        val currentDiscoveryStatus = appViewModel.discoveryStatus.value
-
-        if (currentServer != null) {
-            // Server is connected or discovered, update UI immediately
-            val serverItem = DashboardItem.ServerItem(
-                status = when {
-                    currentServer.connected -> "Connected via ${currentServer.discoveryMethod ?: "Unknown"}"
-                    currentServer.discoveryMethod == "mDNS" -> "mDNS Discovery Successful"
-                    currentServer.discoveryMethod == "QRCode" -> "QR Code Scanned"
-                    else -> "Server Found"
-                },
-                serverStatus = if (currentServer.connected) "CONNECTED" else "DISCOVERED",
-                apiEndpoint = currentServer.api_endpoint ?: "-",
-                discoveryMethod = currentServer.discoveryMethod ?: "Auto mDNS Discovery",
-                isStartMdnsButtonEnabled = currentDiscoveryStatus?.isDiscovering() != true,
-                serverName = currentServer.name ?: "Autodroid Server",
-                hostname = currentServer.hostname ?: "-",
-                platform = currentServer.platform ?: "-"
-            )
-            
-            // Update the server item in the list
-            serverConnectionItemManager.handleServerConnectionUpdate(serverItem, dashboardItems, dashboardAdapter)
-        } else {
-            // No server info available, show discovery status
-            val isDiscovering = currentDiscoveryStatus?.isDiscovering() ?: false
-            val retryCount = currentDiscoveryStatus?.retryCount ?: 0
-            
-            val serverItem = DashboardItem.ServerItem(
-                status = when {
-                    isDiscovering -> if (retryCount > 0) "mDNS Discovery (Retry $retryCount)..." else "Discovering servers via mDNS..."
-                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "mDNS Discovery Failed"
-                    else -> "Discovering servers via mDNS..."
-                },
-                serverStatus = when {
-                    isDiscovering -> "DISCOVERING"
-                    currentDiscoveryStatus?.isDiscoveryFailed() == true -> "FAILED"
-                    else -> "DISCONNECTED"
-                },
-                apiEndpoint = "-",
-                discoveryMethod = "Auto mDNS Discovery",
-                isStartMdnsButtonEnabled = !isDiscovering
-            )
-            
-            // Update the server item in the list
-            serverConnectionItemManager.handleServerConnectionUpdate(serverItem, dashboardItems, dashboardAdapter)
-        }
+        // Simply trigger a refresh of the server item manager
+        // The ServerItemManager will handle the state update internally
+        serverItemManager.refresh()
     }
 
     // updateWiFiInfo method removed - WiFi information updates are handled by WiFiItemManager
@@ -419,10 +378,27 @@ class DashboardFragment : BaseFragment() {
     }
 
     /**
-     * 处理手动输入按钮点击事件 - 委托给ServerConnectionItemManager
+     * 处理手动输入按钮点击事件 - 委托给ServerItemManager
      */
     private fun onManualInputClick() {
-        serverConnectionItemManager.handleManualInputClick()
+        serverItemManager.handleManualInputClick()
+    }
+
+    /**
+     * Refresh the UI - called from MainActivity after login success
+     */
+    fun refreshUI() {
+        Log.d(TAG, "DashboardFragment.refreshUI() called")
+        
+        // Force update all item managers to refresh their data
+        serverItemManager.refresh()
+        wifiItemManager.refresh()
+        deviceInfoItemManager.refresh()
+        apkScannerItemManager.refresh()
+        apkItemManager.refresh()
+        
+        // Update navigation state if needed
+        updateUI()
     }
 
     override fun onDestroy() {

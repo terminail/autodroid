@@ -67,9 +67,9 @@ async def get_server_info():
     return {
         "name": "Autodroid Server",
         "hostname": hostname,
-        "ip_address": ip_address,
+        "ipAddress": ip_address,
         "platform": platform.platform(),
-        "api_endpoint": f"http://{ip_address}:{fastapi_port}/api",
+        "apiEndpoint": f"http://{ip_address}:{fastapi_port}/api",
         "services": {
             "device_manager": "running",
             "workflow_engine": "running",
@@ -160,7 +160,7 @@ async def get_server_wifis():
                             # Find the matching WiFi in the list and add the IP
                             for wifi in wifis:
                                 if wifi["name"] == connected_ssid:
-                                    wifi["ip_address"] = ip_address
+                                    wifi["ipAddress"] = ip_address
                                     break
                             break
             except Exception as e:
@@ -191,7 +191,7 @@ async def get_server_wifis():
                                 "name": ssid,
                                 "signal_strength": signal,
                                 "security": security,
-                                "ip_address": None
+                                "ipAddress": None
                             })
             
             # Try to get the IP address for the currently connected WiFi
@@ -219,7 +219,7 @@ async def get_server_wifis():
                         # Find the matching WiFi in the list and add the IP
                         for wifi in wifis:
                             if wifi["name"] == connected_ssid:
-                                wifi["ip_address"] = ip_address
+                                wifi["ipAddress"] = ip_address
                                 break
             except Exception as e:
                 print(f"Error getting connected WiFi IP on Linux: {e}")
@@ -282,8 +282,8 @@ async def generate_qr_code():
         # Create QR code data
         qr_data = {
             "server_name": "Autodroid Server",
-            "api_endpoint": api_endpoint,
-            "ip_address": ip_address,
+            "apiEndpoint": api_endpoint,
+            "ipAddress": ip_address,
             "port": port,
             "protocol": protocol,
             "version": "1.0",
@@ -349,8 +349,8 @@ async def get_qr_code_data():
         # Create QR code data
         qr_data = {
             "server_name": "Autodroid Server",
-            "api_endpoint": api_endpoint,
-            "ip_address": ip_address,
+            "apiEndpoint": api_endpoint,
+            "ipAddress": ip_address,
             "port": port,
             "protocol": protocol,
             "version": "1.0",
@@ -360,7 +360,7 @@ async def get_qr_code_data():
         
         return {
             "qr_data": qr_data,
-            "api_endpoint": api_endpoint
+            "apiEndpoint": api_endpoint
         }
         
     except Exception as e:

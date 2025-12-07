@@ -40,7 +40,7 @@ class DeviceRegistration(BaseModel):
     name: str
     platform: str
     model: str
-    ip_address: str
+    ipAddress: str
     port: int
 
 
@@ -65,9 +65,9 @@ class ServerInfo(BaseModel):
     """Model for server information response"""
     name: str
     hostname: str
-    ip_address: str
+    ipAddress: str
     platform: str
-    api_endpoint: str
+    apiEndpoint: str
     services: Dict[str, str]
     capabilities: Dict[str, bool]
 
@@ -81,11 +81,12 @@ class HealthCheck(BaseModel):
 
 class WiFiNetwork(BaseModel):
     """Model for WiFi network information"""
-    name: str
-    signal_strength: int
-    security: str
-    ip_address: Optional[str] = None
-    recommended: bool = False
+    ssid: str
+    bssid: str
+    frequency: int
+    signal_level: int
+    capabilities: str
+    ipAddress: Optional[str] = None
 
 
 class WiFiList(BaseModel):

@@ -9,7 +9,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.manager.model.DiscoveredServer
+// import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.model.Server
 import java.util.*
 import java.util.concurrent.Executor
@@ -34,8 +34,6 @@ class MdnsFallbackManager(private val context: Context) {
     private var isDiscoveryInProgress = false
     private var discoveryCallback: ((Server) -> Unit)? = null
     private var failureCallback: (() -> Unit)? = null
-    private val weightManager = MdnsWeightManager(context)
-    
     interface ServiceDiscoveryCallback {
         fun onServiceFound(serviceName: String?, host: String?, port: Int)
         fun onServiceLost(serviceName: String?)
@@ -57,16 +55,11 @@ class MdnsFallbackManager(private val context: Context) {
         implementations.add(weUPnP)
         implementations.add(standardNsd)
         
-        // Sort implementations by weight (highest first)
-        implementations.sortByDescending { weightManager.getWeight(it) }
+        Log.d(TAG, "Initialized ${implementations.size} mDNS implementations for manual start mode")
         
-        Log.d(TAG, "Initialized ${implementations.size} mDNS implementations with weight-based sorting")
-        
-        // Log implementation weights and availability
+        // Log implementation availability
         implementations.forEach { impl ->
-            val weight = weightManager.getWeight(impl)
-            val status = weightManager.getAvailabilityStatus(impl)
-            Log.d(TAG, "${impl.javaClass.simpleName}: weight=$weight, status=$status")
+            Log.d(TAG, "${impl.javaClass.simpleName}: available for manual start")
         }
     }
     
@@ -94,20 +87,12 @@ class MdnsFallbackManager(private val context: Context) {
      * Try the next mDNS implementation
      */
     private fun tryNextImplementation() {
-        // Filter out disabled implementations (weight = -1)
-        val availableImplementations = implementations.filter { weightManager.isAvailable(it) }
+        // Use all implementations (no weight filtering)
+        val availableImplementations = implementations
         
-        if (availableImplementations.isEmpty()) {
-            // If all implementations are disabled, try to restore at least one
-            Log.w(TAG, "All implementations disabled, attempting to restore minimal functionality")
-            implementations.forEach { weightManager.onImplementationFailed(it) } // This will restore minimal weight
-        }
-        
-        val filteredImplementations = implementations.filter { weightManager.isAvailable(it) }
-        
-        if (currentImplementationIndex >= filteredImplementations.size) {
-            // All available implementations failed
-            Log.e(TAG, "All available mDNS implementations failed")
+        if (currentImplementationIndex >= availableImplementations.size) {
+            // All implementations failed
+            Log.e(TAG, "All mDNS implementations failed")
             isDiscoveryInProgress = false
             failureCallback?.invoke()
             return
@@ -115,9 +100,8 @@ class MdnsFallbackManager(private val context: Context) {
         
         val implementation = availableImplementations[currentImplementationIndex]
         val implementationName = implementation.javaClass.simpleName
-        val currentWeight = weightManager.getWeight(implementation)
         
-        Log.d(TAG, "Trying mDNS implementation: $implementationName (weight=$currentWeight, ${currentImplementationIndex + 1}/${availableImplementations.size})")
+        Log.d(TAG, "Trying mDNS implementation: $implementationName (${currentImplementationIndex + 1}/${availableImplementations.size})")
         
         // Add a delay before trying the next implementation to avoid rapid switching
         if (currentImplementationIndex > 0) {
@@ -135,16 +119,13 @@ class MdnsFallbackManager(private val context: Context) {
         // Create a callback for the current implementation
         val implementationCallback = object : MdnsImplementation.Callback {
             override fun onServiceFound(serverInfo: Server) {
-                Log.d(TAG, "Service found using $implementationName: ${serverInfo.ip}:${serverInfo.port}")
+                Log.d(TAG, "Service found using $implementationName: ${serverInfo.hostname}")
                 discoveryCallback?.invoke(serverInfo)
             }
             
             override fun onDiscoveryFailed() {
                 Log.w(TAG, "Implementation $implementationName failed, trying next")
                 hasTimedOut = true // Prevent timeout from triggering
-                
-                // Mark implementation as failed
-                weightManager.onImplementationFailed(implementation)
                 
                 currentImplementationIndex++
                 tryNextImplementation()
@@ -159,9 +140,6 @@ class MdnsFallbackManager(private val context: Context) {
             if (hasStarted && !hasTimedOut) {
                 Log.w(TAG, "TIMEOUT: Implementation $implementationName found no services after 10 seconds, switching to next implementation")
                 hasTimedOut = true
-                
-                // Mark implementation as failed
-                weightManager.onImplementationFailed(implementation)
                 
                 implementation.stopDiscovery()
                 currentImplementationIndex++

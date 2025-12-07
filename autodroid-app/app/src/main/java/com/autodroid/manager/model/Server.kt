@@ -11,19 +11,21 @@ data class Server(
     val name: String? = null,
     val hostname: String? = null,
     val platform: String? = null,
-    val api_endpoint: String? = null,
+    val apiEndpoint: String? = null,
     val services: Map<String, String> = emptyMap(),
     val capabilities: Map<String, Boolean> = emptyMap(),
     val connected: Boolean = false,
-    val ip: String? = null,
-    val port: Int? = null,
-    val discoveryMethod: String? = null
+
+    val discoveryMethod: String? = null,
+    val supportsDeviceRegistration: Boolean = false,
+    val supportsApkManagement: Boolean = false,
+    val supportsWorkflowExecution: Boolean = false
 ) {
     /**
      * Get the API endpoint URL
      */
-    fun getApiEndpoint(): String {
-        return api_endpoint ?: ""
+    fun getApiEndpointUrl(): String {
+        return apiEndpoint ?: throw IllegalArgumentException("服务器API端点不能为空")
     }
     
     /**
@@ -31,7 +33,7 @@ data class Server(
      * A server is valid if it has a valid API endpoint
      */
     fun isValid(): Boolean {
-        val apiEndpoint = getApiEndpoint()
+        val apiEndpoint = getApiEndpointUrl()
         return apiEndpoint.isNotBlank() && apiEndpoint.startsWith("http")
     }
     
@@ -39,7 +41,7 @@ data class Server(
      * Check if the server info is enriched with API data
      */
     fun isEnriched(): Boolean {
-        return name != null && hostname != null && api_endpoint != null
+        return name != null && hostname != null && apiEndpoint != null
     }
     
     /**
@@ -50,7 +52,7 @@ data class Server(
             name = serverInfoResponse.name,
             hostname = serverInfoResponse.hostname,
             platform = serverInfoResponse.platform,
-            api_endpoint = serverInfoResponse.api_endpoint,
+            apiEndpoint = serverInfoResponse.apiEndpoint,
             services = serverInfoResponse.services,
             capabilities = serverInfoResponse.capabilities
         )
@@ -87,7 +89,7 @@ data class Server(
     override fun toString(): String {
         return if (isEnriched()) {
             "ServerInfo(serviceName='$serviceName', name='$name', hostname='$hostname', " +
-            "platform='$platform', api_endpoint='$api_endpoint')"
+            "platform='$platform', apiEndpoint='$apiEndpoint')"
         } else {
             "ServerInfo(serviceName='$serviceName')"
         }
