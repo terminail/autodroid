@@ -135,42 +135,232 @@ graph BT
 
 ### 数据库结构设计
 
+引用服务端数据模型（参考 `/d:/git/autodroid/autodroid-container/DESIGN.md#L174-175`），移动端本地缓存以下实体：
+
 ```mermaid
 erDiagram
-    SERVERS {
-        string id PK
-        string name
-        string host
-        int port
-        boolean connected
-        long lastSeen
-        string serverInfo
+    SERVER {
+        string id PK "使用apiEndpoint的shorturl"
+        string apiEndpoint "服务器API端点"
+        string name "服务器名称"
+        string host "服务器主机地址"
+        boolean connected "连接状态"
+        long last_connected_at "最后连接时间戳"
     }
     
-    SERVERS ||--o{ SERVER_INFO : contains
-    
-    SERVER_INFO {
-        string serverId FK
-        string api_endpoint
-        string platform
-        string hostname
-        string version
+    USER {
+        string id PK "用户唯一标识"
+        string email "用户邮箱"
+        string name "用户姓名"
+        string role "用户角色"
+        string description "用户描述"
+        datetime created_at "创建时间"
+        datetime last_login "最后登录时间"
     }
+    
+    DEVICE {
+        string id PK "设备唯一标识"
+        string user_id FK "关联用户ID"
+        string name "设备名称"
+        string description "设备描述"
+        string platform "设备平台"
+        string model "设备型号"
+        string status "设备状态(CONNECTED、DISCONNECTED)"
+        datetime connected_at "连接时间"
+        datetime created_at "创建时间"
+    }
+    
+    APK {
+        string id PK "APK唯一标识"
+        string app_name "应用名称"
+        string description "应用描述"
+        string version "版本号"
+        int version_code "版本代码"
+        datetime installed_time "安装时间"
+        datetime created_at "创建时间"
+    }
+    
+    WORKSCRIPT {
+        string id PK "工作脚本唯一标识"
+        string apk_id FK "关联APK ID"
+        string name "脚本名称"
+        string description "脚本描述"
+        json metadata "元数据信息"
+        string script_path "Python脚本文件路径"
+        datetime created_at "创建时间"
+    }
+    
+    WORKPLAN {
+        string id PK "工作计划唯一标识"
+        string script_id FK "关联工作脚本ID"
+        string name "计划名称"
+        string description "计划描述"
+        string status "计划状态(NEW、INPROGRESS、FAILED、OK)"
+        datetime created_at "创建时间"
+        datetime started_at "开始时间"
+        datetime ended_at "结束时间"
+    }
+    
+    WORKREPORT {
+        string id PK "工作报告唯一标识"
+        string user_id FK "关联用户ID"
+        string plan_id FK "关联工作计划ID"
+        string description "报告描述"
+        json execution_log "执行日志"
+        json result_data "结果数据"
+        datetime created_at "创建时间"
+        string error_message "错误信息"
+    }
+    
+    CONTRACT {
+        string id PK "合约唯一标识"
+        string symbol "合约代码"
+        string name "合约名称"
+        string type "合约类型(股票、ETF、期权等)"
+        string exchange "交易所"
+        decimal price "当前价格"
+        datetime created_at "创建时间"
+    }
+    
+    ORDER {
+        string id PK "订单唯一标识"
+        string plan_id FK "关联工作计划ID"
+        string contract_id FK "关联合约ID"
+        string description "订单描述"
+        string order_type "订单类型(委托单、成交单)"
+        decimal amount "订单金额"
+        integer contract_shares "合约股数"
+        decimal fee "手续费"
+        decimal profit_loss "利润损失"
+        datetime created_at "创建时间"
+    }
+    
+    USER ||--o{ DEVICE : "拥有设备"
+    DEVICE }o--o{ APK : "安装应用"
+    WORKSCRIPT ||--o{ APK : "测试应用"
+    WORKSCRIPT ||--o{ WORKPLAN : "使用计划"
+    WORKPLAN ||--|| WORKREPORT : "生成报告"
+    WORKPLAN ||--o{ ORDER : "可能创建"
+    CONTRACT ||--o{ ORDER : "交易合约"
 ```
 
 ### 数据模型定义
+
+引用服务端数据模型（参考 `/d:/git/autodroid/autodroid-container/DESIGN.md#L174-175`），移动端本地缓存以下实体：
 
 **ServerEntity 实体类结构：**
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | String | 主键，服务器唯一标识 |
+| apiEndpoint | String | 服务器API端点 |
 | name | String | 服务器名称 |
 | host | String | 服务器主机地址 |
-| port | Int | 服务器端口号 |
 | connected | Boolean | 连接状态 |
-| lastSeen | Long | 最后访问时间戳 |
-| serverInfo | String | JSON格式的完整服务器信息 |
+| last_connected_at | Long | 最后连接时间戳 |
+
+**UserEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，用户唯一标识 |
+| email | String | 用户邮箱 |
+| name | String | 用户姓名 |
+| role | String | 用户角色 |
+| description | String | 用户描述 |
+| created_at | DateTime | 创建时间 |
+| last_login | DateTime | 最后登录时间 |
+
+**DeviceEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，设备唯一标识 |
+| user_id | String | 外键，关联用户ID |
+| name | String | 设备名称 |
+| description | String | 设备描述 |
+| platform | String | 设备平台 |
+| model | String | 设备型号 |
+| status | String | 设备状态（CONNECTED、DISCONNECTED） |
+| connected_at | DateTime | 连接时间 |
+| created_at | DateTime | 创建时间 |
+
+**ApkEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，APK唯一标识 |
+| app_name | String | 应用名称 |
+| description | String | 应用描述 |
+| version | String | 版本号 |
+| version_code | Int | 版本代码 |
+| installed_time | DateTime | 安装时间 |
+| created_at | DateTime | 创建时间 |
+
+**WorkScriptEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，工作脚本唯一标识 |
+| apk_id | String | 外键，关联APK ID |
+| name | String | 脚本名称 |
+| description | String | 脚本描述 |
+| metadata | JSON | 元数据信息 |
+| script_path | String | Python脚本文件路径 |
+| created_at | DateTime | 创建时间 |
+
+**WorkPlanEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，工作计划唯一标识 |
+| script_id | String | 外键，关联工作脚本ID |
+| name | String | 计划名称 |
+| description | String | 计划描述 |
+| status | String | 计划状态（NEW、INPROGRESS、FAILED、OK） |
+| created_at | DateTime | 创建时间 |
+| started_at | DateTime | 开始时间 |
+| ended_at | DateTime | 结束时间 |
+
+**WorkReportEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，工作报告唯一标识 |
+| user_id | String | 外键，关联用户ID |
+| plan_id | String | 外键，关联工作计划ID |
+| description | String | 报告描述 |
+| execution_log | JSON | 执行日志 |
+| result_data | JSON | 结果数据 |
+| created_at | DateTime | 创建时间 |
+| error_message | String | 错误信息 |
+
+**ContractEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，合约唯一标识 |
+| symbol | String | 合约代码 |
+| name | String | 合约名称 |
+| type | String | 合约类型（股票、ETF、期权等） |
+| exchange | String | 交易所 |
+| price | Decimal | 当前价格 |
+| created_at | DateTime | 创建时间 |
+
+**OrderEntity 实体类结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，订单唯一标识 |
+| plan_id | String | 外键，关联工作计划ID |
+| contract_id | String | 外键，关联合约ID |
+| description | String | 订单描述 |
+| order_type | String | 订单类型（委托单、成交单） |
+| amount | Decimal | 订单金额 |
+| contract_shares | Int | 合约股数 |
+| fee | Decimal | 手续费 |
+| profit_loss | Decimal | 利润损失 |
+| created_at | DateTime | 创建时间 |
 
 ### 数据访问操作
 

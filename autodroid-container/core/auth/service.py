@@ -48,9 +48,7 @@ class AuthService:
         }
         access_token = self.create_access_token(token_data, access_token_expires)
         
-        # 创建会话
-        expires_at = datetime.datetime.utcnow() + access_token_expires
-        self.user_db.create_session(user["id"], access_token, expires_at)
+
         
         return Token(
             access_token=access_token,
@@ -80,9 +78,7 @@ class AuthService:
             }
             access_token = self.create_access_token(token_data, access_token_expires)
             
-            # 创建会话
-            expires_at = datetime.datetime.utcnow() + access_token_expires
-            self.user_db.create_session(user["id"], access_token, expires_at)
+
             
             return {
                 "user": user,
@@ -102,11 +98,6 @@ class AuthService:
     def verify_token(self, token: str) -> Optional[TokenData]:
         """验证令牌"""
         try:
-            # 验证会话
-            session_data = self.user_db.validate_session(token)
-            if not session_data:
-                return None
-            
             # 验证JWT令牌
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             user_id: str = payload.get("sub")
@@ -128,7 +119,8 @@ class AuthService:
     
     def logout(self, token: str) -> bool:
         """用户登出"""
-        return self.user_db.delete_session(token)
+        # JWT 令牌无需服务器端存储，登出只需客户端删除令牌即可
+        return True
     
     def get_current_user(self, token: str) -> Optional[dict]:
         """获取当前用户信息"""

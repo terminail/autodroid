@@ -1,6 +1,6 @@
 """
 Authentication API endpoints for Autodroid system.
-Handles user registration, login, logout, and session management.
+Handles user registration, login, logout, and JWT token management.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -76,7 +76,7 @@ async def logout_user(
     authorization: Optional[str] = Depends(security),
     token: Optional[str] = Query(None, description="Token for logout (alternative to Authorization header)")
 ):
-    """Logout user and invalidate session"""
+    """Logout user (JWT token - client-side deletion)"""
     try:
         # 优先使用Authorization header中的token，如果没有则使用查询参数中的token
         auth_token = authorization.credentials if authorization else token

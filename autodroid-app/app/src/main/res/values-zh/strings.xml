@@ -40,8 +40,8 @@
     <string name="server_ip">服务器IP: </string>
     <string name="server_status">服务器状态: </string>
     <string name="connected">已连接</string>
-    <string name="no_workflows">没有可用的工作流</string>
-    <string name="available_workflows">可用工作流:</string>
+    <string name="no_workflows">没有可用的工作脚本</string>
+<string name="available_workflows">可用工作脚本:</string>
     <string name="permissions_granted">权限已授予</string>
     <string name="permissions_denied">部分权限被拒绝</string>
     <string name="connection_status">连接状态: </string>

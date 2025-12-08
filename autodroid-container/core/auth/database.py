@@ -8,7 +8,7 @@ import uuid
 from peewee import DoesNotExist
 
 from ..database.base import BaseDatabase
-from ..database.models import User, Session
+from ..database.models import User
 
 
 class AuthDatabase(BaseDatabase):
@@ -151,45 +151,3 @@ class AuthDatabase(BaseDatabase):
         except Exception:
             return None
     
-    def create_session(self, user_id: str, token: str, expires_at: datetime) -> bool:
-        """创建用户会话"""
-        try:
-            session_id = str(uuid.uuid4())
-            Session.create(
-                id=session_id,
-                user=user_id,
-                token=token,
-                expires_at=expires_at
-            )
-            return True
-        except Exception:
-            return False
-    
-    def validate_session(self, token: str) -> Optional[Dict[str, Any]]:
-        """验证会话令牌"""
-        try:
-            session = (Session
-                     .select(Session, User)
-                     .join(User)
-                     .where((Session.token == token) & 
-                           (Session.expires_at > datetime.now()))
-                     .get())
-            
-            return {
-                "user_id": session.user.id,
-                "email": session.user.email,
-                "role": session.user.role,
-                "expires_at": session.expires_at
-            }
-        except DoesNotExist:
-            return None
-        except Exception:
-            return None
-    
-    def delete_session(self, token: str) -> bool:
-        """删除会话"""
-        try:
-            deleted_count = Session.delete().where(Session.token == token).execute()
-            return deleted_count > 0
-        except Exception:
-            return False

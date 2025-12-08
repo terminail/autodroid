@@ -1,7 +1,7 @@
 package com.autodroid.manager.model
 
 /**
- * 工作流详情数据封装类
+ * 工作脚本详情数据封装类
  */
 data class WorkflowData(
     val id: String? = null,
@@ -15,14 +15,14 @@ data class WorkflowData(
 ) {
     companion object {
         /**
-         * 创建空工作流数据
+         * 创建空工作脚本数据
          */
         fun empty(): WorkflowData = WorkflowData()
     }
 }
 
 /**
- * 工作流步骤信息
+ * 工作脚本步骤信息
  */
 data class WorkflowStep(
     val stepNumber: Int,
@@ -32,7 +32,7 @@ data class WorkflowStep(
 )
 
 /**
- * 工作流列表项数据类
+ * 工作脚本列表项数据类
  */
 data class Workflow(
     val id: String? = null,

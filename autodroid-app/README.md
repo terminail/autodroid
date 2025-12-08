@@ -1,12 +1,12 @@
 # Autodroid App
 
-Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和管理测试工作流。
+Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和管理测试工作脚本。
 
 ## 功能特性
 
 - **服务器发现**：通过 mDNS 自动发现 Autodroid 服务器
 - **设备注册**：将测试设备信息注册到服务器
-- **工作流管理**：查看和管理测试工作流
+- **工作脚本管理**：查看和管理测试工作脚本
 - **测试报告**：查看测试执行报告
 - **实时监控**：监控测试设备状态
 
@@ -157,7 +157,7 @@ autodroid-app/
 
 ### 4. WorkflowManager
 
-管理测试工作流。
+管理测试工作脚本。
 
 ## API 接口
 
@@ -166,7 +166,7 @@ autodroid-app/
 - `/api/health`：健康检查
 - `/api/server`：获取服务器信息
 - `/api/devices/register`：注册设备
-- `/api/workflows`：获取工作流列表
+- `/api/workflows`：获取工作脚本列表
 - `/api/plans`：获取测试计划
 
 ## 常见问题

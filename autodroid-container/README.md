@@ -1,6 +1,6 @@
 # Autodroid Container
 
-Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作流执行、测试调度等功能。
+Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。
 
 ## 环境要求
 
@@ -184,9 +184,9 @@ curl http://localhost:8004/api/devices
 | `/api/devices` | GET | 获取所有注册设备 |
 | `/api/devices/{udid}` | GET | 获取特定设备信息 |
 | `/api/devices/register` | POST | 注册设备 |
-| `/api/workflows` | GET | 获取所有工作流 |
-| `/api/workflows/{workflow_name}` | GET | 获取特定工作流 |
-| `/api/workflows` | POST | 创建新工作流 |
+| `/api/workflows` | GET | 获取所有工作脚本 |
+| `/api/workflows/{workflow_name}` | GET | 获取特定工作脚本 |
+| `/api/workflows` | POST | 创建新工作脚本 |
 | `/api/plans` | GET | 获取所有测试计划 |
 | `/api/plans` | POST | 创建新测试计划 |
 | `/api/plans/{plan_id}` | GET | 获取特定测试计划 |
@@ -206,7 +206,7 @@ autodroid-container/
 ├── core/                # 核心业务逻辑
 │   ├── device/          # 设备管理
 │   │   └── device_manager.py  # 设备管理器
-│   ├── workflow/        # 工作流引擎
+│   ├── workflow/        # 工作脚本引擎
 │   └── scheduling/      # 调度器
 ├── pyproject.toml       # 项目配置和依赖
 └── README.md            # 项目说明文档
