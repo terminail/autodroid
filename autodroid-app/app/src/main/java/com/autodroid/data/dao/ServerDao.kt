@@ -23,9 +23,9 @@ interface ServerDao {
     fun getAllServers(): LiveData<List<ServerEntity>>
 
     /**
-     * 获取已连接的服务器
+     * 获取已连接的服务器，如果没有连接的服务器则返回最近连接过的（时间戳最新的）
      */
-    @Query("SELECT * FROM servers WHERE isConnected = 1 LIMIT 1")
+    @Query("SELECT * FROM servers WHERE isConnected = 1 ORDER BY lastConnectedTime DESC LIMIT 1")
     fun getConnectedServer(): LiveData<ServerEntity?>
 
     /**

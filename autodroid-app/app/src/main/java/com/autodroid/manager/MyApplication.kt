@@ -23,6 +23,11 @@ class MyApplication : Application() {
 
     // Helper method to get AppViewModel instance
     fun getAppViewModel(): AppViewModel {
-        return AppViewModel.getInstance()
+        val appViewModel = AppViewModel.getInstance()
+        // Ensure AppViewModel is properly initialized
+        if (!appViewModel.isInitialized()) {
+            appViewModel.initialize(this)
+        }
+        return appViewModel
     }
 }

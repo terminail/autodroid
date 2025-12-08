@@ -47,6 +47,131 @@ class ServerItemManager(
     private var serverConnectionMethod = "none" // mDNS, QRCode, or none
     
     /**
+     * Initialize the manager and start observing server status
+     */
+    fun initialize() {
+
+        
+        setupObservers()
+        
+        // mDNS discovery will be started manually by user - do not auto-start
+    }
+    
+    /**
+     * Set up observers for server discovery status
+     */
+    private fun setupObservers() {
+        // Observe server info from AppViewModel (single source of truth)
+        appViewModel.server.observe(lifecycleOwner) { server ->
+            server?.let {
+                val connected = it.connected
+                val hostname = it.hostname ?: ""
+                val apiEndpoint = it.apiEndpoint ?: "-"
+                
+                isServerConnected = connected
+                
+                // 根据连接状态更新UI
+                val isDiscoveryInProgress = false // Discovery status management moved to AppViewModel
+                
+                updateItem(
+                    status = when {
+                        connected -> "Connected"
+                        isDiscoveryInProgress -> "Discovering servers via mDNS..."
+                        else -> "Server Discovered"
+                    },
+                    serverStatus = if (connected) "CONNECTED" else "DISCOVERED",
+                    apiEndpoint = apiEndpoint,
+                    discoveryMethod = it.discoveryMethod ?: when {
+                        connected -> "Connected"
+                        isDiscoveryInProgress -> "Discovery via mDNS..."
+                        else -> "Discovered"
+                    },
+                    serverName = it.name,
+                    hostname = it.hostname ?: "",
+                    platform = it.platform ?: "Unknown",
+                    isStartMdnsButtonEnabled = !isDiscoveryInProgress
+                )
+                
+                Log.d(TAG, "AppViewModel server updated: ${it.name}, connected: $connected, platform: ${it.platform}")
+                
+                // Check server health if we have an API endpoint
+                if (apiEndpoint != "-" && !connected) {
+                    checkServerHealth(apiEndpoint) { isHealthy ->
+                        // Ensure UI updates run on main thread
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            updateItem(serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED")
+                        }
+                    }
+                }
+            } ?: run {
+                // Clear UI when no server info is available
+                isServerConnected = false
+                serverConnectionMethod = "none"
+                
+                // 在手动模式下，应用启动时完全不设置任何状态
+                // 只有在用户交互或实际状态变化时才更新UI
+                // 避免在启动时自动显示任何状态信息
+                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
+                    // 保持空白状态，不自动设置任何文本
+                    return@run
+                }
+                
+                // 只有在实际有状态变化时才更新
+                updateItem(
+                    status = "请从下面选择发现服务器方式",
+                    serverStatus = "DISCONNECTED",
+                    apiEndpoint = "-",
+                    discoveryMethod = "选择发现方式",
+                    isStartMdnsButtonEnabled = true // mDNS按钮启用
+                )
+                
+                Log.d(TAG, "AppViewModel server is null, UI cleared")
+            }
+        }
+        
+        // Note: Discovery status management is handled by DiscoveryStatusManager
+        // Observe discovery status from DiscoveryStatusManager
+        DiscoveryStatusManager.discoveryStatus.observe(lifecycleOwner) { discoveryStatus ->
+            discoveryStatus?.let { status ->
+                val isDiscovering = status.inProgress
+                
+                // 在应用启动时，如果当前状态是初始状态，则不自动显示mDNS状态
+                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
+                    // 保持空白状态，不自动设置任何mDNS相关文本
+                    return@let
+                }
+                
+                // Update UI based on discovery status
+                when {
+                    isDiscovering -> {
+                        updateItem(
+                            status = "Discovering servers via mDNS...",
+                            serverStatus = "DISCOVERING",
+                            apiEndpoint = "-",
+                            discoveryMethod = "Auto mDNS Discovery",
+                            isStartMdnsButtonEnabled = false // 仅mDNS按钮在发现过程中禁用
+                        )
+                    }
+                    status.failed -> {
+                        updateItem(
+                            status = "mDNS Discovery Failed",
+                            serverStatus = "FAILED",
+                            apiEndpoint = "-",
+                            discoveryMethod = "Auto mDNS Discovery Failed",
+                            isStartMdnsButtonEnabled = true // mDNS按钮在失败后启用
+                        )
+                    }
+                    else -> {
+                        // Other cases are handled by serverInfo observer
+                    }
+                }
+            }
+        }
+        
+
+    }
+    
+    /**
      * Show detailed toast message with title and description
      */
     private fun showDetailedToast(title: String, description: String = "", duration: Int = Toast.LENGTH_SHORT) {
@@ -148,146 +273,6 @@ class ServerItemManager(
     }
     
     /**
-     * Initialize the manager and start observing server status
-     */
-    fun initialize() {
-
-        
-        setupObservers()
-        
-        // mDNS discovery will be started manually by user - do not auto-start
-    }
-    
-    /**
-     * Set up observers for server discovery status
-     */
-    private fun setupObservers() {
-        // Observe server info from AppViewModel (single source of truth)
-        appViewModel.server.observe(lifecycleOwner) { server ->
-            server?.let {
-                val connected = it.connected
-                val hostname = it.hostname ?: ""
-                val apiEndpoint = it.apiEndpoint ?: "-"
-                
-                isServerConnected = connected
-                
-                // 根据连接状态更新UI
-                val isDiscoveryInProgress = false // Discovery status management moved to AppViewModel
-                
-                updateItem(
-                    status = when {
-                        connected -> "Connected"
-                        isDiscoveryInProgress -> "Discovering servers via mDNS..."
-                        else -> "Server Discovered"
-                    },
-                    serverStatus = if (connected) "CONNECTED" else "DISCOVERED",
-                    apiEndpoint = apiEndpoint,
-                    discoveryMethod = it.discoveryMethod ?: when {
-                        connected -> "Connected"
-                        isDiscoveryInProgress -> "Discovery via mDNS..."
-                        else -> "Discovered"
-                    },
-                    serverName = it.name,
-                    hostname = it.hostname ?: "",
-                    platform = it.platform ?: "Unknown",
-                    isStartMdnsButtonEnabled = !isDiscoveryInProgress
-                )
-                
-                Log.d(TAG, "AppViewModel server updated: ${it.name}, connected: $connected, platform: ${it.platform}")
-                
-                // Check server health if we have an API endpoint
-                if (apiEndpoint != "-" && !connected) {
-                    checkServerHealth(apiEndpoint) { isHealthy ->
-                        // Ensure UI updates run on main thread
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            updateItem(serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED")
-                            
-                            // If server is healthy, automatically connect to it
-                            if (isHealthy) {
-                                connectToServer(apiEndpoint)
-                            }
-                        }
-                    }
-                }
-            } ?: run {
-                // Clear UI when no server info is available
-                isServerConnected = false
-                serverConnectionMethod = "none"
-                
-                // 在手动模式下，应用启动时完全不设置任何状态
-                // 只有在用户交互或实际状态变化时才更新UI
-                // 避免在启动时自动显示任何状态信息
-                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
-                    // 保持空白状态，不自动设置任何文本
-                    return@run
-                }
-                
-                // 只有在实际有状态变化时才更新
-                updateItem(
-                    status = "请从下面选择发现服务器方式",
-                    serverStatus = "DISCONNECTED",
-                    apiEndpoint = "-",
-                    discoveryMethod = "选择发现方式",
-                    isStartMdnsButtonEnabled = true // mDNS按钮启用
-                )
-                
-                Log.d(TAG, "AppViewModel server is null, UI cleared")
-            }
-        }
-        
-        // Note: Discovery status management is handled by DiscoveryStatusManager
-        // Observe discovery status from DiscoveryStatusManager
-        DiscoveryStatusManager.discoveryStatus.observe(lifecycleOwner) { discoveryStatus ->
-            discoveryStatus?.let { status ->
-                val isDiscovering = status.inProgress
-                
-                // 在应用启动时，如果当前状态是初始状态，则不自动显示mDNS状态
-                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
-                    // 保持空白状态，不自动设置任何mDNS相关文本
-                    return@let
-                }
-                
-                // Update UI based on discovery status
-                when {
-                    isDiscovering -> {
-                        updateItem(
-                            status = "Discovering servers via mDNS...",
-                            serverStatus = "DISCOVERING",
-                            apiEndpoint = "-",
-                            discoveryMethod = "Auto mDNS Discovery",
-                            isStartMdnsButtonEnabled = false // 仅mDNS按钮在发现过程中禁用
-                        )
-                    }
-                    status.failed -> {
-                        updateItem(
-                            status = "mDNS Discovery Failed",
-                            serverStatus = "FAILED",
-                            apiEndpoint = "-",
-                            discoveryMethod = "Auto mDNS Discovery Failed",
-                            isStartMdnsButtonEnabled = true // mDNS按钮在失败后启用
-                        )
-                    }
-                    else -> {
-                        // Other cases are handled by serverInfo observer
-                    }
-                }
-            }
-        }
-        
-        // Note: Saved servers management has been moved to AppViewModel
-        // Observe saved servers from AppViewModel
-        appViewModel.savedServers.observe(lifecycleOwner) { servers ->
-            servers?.let {
-                Log.d(TAG, "Saved servers updated: ${it.size} servers")
-                // Update UI to show saved servers count or other relevant info
-                if (it.isNotEmpty()) {
-                    updateItem(status = "已保存 ${it.size} 个服务器")
-                }
-            }
-        }
-    }
-    
-    /**
      * Start QR code scanning process
      */
     fun startQRCodeScanning() {
@@ -356,11 +341,6 @@ class ServerItemManager(
                         updateItem(
                             serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
                         )
-                        
-                        // If server is healthy, connect to it
-                        if (isHealthy) {
-                            connectToServer(apiEndpoint)
-                        }
                     }
                 }
                 
@@ -397,35 +377,7 @@ class ServerItemManager(
         }
     }
     
-    /**
-     * Connect to server using IP and port
-     */
-    private fun connectToServer(apiEndpoint: String) {
-        Log.i(TAG, "Connecting to server via API endpoint: $apiEndpoint")
-        
-        // Note: Server info management has been moved to AppViewModel
-        // Get the discovery method from the server info
-        val discoveryMethod = appViewModel.server.value?.discoveryMethod ?: "unknown"
-        
-        // Ensure UI updates run on main thread
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
-            updateItem(
-                status = "Connected to server via $discoveryMethod",
-                serverStatus = "CONNECTED",
-                discoveryMethod = discoveryMethod
-            )
-        }
-        
-        // Note: Server management responsibility has been moved to AppViewModel
-        // UI components should initiate connections through AppViewModel
-        
-        // Check server health
-        checkServerHealth(apiEndpoint) { isHealthy ->
-            updateItem(
-                serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
-            )
-        }
-    }
+
     
     /**
      * Check server health by calling the /api/health endpoint
@@ -528,64 +480,7 @@ class ServerItemManager(
         }
     }
     
-    /**
-     * Show saved servers dialog
-     */
-    fun showSavedServersDialog() {
-        val savedServers = appViewModel.savedServers.value ?: return
-        
-        if (savedServers.isEmpty()) {
-            showDetailedToast("没有已保存的服务器", "", Toast.LENGTH_SHORT)
-            return
-        }
-        
-        val serverNames = savedServers.mapIndexed { index, server ->
-            "${index + 1}. ${server.name} (${server.hostname})"
-        }.toTypedArray()
-        
-        androidx.appcompat.app.AlertDialog.Builder(context)
-            .setTitle("选择已保存的服务器")
-            .setItems(serverNames) { _, which ->
-                val selectedServer = savedServers[which]
-                connectToSavedServer(selectedServer)
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-    
-    /**
-     * Connect to a saved server
-     */
-    private fun connectToSavedServer(server: Server) {
-        val apiEndpoint = server.apiEndpoint ?: return
-        
-        // Update UI to show connection attempt
-        updateItem(
-            status = "连接到已保存服务器: ${server.name}",
-            serverStatus = "CONNECTING",
-            apiEndpoint = apiEndpoint,
-            discoveryMethod = server.discoveryMethod ?: "手动连接",
-            isStartMdnsButtonEnabled = false
-        )
-        
-        // Check server health before connecting
-        checkServerHealth(apiEndpoint) { isHealthy ->
-            // Ensure UI updates run on main thread
-            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                if (isHealthy) {
-                    // Note: Server connection management has been moved to AppViewModel
-                    // Connect to the server through AppViewModel
-                    appViewModel.connectToSavedServer(server.hostname ?: "")
-                } else {
-                    updateItem(
-                        status = "服务器健康检查失败: ${server.name}",
-                        serverStatus = "HEALTH_CHECK_FAILED",
-                        isStartMdnsButtonEnabled = true
-                    )
-                }
-            }
-        }
-    }
+
     
     /**
      * Show add server dialog
@@ -697,15 +592,14 @@ class ServerItemManager(
      * Show server management dialog
      */
     fun showServerManagementDialog() {
-        val options = arrayOf("查看已保存服务器", "添加服务器", "刷新服务器列表")
+        val options = arrayOf("添加服务器", "刷新服务器列表")
         
         androidx.appcompat.app.AlertDialog.Builder(context)
             .setTitle("服务器管理")
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> showSavedServersDialog()
-                    1 -> showAddServerDialog()
-                    2 -> {
+                    0 -> showAddServerDialog()
+                    1 -> {
                         // Note: Server refresh management has been moved to AppViewModel
                         appViewModel.refreshSavedServers()
                         showDetailedToast("服务器列表已刷新", "", Toast.LENGTH_SHORT)
@@ -719,9 +613,18 @@ class ServerItemManager(
      * Disconnect from current server
      */
     fun disconnectFromServer() {
-        // Note: Server disconnection management has been moved to AppViewModel
-        appViewModel.disconnectFromServer()
-        showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)
+        // Note: Server disconnection management is handled by updating connection status
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 断开所有服务器的连接状态
+                serverRepository.getAllServers().value?.forEach { serverEntity ->
+                    serverRepository.updateServerInfo(serverEntity.apiEndpoint, serverEntity.version)
+                }
+                showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)
+            } catch (e: Exception) {
+                Log.e("ServerItemManager", "Error disconnecting from server: ${e.message}", e)
+            }
+        }
     }
     
     /**
@@ -731,12 +634,7 @@ class ServerItemManager(
         showServerManagementDialog()
     }
     
-    /**
-     * Handle saved servers button click
-     */
-    fun onSavedServersButtonClick() {
-        showSavedServersDialog()
-    }
+
     
     /**
      * Handle add server button click
@@ -762,31 +660,11 @@ class ServerItemManager(
         return appViewModel.server.value
     }
     
-    /**
-     * Get saved servers list
-     */
-    fun getSavedServers(): List<Server> {
-        // Note: Saved servers management has been moved to AppViewModel
-        return appViewModel.savedServers.value ?: emptyList()
-    }
+
     
-    /**
-     * Refresh server list
-     */
-    fun refreshServerList() {
-        // Note: Server refresh management has been moved to AppViewModel
-        appViewModel.refreshSavedServers()
-        showDetailedToast("服务器列表已刷新", "", Toast.LENGTH_SHORT)
-    }
+
     
-    /**
-     * Delete a saved server
-     */
-    fun deleteSavedServer(serverKey: String) {
-        // Note: Server deletion management has been moved to AppViewModel
-        appViewModel.deleteSavedServer(serverKey)
-        showDetailedToast("服务器已删除", "", Toast.LENGTH_SHORT)
-    }
+
     
     /**
      * Update server status in UI

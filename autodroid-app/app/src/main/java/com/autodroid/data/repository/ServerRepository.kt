@@ -72,53 +72,8 @@ class ServerRepository private constructor(application: Application) {
         }
     }
     
-    /**
-     * 连接到指定服务器
-     */
-    suspend fun connectToServer(apiEndpoint: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                // 先断开所有服务器连接
-                serverProvider.disconnectAllServers()
-                
-                // 连接到指定服务器
-                serverProvider.updateConnectionStatus(apiEndpoint, true)
-                
-                // 更新UI状态
-                val serverEntity = serverProvider.getServerByKey(apiEndpoint)
-                if (serverEntity != null) {
-                    val server = Server(
-                        serviceName = serverEntity.name,
-                        name = serverEntity.name,
-                        hostname = serverEntity.hostname,
-                        platform = serverEntity.platform,
-                        apiEndpoint = serverEntity.apiEndpoint,
-                        connected = true
-                    )
-                    _currentServer.postValue(server)
-                    _serverConnectionStatus.postValue(true)
-                    true
-                } else {
-                    false
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                false
-            }
-        }
-    }
-    
-    /**
-     * 断开服务器连接
-     */
-    suspend fun disconnectServer() {
-        withContext(Dispatchers.IO) {
-            serverProvider.disconnectAllServers()
-            _serverConnectionStatus.postValue(false)
-            _currentServer.postValue(null)
-        }
-    }
-    
+
+
 
     
     /**
@@ -143,15 +98,6 @@ class ServerRepository private constructor(application: Application) {
      */
     suspend fun deleteServer(apiEndpoint: String) {
         withContext(Dispatchers.IO) {
-            // 如果删除的是当前连接的服务器，断开连接
-            val currentConnectedServer = _currentServer.value
-            if (currentConnectedServer != null) {
-                val serverEntity = serverProvider.getServerByKey(apiEndpoint)
-                if (serverEntity != null && serverEntity.apiEndpoint == apiEndpoint) {
-                    disconnectServer()
-                }
-            }
-            
             serverProvider.deleteServerByKey(apiEndpoint)
         }
     }

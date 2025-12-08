@@ -160,17 +160,7 @@ class DashboardFragment : BaseFragment() {
                 serverItemManager.handleManualInputClick()
             }
             
-            override fun onSavedServersClick() {
-                serverItemManager.onSavedServersButtonClick()
-            }
-            
-            override fun onAddServerClick() {
-                serverItemManager.onAddServerButtonClick()
-            }
-            
-            override fun onDisconnectClick() {
-                serverItemManager.onDisconnectButtonClick()
-            }
+
             
             override fun onScanApksClick() {
                 android.util.Log.d("DashboardFragment", "onScanApksClick被调用")
@@ -262,7 +252,7 @@ class DashboardFragment : BaseFragment() {
         // 1. Connection Status - Use ServerItemManager to get the current server item
         dashboardItems.add(serverItemManager.getCurrentItem())
         
-        // 2. Wifi Information
+        // 3. Wifi Information
         dashboardItems.add(DashboardItem.WiFiItem(
             ssid = "Unknown",
             bssid = "Unknown",
@@ -273,7 +263,7 @@ class DashboardFragment : BaseFragment() {
             isConnected = false
         ))
         
-        // 3. Device Information
+        // 4. Device Information
         dashboardItems.add(DashboardItem.DeviceItem(
             udid = "Unknown",
             userId = "user001",
@@ -284,12 +274,12 @@ class DashboardFragment : BaseFragment() {
             connectionTime = "Never"
         ))
         
-        // 4. APK scanner
+        // 5. APK scanner
         dashboardItems.add(DashboardItem.ApkScannerItem(
             scanStatus = "SCAN INSTALLED APKS"
         ))
         
-        // 5. Add empty APK info item as placeholder (will be updated when APKs are scanned)
+        // 6. Add empty APK info item as placeholder (will be updated when APKs are scanned)
         dashboardItems.add(DashboardItem.ApkItem(
             apkInfo = com.autodroid.manager.model.Apk(
                 packageName = "",
@@ -302,7 +292,7 @@ class DashboardFragment : BaseFragment() {
             )
         ))
         
-        // 6. Static Dashboard Items (add any additional static items here if needed)
+        // 7. Static Dashboard Items (add any additional static items here if needed)
         
         // Update adapter with new items
         dashboardAdapter?.updateItems(dashboardItems)

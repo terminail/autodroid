@@ -126,6 +126,9 @@ class LoginActivity : BaseActivity() {
                 val resultIntent = Intent()
                 resultIntent.putExtra("login_successful", true)
                 setResult(RESULT_OK, resultIntent)
+                
+                // Ensure the authentication state is properly set before finishing
+                Thread.sleep(100) // Small delay to ensure state is set
                 finish()
             }
         })
@@ -183,7 +186,7 @@ class LoginActivity : BaseActivity() {
                     super.onAuthenticationError(errorCode, errString)
                     if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED) {
                         val errorMessage = getString(R.string.biometric_error) ?: ""
-                    errorTextView.text = "$errorMessage${errString.toString()}"
+                    errorTextView.text = "$errorMessage$errString"
                         errorTextView.visibility = View.VISIBLE
                     }
                 }

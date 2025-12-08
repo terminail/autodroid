@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import com.autodroid.data.repository.ServerRepository
 import com.autodroid.manager.model.User
-import com.autodroid.manager.model.DiscoveryStatus
 import com.autodroid.manager.model.Device
 import com.autodroid.manager.model.Network
 import com.autodroid.manager.model.Apk
@@ -62,28 +61,21 @@ class AppViewModel : ViewModel() {
     // Repository instances
     private var serverRepository: ServerRepository? = null
     
-    // Server information (single source of truth)
-    val server: LiveData<Server?> get() = serverRepository?.getConnectedServer()?.map { entity ->
-        if (entity != null) {
+    // Server information (single source of truth) - directly from database
+    val server: LiveData<Server?> get() = serverRepository?.getConnectedServer()?.map { serverEntity ->
+        if (serverEntity != null) {
             Server(
-                serviceName = entity.name,
-                name = entity.name,
-                connected = entity.isConnected,
-                apiEndpoint = if (entity.apiEndpoint.isNotEmpty()) entity.apiEndpoint else "http://localhost/api",
-                discoveryMethod = entity.discoveryType.ifEmpty { "Database" },
-                hostname = entity.hostname,
-                platform = entity.platform,
-                supportsDeviceRegistration = entity.supportsDeviceRegistration,
-                supportsApkManagement = entity.supportsApkManagement,
-                supportsWorkflowExecution = entity.supportsWorkflowExecution
+                serviceName = serverEntity.name,
+                name = serverEntity.name,
+                hostname = serverEntity.hostname,
+                platform = serverEntity.platform,
+                apiEndpoint = serverEntity.apiEndpoint,
+                connected = true
             )
         } else {
             null
         }
     } ?: MutableLiveData<Server?>().apply { value = null }
-    
-    // Saved servers list from repository
-    val savedServers = MutableLiveData<List<Server>>()
 
     // User authentication information (global shared state)
     val user = MutableLiveData<User>(User(isAuthenticated = false))
@@ -113,32 +105,20 @@ class AppViewModel : ViewModel() {
     fun initialize(context: Context) {
         serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
         
-        // Load saved servers from repository
-        loadSavedServers()
+        // Initialize server status from repository
+        CoroutineScope(Dispatchers.IO).launch {
+            serverRepository?.initializeServerStatus()
+        }
     }
     
     /**
-     * Load saved servers from repository
+     * Check if the ViewModel is properly initialized
      */
-    private fun loadSavedServers() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val serversLiveData = serverRepository?.getAllServers()
-                serversLiveData?.observeForever { servers ->
-                    savedServers.value = (servers?.map { entity ->
-                        Server(
-                            serviceName = entity.name,
-                            name = entity.name,
-                            connected = entity.lastConnectedTime > 0,
-                            apiEndpoint = "http://localhost/api"
-                        )
-                    } ?: emptyList()) as List<Server>?
-                }
-            } catch (e: Exception) {
-                Log.e("AppViewModel", "Error loading saved servers: ${e.message}", e)
-            }
-        }
+    fun isInitialized(): Boolean {
+        return serverRepository != null
     }
+    
+
 
     // Setters
     
@@ -336,62 +316,14 @@ class AppViewModel : ViewModel() {
     fun setAvailableWorkflows(workflows: MutableList<Workflow>) {
         availableWorkflows.setValue(workflows)
     }
-    
-    /**
-     * Connect to a saved server by key
-     */
-    fun connectToSavedServer(serverKey: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val success = serverRepository?.connectToServer(serverKey) ?: false
-                if (success) {
-                    Log.d("AppViewModel", "Connected to server with key: $serverKey")
-                } else {
-                    Log.w("AppViewModel", "Failed to connect to server with key: $serverKey")
-                }
-            } catch (e: Exception) {
-                Log.e("AppViewModel", "Error connecting to saved server: ${e.message}", e)
-            }
-        }
-    }
-    
-    /**
-     * Disconnect from current server
-     */
-    fun disconnectFromServer() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                serverRepository?.disconnectServer()
-                Log.d("AppViewModel", "Disconnected from server")
-            } catch (e: Exception) {
-                Log.e("AppViewModel", "Error disconnecting from server: ${e.message}", e)
-            }
-        }
-    }
-    
 
-    
-    /**
-     * Delete a saved server
-     */
-    fun deleteSavedServer(serverKey: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                serverRepository?.deleteServer(serverKey)
-                // Refresh saved servers list
-                loadSavedServers()
-                Log.d("AppViewModel", "Deleted server with key: $serverKey")
-            } catch (e: Exception) {
-                Log.e("AppViewModel", "Error deleting server: ${e.message}", e)
-            }
-        }
-    }
-    
+
     /**
      * Refresh saved servers list
      */
     fun refreshSavedServers() {
-        loadSavedServers()
+        // Note: Saved servers functionality has been removed
+        Log.d("AppViewModel", "Saved servers refresh requested (functionality removed)")
     }
     
     // Server connection state helper methods

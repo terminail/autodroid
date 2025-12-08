@@ -11,13 +11,17 @@ import com.autodroid.manager.ui.BaseFragment
 import com.autodroid.manager.AppViewModel
 import com.autodroid.manager.model.Server
 import com.autodroid.manager.service.DiscoveryStatusManager
+import com.autodroid.data.repository.ServerRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import android.util.Log
 
 class ServerDetailFragment : BaseFragment() {
     // UI Components
     private var serverNameTextView: TextView? = null
     private var apiEndpointTextView: TextView? = null
     private var connectButton: Button? = null
-    private var disconnectButton: Button? = null
 
     private var apiEndpoint: String? = null
 
@@ -37,19 +41,11 @@ class ServerDetailFragment : BaseFragment() {
         serverNameTextView = view?.findViewById(R.id.server_name_text_view)
         apiEndpointTextView = view?.findViewById(R.id.api_endpoint_text_view)
         connectButton = view?.findViewById(R.id.connect_button)
-        disconnectButton = view?.findViewById(R.id.disconnect_button)
 
         // Update UI with server info
         updateServerInfoUI()
 
-        // Set up click listeners
-        connectButton?.setOnClickListener {
-            connectToServer()
-        }
 
-        disconnectButton?.setOnClickListener {
-            disconnectFromServer()
-        }
     }
 
     override fun setupObservers() {
@@ -74,27 +70,9 @@ class ServerDetailFragment : BaseFragment() {
         apiEndpointTextView?.text = "API Endpoint: $apiEndpoint"
     }
 
-    private fun connectToServer() {
-        if (apiEndpoint.isNullOrEmpty()) {
-            Toast.makeText(context, "Invalid server information", Toast.LENGTH_SHORT).show()
-            return
-        }
 
-        // Extract host and port from API endpoint to create serverKey
-        val serverKey = extractServerKeyFromApiEndpoint(apiEndpoint!!)
-        if (serverKey == null) {
-            Toast.makeText(context, "Invalid API endpoint format", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Connect to server using AppViewModel
-        val viewModel = ViewModelProvider(requireActivity()).get(AppViewModel::class.java)
-        viewModel.connectToSavedServer(serverKey)
-
-        Toast.makeText(context, "Connected to server via API Endpoint", Toast.LENGTH_SHORT).show()
-    }
     
-    private fun extractServerKeyFromApiEndpoint(apiEndpoint: String): String? {
+    private fun extractApiEndpointKey(apiEndpoint: String): String? {
         return try {
             // Parse API endpoint to extract host and port
             val url = java.net.URL(apiEndpoint)
@@ -107,14 +85,22 @@ class ServerDetailFragment : BaseFragment() {
     }
 
     private fun disconnectFromServer() {
-        // Disconnect from current server using AppViewModel
-        val viewModel = ViewModelProvider(requireActivity()).get(AppViewModel::class.java)
-        viewModel.disconnectFromServer()
-        Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
+        // Disconnect from current server by updating connection status
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val serverRepository = ServerRepository.getInstance(requireContext().applicationContext as android.app.Application)
+                // 断开所有服务器的连接状态
+                serverRepository.getAllServers().value?.forEach { serverEntity ->
+                    serverRepository.updateServerInfo(serverEntity.apiEndpoint, serverEntity.version)
+                }
+                Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("ServerDetailFragment", "Error disconnecting from server: ${e.message}", e)
+            }
+        }
     }
 
     private fun updateConnectionButtons(isConnected: Boolean) {
         connectButton?.isEnabled = !isConnected
-        disconnectButton?.isEnabled = isConnected
     }
 }

@@ -14,12 +14,9 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.autodroid.data.database.ServerProvider
 import com.autodroid.data.repository.ServerRepository
 import com.autodroid.manager.model.Server
 import com.autodroid.manager.network.ApiClient
-import com.autodroid.manager.network.HealthCheckResponse
-import com.autodroid.manager.service.NsdHelper.ServiceDiscoveryCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,7 +25,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.net.InetAddress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -100,9 +96,6 @@ class NetworkService : Service() {
         
         // Clean up resources
         try {
-            // Disconnect from server
-            disconnectFromServer()
-            
             executorService?.shutdownNow()
             mdnsFallbackManager?.stopDiscovery()
             mdnsFallbackManager = null
@@ -425,11 +418,11 @@ class NetworkService : Service() {
                     try {
                         val healthResponse = apiClient.healthCheck()
                         
-                        // Update server info in repository using server key from repository
-                        val currentServer = serverRepository?.currentServer?.value
-                        if (currentServer != null) {
-                            // 使用serviceName作为serverKey来更新服务器信息
-                            serverRepository?.updateServerInfo(currentServer.serviceName, healthResponse.version ?: "unknown")
+                        // Update server info in repository using apiEndpoint as server key
+                        val apiEndpoint = server.apiEndpoint ?: server.serviceName
+                        if (apiEndpoint.isNotEmpty()) {
+                            // Update server version and connection status
+                            serverRepository?.updateServerInfo(apiEndpoint, healthResponse.version ?: "unknown")
                         }
                         
                         // Update DiscoveryStatusManager
@@ -469,70 +462,6 @@ class NetworkService : Service() {
             }
         }
     }
-
-    /**
-     * Connect to existing server from repository
-     */
-    fun connectToServer(serverKey: String) {
-        executorService!!.submit {
-            try {
-                // Use coroutine scope for suspend function
-                CoroutineScope(Dispatchers.IO).launch {
-                    val success = serverRepository?.connectToServer(serverKey) ?: false
-                    if (success) {
-                        val currentServer = serverRepository?.currentServer?.value
-                        if (currentServer != null) {
-                            discoveredServer = currentServer
-                            DiscoveryStatusManager.updateServerInfo(currentServer)
-                            DiscoveryStatusManager.setServerConnected(true)
-                            
-                            // Perform health check
-                            performHealthCheck(currentServer)
-                        }
-                    } else {
-                        Log.w(TAG, "Failed to connect to server with key: $serverKey")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error connecting to server: ${e.message}", e)
-            }
-        }
-    }
-
-    /**
-     * Disconnect from current server
-     */
-    fun disconnectFromServer() {
-        executorService!!.submit {
-            try {
-                // Use coroutine scope for suspend function
-                CoroutineScope(Dispatchers.IO).launch {
-                    serverRepository?.disconnectServer()
-                }
-                DiscoveryStatusManager.setServerConnected(false)
-                DiscoveryStatusManager.updateServerInfo(null)
-                discoveredServer = null
-                Log.d(TAG, "Disconnected from server")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error disconnecting from server: ${e.message}", e)
-            }
-        }
-    }
-
-    /**
-     * Get all saved servers from repository
-     */
-    fun getSavedServers() = serverRepository?.getAllServers()
-
-    val discoveredServers: List<Server>?
-        get() {
-            // Return the currently discovered server if available
-            return if (discoveredServer != null) {
-                mutableListOf(discoveredServer!!)
-            } else {
-                null
-            }
-        }
 
     /**
      * Notify listeners when a service is discovered
