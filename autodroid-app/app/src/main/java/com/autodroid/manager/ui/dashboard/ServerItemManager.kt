@@ -93,16 +93,6 @@ class ServerItemManager(
                 )
                 
                 Log.d(TAG, "AppViewModel server updated: ${it.name}, connected: $connected, platform: ${it.platform}")
-                
-                // Check server health if we have an API endpoint
-                if (apiEndpoint != "-" && !connected) {
-                    checkServerHealth(apiEndpoint) { isHealthy ->
-                        // Ensure UI updates run on main thread
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            updateItem(serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED")
-                        }
-                    }
-                }
             } ?: run {
                 // Clear UI when no server info is available
                 isServerConnected = false
@@ -379,62 +369,7 @@ class ServerItemManager(
     
 
     
-    /**
-     * Check server health by calling the /api/health endpoint
-     */
-    private fun checkServerHealth(apiEndpoint: String, callback: (Boolean) -> Unit) {
-        Thread {
-            try {
-                val healthUrl = if (apiEndpoint.endsWith("/")) {
-                    "${apiEndpoint}health"
-                } else {
-                    "${apiEndpoint}/health"
-                }
-                
-                Log.d(TAG, "Checking server health at: $healthUrl")
-                
-                // Use OkHttp for better network handling
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .build()
-                
-                val request = Request.Builder()
-                    .url(healthUrl)
-                    .get()
-                    .build()
-                
-                try {
-                    val response = client.newCall(request).execute()
-                    val isSuccessful = response.isSuccessful
-                    val responseCode = response.code
-                    Log.d(TAG, "Server health check response: $responseCode, successful: $isSuccessful")
-                    callback(isSuccessful)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error checking server health with OkHttp: ${e.message}")
-                    // Fallback to HttpURLConnection if OkHttp fails
-                    try {
-                        Log.d(TAG, "Trying fallback to HttpURLConnection")
-                        val url = java.net.URL(healthUrl)
-                        val connection = url.openConnection() as java.net.HttpURLConnection
-                        connection.requestMethod = "GET"
-                        connection.connectTimeout = 5000
-                        connection.readTimeout = 5000
-                        
-                        val responseCode = connection.responseCode
-                        Log.d(TAG, "Server health check response with HttpURLConnection: $responseCode")
-                        callback(responseCode == 200)
-                    } catch (e2: Exception) {
-                        Log.e(TAG, "Error checking server health with HttpURLConnection: ${e2.message}")
-                        callback(false)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error checking server health: ${e.message}")
-                callback(false)
-            }
-        }.start()
-    }
+
     
     /**
      * Get the current server connection item
@@ -520,61 +455,36 @@ class ServerItemManager(
                 
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     if (serverInfo != null) {
-                        // Extract host and port from api_endpoint
-                        val (host, port) = try {
+                        // Extract host from api_endpoint
+                        val host = try {
                             val endpoint = serverInfo.apiEndpoint ?: apiEndpoint
                             val url = java.net.URL(endpoint)
-                            url.host to url.port
+                            url.host
                         } catch (e: Exception) {
                             // Fallback parsing if URL parsing fails
                             val hostRegex = "//([^:/]+)".toRegex()
-                            val portRegex = ":(\\d+)(/|$)".toRegex()
                             val hostMatch = hostRegex.find(apiEndpoint)
-                            val portMatch = portRegex.find(apiEndpoint)
-                            val host = hostMatch?.groupValues?.get(1) ?: "localhost"
-                            val port = portMatch?.groupValues?.get(1)?.toInt() ?: 8000
-                            host to port
+                            hostMatch?.groupValues?.get(1) ?: "localhost"
                         }
                         
                         // Create a Server with all the information we already have
+                        val serverEndpoint = serverInfo.apiEndpoint ?: apiEndpoint
                         val server = Server(
                             serviceName = serverInfo.name ?: "Manual Server",
                             name = serverInfo.name ?: "Manual Server",
                             hostname = host,
                             platform = serverInfo.platform,
-                            apiEndpoint = serverInfo.apiEndpoint ?: apiEndpoint,
+                            apiEndpoint = serverEndpoint,
                             discoveryMethod = "manual"
                         )
                         
                         // Add server using repository
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                serverRepository.addDiscoveredServer(server)
-                                withContext(Dispatchers.Main) {
-                                    // 更新UI显示服务器连接成功状态
-                                    updateItem(
-                                        status = "已连接到手动输入服务器: ${server.name}",
-                                        serverStatus = "CONNECTED",
-                                        apiEndpoint = server.apiEndpoint ?: "-",
-                                        discoveryMethod = "手动输入",
-                                        isStartMdnsButtonEnabled = false,
-                                        serverName = server.name ?: "手动服务器",
-                                        hostname = server.hostname ?: "-",
-                                        platform = server.platform ?: "-"
-                                    )
-                                    showDetailedToast("服务器连接成功", "", Toast.LENGTH_SHORT)
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    // 更新UI显示连接失败状态
-                                    updateItem(
-                                        status = "手动输入服务器添加失败: ${e.message}",
-                                        serverStatus = "FAILED",
-                                        isStartMdnsButtonEnabled = true
-                                    )
-                                    showDetailedToast("添加服务器失败: ${e.message}", "", Toast.LENGTH_SHORT)
-                                }
-                            }
+                        try {
+                            serverRepository.insertOrUpdateServer(server)
+                            // UI will be automatically updated by the observer in setupObservers()
+                            showDetailedToast("服务器连接成功", "", Toast.LENGTH_SHORT)
+                        } catch (e: Exception) {
+                            showDetailedToast("添加服务器失败: ${e.message}", "", Toast.LENGTH_SHORT)
                         }
                     } else {
                         showDetailedToast("无法获取服务器信息", "", Toast.LENGTH_SHORT)
@@ -618,7 +528,8 @@ class ServerItemManager(
             try {
                 // 断开所有服务器的连接状态
                 serverRepository.getAllServers().value?.forEach { serverEntity ->
-                    serverRepository.updateServerInfo(serverEntity.apiEndpoint, serverEntity.version)
+                    // Server info is automatically updated when getConnectedServer() is called
+                        // No need to manually update server info here
                 }
                 showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)
             } catch (e: Exception) {

@@ -16,7 +16,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.autodroid.data.repository.ServerRepository
 import com.autodroid.manager.model.Server
-import com.autodroid.manager.network.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -259,11 +258,8 @@ class NetworkService : Service() {
                         
                         // Save to repository using coroutine scope
                         CoroutineScope(Dispatchers.IO).launch {
-                            serverRepository?.addDiscoveredServer(discoveredServer!!)
+                            serverRepository?.insertOrUpdateServer(discoveredServer!!)
                         }
-                        
-                        // Perform health check
-                        performHealthCheck(discoveredServer!!)
                         
                         // Keep discovery status as true to maintain connection
                         DiscoveryStatusManager.updateDiscoveryStatus(true)
@@ -323,9 +319,14 @@ class NetworkService : Service() {
         deviceInfoJson: String
     ) {
         try {
+            // 检查serverHost是否为空
+            if (serverHost == null) {
+                Log.e(TAG, "Cannot send device info: serverHost is null")
+                return
+            }
             val url = String.format("http://%s:%d/api/devices/register", serverHost, serverPort)
 
-            val body = deviceInfoJson
+            val body = deviceInfoJson!!
                 .toRequestBody("application/json".toMediaTypeOrNull())
 
             val request = Request.Builder()
@@ -401,65 +402,6 @@ class NetworkService : Service() {
             initNetworkDiscovery()
         } catch (e: Exception) {
             Log.e(TAG, "Error restarting mDNS discovery", e)
-        }
-    }
-
-    /**
-     * Perform health check on discovered server
-     */
-    private fun performHealthCheck(server: Server) {
-        executorService!!.submit {
-            try {
-                // Use coroutine scope for suspend functions
-                CoroutineScope(Dispatchers.IO).launch {
-                    // Create ApiClient instance for health check
-                    val apiClient = ApiClient.getInstance()
-                    
-                    try {
-                        val healthResponse = apiClient.healthCheck()
-                        
-                        // Update server info in repository using apiEndpoint as server key
-                        val apiEndpoint = server.apiEndpoint ?: server.serviceName
-                        if (apiEndpoint.isNotEmpty()) {
-                            // Update server version and connection status
-                            serverRepository?.updateServerInfo(apiEndpoint, healthResponse.version ?: "unknown")
-                        }
-                        
-                        // Update DiscoveryStatusManager
-                        DiscoveryStatusManager.updateServerInfo(server)
-                        DiscoveryStatusManager.setServerConnected(true)
-                        Log.d(TAG, "Server health check successful: ${healthResponse}")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Server health check failed: ${e.message}")
-                        DiscoveryStatusManager.setServerConnected(false)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during health check: ${e.message}", e)
-                DiscoveryStatusManager.setServerConnected(false)
-            }
-        }
-    }
-
-    /**
-     * Add server manually (e.g., from QR code or manual input)
-     */
-    fun addServerManually(server: Server) {
-        executorService!!.submit {
-            try {
-                // Save to repository using coroutine scope
-                CoroutineScope(Dispatchers.IO).launch {
-                    serverRepository?.addDiscoveredServer(server)
-                }
-                
-                // Perform health check
-                performHealthCheck(server)
-                
-                // Update DiscoveryStatusManager
-                DiscoveryStatusManager.updateServerInfo(server)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error adding server manually: ${e.message}", e)
-            }
         }
     }
 

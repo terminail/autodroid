@@ -8,6 +8,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autodroid.data.dao.ServerDao
 import com.autodroid.data.dao.ServerEntity
+import com.autodroid.manager.config.ConfigManager
 
 /**
  * Room数据库主类
@@ -15,7 +16,7 @@ import com.autodroid.data.dao.ServerEntity
  */
 @Database(
     entities = [ServerEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,10 +35,14 @@ abstract class AppDatabase : RoomDatabase() {
          */
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
+                // 从配置文件中获取数据库名称
+                val config = ConfigManager.getConfig()
+                val databaseName = config.database.room.databaseName ?: "autodroid_database"
+                
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "autodroid_database"
+                    databaseName
                 )
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .build()

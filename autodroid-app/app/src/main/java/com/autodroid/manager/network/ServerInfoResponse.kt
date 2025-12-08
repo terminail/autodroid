@@ -5,11 +5,11 @@ package com.autodroid.manager.network
  * This is the type-safe response model for getServerInfo() API call
  */
 data class ServerInfoResponse(
+    val apiEndpoint: String,
     val name: String? = null,
     val hostname: String? = null,
     val ipAddress: String? = null,
     val platform: String? = null,
-    val apiEndpoint: String? = null,
     val services: Map<String, String> = emptyMap(),
     val capabilities: Map<String, Boolean> = emptyMap()
 ) {
@@ -17,7 +17,7 @@ data class ServerInfoResponse(
      * Check if the server info response is valid
      */
     fun isValid(): Boolean {
-        return name != null && hostname != null && ipAddress != null && apiEndpoint != null
+        return name != null && hostname != null && ipAddress != null
     }
     
     /**
@@ -46,13 +46,6 @@ data class ServerInfoResponse(
      */
     fun supportsEventTriggering(): Boolean {
         return capabilities["event_triggering"] ?: false
-    }
-    
-    /**
-     * Get the API endpoint URL
-     */
-    fun getApiEndpointUrl(): String {
-        return apiEndpoint ?: throw IllegalArgumentException("服务器API端点不能为空")
     }
     
     override fun toString(): String {

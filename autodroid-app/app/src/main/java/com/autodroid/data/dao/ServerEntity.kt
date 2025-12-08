@@ -14,7 +14,7 @@ data class ServerEntity(
     val apiEndpoint: String, // API端点作为主键
 
     // 服务器基本信息
-    val name: String,
+    val name: String?,
 
     // 连接状态
     val isConnected: Boolean = false,

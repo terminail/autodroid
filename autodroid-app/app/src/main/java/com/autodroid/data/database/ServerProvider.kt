@@ -56,16 +56,18 @@ class ServerProvider private constructor(context: Context) {
             // 检查是否已存在相同主键的服务器
             val existingServer = serverDao.getServerByKey(server.apiEndpoint)
             
-            return@withContext if (existingServer != null) {
+            val result: String = if (existingServer != null) {
                 // 更新现有服务器
                 val updatedServer = server.copy(updatedAt = System.currentTimeMillis())
                 serverDao.updateServer(updatedServer)
-                existingServer.apiEndpoint
+                existingServer.apiEndpoint!!
             } else {
                 // 插入新服务器
                 serverDao.insertServer(server)
                 server.apiEndpoint
             }
+            
+            return@withContext result
         }
     }
     

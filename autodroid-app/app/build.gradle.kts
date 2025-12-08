@@ -72,6 +72,10 @@ dependencies {
     // JSON parsing
     implementation("com.google.code.gson:gson:2.13.2")
     
+    // YAML parsing for configuration files
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2")
+    
     // Third-party mDNS libraries
     implementation("javax.jmdns:jmdns:3.4.1")
     implementation("org.bitlet:weupnp:0.1.4")

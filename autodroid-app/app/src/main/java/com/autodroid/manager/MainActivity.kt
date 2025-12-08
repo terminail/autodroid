@@ -95,12 +95,10 @@ class MainActivity : AppCompatActivity() {
         val permissionsNeeded = mutableListOf<String>()
         
         // Check location permission for mDNS discovery (Android 6.0+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        
+
         // Check network state permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED) {
             permissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE)

@@ -104,11 +104,6 @@ class AppViewModel : ViewModel() {
      */
     fun initialize(context: Context) {
         serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
-        
-        // Initialize server status from repository
-        CoroutineScope(Dispatchers.IO).launch {
-            serverRepository?.initializeServerStatus()
-        }
     }
     
     /**

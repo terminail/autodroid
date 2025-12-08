@@ -91,7 +91,8 @@ class ServerDetailFragment : BaseFragment() {
                 val serverRepository = ServerRepository.getInstance(requireContext().applicationContext as android.app.Application)
                 // 断开所有服务器的连接状态
                 serverRepository.getAllServers().value?.forEach { serverEntity ->
-                    serverRepository.updateServerInfo(serverEntity.apiEndpoint, serverEntity.version)
+                    // Server info is automatically updated when getConnectedServer() is called
+                // No need to manually update server info here
                 }
                 Toast.makeText(context, "Disconnected from server", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
