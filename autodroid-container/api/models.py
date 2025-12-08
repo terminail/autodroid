@@ -7,25 +7,7 @@ Separating models from the main application logic improves code organization and
 
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
-
-
-class WorkflowCreate(BaseModel):
-    """Model for creating a new workflow"""
-    name: str
-    description: str
-    metadata: Dict[str, str]
-    device_selection: Dict[str, Any]
-    steps: List[Dict[str, Any]]
-    schedule: Optional[Dict[str, Any]] = None
-
-
-class WorkflowPlanCreate(BaseModel):
-    """Model for creating a new workflow plan"""
-    workflow_id: str
-    device_udid: str
-    enabled: bool = True
-    schedule: Dict[str, Any]
-    priority: int = 0
+from datetime import datetime
 
 
 class EventTrigger(BaseModel):
@@ -42,23 +24,6 @@ class DeviceRegistration(BaseModel):
     model: str
     ipAddress: str
     port: int
-
-
-class WorkflowExecution(BaseModel):
-    """Model for workflow execution request"""
-    workflow_id: str
-    device_udid: str
-    parameters: Optional[Dict[str, Any]] = None
-
-
-class ExecutionResult(BaseModel):
-    """Model for workflow execution result"""
-    success: bool
-    message: str
-    execution_id: str
-    duration: float
-    error: Optional[str] = None
-    logs: Optional[List[str]] = None
 
 
 class ServerInfo(BaseModel):
@@ -94,3 +59,40 @@ class WiFiList(BaseModel):
     networks: List[WiFiNetwork]
     server_ip: str
     recommendation: Optional[str] = None
+
+
+class WorkscriptParameter(BaseModel):
+    """Model for workscript parameter"""
+    name: str
+    type: str
+    default: Any
+    description: str
+
+
+class Workscript(BaseModel):
+    """Model for workscript information"""
+    id: str
+    name: str
+    description: str
+    script_file: str
+    category: str
+    priority: str
+    tags: List[str]
+    parameters: List[WorkscriptParameter]
+    requirements: List[str]
+    estimated_duration: str
+
+
+class WorkscriptMetadata(BaseModel):
+    """Model for workscript metadata"""
+    app_package: str
+    last_updated: str
+    version: str
+    author: str
+
+
+class WorkscriptList(BaseModel):
+    """Model for list of workscripts"""
+    workscripts: List[Workscript]
+    metadata: WorkscriptMetadata
+    total_count: int

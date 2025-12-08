@@ -92,7 +92,6 @@ curl http://localhost:8004/api/health
   "timestamp": 1733123456.789,
   "services": {
     "device_manager": "running",
-    "workflow_engine": "running",
     "scheduler": "running"
   }
 }
@@ -120,7 +119,6 @@ curl http://localhost:8004/api/server
   },
   "capabilities": {
     "device_registration": true,
-    "workflow_execution": true,
     "test_scheduling": true,
     "event_triggering": true
   },
@@ -128,7 +126,6 @@ curl http://localhost:8004/api/server
     "health": "/api/health",
     "devices": "/api/devices",
     "device_register": "/api/devices/register",
-    "workflows": "/api/workflows",
     "test_plans": "/api/plans"
   }
 }
@@ -184,9 +181,6 @@ curl http://localhost:8004/api/devices
 | `/api/devices` | GET | 获取所有注册设备 |
 | `/api/devices/{udid}` | GET | 获取特定设备信息 |
 | `/api/devices/register` | POST | 注册设备 |
-| `/api/workflows` | GET | 获取所有工作脚本 |
-| `/api/workflows/{workflow_name}` | GET | 获取特定工作脚本 |
-| `/api/workflows` | POST | 创建新工作脚本 |
 | `/api/plans` | GET | 获取所有测试计划 |
 | `/api/plans` | POST | 创建新测试计划 |
 | `/api/plans/{plan_id}` | GET | 获取特定测试计划 |
@@ -232,7 +226,7 @@ pytest
 
 如果端口 8004 已被占用，可以修改配置文件中的端口设置：
 
-1. 编辑 `config.yaml` 文件
+1. 编辑 `config` 文件
 2. 修改 `server.backend.port` 的值
 3. 重新启动服务器
 

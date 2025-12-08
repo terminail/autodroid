@@ -59,7 +59,7 @@
 				</div>
 				<div class="navbar-menu">
 					<a href="/app" class:active={window.location.pathname === '/' || window.location.pathname === '/app'}>Dashboard</a>
-					<a href="/app/workflows" class:active={window.location.pathname.startsWith('/app/workflows')}>Workflows</a>
+
 					<a href="/app/reports" class:active={window.location.pathname.startsWith('/app/reports')}>Reports</a>
 					<a href="/app/orders" class:active={window.location.pathname.startsWith('/app/orders')}>Orders</a>
 					<a href="/app/my" class:active={window.location.pathname.startsWith('/app/my')}>My</a>

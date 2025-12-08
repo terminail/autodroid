@@ -29,7 +29,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8003 --reload
 
 #### 基础配置
 ```yaml
-# frontend/config.yaml
+# frontend/config
 server:
   url: http://localhost:8003
   api_base: /api
@@ -179,10 +179,7 @@ class PortManager:
 erDiagram
     User ||--o{ Device : owns
     Device }o--o{ Apk : "installed on"
-    WorkScript o{--|| Apk : "tested by"
-    WorkScript ||--o{ WorkPlan : "uses"
-    WorkPlan ||--|| WorkReport : generates
-    WorkPlan ||--o{ Order : "may create"
+
     Contract ||--o{ Order : "traded through"
     
     User {
@@ -193,6 +190,38 @@ erDiagram
         string description
         datetime created_at
         datetime last_login
+    }
+    
+    Device {
+        string id PK
+        string user_id FK
+        string udid
+        string name
+        string platform
+        string model
+        string status
+        datetime created_at
+        datetime last_seen
+    }
+    
+    Apk {
+        string id PK
+        string package_name
+        string app_name
+        string version
+        string device_id FK
+        datetime install_time
+        string status
+    }
+    
+    WorkScript {
+        string id PK
+        string name
+        string description
+        string apk_id FK
+        string script_path
+        datetime created_at
+        string status
     }
     
     Device {

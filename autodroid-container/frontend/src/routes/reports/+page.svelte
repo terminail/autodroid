@@ -1,146 +1,146 @@
 <script lang="ts">
-	import type { TestReport, TestReportStep } from '$lib/types';
-	import { onMount } from 'svelte';
+	import type { TestReport } from "$lib/types";
+	import { onMount } from "svelte";
 
 	let reports: TestReport[] = [];
 	let isLoading = true;
 	let error: string | null = null;
 	let selectedReport: TestReport | null = null;
-	let statusFilter: string = 'all';
-	let searchQuery: string = '';
+	let statusFilter: string = "all";
+	let searchQuery: string = "";
 
 	async function fetchReports() {
 		isLoading = true;
 		error = null;
-		
+
 		try {
 			// For now, use a mock endpoint since the actual API might not exist yet
 			// In a real implementation, this would be:
 			// const response = await fetch('/api/reports');
 			// const data = await response.json();
 			// reports = data.reports || [];
-			
+
 			// Mock data for demonstration
 			reports = [
 				{
-					id: 'report-1',
-					name: 'Test Report 1',
-					description: 'Test report for workflow 1 on device 1',
-					workflow_name: 'workflow-1',
-					device_udid: 'device-123',
-					status: 'passed',
-					start_time: '2025-01-01T10:00:00Z',
-					end_time: '2025-01-01T10:05:30Z',
+					id: "report-1",
+					name: "Test Report 1",
+					description: "Test report for Python script 1 on device 1",
+					device_udid: "device-123",
+					status: "passed",
+					start_time: "2025-01-01T10:00:00Z",
+					end_time: "2025-01-01T10:05:30Z",
 					duration: 330,
 					steps: [
 						{
-							id: 'step-1',
-							action: 'click',
-							status: 'passed',
+							id: "step-1",
+							action: "click",
+							status: "passed",
 							duration: 1000,
-							selector: '#button1'
+							selector: "#button1",
 						},
 						{
-							id: 'step-2',
-							action: 'fill',
-							status: 'passed',
+							id: "step-2",
+							action: "fill",
+							status: "passed",
 							duration: 500,
-							selector: '#input1',
-							value: 'test value'
+							selector: "#input1",
+							value: "test value",
 						},
 						{
-							id: 'step-3',
-							action: 'submit',
-							status: 'passed',
+							id: "step-3",
+							action: "submit",
+							status: "passed",
 							duration: 2000,
-							selector: '#form1'
-						}
-					]
+							selector: "#form1",
+						},
+					],
 				},
 				{
-					id: 'report-2',
-					name: 'Test Report 2',
-					description: 'Test report for workflow 2 on device 2',
-					workflow_name: 'workflow-2',
-					device_udid: 'device-456',
-					status: 'failed',
-					start_time: '2025-01-02T14:30:00Z',
-					end_time: '2025-01-02T14:32:15Z',
+					id: "report-2",
+					name: "Test Report 2",
+					description: "Test report for Python script 2 on device 2",
+					device_udid: "device-456",
+					status: "failed",
+					start_time: "2025-01-02T14:30:00Z",
+					end_time: "2025-01-02T14:32:15Z",
 					duration: 135,
 					steps: [
 						{
-							id: 'step-1',
-							action: 'click',
-							status: 'passed',
+							id: "step-1",
+							action: "click",
+							status: "passed",
 							duration: 800,
-							selector: '#button2'
+							selector: "#button2",
 						},
 						{
-							id: 'step-2',
-							action: 'fill',
-							status: 'failed',
+							id: "step-2",
+							action: "fill",
+							status: "failed",
 							duration: 300,
-							selector: '#input2',
-							value: 'test value',
-							error: 'Element not found'
-						}
-					]
+							selector: "#input2",
+							value: "test value",
+							error: "Element not found",
+						},
+					],
 				},
 				{
-					id: 'report-3',
-					name: 'Test Report 3',
-					description: 'Test report for workflow 1 on device 3',
-					workflow_name: 'workflow-1',
-					device_udid: 'device-789',
-					status: 'passed',
-					start_time: '2025-01-03T09:15:00Z',
-					end_time: '2025-01-03T09:20:45Z',
+					id: "report-3",
+					name: "Test Report 3",
+					description: "Test report for Python script 1 on device 3",
+					device_udid: "device-789",
+					status: "passed",
+					start_time: "2025-01-03T09:15:00Z",
+					end_time: "2025-01-03T09:20:45Z",
 					duration: 345,
 					steps: [
 						{
-							id: 'step-1',
-							action: 'click',
-							status: 'passed',
+							id: "step-1",
+							action: "click",
+							status: "passed",
 							duration: 1200,
-							selector: '#button1'
+							selector: "#button1",
 						},
 						{
-							id: 'step-2',
-							action: 'fill',
-							status: 'passed',
+							id: "step-2",
+							action: "fill",
+							status: "passed",
 							duration: 600,
-							selector: '#input1',
-							value: 'test value'
+							selector: "#input1",
+							value: "test value",
 						},
 						{
-							id: 'step-3',
-							action: 'submit',
-							status: 'passed',
+							id: "step-3",
+							action: "submit",
+							status: "passed",
 							duration: 2500,
-							selector: '#form1'
-						}
-					]
-				}
+							selector: "#form1",
+						},
+					],
+				},
 			];
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'An error occurred';
-			console.error('Error fetching reports:', err);
+			error = err instanceof Error ? err.message : "An error occurred";
+			console.error("Error fetching reports:", err);
 		} finally {
 			isLoading = false;
 		}
 	}
 
 	function getFilteredReports() {
-		return reports.filter(report => {
+		return reports.filter((report) => {
 			// Status filter
-			const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-			
+			const matchesStatus =
+				statusFilter === "all" || report.status === statusFilter;
+
 			// Search query filter
-			const matchesSearch = !searchQuery || 
+			const matchesSearch =
+				!searchQuery ||
 				report.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				report.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				report.workflow_name.toLowerCase().includes(searchQuery.toLowerCase());
-			
+				report.description
+					.toLowerCase()
+					.includes(searchQuery.toLowerCase());
+
 			return matchesStatus && matchesSearch;
 		});
 	}
@@ -159,7 +159,7 @@
 
 <div class="reports-page">
 	<h1>Reports</h1>
-	
+
 	{#if isLoading}
 		<div class="loading">Loading reports...</div>
 	{:else if error}
@@ -172,15 +172,18 @@
 					<h2>Report List</h2>
 					<div class="filters">
 						<div class="search-box">
-							<input 
-								type="text" 
-								placeholder="Search reports..." 
+							<input
+								type="text"
+								placeholder="Search reports..."
 								bind:value={searchQuery}
 								class="search-input"
 							/>
 						</div>
 						<div class="status-filter">
-							<select bind:value={statusFilter} class="filter-select">
+							<select
+								bind:value={statusFilter}
+								class="filter-select"
+							>
 								<option value="all">All Status</option>
 								<option value="passed">Passed</option>
 								<option value="failed">Failed</option>
@@ -190,36 +193,54 @@
 						</div>
 					</div>
 				</div>
-				
+
 				{#if getFilteredReports().length === 0}
 					<div class="no-reports">No reports found</div>
 				{:else}
 					<div class="report-cards">
 						{#each getFilteredReports() as report}
-							<div class="report-card" on:click={() => selectReport(report)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectReport(report); }} role="button" tabindex="0">
+							<div
+								class="report-card"
+								on:click={() => selectReport(report)}
+								on:keydown={(e) => {
+									if (e.key === "Enter" || e.key === " ")
+										selectReport(report);
+								}}
+								role="button"
+								tabindex="0"
+							>
 								<div class="report-header">
 									<h3>{report.name}</h3>
-									<span class={`status-badge ${report.status}`}>
-										{report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+									<span
+										class={`status-badge ${report.status}`}
+									>
+										{report.status.charAt(0).toUpperCase() +
+											report.status.slice(1)}
 									</span>
 								</div>
-								<p class="description">{report.description || 'No description'}</p>
+								<p class="description">
+									{report.description || "No description"}
+								</p>
 								<div class="report-meta">
 									<div class="meta-item">
-										<span class="label">Workflow:</span>
-										<span class="value">{report.workflow_name}</span>
-									</div>
-									<div class="meta-item">
 										<span class="label">Device:</span>
-										<span class="value">{report.device_udid}</span>
+										<span class="value"
+											>{report.device_udid}</span
+										>
 									</div>
 									<div class="meta-item">
 										<span class="label">Duration:</span>
-										<span class="value">{report.duration}s</span>
+										<span class="value"
+											>{report.duration}s</span
+										>
 									</div>
 									<div class="meta-item">
 										<span class="label">Start:</span>
-										<span class="value">{new Date(report.start_time).toLocaleString()}</span>
+										<span class="value"
+											>{new Date(
+												report.start_time,
+											).toLocaleString()}</span
+										>
 									</div>
 								</div>
 							</div>
@@ -227,100 +248,157 @@
 					</div>
 				{/if}
 			</div>
-			
+
 			<!-- Report Details -->
 			{#if selectedReport}
 				<div class="report-details">
 					<div class="details-header">
 						<h2>Report Details</h2>
-						<button class="close-button" on:click={closeReportDetails}>×</button>
+						<button
+							class="close-button"
+							on:click={closeReportDetails}>×</button
+						>
 					</div>
-					
+
 					<div class="details-content">
 						<div class="report-info">
 							<h3>{selectedReport.name}</h3>
-							<p class="description">{selectedReport.description || 'No description'}</p>
+							<p class="description">
+								{selectedReport.description || "No description"}
+							</p>
 							<div class="report-status">
-								<span class={`status-badge ${selectedReport.status}`}>
-									{selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
+								<span
+									class={`status-badge ${selectedReport.status}`}
+								>
+									{selectedReport.status
+										.charAt(0)
+										.toUpperCase() +
+										selectedReport.status.slice(1)}
 								</span>
-								<span class="duration">Duration: {selectedReport.duration}s</span>
+								<span class="duration"
+									>Duration: {selectedReport.duration}s</span
+								>
 							</div>
 						</div>
-						
+
 						<div class="report-metadata">
 							<h4>Metadata</h4>
 							<div class="metadata-grid">
 								<div class="metadata-item">
-									<span class="meta-key">Workflow:</span>
-									<span class="meta-value">{selectedReport.workflow_name}</span>
-								</div>
-								<div class="metadata-item">
 									<span class="meta-key">Device UDID:</span>
-									<span class="meta-value">{selectedReport.device_udid}</span>
+									<span class="meta-value"
+										>{selectedReport.device_udid}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Start Time:</span>
-									<span class="meta-value">{new Date(selectedReport.start_time).toLocaleString()}</span>
+									<span class="meta-value"
+										>{new Date(
+											selectedReport.start_time,
+										).toLocaleString()}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">End Time:</span>
-									<span class="meta-value">{new Date(selectedReport.end_time).toLocaleString()}</span>
+									<span class="meta-value"
+										>{new Date(
+											selectedReport.end_time,
+										).toLocaleString()}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Total Steps:</span>
-									<span class="meta-value">{selectedReport.steps.length}</span>
+									<span class="meta-value"
+										>{selectedReport.steps.length}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Passed Steps:</span>
-									<span class="meta-value">{selectedReport.steps.filter(step => step.status === 'passed').length}</span>
+									<span class="meta-value"
+										>{selectedReport.steps.filter(
+											(step) => step.status === "passed",
+										).length}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Failed Steps:</span>
-									<span class="meta-value">{selectedReport.steps.filter(step => step.status === 'failed').length}</span>
+									<span class="meta-value"
+										>{selectedReport.steps.filter(
+											(step) => step.status === "failed",
+										).length}</span
+									>
 								</div>
 							</div>
 						</div>
-						
+
 						<div class="report-steps">
 							<h4>Steps</h4>
 							<div class="steps-list">
 								{#each selectedReport.steps as step, index}
-									<div class="step-item" class:failed={step.status === 'failed'}>
+									<div
+										class="step-item"
+										class:failed={step.status === "failed"}
+									>
 										<div class="step-header">
-											<span class="step-number">{index + 1}</span>
-											<span class="step-action">{step.action}</span>
-											<span class={`step-status ${step.status}`}>
-												{step.status.charAt(0).toUpperCase() + step.status.slice(1)}
+											<span class="step-number"
+												>{index + 1}</span
+											>
+											<span class="step-action"
+												>{step.action}</span
+											>
+											<span
+												class={`step-status ${step.status}`}
+											>
+												{step.status
+													.charAt(0)
+													.toUpperCase() +
+													step.status.slice(1)}
 											</span>
-											<span class="step-duration">{step.duration}ms</span>
+											<span class="step-duration"
+												>{step.duration}ms</span
+											>
 										</div>
 										{#if step.error}
 											<div class="step-error">
-												<strong>Error:</strong> {step.error}
+												<strong>Error:</strong>
+												{step.error}
 											</div>
 										{/if}
 										{#if step.selector}
 											<div class="step-property">
-												<span class="property-label">Selector:</span>
-												<span class="property-value">{step.selector}</span>
+												<span class="property-label"
+													>Selector:</span
+												>
+												<span class="property-value"
+													>{step.selector}</span
+												>
 											</div>
 										{/if}
 										{#if step.value !== undefined}
 											<div class="step-property">
-												<span class="property-label">Value:</span>
-												<span class="property-value">{JSON.stringify(step.value)}</span>
+												<span class="property-label"
+													>Value:</span
+												>
+												<span class="property-value"
+													>{JSON.stringify(
+														step.value,
+													)}</span
+												>
 											</div>
 										{/if}
 									</div>
 								{/each}
 							</div>
 						</div>
-						
+
 						<div class="report-actions">
-							<button class="primary-button">Download Report</button>
-							<button class="secondary-button">Delete Report</button>
-							<button class="secondary-button">Rerun Workflow</button>
+							<button class="primary-button"
+								>Download Report</button
+							>
+							<button class="secondary-button"
+								>Delete Report</button
+							>
+							<button class="secondary-button">Rerun Test</button>
 						</div>
 					</div>
 				</div>
@@ -341,7 +419,8 @@
 		font-size: 2rem;
 	}
 
-	.loading, .error {
+	.loading,
+	.error {
 		text-align: center;
 		padding: 2rem;
 		border-radius: 8px;
@@ -788,17 +867,17 @@
 		.reports-container {
 			grid-template-columns: 1fr;
 		}
-		
+
 		.report-details {
 			position: static;
 		}
-		
+
 		.reports-header {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 1rem;
 		}
-		
+
 		.filters {
 			width: 100%;
 		}
@@ -809,15 +888,15 @@
 			flex-direction: column;
 			align-items: stretch;
 		}
-		
+
 		.search-box {
 			max-width: none;
 		}
-		
+
 		.report-actions {
 			flex-direction: column;
 		}
-		
+
 		.report-actions button {
 			width: 100%;
 		}

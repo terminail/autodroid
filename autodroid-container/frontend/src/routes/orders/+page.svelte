@@ -1,80 +1,80 @@
 <script lang="ts">
-	import type { Order } from '$lib/types';
-	import { onMount } from 'svelte';
+	import type { Order } from "$lib/types";
+	import { onMount } from "svelte";
 
 	let orders: Order[] = [];
 	let isLoading = true;
 	let error: string | null = null;
 	let selectedOrder: Order | null = null;
-	let statusFilter: string = 'all';
-	let searchQuery: string = '';
+	let statusFilter: string = "all";
+	let searchQuery: string = "";
 
 	async function fetchOrders() {
 		isLoading = true;
 		error = null;
-		
+
 		try {
 			// For now, use a mock endpoint since the actual API might not exist yet
 			// In a real implementation, this would be:
 			// const response = await fetch('/api/orders');
 			// const data = await response.json();
 			// orders = data.orders || [];
-			
+
 			// Mock data for demonstration
 			orders = [
 				{
-					id: 'order-1',
-					name: 'Test Order 1',
-					description: 'Test order for workflow 1 on device 1',
-					workflow_name: 'workflow-1',
-					device_udid: 'device-123',
-					status: 'pending',
-					created_at: '2025-01-01T10:00:00Z',
-					updated_at: '2025-01-01T10:00:00Z',
-					priority: 1
+					id: "order-1",
+					name: "Test Order 1",
+					description: "Test order for Python script 1 on device 1",
+					device_udid: "device-123",
+					status: "pending",
+					created_at: "2025-01-01T10:00:00Z",
+					updated_at: "2025-01-01T10:00:00Z",
+					priority: 1,
 				},
 				{
-					id: 'order-2',
-					name: 'Test Order 2',
-					description: 'Test order for workflow 2 on device 2',
-					workflow_name: 'workflow-2',
-					device_udid: 'device-456',
-					status: 'running',
-					created_at: '2025-01-02T14:30:00Z',
-					updated_at: '2025-01-02T14:30:00Z',
-					priority: 2
+					id: "order-2",
+					name: "Test Order 2",
+					description: "Test order for Python script 2 on device 2",
+					device_udid: "device-456",
+					status: "running",
+					created_at: "2025-01-02T14:30:00Z",
+					updated_at: "2025-01-02T14:30:00Z",
+					priority: 2,
 				},
 				{
-					id: 'order-3',
-					name: 'Test Order 3',
-					description: 'Test order for workflow 1 on device 3',
-					workflow_name: 'workflow-1',
-					device_udid: 'device-789',
-					status: 'completed',
-					created_at: '2025-01-03T09:15:00Z',
-					updated_at: '2025-01-03T09:20:45Z',
-					priority: 1
-				}
+					id: "order-3",
+					name: "Test Order 3",
+					description: "Test order for Python script 1 on device 3",
+					device_udid: "device-789",
+					status: "completed",
+					created_at: "2025-01-03T09:15:00Z",
+					updated_at: "2025-01-03T09:20:45Z",
+					priority: 1,
+				},
 			];
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'An error occurred';
-			console.error('Error fetching orders:', err);
+			error = err instanceof Error ? err.message : "An error occurred";
+			console.error("Error fetching orders:", err);
 		} finally {
 			isLoading = false;
 		}
 	}
 
 	function getFilteredOrders() {
-		return orders.filter(order => {
+		return orders.filter((order) => {
 			// Status filter
-			const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-			
+			const matchesStatus =
+				statusFilter === "all" || order.status === statusFilter;
+
 			// Search query filter
-			const matchesSearch = !searchQuery || 
+			const matchesSearch =
+				!searchQuery ||
 				order.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				order.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				order.workflow_name.toLowerCase().includes(searchQuery.toLowerCase());
-			
+				order.description
+					.toLowerCase()
+					.includes(searchQuery.toLowerCase());
+
 			return matchesStatus && matchesSearch;
 		});
 	}
@@ -93,7 +93,7 @@
 
 <div class="orders-page">
 	<h1>Orders</h1>
-	
+
 	{#if isLoading}
 		<div class="loading">Loading orders...</div>
 	{:else if error}
@@ -106,15 +106,18 @@
 					<h2>Order List</h2>
 					<div class="filters">
 						<div class="search-box">
-							<input 
-								type="text" 
-								placeholder="Search orders..." 
+							<input
+								type="text"
+								placeholder="Search orders..."
 								bind:value={searchQuery}
 								class="search-input"
 							/>
 						</div>
 						<div class="status-filter">
-							<select bind:value={statusFilter} class="filter-select">
+							<select
+								bind:value={statusFilter}
+								class="filter-select"
+							>
 								<option value="all">All Status</option>
 								<option value="pending">Pending</option>
 								<option value="in_progress">In Progress</option>
@@ -124,36 +127,54 @@
 						</div>
 					</div>
 				</div>
-				
+
 				{#if getFilteredOrders().length === 0}
 					<div class="no-orders">No orders found</div>
 				{:else}
 					<div class="order-cards">
 						{#each getFilteredOrders() as order}
-							<div class="order-card" on:click={() => selectOrder(order)} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectOrder(order); }} role="button" tabindex="0">
+							<div
+								class="order-card"
+								on:click={() => selectOrder(order)}
+								on:keydown={(e) => {
+									if (e.key === "Enter" || e.key === " ")
+										selectOrder(order);
+								}}
+								role="button"
+								tabindex="0"
+							>
 								<div class="order-header">
 									<h3>{order.name}</h3>
-									<span class={`status-badge ${order.status}`}>
-										{order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+									<span
+										class={`status-badge ${order.status}`}
+									>
+										{order.status.charAt(0).toUpperCase() +
+											order.status.slice(1)}
 									</span>
 								</div>
-								<p class="description">{order.description || 'No description'}</p>
+								<p class="description">
+									{order.description || "No description"}
+								</p>
 								<div class="order-meta">
 									<div class="meta-item">
-										<span class="label">Workflow:</span>
-										<span class="value">{order.workflow_name}</span>
-									</div>
-									<div class="meta-item">
 										<span class="label">Device:</span>
-										<span class="value">{order.device_udid}</span>
+										<span class="value"
+											>{order.device_udid}</span
+										>
 									</div>
 									<div class="meta-item">
 										<span class="label">Priority:</span>
-										<span class="value">{order.priority}</span>
+										<span class="value"
+											>{order.priority}</span
+										>
 									</div>
 									<div class="meta-item">
 										<span class="label">Created:</span>
-										<span class="value">{new Date(order.created_at).toLocaleString()}</span>
+										<span class="value"
+											>{new Date(
+												order.created_at,
+											).toLocaleString()}</span
+										>
 									</div>
 								</div>
 							</div>
@@ -161,53 +182,75 @@
 					</div>
 				{/if}
 			</div>
-			
+
 			<!-- Order Details -->
 			{#if selectedOrder}
 				<div class="order-details">
 					<div class="details-header">
 						<h2>Order Details</h2>
-						<button class="close-button" on:click={closeOrderDetails}>×</button>
+						<button
+							class="close-button"
+							on:click={closeOrderDetails}>×</button
+						>
 					</div>
-					
+
 					<div class="details-content">
 						<div class="order-info">
 							<h3>{selectedOrder.name}</h3>
-							<p class="description">{selectedOrder.description || 'No description'}</p>
+							<p class="description">
+								{selectedOrder.description || "No description"}
+							</p>
 							<div class="order-status">
-								<span class={`status-badge ${selectedOrder.status}`}>
-									{selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+								<span
+									class={`status-badge ${selectedOrder.status}`}
+								>
+									{selectedOrder.status
+										.charAt(0)
+										.toUpperCase() +
+										selectedOrder.status.slice(1)}
 								</span>
-								<span class="priority">Priority: {selectedOrder.priority}</span>
+								<span class="priority"
+									>Priority: {selectedOrder.priority}</span
+								>
 							</div>
 						</div>
-						
+
 						<div class="order-metadata">
 							<h4>Metadata</h4>
 							<div class="metadata-grid">
 								<div class="metadata-item">
-									<span class="meta-key">Workflow:</span>
-									<span class="meta-value">{selectedOrder.workflow_name}</span>
-								</div>
-								<div class="metadata-item">
 									<span class="meta-key">Device UDID:</span>
-									<span class="meta-value">{selectedOrder.device_udid}</span>
+									<span class="meta-value"
+										>{selectedOrder.device_udid}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Created At:</span>
-									<span class="meta-value">{new Date(selectedOrder.created_at).toLocaleString()}</span>
+									<span class="meta-value"
+										>{new Date(
+											selectedOrder.created_at,
+										).toLocaleString()}</span
+									>
 								</div>
 								<div class="metadata-item">
 									<span class="meta-key">Updated At:</span>
-									<span class="meta-value">{new Date(selectedOrder.updated_at).toLocaleString()}</span>
+									<span class="meta-value"
+										>{new Date(
+											selectedOrder.updated_at,
+										).toLocaleString()}</span
+									>
 								</div>
 							</div>
 						</div>
-						
+
 						<div class="order-actions">
 							<button class="primary-button">Edit Order</button>
-							<button class="secondary-button">Delete Order</button>
-							<button class="secondary-button">Cancel Order</button>
+							<button class="secondary-button"
+								>Delete Order</button
+							>
+							<button class="secondary-button"
+								>Cancel Order</button
+							>
 						</div>
 					</div>
 				</div>
@@ -228,7 +271,8 @@
 		font-size: 2rem;
 	}
 
-	.loading, .error {
+	.loading,
+	.error {
 		text-align: center;
 		padding: 2rem;
 		border-radius: 8px;
@@ -571,17 +615,17 @@
 		.orders-container {
 			grid-template-columns: 1fr;
 		}
-		
+
 		.order-details {
 			position: static;
 		}
-		
+
 		.orders-header {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 1rem;
 		}
-		
+
 		.filters {
 			width: 100%;
 		}
@@ -592,15 +636,15 @@
 			flex-direction: column;
 			align-items: stretch;
 		}
-		
+
 		.search-box {
 			max-width: none;
 		}
-		
+
 		.order-actions {
 			flex-direction: column;
 		}
-		
+
 		.order-actions button {
 			width: 100%;
 		}

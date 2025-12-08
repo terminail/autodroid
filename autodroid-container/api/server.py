@@ -47,7 +47,6 @@ async def health_check():
         "timestamp": asyncio.get_event_loop().time(),
         "services": {
             "device_manager": "running",
-            "workflow_engine": "running",
             "scheduler": "running"
         }
     }
@@ -72,12 +71,10 @@ async def get_server_info():
         "apiEndpoint": f"http://{ip_address}:{fastapi_port}/api",
         "services": {
             "device_manager": "running",
-            "workflow_engine": "running",
             "scheduler": "running"
         },
         "capabilities": {
             "device_registration": True,
-            "workflow_execution": True,
             "test_scheduling": True,
             "event_triggering": True
         }

@@ -9,9 +9,9 @@ from contextlib import asynccontextmanager
 # Import routers from feature-based files
 from .auth import router as auth_router
 from .devices import router as devices_router
-from .workflows import router as workflows_router
 from .server import router as server_router
 from .apks import router as apks_router
+from .workscripts import router as workscripts_router
 from .mdns import MDNSService, register_mdns_from_config
 
 import os
@@ -20,8 +20,6 @@ import yaml
 
 from core.device.service import DeviceManager
 from core.device.models import DeviceInfo
-from core.workflow.engine import WorkflowEngine, WorkflowConfig
-from core.scheduling.scheduler import SmartScheduler, DeviceWorkflowPlan
 from core.auth.models import UserCreate, UserLogin, UserResponse, Token
 from core.auth.service import AuthService
 
@@ -50,18 +48,11 @@ frontend_config = config.get('frontend', {})
 database_config = config.get('database', {})
 auth_config = config.get('authentication', {})
 
-# Background tasks
-async def start_scheduler():
-    """Start the scheduling service"""
-    asyncio.create_task(scheduler.schedule_tasks())
-
 # Lifespan event handler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     # Startup
-    await start_scheduler()
-    
     # Register mDNS service
     mdns_service = await register_mdns_from_config(config)
     app.state.mdns_service = mdns_service
@@ -122,8 +113,8 @@ async def spa_fallback_handler(request: Request, exc: HTTPException):
             
             # Check if this is a direct path to a frontend route (without /app prefix)
             # List of known frontend routes
-            frontend_routes = ['/workflows', '/reports', '/my', '/orders', '/auth']
-            if any(request.url.path == route or request.url.path.startswith(route + '/') for route in frontend_routes):
+    frontend_routes = ['/reports', '/my', '/orders', '/auth']
+    if any(request.url.path == route or request.url.path.startswith(route + '/') for route in frontend_routes):
                 # Redirect to the correct path with /app prefix
                 from fastapi.responses import RedirectResponse
                 return RedirectResponse(url=f"{frontend_mount_path}{request.url.path}", status_code=302)
@@ -137,9 +128,9 @@ async def spa_fallback_handler(request: Request, exc: HTTPException):
 # Include routers from feature-based files FIRST to ensure API routes have priority
 app.include_router(auth_router)
 app.include_router(devices_router)
-app.include_router(workflows_router)
 app.include_router(server_router)
 app.include_router(apks_router)
+app.include_router(workscripts_router)
 
 # Add API root endpoint
 @app.get("/api")
@@ -152,9 +143,9 @@ async def api_root():
         "endpoints": {
             "auth": "/api/auth",
             "devices": "/api/devices",
-            "workflows": "/api/workflows", 
             "server": "/api/server",
             "apks": "/api/apks",
+            "workscripts": "/api/{app_package}/workscripts",
             "config": "/api/config",
             "health": "/api/health"
         },
@@ -194,8 +185,6 @@ else:
 
 # Initialize core components
 device_manager = DeviceManager()
-workflow_engine = WorkflowEngine()
-scheduler = SmartScheduler()
 
 # Initialize authentication service
 auth_service = AuthService(
@@ -208,6 +197,4 @@ security = HTTPBearer()
 
 # Configuration
 APPIUM_URL = os.getenv("APPIUM_URL", api_config.get('appium_url', "http://appium-server:4723"))
-# Use absolute path to workflows directory in current project
-WORKFLOWS_DIR = os.getenv("WORKFLOWS_DIR", api_config.get('workflows_directory', os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "workflows")))
 MAX_CONCURRENT_TASKS = int(os.getenv("MAX_CONCURRENT_TASKS", str(api_config.get('max_concurrent_tasks', 5))))

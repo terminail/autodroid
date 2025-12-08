@@ -1,6 +1,6 @@
 """
 统一数据库管理模块（基于peewee ORM）
-所有核心模块（apk、auth、device、scheduling、workflow）共享同一个数据库
+所有核心模块（apk、auth、device、scheduling）共享同一个数据库
 """
 
 import os

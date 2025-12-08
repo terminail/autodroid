@@ -215,7 +215,7 @@
 					</div>
 					<div class="activity-item">
 						<div class="activity-time">{new Date(Date.now() - 3600000).toLocaleString()}</div>
-						<div class="activity-description">Updated workflow "Test Workflow"</div>
+						<div class="activity-description">Updated Python script "Test Script"</div>
 					</div>
 					<div class="activity-item">
 						<div class="activity-time">{new Date(Date.now() - 7200000).toLocaleString()}</div>

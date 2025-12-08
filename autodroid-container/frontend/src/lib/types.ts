@@ -8,12 +8,9 @@ export interface ServerInfo {
     python_version: string;
     services: {
         device_manager: string;
-        workflow_engine: string;
-        scheduler: string;
     };
     capabilities: {
         device_registration: boolean;
-        workflow_execution: boolean;
         test_scheduling: boolean;
         event_triggering: boolean;
     };
@@ -21,7 +18,7 @@ export interface ServerInfo {
         health: string;
         devices: string;
         device_register: string;
-        workflows: string;
+
         test_plans: string;
     };
 }
@@ -75,68 +72,7 @@ export interface APKInfo {
     [key: string]: any;
 }
 
-// Workflow related types
-export interface WorkflowStep {
-    id: string;
-    type: string;
-    action: string;
-    selector: string;
-    value?: any;
-    timeout?: number;
-    [key: string]: any;
-}
 
-export interface WorkflowConfig {
-    id: string;
-    name: string;
-    description: string;
-    metadata: Record<string, string>;
-    device_selection: Record<string, any>;
-    steps: WorkflowStep[];
-    schedule?: Record<string, any>;
-}
-
-export interface WorkflowCreate {
-    id: string;
-    name: string;
-    description: string;
-    metadata: Record<string, string>;
-    device_selection: Record<string, any>;
-    steps: WorkflowStep[];
-    schedule?: Record<string, any>;
-}
-
-export interface WorkflowInfo {
-    id: string;
-    name: string;
-    description: string;
-    status?: 'active' | 'inactive' | 'error';
-    created_at?: string;
-    updated_at?: string;
-    metadata?: Record<string, string>;
-    device_selection?: Record<string, any>;
-    steps?: WorkflowStep[];
-    schedule?: Record<string, any>;
-}
-
-// Workflow plan related types
-export interface WorkflowPlanCreate {
-    workflow_id: string;
-    device_udid: string;
-    enabled?: boolean;
-    schedule: Record<string, any>;
-    priority?: number;
-}
-
-export interface DeviceWorkflowPlan {
-    id: string;
-    workflow_id: string;
-    device_udid: string;
-    enabled: boolean;
-    schedule: Record<string, any>;
-    priority: number;
-    [key: string]: any;
-}
 
 // Event related types
 export interface EventTrigger {
@@ -150,7 +86,6 @@ export interface HealthCheck {
     timestamp: number;
     services: {
         device_manager: string;
-        workflow_engine: string;
         scheduler: string;
     };
 }
@@ -206,7 +141,7 @@ export interface UserProfile {
     role: string;
     last_login: string;
     created_at: string;
-    [ key: string ]: any;
+    [key: string]: any;
 }
 
 export interface UserPreferences {
@@ -216,7 +151,7 @@ export interface UserPreferences {
     email_alerts: boolean;
     auto_refresh: boolean;
     refresh_interval: number;
-    [ key: string ]: any;
+    [key: string]: any;
 }
 
 // Order related types
@@ -224,13 +159,12 @@ export interface Order {
     id: string;
     name: string;
     description: string;
-    workflow_name: string;
     device_udid: string;
     status: string;
     created_at: string;
     updated_at: string;
     priority: number;
-    [ key: string ]: any;
+    [key: string]: any;
 }
 
 // Report related types
@@ -240,21 +174,20 @@ export interface TestReportStep {
     status: string;
     duration: number;
     error?: string;
-    [ key: string ]: any;
+    [key: string]: any;
 }
 
 export interface TestReport {
     id: string;
     name: string;
     description: string;
-    workflow_name: string;
     device_udid: string;
     status: string;
     start_time: string;
     end_time: string;
     duration: number;
     steps: TestReportStep[];
-    [ key: string ]: any;
+    [key: string]: any;
 }
 
 // API response types
@@ -269,10 +202,3 @@ export interface DevicesResponse {
     devices: DeviceInfo[];
 }
 
-export interface WorkflowsResponse {
-    workflows: WorkflowInfo[];
-}
-
-export interface WorkflowPlansResponse {
-    plans: DeviceWorkflowPlan[];
-}

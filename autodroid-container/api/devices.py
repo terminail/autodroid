@@ -190,27 +190,7 @@ async def delete_device_apk(udid: str, package_name: str):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/{udid}/apks/{package_name}/workflows")
-async def get_apk_workflows(udid: str, package_name: str):
-    """Get workflows associated with a specific APK on a device"""
-    # Check if device exists
-    if not device_manager.is_device_available(udid):
-        raise HTTPException(status_code=404, detail="Device not found")
-    
-    try:
-        # Check if APK exists
-        apk = device_manager.get_apk(udid, package_name)
-        if not apk:
-            raise HTTPException(status_code=404, detail=f"APK with package name {package_name} not found for device {udid}")
-        
-        # TODO: Implement workflow association with APK
-        # For now, return an empty list
-        return {
-            "message": f"Found 0 workflows for APK {package_name} on device {udid}",
-            "workflows": []
-        }
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+
 
 @router.get("/users/{user_id}", response_model=List[DeviceInfo])
 async def get_devices_by_user(user_id: str):

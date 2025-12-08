@@ -78,8 +78,4 @@ ui:
   default_theme: light
   show_help_text: true
   show_tooltips: true
-workflow:
-  max_execution_time: 60
-  max_retries: 3
-  retry_delay: 5
-  storage_path: workflows/
+

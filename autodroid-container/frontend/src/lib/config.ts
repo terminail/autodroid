@@ -83,7 +83,7 @@ export const FRONTEND_CONFIG = {
     }
 };
 
-// Load configuration from unified config.yaml file
+// Load configuration from unified config file
 export async function loadConfig(): Promise<AppConfig> {
     try {
         // Fetch the unified configuration from the backend server
