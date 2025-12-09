@@ -27,13 +27,13 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 ## Phase 2: Automation Engine & QR Code Connection (4 weeks)
 
 ### Objectives
-- Develop workflow parsing and execution capabilities
+- Develop workscript parsing and execution capabilities
 - Implement element positioning engine
 - Create step executor with error handling
 - Implement QR code connection feature for mobile app
 
 ### Tasks
-- Workflow parser development
+- WorkScript parser development
 - Element positioning engine implementation
 - Step executor with timeout and retry mechanisms
 - Error handling and recovery mechanisms
@@ -42,15 +42,15 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 - Connection validation and fallback mechanisms
 
 ### Deliverables
-- Workflow execution engine
+- WorkScript execution engine
 - Element positioning library supporting multiple strategies
 - Error recovery mechanism
-- Basic workflow validation tools
+- Basic workscript validation tools
 - QR code generation API endpoint
 - QR code scanner component for mobile app
 - Enhanced connection flow with QR code support
 
-## Phase 3: Scheduling System (2 weeks)
+## Phase 3: Workplan System (2 weeks)
 
 ### Objectives
 - Implement scheduled task management
@@ -74,7 +74,7 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 ### Objectives
 - Develop APK scanning and analysis capabilities
 - Create element discovery assistance tools
-- Implement workflow template generation
+- Implement workscript template generation
 
 ### Tasks
 - APK scanning tool development
@@ -84,7 +84,7 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 
 ### Deliverables
 - APK analysis toolset
-- Workflow template generator
+- WorkScript template generator
 - User interaction interface for APK selection
 - APK information extraction utilities
 

@@ -115,11 +115,11 @@ class NetworkService : Service() {
 
         if (intent != null && intent.getAction() != null) {
             when (intent.getAction()) {
-                "MATCH_WORKFLOWS" -> {
+                "MATCH_WORKSCRIPTS" -> {
                     // App-based APK scanning: Receive APK info from app
                     val apkInfoListJson = intent.getStringExtra("apk_info_list")
                     if (apkInfoListJson != null) {
-                        matchWorkflowsForApks(apkInfoListJson)
+                        matchWorkScriptsForApks(apkInfoListJson)
                     }
                 }
             }
@@ -371,9 +371,9 @@ class NetworkService : Service() {
             }
         }
 
-    private fun matchWorkflowsForApks(apkInfoListJson: String?) {
-        // Simplified: Log that we're matching workflows
-        Log.d(TAG, "Matching workflows for APKs (simulated): " + apkInfoListJson)
+    private fun matchWorkScriptsForApks(apkInfoListJson: String?) {
+        // Simplified: Log that we're matching workscripts
+        Log.d(TAG, "Matching workscripts for APKs (simulated): " + apkInfoListJson)
     }
 
     /**

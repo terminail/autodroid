@@ -114,7 +114,7 @@ curl http://localhost:8004/api/server
   "python_version": "3.13.5",
   "services": {
     "device_manager": "running",
-    "workflow_engine": "running",
+    "workscript_engine": "running",
     "scheduler": "running"
   },
   "capabilities": {

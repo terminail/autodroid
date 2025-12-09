@@ -29,7 +29,7 @@ data class ServerEntity(
     // 服务器能力信息
     val supportsDeviceRegistration: Boolean = false,
     val supportsApkManagement: Boolean = false,
-    val supportsWorkflowExecution: Boolean = false,
+    val supportsWorkScriptExecution: Boolean = false,
     val supportsTestScheduling: Boolean = false,
     val supportsEventTriggering: Boolean = false,
 

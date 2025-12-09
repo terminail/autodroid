@@ -98,15 +98,8 @@ class ServerItemManager(
                 isServerConnected = false
                 serverConnectionMethod = "none"
                 
-                // 在手动模式下，应用启动时完全不设置任何状态
-                // 只有在用户交互或实际状态变化时才更新UI
-                // 避免在启动时自动显示任何状态信息
-                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
-                    // 保持空白状态，不自动设置任何文本
-                    return@run
-                }
-                
-                // 只有在实际有状态变化时才更新
+                // Always set the initial state to ensure UI is properly initialized
+                // This ensures buttons and other UI elements are visible from the start
                 updateItem(
                     status = "请从下面选择发现服务器方式",
                     serverStatus = "DISCONNECTED",
@@ -115,7 +108,7 @@ class ServerItemManager(
                     isStartMdnsButtonEnabled = true // mDNS按钮启用
                 )
                 
-                Log.d(TAG, "AppViewModel server is null, UI cleared")
+                Log.d(TAG, "AppViewModel server is null, UI initialized with default state")
             }
         }
         
@@ -125,11 +118,8 @@ class ServerItemManager(
             discoveryStatus?.let { status ->
                 val isDiscovering = status.inProgress
                 
-                // 在应用启动时，如果当前状态是初始状态，则不自动显示mDNS状态
-                if (currentItem.status == "Discovering servers..." || currentItem.status == "请从下面选择发现服务器方式") {
-                    // 保持空白状态，不自动设置任何mDNS相关文本
-                    return@let
-                }
+                // Always update UI when discovery status changes, regardless of current state
+                // This ensures proper UI initialization
                 
                 // Update UI based on discovery status
                 when {

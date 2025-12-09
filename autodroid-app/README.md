@@ -155,7 +155,7 @@ autodroid-app/
 
 管理设备信息和状态。
 
-### 4. WorkflowManager
+### 4. WorkScriptManager
 
 管理测试工作脚本。
 
@@ -166,7 +166,7 @@ autodroid-app/
 - `/api/health`：健康检查
 - `/api/server`：获取服务器信息
 - `/api/devices/register`：注册设备
-- `/api/workflows`：获取工作脚本列表
+- `/api/workscripts`：获取工作脚本列表
 - `/api/plans`：获取测试计划
 
 ## 常见问题

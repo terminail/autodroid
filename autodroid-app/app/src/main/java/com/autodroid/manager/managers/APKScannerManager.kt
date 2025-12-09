@@ -45,7 +45,7 @@ class APKScannerManager(private val context: Context) {
     private fun sendApkInfoToServer(installedApks: MutableList<MutableMap<String?, Any?>?>?) {
         val apkInfoJson = gson.toJson(installedApks)
         val intent = Intent(context, NetworkService::class.java)
-        intent.setAction("MATCH_WORKFLOWS")
+        intent.setAction("MATCH_WORKSCRIPTS")
         intent.putExtra("apk_info_list", apkInfoJson)
         context.startService(intent)
     }

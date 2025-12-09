@@ -12,22 +12,22 @@ import com.google.gson.Gson
 class BroadcastReceiverManager(
     private val context: Context,
     private val viewModel: AppViewModel?,
-    private val workflowManager: WorkflowManager?
+    private val workScriptManager: WorkScriptManager?
 ) {
     private val gson: Gson
 
     private var serverInfoReceiver: BroadcastReceiver? = null
-    private var workflowsReceiver: BroadcastReceiver? = null
+    private var workScriptsReceiver: BroadcastReceiver? = null
     private val reportsReceiver: BroadcastReceiver? = null
     private val executionReceiver: BroadcastReceiver? = null
-    private val matchedWorkflowsReceiver: BroadcastReceiver? = null
+    private val matchedWorkScriptsReceiver: BroadcastReceiver? = null
 
     interface BroadcastListener {
         fun onServerInfoReceived(serverInfoJson: String?)
-        fun onWorkflowsReceived(workflowsJson: String?)
+        fun onWorkScriptsReceived(workScriptsJson: String?)
         fun onReportsReceived(reportsJson: String?)
         fun onExecutionReceived(executionJson: String?)
-        fun onMatchedWorkflowsReceived(matchedWorkflowsJson: String?)
+        fun onMatchedWorkScriptsReceived(matchedWorkScriptsJson: String?)
     }
 
     private var listener: BroadcastListener? = null
@@ -50,11 +50,11 @@ class BroadcastReceiverManager(
             }
         }
 
-        workflowsReceiver = object : BroadcastReceiver() {
+        workScriptsReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
-                val workflowsJson = intent.getStringExtra("workflows")
-                if (listener != null && workflowsJson != null) {
-                    listener!!.onWorkflowsReceived(workflowsJson)
+                val workScriptsJson = intent.getStringExtra("workscripts")
+                if (listener != null && workScriptsJson != null) {
+                    listener!!.onWorkScriptsReceived(workScriptsJson)
                 }
             }
         }
@@ -65,8 +65,8 @@ class BroadcastReceiverManager(
             IntentFilter("com.autodroid.manager.SERVER_INFO_UPDATE")
         )
         context.registerReceiver(
-            workflowsReceiver,
-            IntentFilter("com.autodroid.manager.WORKFLOWS_UPDATE")
+            workScriptsReceiver,
+            IntentFilter("com.autodroid.manager.WORKSCRIPTS_UPDATE")
         )
         // Register other intent filters...
     }
@@ -75,8 +75,8 @@ class BroadcastReceiverManager(
         if (serverInfoReceiver != null) {
             context.unregisterReceiver(serverInfoReceiver)
         }
-        if (workflowsReceiver != null) {
-            context.unregisterReceiver(workflowsReceiver)
+        if (workScriptsReceiver != null) {
+            context.unregisterReceiver(workScriptsReceiver)
         }
         // Unregister other receivers...
     }

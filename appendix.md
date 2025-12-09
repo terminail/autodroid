@@ -95,7 +95,7 @@ class CustomDataProvider:
 
 ### 3.3 Extending Workflow Actions
 
-To add a new action type to the workflow engine:
+To add a new action type to the WorkScript Engine:
 
 ```python
 class CustomActionExecutor:
@@ -135,5 +135,5 @@ class CustomActionExecutor:
 | **Container** | A lightweight, standalone, executable package that includes everything needed to run an application |
 | **Docker** | A platform for developing, shipping, and running applications in containers |
 | **Podman** | An open-source container runtime that provides a Docker-compatible command line interface |
-| **Workflow** | A sequence of automated steps defined in YAML format to test an application |
+| **WorkScript** | A sequence of automated steps defined in YAML format to test an application |
 | **Element Locator** | A method to identify UI elements in an application, such as ID, text, or XPath |

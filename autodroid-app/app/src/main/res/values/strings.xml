@@ -39,8 +39,9 @@
     <string name="server_ip">Server IP: </string>
     <string name="server_status">Server Status: </string>
     <string name="connected">Connected</string>
-    <string name="no_workflows">No workflows available</string>
-    <string name="available_workflows">Available Workflows:</string>
+    <string name="no_workscripts">No workscripts available</string>
+
+    <string name="available_workscripts">Available WorkScripts:</string>
     <string name="permissions_granted">Permissions granted</string>
     <string name="permissions_denied">Some permissions denied</string>
     <string name="connection_status">Connection Status: </string>

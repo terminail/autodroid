@@ -6,8 +6,8 @@
 flowchart TD
     subgraph ContainerServer[Container Server]
         subgraph CoreComponents[Core Components]
-            WorkflowEngine[Workflow Engine]
-            SchedulingSystem[Scheduling System]
+            WorkScriptEngine[WorkScript Engine]
+            WorkplanSystem[Workplan System]
             DeviceManagement[Device Management]
         end
         
@@ -60,7 +60,7 @@ flowchart TD
     classDef device stroke:#000,stroke-width:2px,fill:#fff,color:#000;
     
     class ContainerServer container;
-    class WorkflowEngine,SchedulingSystem,DeviceManagement,RESTfulAPI component;
+    class WorkScriptEngine,SchedulingSystem,DeviceManagement,RESTfulAPI component;
     class mDNS,HTTP,WebSocket,ADB,QRCode communication;
     class TestDeviceA,TestDeviceB,TestDeviceC,ProxyAppA,ProxyAppB,ProxyAppC device;
 ```
@@ -73,8 +73,8 @@ flowchart TD
    - Provides RESTful API for external communication
 
 2. **Core Components**
-   - **Workflow Engine**: Executes automation workflows defined in YAML
-   - **Scheduling System**: Manages scheduled and event-driven tasks
+   - **WorkScript Engine**: Executes automation workflows defined in YAML
+   - **Workplan System**: Manages scheduled and event-driven tasks
    - **Device Management**: Handles device discovery, connection, and monitoring
 
 3. **Communication Layer**

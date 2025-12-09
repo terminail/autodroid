@@ -187,18 +187,18 @@ errorTextView.setText(getString(R.string.email_required));
 setErrorMessage(getApplication().getString(R.string.passwords_mismatch));
 ```
 
-## 3. Workflow Definition Specification
+## 3. WorkScript Definition Specification
 
-### 3.1 Workflow Organization
-Workflows are organized by **package name**, **application name**, and **version** to support:
-- Multiple workflows per APK (e.g., login, purchase, settings workflows)
-- Version-specific workflows (different workflows for different app versions)
+### 3.1 WorkScript Organization
+WorkScripts are organized by **package name**, **application name**, and **version** to support:
+- Multiple workscripts per APK (e.g., login, purchase, settings workscripts)
+- Version-specific workscripts (different workscripts for different app versions)
 - Clear organization and management of test scenarios
 
-### 3.2 Workflow Definition Structure
+### 3.2 WorkScript Definition Structure
 
 ```yaml
-name: "APK_A Login Workflow"
+name: "APK_A Login WorkScript"
 description: "Login flow for target application"
 
 metadata:
@@ -208,7 +208,7 @@ metadata:
   version: "1.0"
   version_constraint: "1.0+"  # Supports version ranges
 
-workflow_type: "functional"  # functional, performance, regression
+workscript_type: "functional"  # functional, performance, regression
 
 priority: 1  # 1-5, 1 being highest
 
@@ -242,30 +242,30 @@ schedule:
   interval_minutes: 120
 ```
 
-### 3.3 Multiple Workflows per APK
-A single APK can have multiple workflows for different test scenarios:
+### 3.3 Multiple WorkScripts per APK
+A single APK can have multiple workscripts for different test scenarios:
 
-#### Example: Multiple Workflows for Same APK
+#### Example: Multiple WorkScripts for Same APK
 ```
-workflows/
+workscripts/
 └── com.target.app/
     └── Target Application/
         ├── 1.0/
-        │   ├── login-workflow.yaml
-        │   ├── purchase-workflow.yaml
-        │   └── settings-workflow.yaml
+        │   ├── login-workscript.yaml
+        │   ├── purchase-workscript.yaml
+        │   └── settings-workscript.yaml
         └── 2.0/
-            ├── login-workflow.yaml  # Updated for v2.0 UI changes
-            ├── purchase-workflow.yaml
-            └── settings-workflow.yaml
+            ├── login-workscript.yaml  # Updated for v2.0 UI changes
+            ├── purchase-workscript.yaml
+            └── settings-workscript.yaml
 ```
 
-### 3.4 Version-Specific Workflows
-Workflows can be version-specific to handle UI/behavior changes between app versions:
+### 3.4 Version-Specific WorkScripts
+WorkScripts can be version-specific to handle UI/behavior changes between app versions:
 
-#### Example: Version 2.0 Login Workflow
+#### Example: Version 2.0 Login WorkScript
 ```yaml
-name: "APK_A Login Workflow (v2.0)"
+name: "APK_A Login WorkScript (v2.0)"
 description: "Login flow for target application v2.0"
 
 metadata:
@@ -293,18 +293,18 @@ steps:
     timeout: 10
 ```
 
-### 3.5 Workflow Selection Logic
-The system selects appropriate workflows based on:
+### 3.5 WorkScript Selection Logic
+The system selects appropriate workscripts based on:
 1. Exact package name match
 2. App version compatibility check using version_constraint
-3. Workflow type and priority
+3. WorkScript type and priority
 4. Device compatibility criteria
 
 This organization ensures that:
-- Each APK can have multiple workflows for different test scenarios
-- Different versions of the same APK can have tailored workflows
-- Workflows are easily manageable and maintainable
-- The system can automatically select the right workflow for the right app version
+- Each APK can have multiple workscripts for different test scenarios
+- Different versions of the same APK can have tailored workscripts
+- WorkScripts are easily manageable and maintainable
+- The system can automatically select the right workscript for the right app version
 
 ## 5. QR Code Connection Feature
 
@@ -597,13 +597,13 @@ If QR code scanning fails or is not available, users can:
 2. Use mDNS discovery (if enabled)
 3. Select from previously connected servers
 
-## 6. App-Server Workflow Matching
+## 6. App-Server WorkScript Matching
 
 ### 4.1 Feature Overview
-The Android app can trigger the server to scan the test device's installed APKs and match them with available workflows. This enables:
-- Automatic discovery of compatible workflows for installed apps
-- Easy selection of appropriate workflows for testing
-- Dynamic workflow assignment based on device capabilities
+The Android app can trigger the server to scan the test device's installed APKs and match them with available workscripts. This enables:
+- Automatic discovery of compatible workscripts for installed apps
+- Easy selection of appropriate workscripts for testing
+- Dynamic workscript assignment based on device capabilities
 
 ### 4.2 Implementation Details
 
@@ -616,27 +616,27 @@ async def scan_device_apks(
     device_id: str,
     current_user: User = Depends(get_current_active_user)
 ):
-    """Scan device for installed APKs and match with workflows"""
+    """Scan device for installed APKs and match with workscripts"""
     # 1. Trigger ADB scan on device
     # 2. Extract APK information (package name, app name, version)
-    # 3. Match with available workflows
-    # 4. Return matched workflows to app
+    # 3. Match with available workscripts
+    # 4. Return matched workscripts to app
     return {
         "device_id": device_id,
         "scanned_at": datetime.utcnow(),
-        "matched_workflows": []
+        "matched_workscripts": []
     }
 
-@app.get("/api/devices/{device_id}/matched-workflows")
-async def get_matched_workflows(
+@app.get("/api/devices/{device_id}/matched-workscripts")
+async def get_matched_workscripts(
     device_id: str,
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get previously matched workflows for device"""
-    # Return cached matched workflows
+    """Get previously matched workscripts for device"""
+    # Return cached matched workscripts
     return {
         "device_id": device_id,
-        "matched_workflows": []
+        "matched_workscripts": []
     }
 ```
 
@@ -680,11 +680,11 @@ public void scanInstalledApks() {
 - Better reliability: No dependency on ADB connection
 - More secure: Less exposure of device information
 
-#### 4.2.3 Workflow Matching Algorithm
+#### 4.2.3 WorkScript Matching Algorithm
 
 ```python
-def match_workflows(apk_info_list, available_workflows):
-    matched_workflows = []
+def match_workscripts(apk_info_list, available_workscripts):
+    matched_workscripts = []
     
     for apk_info in apk_info_list:
         # Extract APK details
@@ -692,9 +692,9 @@ def match_workflows(apk_info_list, available_workflows):
         app_version = apk_info["version_name"]
         
         # Find matching workflows
-        for workflow in available_workflows:
+        for workscript in available_workscripts:
             # Check package name match
-            if workflow["metadata"]["app_package"] != package_name:
+            if workscript["metadata"]["app_package"] != package_name:
                 continue
             
             # Check version compatibility
@@ -707,12 +707,12 @@ def match_workflows(apk_info_list, available_workflows):
                 continue
             
             # Add to matched workflows
-            matched_workflows.append({
+            matched_workscripts.append({
                 "apk_info": apk_info,
-                "workflow": workflow
+                "workscript": workscript
             })
     
-    return matched_workflows
+    return matched_workscripts
 ```
 
 ### 4.3 App-Server Interaction Flow
@@ -746,7 +746,7 @@ def match_workflows(apk_info_list, available_workflows):
 1. **Automatic Workflow Discovery**: Users don't need to manually find compatible workflows
 2. **Dynamic Matching**: Workflows are matched based on actual device capabilities
 3. **Version Awareness**: Only compatible workflows for the installed app version are returned
-4. **Efficient Testing**: Users can quickly select appropriate workflows for testing
+4. **Efficient Testing**: Users can quickly select appropriate workscripts for testing
 5. **Scalable Architecture**: Supports multiple devices and workflows simultaneously
 6. **Real-time Updates**: Workflows are matched in real-time based on current device state
 

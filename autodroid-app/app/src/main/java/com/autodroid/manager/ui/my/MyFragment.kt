@@ -56,15 +56,18 @@ class MyFragment : BaseFragment() {
     }
 
     override fun setupObservers() {
-        // Setup observers for my data
+        // Observe authentication state from AppViewModel
+        appViewModel.user.observe(viewLifecycleOwner) { user ->
+            updateMyItems()
+        }
     }
     
     private fun updateMyItems() {
         val items = mutableListOf<MyItem>()
         
-        // Add items based on login status
-        // TODO: Check actual login status from ViewModel
-        val isLoggedIn = false // Default to not logged in
+        // Add items based on login status from AppViewModel
+        val user = appViewModel.user.value
+        val isLoggedIn = user?.isAuthenticated ?: false
         
         if (isLoggedIn) {
             items.add(MyItem.UserQRCodeItem())
@@ -83,11 +86,9 @@ class MyFragment : BaseFragment() {
     }
     
     private fun handleLogout() {
-        // TODO: Implement logout logic
-        // For now, just update the UI to show logged out state
-        val items = mutableListOf<MyItem>()
-        items.add(MyItem.LoginItem())
-        myAdapter?.updateItems(items)
+        // Clear authentication state
+        appViewModel.clearAuthentication()
+        // UI will be automatically updated by the observer
     }
     
     private fun handleUserQRCode() {

@@ -33,10 +33,10 @@
                     android:layout_marginBottom="8dp" />
 
                 <TextView
-                    android:id="@+id/report_workflow_name"
+                    android:id="@+id/report_workscript_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Workflow: Sample Workflow"
+                    android:text="WorkScript: Sample WorkScript"
                     android:textSize="16sp"
                     android:textColor="@android:color/black"
                     android:layout_marginBottom="8dp" />

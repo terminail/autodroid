@@ -78,10 +78,10 @@ selected_app = selector.interactive_select()
 2. Start session and analyze interface elements
 3. Record element location strategies (ID > Text > Accessibility ID > XPath)
 
-### 2.3 Workflow Template Generation
+### 2.3 WorkScript Template Generation
 ```python
-# Automatically generate basic workflow
-workflow_file = selector.generate_workflow_template(selected_app)
+# Automatically generate basic workscript
+workscript_file = selector.generate_workscript_template(selected_app)
 ```
 
 ## 3. Containerized Deployment

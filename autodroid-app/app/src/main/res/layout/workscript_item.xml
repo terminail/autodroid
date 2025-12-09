@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/workflow_item_background"
+    android:background="@drawable/workscript_item_background"
     android:padding="12dp"
     android:layout_marginBottom="8dp"
     android:layout_marginLeft="16dp"
@@ -12,7 +12,7 @@
     android:foreground="?android:attr/selectableItemBackground">
 
     <TextView
-        android:id="@+id/workflow_item_name"
+        android:id="@+id/workscript_item_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
@@ -21,7 +21,7 @@
         android:layout_marginBottom="4dp" />
 
     <TextView
-        android:id="@+id/workflow_item_package"
+        android:id="@+id/workscript_item_package"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
@@ -30,14 +30,14 @@
         android:layout_marginBottom="4dp" />
 
     <TextView
-        android:id="@+id/workflow_item_description"
+        android:id="@+id/workscript_item_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray"
         android:layout_marginBottom="12dp" />
 
-    <!-- Workflow Status -->
+    <!-- WorkScript Status -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
             android:textColor="@android:color/darker_gray" />
 
         <TextView
-            android:id="@+id/workflow_status"
+            android:id="@+id/workscript_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Ready"
@@ -69,7 +69,7 @@
             android:gravity="right" />
 
         <TextView
-            android:id="@+id/workflow_duration"
+            android:id="@+id/workscript_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="00:00:00"
@@ -86,7 +86,7 @@
         android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/workflow_start_time"
+            android:id="@+id/workscript_start_time"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -96,7 +96,7 @@
             android:textColor="@android:color/darker_gray" />
 
         <TextView
-            android:id="@+id/workflow_end_time"
+            android:id="@+id/workscript_end_time"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

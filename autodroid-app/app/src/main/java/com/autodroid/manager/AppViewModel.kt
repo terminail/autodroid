@@ -14,7 +14,7 @@ import com.autodroid.manager.model.Network
 import com.autodroid.manager.model.Apk
 import com.autodroid.manager.model.Server
 import com.autodroid.manager.model.Wifi
-import com.autodroid.manager.model.Workflow
+import com.autodroid.manager.model.WorkScript
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -96,8 +96,8 @@ class AppViewModel : ViewModel() {
     val apkList = MutableLiveData<List<com.autodroid.manager.model.Apk>?>()
     val selectedApkIndex = MutableLiveData<Int>()
     
-    // Workflows information
-    val availableWorkflows = MutableLiveData<MutableList<Workflow>>()
+    // WorkScripts information
+    val availableWorkScripts = MutableLiveData<MutableList<WorkScript>>()
 
     /**
      * Initialize the ViewModel with application context
@@ -308,8 +308,8 @@ class AppViewModel : ViewModel() {
         }
     }
     
-    fun setAvailableWorkflows(workflows: MutableList<Workflow>) {
-        availableWorkflows.setValue(workflows)
+    fun setAvailableWorkScripts(workScripts: MutableList<WorkScript>) {
+        availableWorkScripts.setValue(workScripts)
     }
 
 

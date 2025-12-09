@@ -3,7 +3,7 @@ package com.autodroid.manager.model
 /**
  * 工作脚本详情数据封装类
  */
-data class WorkflowData(
+data class WorkScriptData(
     val id: String? = null,
     val name: String? = null,
     val description: String? = null,
@@ -11,20 +11,20 @@ data class WorkflowData(
     val createdBy: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-    val steps: List<WorkflowStep>? = null
+    val steps: List<WorkScriptStep>? = null
 ) {
     companion object {
         /**
          * 创建空工作脚本数据
          */
-        fun empty(): WorkflowData = WorkflowData()
+        fun empty(): WorkScriptData = WorkScriptData()
     }
 }
 
 /**
  * 工作脚本步骤信息
  */
-data class WorkflowStep(
+data class WorkScriptStep(
     val stepNumber: Int,
     val action: String,
     val description: String? = null,
@@ -34,7 +34,7 @@ data class WorkflowStep(
 /**
  * 工作脚本列表项数据类
  */
-data class Workflow(
+data class WorkScript(
     val id: String? = null,
     val name: String? = null,
     val title: String? = null,

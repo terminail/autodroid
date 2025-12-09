@@ -20,18 +20,18 @@
 - Automatic scanning of installed APKs on mobile phones
 - Extract package name, app name, version information
 - Identify main Activity and interface structure
-- Generate basic workflow templates
+- Generate basic workscript templates
 
-**F004 - Workflow Engine**
+**F004 - WorkScript Engine**
 - YAML configuration-driven workflow definition
 - Supports data-driven test cases
 - Conditional branching and loop control
 - Step-level timeout and retry mechanism
 
-**F005 - Intelligent Scheduling System**
+**F005 - Workplan System**
 - Time-based scheduled tasks
 - Event-driven automatic triggering
-- Resource-aware intelligent scheduling
+- Resource-aware workplan system
 - Task queue and priority management
 
 **F006 - Real-time Monitoring Reports**

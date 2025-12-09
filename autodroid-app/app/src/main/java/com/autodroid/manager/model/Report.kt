@@ -12,7 +12,7 @@ data class Report(
     val completedAt: String? = null,
     val duration: String? = null,
     val device: String? = null,
-    val workflow: String? = null,
+    val workScript: String? = null,
     val steps: List<ReportStep>? = null
 ) {
     companion object {
@@ -26,13 +26,13 @@ data class Report(
          */
         fun mock(): Report = Report(
             id = "report-001",
-            title = "Sample Workflow Execution",
+            title = "Sample WorkScript Execution",
             status = "COMPLETED",
             createdAt = "2024-01-15 10:30:00",
             completedAt = "2024-01-15 10:45:00",
             duration = "15 minutes",
             device = "Test Device (Android 12)",
-            workflow = "Sample Workflow",
+            workScript = "Sample WorkScript",
             steps = listOf(
                 ReportStep(1, "Launch App", "PASSED", "2s"),
                 ReportStep(2, "Login", "PASSED", "3s"),

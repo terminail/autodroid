@@ -41,7 +41,7 @@ python tools/interactive_apk_selector.py
 #    - Follow the workflow specification from technical-solution.md
 
 # 4. Submit test plan
-#    - Use the API or UI to submit your workflow file
+#    - Use the API or UI to submit your workscript file
 ```
 
 ## 2. Daily Operations
@@ -87,7 +87,7 @@ curl -X DELETE http://localhost:8000/api/plans/{plan_id}
 1. **Create a new workflow file** in the `workflows/` directory with `.yml` extension
 2. **Follow the workflow specification** from [technical-solution.md](technical-solution.md#3-workflow-definition-specification)
 3. **Test the workflow** using the API or UI
-4. **Schedule the workflow** using the scheduling system
+4. **Schedule the workflow** using the workplan system
 
 ### 3.2 Example Workflow Structure
 

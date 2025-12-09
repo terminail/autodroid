@@ -10,13 +10,13 @@
 With the growth of mobile application testing needs, there is a demand for an automated testing solution that can be deployed cross-platform, support multi-device concurrency, and is easy to manage. Traditional solutions have problems such as complex environment configuration, poor platform compatibility, and high maintenance costs.
 
 ### 1.2 Solution
-Develop a cross-platform Android app automation framework based on container technology, implementing standard UI automation through Appium, combined with an intelligent scheduling system, to provide stable and reliable third-party APK automation testing capabilities.
+Develop a cross-platform Android app automation framework based on container technology, implementing standard UI automation through Appium, combined with a workplan system, to provide stable and reliable third-party APK automation testing capabilities.
 
 ### 1.3 Core Values
 - 🐳 **Containerized Deployment**: Supports Docker and Podman, eliminating environment dependencies
 - 🖥️ **Full Platform Support**: macOS, Windows, WSL/Linux
 - 📱 **Non-intrusive**: No modification to target APKs, based on UI hierarchy analysis
-- 🔧 **Intelligent Scheduling**: Supports scheduled tasks and event-driven testing
+- 🔧 **Workplan System**: Supports scheduled tasks and event-driven testing
 - 📊 **Centralized Management**: Unified configuration management and result monitoring
 
 ---
@@ -43,18 +43,18 @@ Develop a cross-platform Android app automation framework based on container tec
 - Automatic scanning of installed APKs on mobile phones
 - Extract package name, app name, version information
 - Identify main Activity and interface structure
-- Generate basic workflow templates
+- Generate basic workscript templates
 
-**F004 - Workflow Engine**
-- YAML configuration-driven workflow definition
+**F004 - WorkScript Engine**
+- YAML configuration-driven workscript definition
 - Supports data-driven test cases
 - Conditional branching and loop control
 - Step-level timeout and retry mechanism
 
-**F005 - Intelligent Scheduling System**
+**F005 - Workplan System**
 - Time-based scheduled tasks
 - Event-driven automatic triggering
-- Resource-aware intelligent scheduling
+- Resource-aware workplan system
 - Task queue and priority management
 
 **F006 - Real-time Monitoring Reports**
@@ -346,10 +346,10 @@ selected_app = selector.interactive_select()
 2. Start session and analyze interface elements
 3. Record element location strategies (ID > Text > Accessibility ID > XPath)
 
-#### 2.3 Workflow Template Generation
+#### 2.3 WorkScript Template Generation
 ```python
-# Automatically generate basic workflow
-workflow_file = selector.generate_workflow_template(selected_app)
+# Automatically generate basic workscript
+workscript_file = selector.generate_workscript_template(selected_app)
 ```
 
 ### 3. Containerized Deployment
@@ -422,17 +422,17 @@ services:
 - Basic REST API
 
 #### Phase 2: Automation Engine (3 weeks)
-- Workflow parser
+- WorkScript parser
 - Element positioning engine
 - Step executor
 - Error handling mechanism
 
 **Deliverables:**
-- Workflow execution engine
+- WorkScript execution engine
 - Element positioning library
 - Error recovery mechanism
 
-#### Phase 3: Scheduling System (2 weeks)
+#### Phase 3: Workplan System (2 weeks)
 - Scheduled task scheduling
 - Event-driven triggering
 - Resource management
@@ -451,7 +451,7 @@ services:
 
 **Deliverables:**
 - APK analysis toolset
-- Workflow template generator
+- WorkScript template generator
 - User interaction interface
 
 #### Phase 5: Testing Optimization (2 weeks)

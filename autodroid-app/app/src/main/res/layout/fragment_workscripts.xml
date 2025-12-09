@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Available Workflows Section -->
+    <!-- Available WorkScripts Section -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,16 +18,16 @@
             android:padding="16dp">
 
             <TextView
-                android:id="@+id/workflows_title"
+                android:id="@+id/workscripts_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Available Workflows:"
+                android:text="Available WorkScripts:"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/workflows_recycler_view"
+                android:id="@+id/workscripts_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp" />

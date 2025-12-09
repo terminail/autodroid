@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.autodroid.manager.R
-import com.autodroid.manager.managers.WorkflowManager
+import com.autodroid.manager.managers.WorkScriptManager
 import com.autodroid.manager.apk.ApkScannerManager
 // import com.autodroid.manager.model.DiscoveredServer
 import com.autodroid.manager.model.Server
@@ -64,7 +64,7 @@ class DashboardFragment : BaseFragment() {
     private var dashboardAdapter: DashboardAdapter? = null
     
     // Managers
-    private var workflowManager: WorkflowManager? = null
+    private var workScriptManager: WorkScriptManager? = null
     private var apkScannerManager: ApkScannerManager? = null
 
     private val dashboardItems = mutableListOf<DashboardItem>()
@@ -80,7 +80,7 @@ class DashboardFragment : BaseFragment() {
         super.onCreate(savedInstanceState)
 
         // Initialize managers
-        workflowManager = WorkflowManager(requireContext(), appViewModel)
+        workScriptManager = WorkScriptManager(requireContext(), appViewModel)
         apkScannerManager = ApkScannerManager(requireContext())
 
         // Initialize Activity Result API launchers

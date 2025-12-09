@@ -45,7 +45,7 @@
 
         </LinearLayout>
 
-        <!-- Workflow Name -->
+        <!-- WorkScript Name -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -57,13 +57,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Workflow Name"
+                android:text="WorkScript Name"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
             <TextView
-                android:id="@+id/report_workflow_name"
+                android:id="@+id/report_workscript_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="N/A"

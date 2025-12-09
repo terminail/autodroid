@@ -24,7 +24,7 @@ class ReportDetailFragment : BaseFragment() {
     }
     
     private lateinit var reportIdTextView: TextView
-    private lateinit var workflowNameTextView: TextView
+    private lateinit var workScriptNameTextView: TextView
     private lateinit var statusTextView: TextView
     private lateinit var startTimeTextView: TextView
     private lateinit var durationTextView: TextView
@@ -36,7 +36,7 @@ class ReportDetailFragment : BaseFragment() {
 
     override fun initViews(view: View) {
         reportIdTextView = view.findViewById(R.id.report_id)
-        workflowNameTextView = view.findViewById(R.id.report_workflow_name)
+        workScriptNameTextView = view.findViewById(R.id.report_workscript_name)
         statusTextView = view.findViewById(R.id.report_status)
         startTimeTextView = view.findViewById(R.id.report_start_time)
         durationTextView = view.findViewById(R.id.report_duration)
@@ -71,7 +71,7 @@ class ReportDetailFragment : BaseFragment() {
 
     private fun updateReportUI(report: Report) {
         reportIdTextView.text = "Report ID: ${report.id ?: "N/A"}"
-        workflowNameTextView.text = "Workflow: ${report.workflow ?: "N/A"}"
+        workScriptNameTextView.text = "WorkScript: ${report.workScript ?: "N/A"}"
         statusTextView.text = "Status: ${report.status ?: "N/A"}"
         startTimeTextView.text = "Start Time: ${report.createdAt ?: "N/A"}"
         durationTextView.text = "Duration: ${report.duration ?: "N/A"}"

@@ -18,7 +18,7 @@ data class Server(
     val discoveryMethod: String? = null,
     val supportsDeviceRegistration: Boolean = false,
     val supportsApkManagement: Boolean = false,
-    val supportsWorkflowExecution: Boolean = false
+    val supportsWorkScriptExecution: Boolean = false
 ) {
     /**
      * Check if the server information is valid for connection
@@ -36,10 +36,10 @@ data class Server(
     }
 
     /**
-     * Check if workflow execution capability is enabled
+     * Check if workscript execution capability is enabled
      */
-    fun supportsWorkflowExecution(): Boolean {
-        return capabilities["workflow_execution"] ?: false
+    fun supportsWorkScriptExecution(): Boolean {
+        return capabilities["workscript_execution"] ?: false
     }
     
     /**

@@ -12,7 +12,7 @@ data class OrderData(
     val createdAt: String? = null,
     val scheduledAt: String? = null,
     val completedAt: String? = null,
-    val workflowId: String? = null,
+    val workScriptId: String? = null,
     val deviceId: String? = null,
     val priority: Int? = null
 ) {
