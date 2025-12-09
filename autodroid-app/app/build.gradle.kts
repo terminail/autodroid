@@ -63,6 +63,7 @@ dependencies {
     // Kotlin
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.21")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
     

@@ -37,7 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 // 从配置文件中获取数据库名称
                 val config = ConfigManager.getConfig()
-                val databaseName = config.database.room.databaseName ?: "autodroid_database"
+                val databaseName = config.database.name
                 
                 val instance = Room.databaseBuilder(
                     context.applicationContext,

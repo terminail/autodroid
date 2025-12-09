@@ -113,6 +113,7 @@ data class EncryptionConfig(
 )
 
 data class DatabaseConfig(
+    val name: String = "autodroid_database",
     val room: RoomConfig = RoomConfig(),
     val cache: CacheConfig = CacheConfig()
 )

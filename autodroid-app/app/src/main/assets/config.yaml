@@ -4,84 +4,84 @@
 # 服务器配置
 server:
   # 默认API端点
-  default_api_endpoint: "http://192.168.1.59:8004/api"
+  defaultApiEndpoint: "http://192.168.1.59:8004/api"
   
   # 连接超时设置（秒）
-  connection_timeout: 10
+  connectionTimeout: 10
   
   # 重试次数
-  max_retries: 3
+  maxRetries: 3
   
   # 健康检查间隔（秒）
-  health_check_interval: 30
+  healthCheckInterval: 30
 
 # 网络配置
 network:
   # mDNS服务发现配置
   mdns:
     enabled: true
-    service_type: "_autodroid._tcp.local."
-    discovery_timeout: 10
+    serviceType: "_autodroid._tcp.local."
+    discoveryTimeout: 10
   
   # WiFi配置
   wifi:
-    scan_interval: 60
-    auto_connect: true
+    scanInterval: 60
+    autoConnect: true
 
 # 设备配置
 device:
   # 设备信息配置
   info:
-    auto_refresh: true
-    refresh_interval: 60
+    autoRefresh: true
+    refreshInterval: 60
   
   # UDID配置
   udid:
-    generation_method: "android_id"  # android_id, serial, random
-    cache_enabled: true
+    generationMethod: "android_id"  # android_id, serial, random
+    cacheEnabled: true
 
 # 驱动开发配置
-driver_development:
+driverDevelopment:
   # 调试模式
-  debug_mode: false
+  debugMode: false
   
   # 日志级别
-  log_level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  logLevel: "INFO"  # DEBUG, INFO, WARN, ERROR
   
   # 性能监控
-  performance_monitoring:
+  performanceMonitoring:
     enabled: true
-    metrics_interval: 60
+    metricsInterval: 60
   
   # 测试配置
   testing:
-    mock_server_enabled: false
-    test_timeout: 30
+    mockServerEnabled: false
+    testTimeout: 30
 
 # UI配置
 ui:
   # 主题配置
   theme:
-    primary_color: "#2196F3"
-    accent_color: "#FF4081"
-    dark_mode: false
+    primaryColor: "#2196F3"
+    accentColor: "#FF4081"
+    darkMode: false
   
   # 导航配置
   navigation:
-    animation_enabled: true
-    bottom_navigation_enabled: true
+    animationEnabled: true
+    bottomNavigationEnabled: true
   
   # 刷新配置
   refresh:
-    pull_to_refresh: true
-    auto_refresh_interval: 300
+    pullToRefresh: true
+    autoRefreshInterval: 300
 
 # 安全配置
 security:
   # 认证配置
   authentication:
-    token_expiry: 86400  # 24小时
-    auto_login: true
+    tokenExpiry: 86400  # 24小时
+    autoLogin: true
   
   # 加密配置
   encryption:
@@ -90,25 +90,27 @@ security:
 
 # 数据库配置
 database:
+  # 数据库名称
+  name: "autodroid_database"
+  
   # Room数据库配置
   room:
-    schema_location: "schemas"
-    export_schema: true
-    database_name: "autodroid_database"
+    schemaLocation: "schemas"
+    exportSchema: true
   
   # 缓存配置
   cache:
     enabled: true
-    max_size_mb: 50
+    maxSizeMb: 50
 
 # 开发环境配置
 development:
   # 开发工具
   tools:
-    adb_enabled: true
-    logcat_enabled: true
+    adbEnabled: true
+    logcatEnabled: true
   
   # 热重载配置
-  hot_reload:
+  hotReload:
     enabled: false
     port: 8080

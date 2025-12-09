@@ -3,12 +3,16 @@ package com.autodroid.manager
 
 import android.app.Application
 import com.autodroid.manager.service.DiscoveryStatusManager
+import com.autodroid.manager.config.ConfigManager
 
 class MyApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
         instance = this
+        
+        // Load configuration first before any database operations
+        ConfigManager.loadConfig(this)
         
         // Initialize the DiscoveryStatusManager with application context
         DiscoveryStatusManager.initialize(this)

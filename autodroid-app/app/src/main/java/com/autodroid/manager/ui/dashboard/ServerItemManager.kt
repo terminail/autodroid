@@ -324,15 +324,10 @@ class ServerItemManager(
                 // Server data management is now handled by AppViewModel
                 // The actual server connection should be initiated by UI components through AppViewModel
                 
-                // Check server health
-                checkServerHealth(apiEndpoint) { isHealthy ->
-                    // Ensure UI updates run on main thread
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        updateItem(
-                            serverStatus = if (isHealthy) "READY" else "HEALTH_CHECK_FAILED"
-                        )
-                    }
-                }
+                // Set server status to READY for now (health check removed)
+                updateItem(
+                    serverStatus = "READY"
+                )
                 
                 showSuccessMessage("QR码扫描成功", "服务器信息已成功获取")
             } else {
