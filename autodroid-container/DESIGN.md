@@ -178,9 +178,10 @@ class PortManager:
 ```mermaid
 erDiagram
     User ||--o{ Device : owns
-    Device }o--o{ Apk : "installed on"
-    WorkScript o{--|| Apk : "tested by"
-    WorkScript ||--o{ WorkPlan : "uses"
+    Device }o--o{ Apk : "installed"
+    Apk ||--o{ WorkScript : "tested by"
+    WorkPlan o{--|| WorkScript : "uses"
+    User ||--o{ WorkPlan : creates
     WorkPlan ||--|| WorkReport : generates
     WorkPlan ||--o{ Order : "may create"
     Contract ||--o{ Order : "traded through"
@@ -223,7 +224,7 @@ erDiagram
         string file_id "工作脚本文件ID"
         string name
         string description
-        json metadata
+        json metadata "规范Workplan的data，python脚本参数"
         string script_path  "Python脚本文件路径"
         datetime created_at
         string status
@@ -232,8 +233,10 @@ erDiagram
     WorkPlan {
         string id PK
         string script_id FK
+        string user_id FK "created by user"
         string name
         string description
+        json data  "工作计划数据符合WorkScript的metadata要求"
         string status  "状态：NEW、INPROGRESS、FAILED、OK"
         datetime created_at
         datetime started_at
@@ -289,22 +292,23 @@ erDiagram
 2. **Device (设备)**
    - 每个设备属于一个用户（多对一关系）
    - 每个设备可以安装多个APK（多对多关系，通过Device-Apk关联表实现）
-   - 核心属性：设备UDID、用户ID、设备名称、平台、型号、状态、连接时间
+   - 核心属性：设备UDID（主键）、用户ID、设备名称、平台、型号、状态、连接时间
 
 3. **Apk (应用程序)**
    - 每个APK被多个工作脚本测试（一对多关系）
    - 同一个APK可以安装在多个设备上（多对多关系，通过Device-Apk关联表实现）
-   - 核心属性：包名（主键）、应用名称、版本、版本号、安装时间、是否系统应用
+   - 核心属性：包名（主键）、应用名称、描述、版本、版本号、创建时间
 
 4. **WorkScript (工作脚本)**
    - 每个工作脚本测试一个APK（多对一关系）
    - 每个工作脚本使用多个工作脚本计划去测试APK（一对多关系）
-   - 核心属性：工作脚本ID、包名（外键）、名称、描述、元数据、脚本文件路径
+   - 核心属性：工作脚本ID、APK ID（外键）、名称、描述、元数据、脚本文件路径、状态
 
 5. **WorkPlan (工作脚本计划)**
    - 每个工作脚本计划使用一个工作脚本去测试APK（多对一关系）
    - 每个工作脚本计划生成一个执行报告（一对一关系）
-   - 核心属性：计划ID、工作脚本ID、名称、描述、状态、优先级、创建时间、计划时间、执行时间
+   - 每个工作脚本计划可以创建一个订单（一对多关系）
+   - 核心属性：计划ID、工作脚本ID、名称、描述、状态、创建时间、开始时间、结束时间
 
 #### 关键业务规则：
 
@@ -346,12 +350,10 @@ CREATE TABLE devices (
 -- APK表
 CREATE TABLE apks (
     id TEXT PRIMARY KEY,
-    app_name TEXT NOT NULL,
+    name TEXT NOT NULL,
     description TEXT,
     version TEXT,
     version_code INTEGER,
-    installed_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_system BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -373,6 +375,7 @@ CREATE TABLE workscripts (
     description TEXT,
     metadata JSON,
     script_path TEXT NOT NULL,  -- Python脚本文件路径
+    status TEXT DEFAULT 'NEW' CHECK(status IN ('NEW', 'INPROGRESS', 'FAILED', 'OK')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (apk_id) REFERENCES apks(id) ON DELETE CASCADE
 );
@@ -381,13 +384,16 @@ CREATE TABLE workscripts (
 CREATE TABLE workplans (
     id TEXT PRIMARY KEY,
     script_id TEXT NOT NULL,
+    user_id TEXT,  -- 创建用户ID，外键指向users表
     name TEXT NOT NULL,
     description TEXT,
+    data JSON,  -- 工作计划数据符合WorkScript的metadata要求
     status TEXT DEFAULT 'NEW' CHECK(status IN ('NEW', 'INPROGRESS', 'FAILED', 'OK')),  -- 计划状态
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     started_at TIMESTAMP,
     ended_at TIMESTAMP,
-    FOREIGN KEY (script_id) REFERENCES workscripts(id) ON DELETE CASCADE
+    FOREIGN KEY (script_id) REFERENCES workscripts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- 工作脚本计划报告表
@@ -419,18 +425,17 @@ CREATE TABLE contracts (
 -- 订单表
 CREATE TABLE orders (
     id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    plan_id TEXT UNIQUE,
+    plan_id TEXT NOT NULL,
     contract_id TEXT,  -- 合约ID，外键指向contracts表
+    name TEXT NOT NULL,
     description TEXT,
     order_type TEXT CHECK(order_type IN ('委托单', '成交单')) DEFAULT '委托单',  -- 订单类型：委托单(Entrusted)、成交单(Executed)
     amount DECIMAL(10,2) DEFAULT 0.00,
     contract_shares INTEGER DEFAULT 0,  -- 合约股数
-    fee DECIMAL(10,2) DEFAULT 0.00,  -- 手续费
-    profit_loss DECIMAL(10,2) DEFAULT 0.00,  -- 利润损失
+    contract_fee DECIMAL(10,2) DEFAULT 0.00,  -- 手续费
+    contract_profit_loss DECIMAL(10,2) DEFAULT 0.00,  -- 利润损失
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (plan_id) REFERENCES workplans(id) ON DELETE SET NULL,
+    FOREIGN KEY (plan_id) REFERENCES workplans(id) ON DELETE CASCADE,
     FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL
 );
 ```
@@ -468,9 +473,9 @@ async def get_devices(request: Request):
     return {"devices": device_manager.get_connected_devices()}
 ```
 
-## 6. 日志和监控
+## 7. 日志和监控
 
-### 6.1 日志配置
+### 7.1 日志配置
 
 ```python
 # 日志配置
@@ -484,7 +489,7 @@ logging.basicConfig(
 )
 ```
 
-### 6.2 健康检查
+### 7.2 健康检查
 
 ```python
 @app.get("/api/health")
@@ -497,9 +502,9 @@ async def health_check():
     }
 ```
 
-## 7. 部署配置
+## 8. 部署配置
 
-### 7.1 Docker 配置
+### 8.1 Docker 配置
 
 ```dockerfile
 # Dockerfile
@@ -516,7 +521,7 @@ EXPOSE 8003
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8003"]
 ```
 
-### 7.2 docker-compose 配置
+### 8.2 docker-compose 配置
 
 ```yaml
 # docker-compose.yml
@@ -533,9 +538,9 @@ services:
       - ./reports:/app/reports
 ```
 
-## 8. 配置管理
+## 9. 配置管理
 
-### 8.1 环境配置
+### 9.1 环境配置
 
 ```python
 # config.py
@@ -562,9 +567,9 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
-## 9. 故障排除
+## 10. 故障排除
 
-### 9.1 常见问题
+### 10.1 常见问题
 
 1. **端口冲突**：如果端口 8003 被占用，服务端会自动寻找可用端口
 2. **网络连接**：确保防火墙允许端口 8003 的访问
@@ -646,12 +651,11 @@ class Device(Model):
 
 class Apk(Model):
     id = CharField(primary_key=True)
-    app_name = CharField()
+    name = CharField()
     description = TextField(null=True)
     version = CharField(null=True)
     version_code = IntegerField(null=True)
-    installed_time = DateTimeField(default=datetime.now)
-    is_system = BooleanField(default=False)
+    created_at = DateTimeField(default=datetime.now)
 
 class WorkScript(Model):
     id = CharField(primary_key=True)
@@ -660,12 +664,15 @@ class WorkScript(Model):
     description = TextField(null=True)
     metadata = JSONField(null=True)
     script_path = CharField()
+    status = CharField(default='NEW')  # NEW, INPROGRESS, FAILED, OK
 
 class WorkPlan(Model):
     id = CharField(primary_key=True)
     script = ForeignKeyField(WorkScript, backref='workplans')
+    user = ForeignKeyField(User, backref='workplans', null=True)
     name = CharField()
     description = TextField(null=True)
+    data = JSONField(null=True)  # 工作计划数据符合WorkScript的metadata要求
     status = CharField(default='NEW')  # NEW, INPROGRESS, FAILED, OK
     created_at = DateTimeField(default=datetime.now)
     started_at = DateTimeField(null=True)
@@ -674,8 +681,8 @@ class WorkPlan(Model):
 class WorkReport(Model):
     id = CharField(primary_key=True)
     plan = ForeignKeyField(WorkPlan, backref='workreports')
+    name = CharField()
     description = TextField(null=True)
-    status = CharField(default='INPROGRESS')  # NEW, INPROGRESS, FAILED, OK
     execution_log = JSONField(null=True)
     result_data = JSONField(null=True)
     created_at = DateTimeField(default=datetime.now)
@@ -685,6 +692,7 @@ class Contract(Model):
     id = CharField(primary_key=True)
     symbol = CharField()  # 交易代码，如 AAPL、SPY
     name = CharField()  # 合约名称，如 Apple Inc.
+    description = TextField(null=True)
     type = CharField()  # 股票、ETF、期权、期货、外汇
     exchange = CharField(null=True)  # 交易所，如 NASDAQ、NYSE
     price = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 当前价格
@@ -692,15 +700,15 @@ class Contract(Model):
 
 class Order(Model):
     id = CharField(primary_key=True)
-    user = ForeignKeyField(User, backref='orders')
-    plan = ForeignKeyField(WorkPlan, backref='orders', null=True, unique=True)
+    plan = ForeignKeyField(WorkPlan, backref='orders')
     contract = ForeignKeyField(Contract, backref='orders', null=True)
+    name = CharField()
     description = TextField(null=True)
     order_type = CharField(default='委托单')  # 委托单(Entrusted)、成交单(Executed)
     amount = DecimalField(default=0.00, max_digits=10, decimal_places=2)
     contract_shares = IntegerField(default=0)  # 合约股数
-    fee = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 手续费
-    profit_loss = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 利润损失
+    contract_fee = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 手续费
+    contract_profit_loss = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 利润损失
     created_at = DateTimeField(default=datetime.now)
 
 # 第二层：模块专用 Pydantic 模型
@@ -723,20 +731,18 @@ class UserResponse(BaseModel):
 # apk/models.py
 class ApkCreateRequest(BaseModel):
     id: str
-    app_name: str
+    name: str
     description: Optional[str] = None
     version: Optional[str] = None
     version_code: Optional[int] = None
-    is_system: bool = False
 
 class ApkResponse(BaseModel):
     id: str
-    app_name: str
+    name: str
     description: Optional[str]
     version: Optional[str]
     version_code: Optional[int]
-    installed_time: datetime
-    is_system: bool
+    created_at: datetime
 
 # device/models.py
 class DeviceCreateRequest(BaseModel):
@@ -757,12 +763,51 @@ class DeviceResponse(BaseModel):
     status: str
     connected_at: Optional[datetime]
 
+# workscript/models.py
+class WorkScriptCreateRequest(BaseModel):
+    id: str
+    apk_id: str
+    name: str
+    description: Optional[str] = None
+    metadata: Optional[dict] = None
+    script_path: str
+
+class WorkScriptResponse(BaseModel):
+    id: str
+    apk_id: str
+    name: str
+    description: Optional[str]
+    metadata: Optional[dict]
+    script_path: str
+    status: str
+    created_at: datetime
+
+# workplan/models.py
+class WorkPlanCreateRequest(BaseModel):
+    script_id: str
+    user_id: Optional[str] = None
+    name: str
+    description: Optional[str] = None
+    data: Optional[dict] = None
+
+class WorkPlanResponse(BaseModel):
+    id: str
+    script_id: str
+    user_id: Optional[str]
+    name: str
+    description: Optional[str]
+    data: Optional[dict]
+    status: str
+    created_at: datetime
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]
+
 # workreport/models.py
 class WorkReportCreateRequest(BaseModel):
     user_id: str
     plan_id: str
+    name: str
     description: Optional[str] = None
-    status: str = "INPROGRESS"
     execution_log: Optional[dict] = None
     result_data: Optional[dict] = None
     error_message: Optional[str] = None
@@ -771,8 +816,8 @@ class WorkReportResponse(BaseModel):
     id: str
     user_id: str
     plan_id: str
+    name: str
     description: Optional[str]
-    status: str
     execution_log: Optional[dict]
     result_data: Optional[dict]
     created_at: datetime
@@ -783,6 +828,7 @@ class ContractCreateRequest(BaseModel):
     id: str
     symbol: str
     name: str
+    description: Optional[str] = None
     type: str = "股票"
     exchange: Optional[str] = None
     price: float = 0.00
@@ -791,6 +837,7 @@ class ContractResponse(BaseModel):
     id: str
     symbol: str
     name: str
+    description: Optional[str]
     type: str
     exchange: Optional[str]
     price: float
@@ -798,27 +845,27 @@ class ContractResponse(BaseModel):
 
 # order/models.py
 class OrderCreateRequest(BaseModel):
-    user_id: str
     plan_id: str
     contract_id: Optional[str] = None
+    name: str
     description: Optional[str] = None
     order_type: str = "委托单"
     amount: float = 0.00
     contract_shares: int = 0
-    fee: float = 0.00
-    profit_loss: float = 0.00
+    contract_fee: float = 0.00
+    contract_profit_loss: float = 0.00
 
 class OrderResponse(BaseModel):
     id: str
-    user_id: str
     plan_id: str
     contract_id: Optional[str]
+    name: str
     description: Optional[str]
     order_type: str
     amount: float
     contract_shares: int
-    fee: float
-    profit_loss: float
+    contract_fee: float
+    contract_profit_loss: float
     created_at: datetime
 ```
 
@@ -922,8 +969,8 @@ class ApkService:
 
 ---
 
-**文档版本**: 1.2  
-**最后更新**: 2025-01-01  
+**文档版本**: 1.3  
+**最后更新**: 2025-01-02  
 **维护者**: Autodroid 开发团队
 
 ## 更新记录
@@ -949,3 +996,16 @@ class ApkService:
 - **数据库表更新**：删除workreports表中的`order_id`字段及对应外键约束，简化为只包含`created_at`字段（删除`started_at`、`completed_at`、`duration_seconds`字段）
 - **业务规则更新**：订单关联从"成功的执行报告可以生成多个订单"改为"每个工作脚本计划可以创建一个订单"
 - **Order模型简化**：移除`status`和`completed_at`字段，只保留核心订单信息（用户、计划、类型、金额、创建时间）
+
+### v1.3 (2025-01-02)
+- 数据模型一致性更新：同步实体定义与数据库表结构
+- **Apk字段清理**：移除`app_name`、`is_system`、`installed_time`，添加`created_at`
+- **WorkScript状态字段新增**：支持状态管理
+- **WorkPlan模型完善**：新增`user_id`外键和`data`字段（JSON格式存储工作计划数据）
+- **Order实体关系调整**：添加`name`字段，保留`contract_shares`、`contract_fee`、`contract_profit_loss`字段
+- **WorkReport模型调整**：移除`status`字段，添加`name`字段
+- **Contract模型新增**：添加`description`字段
+- **Pydantic模型完善**：添加`WorkScript`和`WorkPlan`模型定义，更新字段映射
+- **数据库表结构同步**：更新`Apk`、`WorkScript`、`WorkPlan`、`Order`、`WorkReport`、`Contract`表字段
+- **文档章节编号修正**：日志和监控→7、部署配置→8、配置管理→9
+- **实现规范更新**：第10节模型定义与5.1节实体定义保持一致

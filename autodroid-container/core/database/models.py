@@ -41,12 +41,10 @@ class User(BaseModel):
 class Apk(BaseModel):
     """APK模型"""
     id = CharField(primary_key=True)  # 对应设计文档中的id字段
-    app_name = CharField()
+    name = CharField()
     description = CharField(null=True)
     version = CharField()
     version_code = IntegerField()
-    installed_time = DateTimeField(default=datetime.now)
-    is_system = BooleanField(default=False)
     created_at = DateTimeField(default=datetime.now)
 
 class Device(BaseModel):
@@ -78,14 +76,17 @@ class WorkScript(BaseModel):
     description = CharField(null=True)
     metadata = TextField()  # JSON格式存储
     script_path = CharField()  # Python脚本文件路径
+    status = CharField(default='NEW')  # 状态：NEW、INPROGRESS、FAILED、OK
     created_at = DateTimeField(default=datetime.now)
 
 class WorkPlan(BaseModel):
     """工作脚本计划模型"""
     id = CharField(primary_key=True)
     script = ForeignKeyField(WorkScript, backref='workplans', on_delete='CASCADE')
+    user = ForeignKeyField(User, backref='workplans', null=True, on_delete='SET NULL')
     name = CharField()
     description = CharField(null=True)
+    data = TextField()  # JSON格式存储，工作计划数据符合WorkScript的metadata要求
     status = CharField(default='NEW')  # 状态：NEW、INPROGRESS、FAILED、OK
     created_at = DateTimeField(default=datetime.now)
     started_at = DateTimeField(null=True)
@@ -95,7 +96,8 @@ class WorkReport(BaseModel):
     """工作脚本执行报告模型"""
     id = CharField(primary_key=True)
     user = ForeignKeyField(User, backref='workreports', on_delete='CASCADE')
-    plan = ForeignKeyField(WorkPlan, backref='workreport', on_delete='CASCADE')
+    plan = ForeignKeyField(WorkPlan, backref='workreports', on_delete='CASCADE')
+    name = CharField()
     description = CharField(null=True)
     execution_log = TextField()  # JSON格式存储
     result_data = TextField()  # JSON格式存储
@@ -107,8 +109,9 @@ class Contract(BaseModel):
     id = CharField(primary_key=True)
     symbol = CharField()
     name = CharField()
+    description = CharField(null=True)
     type = CharField()  # 类型：股票、ETF、期权等
-    exchange = CharField()  # 交易所
+    exchange = CharField(null=True)  # 交易所
     price = DecimalField()  # 当前价格
     created_at = DateTimeField(default=datetime.now)
 
@@ -116,13 +119,14 @@ class Order(BaseModel):
     """订单模型"""
     id = CharField(primary_key=True)
     plan = ForeignKeyField(WorkPlan, backref='orders', null=True, on_delete='SET NULL')
-    contract = ForeignKeyField(Contract, backref='orders', on_delete='CASCADE')
+    contract = ForeignKeyField(Contract, backref='orders', null=True, on_delete='SET NULL')
+    name = CharField()
     description = CharField(null=True)
     order_type = CharField()  # 订单类型：委托单(Entrusted)、成交单(Executed)
     amount = DecimalField()
-    contract_shares = IntegerField()  # 合约股数
-    fee = DecimalField()  # 手续费
-    profit_loss = DecimalField()  # 利润损失
+    contract_shares = IntegerField(default=0)  # 合约股数
+    contract_fee = DecimalField(default=0.00)  # 手续费
+    contract_profit_loss = DecimalField(default=0.00)  # 利润损失
     created_at = DateTimeField(default=datetime.now)
 
 # 创建所有表
