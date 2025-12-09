@@ -179,53 +179,24 @@ class PortManager:
 erDiagram
     User ||--o{ Device : owns
     Device }o--o{ Apk : "installed on"
-
+    WorkScript o{--|| Apk : "tested by"
+    WorkScript ||--o{ WorkPlan : "uses"
+    WorkPlan ||--|| WorkReport : generates
+    WorkPlan ||--o{ Order : "may create"
     Contract ||--o{ Order : "traded through"
     
     User {
         string id PK
         string email
         string name
-        string role
         string description
+        string role
         datetime created_at
         datetime last_login
     }
     
     Device {
-        string id PK
-        string user_id FK
-        string udid
-        string name
-        string platform
-        string model
-        string status
-        datetime created_at
-        datetime last_seen
-    }
-    
-    Apk {
-        string id PK
-        string package_name
-        string app_name
-        string version
-        string device_id FK
-        datetime install_time
-        string status
-    }
-    
-    WorkScript {
-        string id PK
-        string name
-        string description
-        string apk_id FK
-        string script_path
-        datetime created_at
-        string status
-    }
-    
-    Device {
-        string id PK
+        string id PK "用udid做主键"
         string user_id FK
         string name
         string description
@@ -234,26 +205,28 @@ erDiagram
         string status  "状态：CONNECTED、DISCONNECTED"
         datetime connected_at
         datetime created_at
+        datetime last_seen
     }
     
     Apk {
-        string id PK
-        string app_name
+        string id PK "用package_name做主键"
+        string name
         string description
         string version
         int version_code
-        datetime installed_time
         datetime created_at
     }
     
     WorkScript {
-        string id PK
+        string id PK "用apk_id_file_id做主键"
         string apk_id FK
+        string file_id "工作脚本文件ID"
         string name
         string description
         json metadata
         string script_path  "Python脚本文件路径"
         datetime created_at
+        string status
     }
     
     WorkPlan {
@@ -271,6 +244,7 @@ erDiagram
         string id PK
         string user_id FK
         string plan_id FK
+        string name
         string description
         json execution_log
         json result_data
@@ -279,9 +253,10 @@ erDiagram
     }
     
     Contract {
-        string id PK
+        string id PK "用exchange_symbol做主键"
         string symbol
-        string name
+        string name        
+        string description
         string type  "类型：股票、ETF、期权等"
         string exchange  "交易所"
         decimal price  "当前价格"
@@ -292,12 +267,13 @@ erDiagram
         string id PK
         string plan_id FK
         string contract_id FK
+        string name        
         string description
         string order_type  "订单类型：委托单(Entrusted)、成交单(Executed)"
         decimal amount
         integer contract_shares  "合约股数"
-        decimal fee  "手续费"
-        decimal profit_loss  "利润损失"
+        decimal contract_fee  "手续费"
+        decimal contract_profit_loss  "利润损失"
         datetime created_at
     }
 ```
