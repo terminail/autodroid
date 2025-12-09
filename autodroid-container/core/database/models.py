@@ -111,7 +111,7 @@ class Contract(BaseModel):
     name = CharField()
     description = CharField(null=True)
     type = CharField()  # 类型：股票、ETF、期权等
-    exchange = CharField(null=True)  # 交易所
+    exchange = CharField()  # 交易所 - 必填字段
     price = DecimalField()  # 当前价格
     created_at = DateTimeField(default=datetime.now)
 

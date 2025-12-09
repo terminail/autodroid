@@ -417,7 +417,7 @@ CREATE TABLE contracts (
     symbol TEXT NOT NULL,  -- 交易代码，如 AAPL、SPY
     name TEXT NOT NULL,  -- 合约名称，如 Apple Inc.
     type TEXT CHECK(type IN ('股票', 'ETF', '期权', '期货', '外汇')),  -- 合约类型
-    exchange TEXT,  -- 交易所，如 NASDAQ、NYSE
+    exchange TEXT NOT NULL,  -- 交易所，如 NASDAQ、NYSE - 必填字段
     price DECIMAL(10,2) DEFAULT 0.00,  -- 当前价格
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -694,7 +694,7 @@ class Contract(Model):
     name = CharField()  # 合约名称，如 Apple Inc.
     description = TextField(null=True)
     type = CharField()  # 股票、ETF、期权、期货、外汇
-    exchange = CharField(null=True)  # 交易所，如 NASDAQ、NYSE
+    exchange = CharField()  # 交易所，如 NASDAQ、NYSE - 必填字段
     price = DecimalField(default=0.00, max_digits=10, decimal_places=2)  # 当前价格
     created_at = DateTimeField(default=datetime.now)
 
@@ -830,7 +830,7 @@ class ContractCreateRequest(BaseModel):
     name: str
     description: Optional[str] = None
     type: str = "股票"
-    exchange: Optional[str] = None
+    exchange: str  # 必填字段
     price: float = 0.00
 
 class ContractResponse(BaseModel):
@@ -839,7 +839,7 @@ class ContractResponse(BaseModel):
     name: str
     description: Optional[str]
     type: str
-    exchange: Optional[str]
+    exchange: str  # 必填字段
     price: float
     created_at: datetime
 
