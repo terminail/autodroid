@@ -71,12 +71,11 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<!-- 头部组件 -->
-	<Header activeTab="apks" />
+<!-- 头部组件 -->
+<Header activeTab="apks" />
 
-	<!-- 主要内容 -->
-	<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- 主要内容 -->
+<div>
 		<!-- 加载状态 -->
 		{#if loading}
 			<div class="flex justify-center items-center py-12">
@@ -334,5 +333,4 @@
 				</div>
 			{/if}
 		{/if}
-	</main>
-</div>
+	</div>
