@@ -18,3 +18,22 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Project specific ignores
+OpenAutoGLM/
+**/editor_management/__pycache__/
+**/editor_management/frontend/.svelte-kit/
+
+# Node.js dependencies
+node_modules/
+
+# WorkScript reports
+**/autodroid-container/workscripts/com.autodroid.manager/reports/
+**/autodroid-container/workscripts/reports/
+
+# AutoDroid Analyzer output directories
+**/autodroid-analyzer/output/
+
+# Python testing cache
+.pytest_cache/
+Open-AutoGLM/

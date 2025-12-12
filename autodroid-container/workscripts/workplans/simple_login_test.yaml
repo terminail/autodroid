@@ -1,0 +1,82 @@
+# 简化登录测试WorkPlan
+# 直接启动LoginActivity进行登录测试
+
+workplan_id: simple_login_test
+version: "1.0"
+description: "简化版登录测试，直接启动LoginActivity"
+
+# 测试环境配置
+environment:
+  device_type: "android"
+  min_android_version: "7.0"
+
+# 测试应用配置
+test_apps:
+  - name: "AutoDroid Manager"
+    package_name: "com.autodroid.manager"
+    login_activity: "com.autodroid.manager.auth.activity.LoginActivity"
+    test_users:
+      - username: "15317227@qq.com"
+        password: "Test@123456"
+        expected_result: "success"
+      - username: "15317227@qq.com" 
+        password: "wrong_password"
+        expected_result: "failure"
+
+# 坐标映射配置
+intelligent_operations:
+  coordinate_mappings:
+    # 登录页面坐标 (适配常见分辨率)
+    username_field:
+      x: 360
+      y: 400
+      description: "用户名/邮箱输入框"
+    password_field:
+      x: 360
+      y: 480
+      description: "密码输入框"
+    login_button:
+      x: 360
+      y: 560
+      description: "登录按钮"
+
+# 简化测试流程
+test_flows:
+  - name: "直接登录测试"
+    description: "直接启动LoginActivity进行登录测试"
+    steps:
+      - action: "start_activity"
+        target: "{login_activity}"
+        description: "直接启动登录Activity"
+        
+      - action: "wait"
+        duration: 2
+        description: "等待登录页面加载"
+        
+      - action: "Tap"
+        element: "{username_field_coord}"
+        description: "点击用户名输入框"
+        
+      - action: "input_text"
+        text: "{username}"
+        description: "输入用户名"
+        
+      - action: "Tap"
+        element: "{password_field_coord}"
+        description: "点击密码输入框"
+        
+      - action: "input_text"
+        text: "{password}"
+        description: "输入密码"
+        
+      - action: "Tap"
+        element: "{login_button_coord}"
+        description: "点击登录按钮"
+        
+      - action: "wait"
+        duration: 3
+        description: "等待登录结果"
+        
+      - action: "verify_result"
+        expected: "{expected_result}"
+        description: "验证登录结果"

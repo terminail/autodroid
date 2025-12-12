@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from peewee import DoesNotExist
 
 from .database import DeviceDatabase
-from .models import DeviceInfo
+from . import DeviceInfo
 from ..apk.models import ApkInfo
 
 class DeviceManager:

@@ -3,7 +3,10 @@ Peewee数据库模型定义
 """
 
 import os
-from peewee import *
+from peewee import (
+    CharField, IntegerField, DateTimeField, ForeignKeyField, 
+    TextField, DecimalField, CompositeKey, SqliteDatabase, Model
+)
 from datetime import datetime
 
 # 获取数据库路径

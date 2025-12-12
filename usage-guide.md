@@ -31,10 +31,10 @@ curl http://localhost:8000/api/health
 # 1. Select target APK
 python tools/interactive_apk_selector.py
 
-# 2. Use Appium Inspector to analyze elements
-#    - Configure desired capabilities as shown in installation guide
-#    - Start session and inspect UI elements
-#    - Record element locators
+# 3. Use ADB UIAutomator to analyze elements
+#    - Use `adb shell uiautomator dump` to get UI hierarchy
+#    - Parse XML output to identify element properties
+#    - Use ADB commands for element interaction testing
 
 # 3. Edit workflow file
 #    - Create a new YAML file in the workflows directory

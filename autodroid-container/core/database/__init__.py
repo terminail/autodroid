@@ -5,7 +5,7 @@
 
 import os
 from typing import Optional
-from .models import db, create_tables
+from . import db, create_tables
 
 class DatabaseManager:
     """统一数据库管理器（基于peewee ORM）"""

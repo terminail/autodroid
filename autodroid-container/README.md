@@ -1,6 +1,6 @@
-# Autodroid Container
+# Autodroid Container (ADB-Based)
 
-Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。
+Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。**基于纯ADB命令实现，已移除Appium依赖。**
 
 ## 环境要求
 

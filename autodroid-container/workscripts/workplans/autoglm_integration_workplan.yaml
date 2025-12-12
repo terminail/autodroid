@@ -1,0 +1,253 @@
+# Open-AutoGLM集成WorkPlan
+# 使用Open-AutoGLM智能操作测试第三方APK
+
+workplan_id: autoglm_integration_test
+version: "1.0"
+description: "使用Open-AutoGLM智能操作框架测试第三方APK的登录功能"
+
+# 测试环境配置
+environment:
+  device_type: "android"
+  min_android_version: "7.0"
+  required_permissions:
+    - "android.permission.INTERNET"
+    - "android.permission.ACCESS_NETWORK_STATE"
+  
+# Open-AutoGLM集成配置  
+autoglm_config:
+  model_config:
+    base_url: "http://localhost:8000/v1"
+    api_key: "EMPTY"
+    model_name: "autoglm-phone-9b"
+    max_tokens: 3000
+    temperature: 0.1
+  agent_config:
+    max_steps: 50
+    device_id: null  # 将在运行时设置
+    verbose: true
+  operation_modes:
+    - "智能识别"  # 使用AI识别UI元素
+    - "坐标操作"  # 使用预设坐标操作
+    - "混合模式"  # 智能识别失败时回退到坐标操作
+
+# 测试应用配置
+test_apps:
+  - name: "AutoDroid Manager"
+    package_name: "com.autodroid.manager"
+    login_activity: "com.autodroid.manager.auth.activity.LoginActivity"
+    test_users:
+      - username: "15317227@qq.com"
+        password: "Test@123456"
+        expected_result: "success"
+      - username: "15317227@qq.com" 
+        password: "wrong_password"
+        expected_result: "failure"
+      - username: ""
+        password: "Test@123456"
+        expected_result: "failure"
+        
+  - name: "WeChat"
+    package_name: "com.tencent.mm"
+    login_type: "qr_code"  # 二维码登录，需要人工接管
+    requires_takeover: true
+    
+  - name: "Taobao"  
+    package_name: "com.taobao.taobao"
+    login_type: "username_password"
+    test_users:
+      - username: "test_user"
+        password: "test_password"
+        expected_result: "failure"  # 预期失败，用于测试
+
+# 智能操作配置
+intelligent_operations:
+  element_detection:
+    method: "ai_vision"  # 使用AI视觉识别
+    fallback: "coordinate_mapping"  # 失败时使用坐标映射
+    timeout: 10  # 元素查找超时时间
+    
+  coordinate_mappings:
+    # 导航到"我的"页面 (底部导航栏，通常在右下角) - 适配1440x3120分辨率
+    my_tab_button:
+      x: 1200
+      y: 2800
+      description: "底部导航栏-我的页面按钮"
+    # "我的"页面中的登录按钮
+    login_button:
+      x: 720
+      y: 800
+      description: "我的页面中的登录按钮"
+    username_field:
+      x: 720
+      y: 1000
+      description: "通用用户名输入框"
+    password_field:
+      x: 720  
+      y: 1200
+      description: "通用密码输入框"
+    submit_button:
+      x: 720
+      y: 1400
+      description: "通用提交按钮"
+      
+  ui_patterns:
+    - pattern: "login|登录|signin|Sign In"
+      type: "button"
+      action: "click"
+    - pattern: "username|email|phone|用户名|邮箱|手机号"
+      type: "input"
+      action: "input_text"
+    - pattern: "password|密码|pwd"
+      type: "input" 
+      action: "input_text"
+    - pattern: "error|错误|failed|失败"
+      type: "message"
+      action: "verify_failure"
+
+# 测试流程配置
+test_flows:
+  - name: "智能登录测试"
+    description: "使用AI智能识别进行登录测试"
+    steps:
+      - action: "launch_app"
+        target: "{app_name}"
+        description: "启动目标应用"
+        
+      - action: "wait"
+        duration: 3
+        description: "等待应用加载"
+        
+      - action: "intelligent_find_and_click"
+        target: "login_button"
+        description: "智能查找并点击登录按钮"
+        
+      - action: "wait"
+        duration: 2
+        description: "等待登录页面加载"
+        
+      - action: "intelligent_find_and_input"
+        target: "username_field"
+        text: "{username}"
+        description: "智能查找用户名输入框并输入"
+        
+      - action: "intelligent_find_and_input"
+        target: "password_field" 
+        text: "{password}"
+        description: "智能查找密码输入框并输入"
+        
+      - action: "intelligent_find_and_click"
+        target: "submit_button"
+        description: "智能查找并点击提交按钮"
+        
+      - action: "wait"
+        duration: 5
+        description: "等待登录结果"
+        
+      - action: "verify_result"
+        expected: "{expected_result}"
+        description: "验证登录结果"
+        
+  - name: "坐标模式登录测试"
+    description: "使用预设坐标进行登录测试"
+    fallback: true  # 智能模式失败时使用
+    steps:
+      - action: "launch_app"
+        target: "{app_name}"
+        description: "启动目标应用"
+        
+      - action: "wait"
+        duration: 3
+        description: "等待应用加载"
+        
+      - action: "Tap"
+        element: "{login_button_coord}"
+        description: "点击登录按钮坐标"
+        
+      - action: "wait"
+        duration: 2
+        description: "等待登录页面加载"
+        
+      - action: "Tap"
+        element: "{username_field_coord}"
+        description: "点击用户名输入框坐标"
+        
+      - action: "input_text"
+        text: "{username}"
+        description: "输入用户名"
+        
+      - action: "Tap"
+        element: "{password_field_coord}"
+        description: "点击密码输入框坐标"
+        
+      - action: "input_text"
+        text: "{password}"
+        description: "输入密码"
+        
+      - action: "Tap"
+        element: "{submit_button_coord}"
+        description: "点击提交按钮坐标"
+        
+      - action: "wait"
+        duration: 5
+        description: "等待登录结果"
+        
+      - action: "verify_result"
+        expected: "{expected_result}"
+        description: "验证登录结果"
+
+# 测试执行配置
+execution:
+  parallel: false  # 串行执行测试
+  retry_failed: true  # 失败时重试
+  max_retries: 2
+  retry_delay: 5  # 重试间隔（秒）
+  
+  # 人工接管配置
+  takeover_config:
+    enabled: true
+    callbacks:
+      confirmation: "confirm_sensitive_action"
+      takeover: "request_human_takeover"
+    sensitive_actions:
+      - "login_with_credentials"
+      - "payment_operation"
+      - "personal_data_access"
+      
+# 报告配置
+reporting:
+  formats: ["json", "html", "markdown"]
+  include_screenshots: true
+  include_ai_analysis: true
+  include_operation_logs: true
+  
+  metrics:
+    - "total_tests"
+    - "success_rate"
+    - "avg_execution_time"
+    - "ai_recognition_accuracy"
+    - "fallback_usage_rate"
+    
+# 错误处理
+error_handling:
+  strategies:
+    element_not_found:
+      action: "use_fallback_coordinates"
+      timeout: 10
+      
+    app_crash:
+      action: "restart_app_and_retry"
+      max_attempts: 2
+      
+    network_error:
+      action: "wait_and_retry"
+      delay: 5
+      
+    ai_model_error:
+      action: "switch_to_coordinate_mode"
+      
+# 性能优化
+performance:
+  screenshot_interval: 1.0  # 截图间隔（秒）
+  ai_inference_delay: 0.5  # AI推理延迟
+  cache_element_locations: true  # 缓存元素位置
+  pre_load_models: true  # 预加载AI模型

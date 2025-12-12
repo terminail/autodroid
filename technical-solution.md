@@ -2,46 +2,56 @@
 
 ## 1. Technology Stack Selection
 
-### Core Frameworks
-- **Automation Engine**: Appium + UI Automator 2
-- **Device Communication**: ADB + Appium Server + mDNS + FastAPI + WebSocket
+### Core Frameworks (Updated for WorkScript Integration)
+- **Automation Engine**: Pure ADB + UIAutomator (Removed Appium dependency)
+- **Device Communication**: ADB + mDNS + FastAPI + WebSocket + WorkScript Engine
 - **Container Runtime**: Docker + Podman
 - **Programming Language**: Python 3.11+ (Server), Java/Kotlin (Android App)
+- **WorkScript System**: Custom workscript engine for task automation
+- **WorkPlan System**: Intelligent scheduling and execution framework
 
 ### Auxiliary Tools
 - **APK Analysis**: aapt, apktool, jadx
-- **UI Analysis**: Appium Inspector, UI Automator Viewer
-- **Report Generation**: Allure, pytest-html
-- **Configuration Management**: Pydantic, YAML
+- **UI Analysis**: ADB UIAutomator dump, custom element detection
+- **Report Generation**: Allure, pytest-html, WorkScript execution reports
+- **Configuration Management**: Pydantic, YAML, WorkScript definitions
 - **QR Code Generation**: qrcode (Python), ZXing (Android)
 
 ### Development Tools
-- **API Framework**: FastAPI
-- **Testing Framework**: pytest, AndroidJUnitRunner
+- **API Framework**: FastAPI (WorkScript API endpoints)
+- **Testing Framework**: pytest, AndroidJUnitRunner, WorkScript test runner
 - **Code Quality**: flake8, black, mypy, Android Lint
 - **CI/CD**: GitHub Actions
 - **Device Discovery**: mDNS (for lightweight device auto-discovery)
-- **Real-time Communication**: FastAPI + WebSocket (for real-time messaging between server and devices)
+- **Real-time Communication**: FastAPI + WebSocket (WorkScript execution status)
 - **Authentication**: Android Biometric API, JWT
 - **Android Architecture**: MVVM (Model-View-ViewModel)
 - **HTTP Client**: OkHttp
 - **JSON Processing**: Gson
+- **WorkScript Engine**: Custom Python engine for script execution
 
 ## 2. Core Module Design
 
-### 2.1 Device Connection Pool
+### 2.1 Device Connection Pool (ADB-Based)
 ```python
 class DeviceConnectionPool:
     def __init__(self, max_connections: int = 5):
         self.max_connections = max_connections
-        self.active_connections: Dict[str, webdriver.Remote] = {}
+        self.active_connections: Dict[str, ADBDevice] = {}
+        self.workscript_engine = WorkScriptEngine()
     
-    async def execute_task(self, device_udid: str, workflow: WorkflowConfig):
-        """Execute task on specified device"""
-        driver = await self.get_driver(device_udid)
-        return await asyncio.create_task(
-            self._execute_workflow(driver, workflow)
-        )
+    async def execute_workscript(self, device_udid: str, workscript: WorkScript):
+        """Execute WorkScript on specified device using pure ADB"""
+        device = await self.get_device(device_udid)
+        return await self.workscript_engine.execute(device, workscript)
+    
+    async def get_device(self, device_udid: str) -> ADBDevice:
+        """Get ADB device connection (No Appium required)"""
+        if device_udid not in self.active_connections:
+            device = ADBDevice(device_udid)
+            await device.connect()
+            self.active_connections[device_udid] = device
+        return self.active_connections[device_udid]
 ```
 
 ### 2.2 Intelligent Scheduler
@@ -59,17 +69,95 @@ class SmartScheduler:
         return active_plans
 ```
 
-### 2.3 Event-Driven Execution
+### 2.3 WorkScript Engine (New ADB-Based Implementation)
 ```python
-class TestDataEventListener:
-    async def handle_new_test_data(self, test_data: dict):
-        """Handle new test data"""
-        # Find matching test plans
-        matching_plans = self.condition_engine.find_matching_plans(test_data)
+class WorkScriptEngine:
+    """
+    Pure ADB-based WorkScript execution engine
+    Replaces Appium with direct ADB commands and UIAutomator
+    """
+    
+    def __init__(self):
+        self.element_detector = ADBElementDetector()
+        self.action_executor = ADBActionExecutor()
+    
+    async def execute(self, device: ADBDevice, workscript: WorkScript) -> ExecutionResult:
+        """Execute WorkScript using pure ADB commands"""
+        try:
+            for step in workscript.steps:
+                if step.action == "start_app":
+                    await self.action_executor.start_app(device, step.package_name)
+                elif step.action == "click":
+                    element = await self.element_detector.find_by_id(device, step.element_id)
+                    await self.action_executor.click(device, element)
+                elif step.action == "send_keys":
+                    element = await self.element_detector.find_by_id(device, step.element_id)
+                    await self.action_executor.send_keys(device, element, step.text)
+                elif step.action == "swipe":
+                    await self.action_executor.swipe(device, step.start_coords, step.end_coords)
+                
+                await asyncio.sleep(step.delay or 0)
+            
+            return ExecutionResult(success=True, message="WorkScript executed successfully")
+            
+        except Exception as e:
+            return ExecutionResult(success=False, error=str(e))
+
+class ADBElementDetector:
+    """Element detection using ADB UIAutomator dump"""
+    
+    async def find_by_id(self, device: ADBDevice, element_id: str) -> Element:
+        """Find element by ID using UIAutomator dump"""
+        # Use ADB to dump UI hierarchy
+        ui_dump = await device.execute_command("uiautomator dump /sdcard/ui_dump.xml")
+        await device.execute_command("pull /sdcard/ui_dump.xml /tmp/ui_dump.xml")
+        
+        # Parse XML and find element
+        element = self.parse_ui_dump("/tmp/ui_dump.xml", element_id)
+        return element
+    
+    def parse_ui_dump(self, xml_file: str, element_id: str) -> Element:
+        """Parse UI dump XML to find element coordinates"""
+        # Parse XML and extract bounds and center coordinates
+        # Return Element object with x, y coordinates for ADB tap
+
+class ADBActionExecutor:
+    """Action execution using ADB commands"""
+    
+    async def start_app(self, device: ADBDevice, package_name: str):
+        """Start app using ADB monkey command"""
+        await device.execute_command(f"monkey -p {package_name} -c android.intent.category.LAUNCHER 1")
+    
+    async def click(self, device: ADBDevice, element: Element):
+        """Tap element using ADB input tap"""
+        await device.execute_command(f"input tap {element.center_x} {element.center_y}")
+    
+    async def send_keys(self, device: ADBDevice, element: Element, text: str):
+        """Send text using ADB input text"""
+        # First tap the element to focus
+        await self.click(device, element)
+        await asyncio.sleep(0.5)
+        # Then input text
+        await device.execute_command(f"input text '{text}'")
+    
+    async def swipe(self, device: ADBDevice, start_coords: tuple, end_coords: tuple):
+        """Swipe using ADB input swipe"""
+        await device.execute_command(f"input swipe {start_coords[0]} {start_coords[1]} {end_coords[0]} {end_coords[1]}")
+```
+
+### 2.4 Event-Driven WorkPlan Execution
+```python
+class WorkPlanEventListener:
+    async def handle_new_workplan_trigger(self, trigger_data: dict):
+        """Handle new WorkPlan execution triggers"""
+        # Find matching WorkPlans
+        matching_plans = self.workplan_engine.find_matching_plans(trigger_data)
         
         for plan in matching_plans:
             if await self.can_execute_now(plan):
-                await self.trigger_test_execution(plan, test_data)
+                # Execute using ADB-based WorkScript engine
+                result = await self.workscript_engine.execute_plan(plan, trigger_data)
+                await self.report_execution_result(plan, result)
 ```
 
 ### 2.4 User Authentication System (Android App)
@@ -195,18 +283,19 @@ WorkScripts are organized by **package name**, **application name**, and **versi
 - Version-specific workscripts (different workscripts for different app versions)
 - Clear organization and management of test scenarios
 
-### 3.2 WorkScript Definition Structure
+### 3.2 WorkScript Definition Structure (ADB-Based)
 
 ```yaml
-name: "APK_A Login WorkScript"
-description: "Login flow for target application"
+name: "APK_A Login WorkScript (ADB Edition)"
+description: "Login flow for target application using pure ADB commands"
 
 metadata:
   app_package: "com.target.app"
   app_name: "Target Application"
   app_activity: ".MainActivity"
   version: "1.0"
-  version_constraint: "1.0+"  # Supports version ranges
+  version_constraint: "1.0+"
+  execution_engine: "adb"  # Specifies ADB-based execution
 
 workscript_type: "functional"  # functional, performance, regression
 
@@ -220,7 +309,7 @@ device_selection:
 
 steps:
   - name: "Launch Application"
-    action: "launch_app"
+    action: "start_app"
     package: "com.target.app"
     activity: ".MainActivity"
     timeout: 30
@@ -233,6 +322,32 @@ steps:
           value: "com.target.app:id/login_button"
         - type: "text"
           value: "Login"
+    timeout: 10
+    
+  - name: "Enter Username"
+    action: "send_keys"
+    locator:
+      strategies:
+        - type: "id"
+          value: "com.target.app:id/username_input"
+    text: "test_user"
+    timeout: 10
+    
+  - name: "Enter Password"
+    action: "send_keys"
+    locator:
+      strategies:
+        - type: "id"
+          value: "com.target.app:id/password_input"
+    text: "test_password"
+    timeout: 10
+    
+  - name: "Submit Login"
+    action: "click"
+    locator:
+      strategies:
+        - type: "id"
+          value: "com.target.app:id/submit_button"
     timeout: 10
 
 schedule:
@@ -293,18 +408,43 @@ steps:
     timeout: 10
 ```
 
-### 3.5 WorkScript Selection Logic
+### 3.5 WorkScript Selection Logic (ADB-Enhanced)
 The system selects appropriate workscripts based on:
 1. Exact package name match
 2. App version compatibility check using version_constraint
 3. WorkScript type and priority
 4. Device compatibility criteria
+5. **Execution engine compatibility** (ADB-based vs legacy Appium)
 
 This organization ensures that:
 - Each APK can have multiple workscripts for different test scenarios
 - Different versions of the same APK can have tailored workscripts
 - WorkScripts are easily manageable and maintainable
 - The system can automatically select the right workscript for the right app version
+- **ADB-based execution provides faster, more reliable automation without Appium overhead**
+
+### 3.6 Migration from Appium to ADB
+
+#### Key Changes:
+1. **Removed Appium Dependency**: All automation now uses pure ADB commands
+2. **Direct UIAutomator Integration**: Uses `uiautomator dump` for element detection
+3. **Faster Execution**: No Appium server overhead, direct device communication
+4. **Better Reliability**: Eliminates Appium server connection issues
+5. **Simplified Architecture**: Single ADB connection per device
+
+#### Action Mapping (Appium → ADB):
+- `driver.find_element_by_id()` → `uiautomator dump` + XML parsing
+- `element.click()` → `adb input tap x y`
+- `element.send_keys()` → `adb input text 'text'`
+- `driver.swipe()` → `adb input swipe x1 y1 x2 y2`
+- `driver.start_activity()` → `adb shell am start -n package/activity`
+
+#### Benefits:
+- **No Appium Server**: Eliminates server setup and maintenance
+- **Faster Element Detection**: Direct UI dump parsing
+- **Lower Resource Usage**: No additional Java processes
+- **Better Error Handling**: Direct ADB error reporting
+- **Simplified Deployment**: Only ADB required on host system
 
 ## 5. QR Code Connection Feature
 

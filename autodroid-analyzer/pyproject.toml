@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autodroid-analyzer"
+version = "1.0.0"
+description = "Autodroid Android Automation System Analyzer"
+authors = [{ name = "Autodroid Team" }]
+requires-python = ">=3.10"
+dependencies = [
+    # Web框架（与container保持一致）
+    "fastapi==0.104.1",
+    "uvicorn==0.24.0",
+    "python-multipart==0.0.6",
+
+    # 数据验证和配置
+    "pydantic==2.5.2",
+    "pydantic-settings==2.1.0",
+    "python-dotenv==1.0.0",
+
+    # 数据库（与container保持一致）
+    "peewee==3.17.1",
+
+    # 网络服务
+    "requests==2.31.0",
+
+    # 系统工具
+    "psutil==5.9.8",
+    "pyyaml==6.0.1",
+
+    # 测试框架
+    "pytest==7.4.4",
+
+    # 图像识别
+    "airtest==1.2.6",
+    "pocoui==1.0.89",
+
+    # 图像处理
+    "Pillow==10.0.0",
+    "opencv-python==4.8.0.74",
+    "numpy==1.24.3",
+
+    # 数据分析（analyzer特有）
+    "networkx==2.6.0",
+    "matplotlib==3.5.0",
+    "scikit-learn==1.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests/unit", "tests/integration", "tests/functional"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"

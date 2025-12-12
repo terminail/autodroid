@@ -1,0 +1,13 @@
+# 本地模型部署依赖
+torch>=2.0.0
+transformers>=4.35.0
+flask>=2.3.0
+pyyaml>=6.0.0
+
+# Open-AutoGLM 客户端依赖
+Pillow>=12.0.0
+openai>=2.9.0
+
+# 可选：优化推理性能
+torchvision>=0.15.0
+accelerate>=0.23.0

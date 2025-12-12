@@ -18,7 +18,7 @@ import io
 from datetime import datetime, timedelta
 # import qrcode  # Temporarily commented out for testing
 
-from .models import WiFiList
+from . import WiFiList
 
 # Initialize router
 router = APIRouter(prefix="/api", tags=["server"])

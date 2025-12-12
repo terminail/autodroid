@@ -1,0 +1,31 @@
+analysis:
+  enable_monitoring: true
+  max_depth: 5
+  multimodal_modes:
+    screenshot: true
+    uiautomator2: true
+    user_monitoring: true
+  page_change_threshold: 0.8
+  screenshot_interval: 2.0
+# app配置块已移除，应用包名应通过参数传递而不是配置文件设置
+database:
+  auto_create_tables: true
+  database_path: d:/git/autodroid/autodroid-analyzer/output/analyzer.db
+  enable_foreign_keys: true
+  journal_mode: WAL
+  synchronous: NORMAL
+
+
+logging:
+  file: d:/git/autodroid/autodroid-analyzer/output/analysis.log
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+output:
+  reports_dir: d:/git/autodroid/autodroid-analyzer/output/reports
+  screenshots_dir: d:/git/autodroid/autodroid-analyzer/output/screenshots
+  ui_hierarchy_dir: d:/git/autodroid/autodroid-analyzer/output/ui_hierarchy
+ui:
+  enable_color_output: true
+  interactive_mode: true
+  max_elements_display: 10
+  show_element_importance: true

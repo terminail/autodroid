@@ -10,11 +10,12 @@
 - One-click service start and stop
 - Container health status monitoring
 
-**F002 - Device Auto Discovery**
+**F002 - Device Auto Discovery (Appium-Free)**
 - Network ADB device auto-discovery and connection
 - USB device direct connection support (Linux/macOS)
 - Real-time device status monitoring (battery, storage, network)
 - Multi-device parallel management (up to 5 concurrent devices)
+- **Pure ADB automation - no Appium dependency required**
 
 **F003 - APK Intelligent Analysis**
 - Automatic scanning of installed APKs on mobile phones
@@ -22,11 +23,13 @@
 - Identify main Activity and interface structure
 - Generate basic workscript templates
 
-**F004 - WorkScript Engine**
+**F004 - WorkScript Engine (ADB-Based)**
 - YAML configuration-driven workflow definition
+- **Pure ADB command execution (removed Appium dependency)**
 - Supports data-driven test cases
 - Conditional branching and loop control
 - Step-level timeout and retry mechanism
+- **Direct UIAutomator integration via ADB commands**
 
 **F005 - Workplan System**
 - Time-based scheduled tasks
@@ -73,9 +76,10 @@
 
 ### 2.1 Performance Requirements
 - Container startup time < 30 seconds
-- Element positioning response time < 3 seconds
+- **Element positioning response time < 2 seconds (ADB-based, faster than Appium)**
 - Support for concurrent execution of 5 automation tasks
 - Memory usage < 1GB
+- **Zero Appium server overhead**
 
 ### 2.2 Reliability Requirements
 - Automation task success rate > 98%

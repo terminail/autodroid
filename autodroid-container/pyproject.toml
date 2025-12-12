@@ -44,7 +44,6 @@ dependencies = [
 
     # 安卓自动化测试
     "uiautomator2==2.16.17",
-    "appium-python-client==2.11.1",
 
     # 图像识别（适配加固APP）
     "airtest==1.2.6",

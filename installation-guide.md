@@ -27,13 +27,15 @@ export ANDROID_HOME=$HOME/Android/Sdk
 export PATH=$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$PATH
 ```
 
-#### Appium Installation
+#### ADB Tools Installation (Appium-Free)
 ```bash
-npm install -g appium
-npm install -g appium-doctor
+# Install Android platform tools (includes ADB)
+sdkmanager --install "platform-tools"
 
-# Install Python client
-pip install appium-python-client
+# Verify ADB installation
+adb version
+
+# No Appium installation required - pure ADB automation!
 ```
 
 ### 1.2 Device Configuration
@@ -64,19 +66,29 @@ selected_app = selector.interactive_select()
 
 ### 2.2 Element Location Analysis
 
-#### Using Appium Inspector
-1. Configure Desired Capabilities:
-```json
-{
-  "platformName": "Android",
-  "appPackage": "com.target.app",
-  "appActivity": ".MainActivity",
-  "automationName": "UiAutomator2"
-}
+#### Using ADB UIAutomator (Appium-Free)
+1. Get UI hierarchy dump:
+```bash
+adb shell uiautomator dump /sdcard/ui_dump.xml
+adb pull /sdcard/ui_dump.xml
 ```
 
-2. Start session and analyze interface elements
-3. Record element location strategies (ID > Text > Accessibility ID > XPath)
+2. Analyze XML structure to identify elements:
+```bash
+# Parse XML and find elements by ID, text, or other attributes
+python tools/parse_uiautomator.py ui_dump.xml
+```
+
+3. Test element interaction:
+```bash
+# Test click on element by coordinates
+adb shell input tap 500 1000
+
+# Test text input
+adb shell input text "test input"
+```
+
+4. Record element location strategies (ID > Text > Coordinates > XPath)
 
 ### 2.3 WorkScript Template Generation
 ```python
@@ -144,7 +156,11 @@ services:
 
 1. Check if all dependencies are installed correctly:
    ```bash
-   appium-doctor
+   # Verify ADB is working
+   adb version
+   
+   # Test device connection
+   adb devices
    ```
 
 2. Verify ADB connection:
@@ -152,10 +168,7 @@ services:
    adb devices
    ```
 
-3. Test Appium server:
-   ```bash
-   appium --version
-   ```
+3. **No Appium server required - pure ADB automation!**
 
 4. Build and run the containers to verify the complete setup:
    ```bash

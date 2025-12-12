@@ -9,32 +9,35 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 ### Objectives
 - Establish the foundational container infrastructure
 - Implement device connection management
-- Integrate Appium service
+- **Develop pure ADB-based automation engine (removed Appium dependency)**
 - Create basic API framework
 
 ### Tasks
 - Container base image construction
 - Device connection management
-- Appium service integration
+- **Pure ADB automation engine development**
+- **UIAutomator integration via ADB commands**
 - Basic REST API development
 
 ### Deliverables
 - Runnable Docker image
 - Device connection verification tool
+- **Pure ADB automation engine**
+- **Direct device control without Appium server**
 - Basic REST API with health check and device status endpoints
-- Containerized Appium service configuration
 
 ## Phase 2: Automation Engine & QR Code Connection (4 weeks)
 
 ### Objectives
 - Develop workscript parsing and execution capabilities
-- Implement element positioning engine
+- **Implement pure ADB-based element positioning engine (Appium-free)**
 - Create step executor with error handling
 - Implement QR code connection feature for mobile app
 
 ### Tasks
 - WorkScript parser development
-- Element positioning engine implementation
+- **Pure ADB element positioning engine implementation**
+- **UIAutomator dump parsing and element detection**
 - Step executor with timeout and retry mechanisms
 - Error handling and recovery mechanisms
 - Server-side QR code generation service
@@ -139,8 +142,10 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 - System runs stably across all supported platforms
 - Automation task success rate > 98%
 - Container startup time < 30 seconds
-- Element positioning response time < 3 seconds
+- **Element positioning response time < 2 seconds (ADB-based, faster than Appium)**
 - Support for concurrent execution of 5 automation tasks
+- **Zero Appium dependency - pure ADB automation**
+- **Direct device control without Appium server overhead**
 
 ## Dependencies
 
@@ -167,6 +172,8 @@ The project will be implemented in 5 phases, with clear objectives and deliverab
 | Element positioning failures | Implement multiple positioning strategies and fallback mechanisms |
 | Network connectivity issues | Add automatic reconnection and error recovery mechanisms |
 | API scalability challenges | Design API with performance and scalability in mind from the beginning |
+| **ADB command compatibility** | **Test ADB commands across different Android versions and device manufacturers** |
+| **UIAutomator dump parsing** | **Implement robust XML parsing with fallback strategies for different UI hierarchies** |
 
 ## QR Code Connection Feature - Detailed Tasks
 

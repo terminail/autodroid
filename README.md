@@ -8,7 +8,7 @@ With the growth of mobile application testing needs, there is a demand for an au
 
 ## Solution
 
-Develop a cross-platform Android app automation framework based on container technology, implementing standard UI automation through Appium, combined with a workplan system, to provide stable and reliable third-party APK automation testing capabilities.
+Develop a cross-platform Android app automation framework based on container technology, implementing standard UI automation through **pure ADB commands** (removed Appium dependency), combined with a workplan system, to provide stable and reliable third-party APK automation testing capabilities.
 
 ## Core Values
 
@@ -17,6 +17,8 @@ Develop a cross-platform Android app automation framework based on container tec
 - 📱 **Non-intrusive**: No modification to target APKs, based on UI hierarchy analysis
 - 🔧 **Workplan System**: Supports scheduled tasks and event-driven testing
 - 📊 **Centralized Management**: Unified configuration management and result monitoring
+- ⚡ **Pure ADB Automation**: Removed Appium dependency for faster, more reliable execution
+- 🔧 **Simplified Architecture**: Direct device control without Appium server overhead
 
 ## Documentation
 

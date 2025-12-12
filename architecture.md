@@ -71,17 +71,21 @@ flowchart TD
    - Hosts the core automation components
    - Manages containerized services
    - Provides RESTful API for external communication
+   - **Removed Appium dependency** - uses pure ADB commands
 
-2. **Core Components**
-   - **WorkScript Engine**: Executes automation workflows defined in YAML
-   - **Workplan System**: Manages scheduled and event-driven tasks
-   - **Device Management**: Handles device discovery, connection, and monitoring
+2. **Core Components (ADB-Based)**
+   - **WorkScript Engine**: Executes automation workflows using pure ADB commands
+   - **Workplan System**: Manages scheduled and event-driven tasks with ADB execution
+   - **Device Management**: Handles device discovery, connection, and monitoring via ADB
+   - **ADB Element Detector**: Finds UI elements using UIAutomator dump
+   - **ADB Action Executor**: Performs clicks, swipes, text input using ADB commands
 
-3. **Communication Layer**
+3. **Communication Layer (Appium-Free)**
    - Uses mDNS for lightweight device auto-discovery in local network
    - Uses FastAPI for RESTful API communication
    - Uses WebSocket for real-time messaging between server and devices
    - Uses QR codes for quick and easy server connection setup
+   - **Direct ADB connection** - no Appium server required
    - Connects the container server with test devices
    - Enables automatic device discovery in local network
 
@@ -89,6 +93,7 @@ flowchart TD
    - Android devices running target applications
    - Equipped with manager app for enhanced communication
    - Supports both USB and network ADB connections
+   - **Direct ADB control** - no Appium server intermediary
 
 ## 2. Container Service Architecture
 
@@ -142,12 +147,13 @@ services:
    - Provides USB and network ADB support
    - Monitors device status
 
-### Service Interactions
+### Service Interactions (Appium-Free)
 
-- The `automation-core` service communicates with `appium-server` to execute UI automation commands
+- The `automation-core` service directly communicates with devices via ADB commands
 - The `device-manager` service handles device discovery and management using mDNS
-- All services work together to provide a complete automation solution
+- All services work together to provide a complete automation solution without Appium
 - Volumes are used to persist workflows and reports outside containers
+- **Direct ADB execution** - no Appium server intermediary required
 
 ## 3. QR Code Connection Architecture
 
