@@ -42,15 +42,13 @@ Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，�
 
 2. 启动服务器（推荐方式）：
    ```bash
-   cd 'd:/git/autodroid/autodroid-container'; 
-   conda activate liugejiao;
-   python run_server.py
+   cd 'd:/git/autodroid/autodroid-container'; conda activate liugejiao; python run_server.py
    ```
 
 3. **Windows用户**：双击运行批处理文件：
   ```bash
   
-  cd 'd:/git/autodroid/autodroid-container'; ./start_server.bat
+  cd 'd:/git/autodroid/autodroid-container'; conda activate liugejiao; ./start_server.bat
    
   ```
 

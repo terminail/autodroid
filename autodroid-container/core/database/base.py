@@ -4,7 +4,7 @@
 """
 
 from typing import Optional
-from . import db, create_tables
+from .models import db, create_tables
 
 
 class BaseDatabase:

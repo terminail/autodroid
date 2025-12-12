@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 from peewee import DoesNotExist
 
 from .database import ApkDatabase
-from . import ApkInfo, ApkCreateRequest, ApkUpdateRequest, ApkListResponse, DeviceApkInfo, ApkRegisterRequest, ApkSearchRequest
+from .models import ApkInfo, ApkCreateRequest, ApkUpdateRequest, ApkListResponse, DeviceApkInfo, ApkRegisterRequest, ApkSearchRequest
 
 
 class ApkManager:

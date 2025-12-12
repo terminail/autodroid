@@ -1,7 +1,7 @@
 import jwt
 import datetime
 from typing import Optional
-from . import Token, TokenData
+from .models import Token, TokenData
 from .database import AuthDatabase
 
 class AuthService:

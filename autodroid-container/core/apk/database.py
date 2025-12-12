@@ -155,3 +155,21 @@ class ApkDatabase(BaseDatabase):
             )
         except Exception:
             return []
+    
+    def get_apk_count(self) -> int:
+        """获取APK总数"""
+        try:
+            return Apk.select().count()
+        except Exception:
+            return 0
+    
+    def get_device_apk_count(self, device_udid: str) -> int:
+        """获取设备的APK数量"""
+        try:
+            return (
+                DeviceApk.select()
+                .where(DeviceApk.device_udid == device_udid)
+                .count()
+            )
+        except Exception:
+            return 0
