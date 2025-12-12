@@ -1,18 +1,10 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import Header from "$lib/components/Header.svelte";
-
-	// 处理Tab切换
-	function handleTabChange(tab: "devices" | "apks") {
-		if (tab === "apks") {
-			goto("/apk");
-		}
-	}
 </script>
 
 <div class="min-h-screen bg-gray-50">
 	<!-- 头部组件 -->
-	<Header activeTab="devices" onTabChange={handleTabChange} />
+	<Header activeTab="devices" />
 
 	<!-- 主要内容 -->
 	<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

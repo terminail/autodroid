@@ -1,38 +1,37 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { api } from '$lib/api';
-	import type { ApkInfo, UserOperation } from '$lib/types';
+	import { goto } from "$app/navigation";
+	import { api } from "$lib/api";
+	import Header from "$lib/components/Header.svelte";
+	import type { ApkInfo, UserOperation } from "$lib/types";
+	import { onMount } from "svelte";
 
-	export let data: { id: string };
+	// 路由参数
+	let { data } = $props();
 
+	// APK相关状态
 	let apk: ApkInfo | null = null;
 	let operations: UserOperation[] = [];
 	let loading = true;
 	let error: string | null = null;
 
 	onMount(async () => {
-		// 获取APK信息
-		const apkResponse = await api.getApk(data.id);
-		if (apkResponse.success) {
-			apk = apkResponse.data || null;
-		} else {
-			error = apkResponse.error || '获取APK信息失败';
+		try {
+			const response = await api.getApk(data.params.id);
+			if (response.success) {
+				apk = response.data;
+				operations = response.data?.operations || [];
+			} else {
+				error = response.error || "获取APK详情失败";
+			}
+		} catch (err) {
+			error = "网络错误，请检查服务器连接";
+		} finally {
 			loading = false;
-			return;
 		}
-
-		// 获取操作记录（按时间倒序排列）
-		const operationsResponse = await api.getOperationsByApk(data.id, 200);
-		if (operationsResponse.success) {
-			operations = operationsResponse.data || [];
-		} else {
-			error = operationsResponse.error || '获取操作记录失败';
-		}
-		loading = false;
 	});
 
 	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleString('zh-CN');
+		return new Date(dateString).toLocaleString("zh-CN");
 	}
 
 	function formatTimeAgo(dateString: string): string {
@@ -43,34 +42,19 @@
 		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 		const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-		if (diffMins < 1) return '刚刚';
+		if (diffMins < 1) return "刚刚";
 		if (diffMins < 60) return `${diffMins}分钟前`;
 		if (diffHours < 24) return `${diffHours}小时前`;
 		if (diffDays < 7) return `${diffDays}天前`;
 		return formatDate(dateString);
 	}
 
-	function getActionTypeIcon(actionType: string): string {
-		switch (actionType) {
-			case 'click': return '🖱️';
-			case 'input': return '⌨️';
-			case 'swipe': return '👆';
-			case 'wait': return '⏱️';
-			case 'back': return '↩️';
-			case 'home': return '🏠';
-			default: return '⚡';
-		}
-	}
-
-	function getActionTypeColor(actionType: string): string {
-		switch (actionType) {
-			case 'click': return 'bg-blue-100 text-blue-800';
-			case 'input': return 'bg-green-100 text-green-800';
-			case 'swipe': return 'bg-purple-100 text-purple-800';
-			case 'wait': return 'bg-yellow-100 text-yellow-800';
-			case 'back': return 'bg-red-100 text-red-800';
-			case 'home': return 'bg-gray-100 text-gray-800';
-			default: return 'bg-gray-100 text-gray-800';
+	// 处理Tab切换
+	function handleTabChange(tab: "devices" | "apks") {
+		if (tab === "devices") {
+			goto("/device");
+		} else {
+			goto("/apk");
 		}
 	}
 </script>
@@ -80,14 +64,14 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
-	<!-- 头部 -->
+	<!-- 头部组件 -->
+	<Header activeTab="apks" onTabChange={handleTabChange} />
+
+	<!-- 页面标题 -->
 	<header class="bg-white shadow-sm border-b">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 			<div class="flex justify-between items-center">
-				<div class="flex items-center space-x-4">
-					<a href="/" class="text-blue-600 hover:text-blue-800">
-						← 返回APK列表
-					</a>
+				<div>
 					<h1 class="text-2xl font-bold text-gray-900">
 						{apk?.package_name || 'APK详情'}
 					</h1>

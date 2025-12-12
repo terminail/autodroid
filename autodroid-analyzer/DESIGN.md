@@ -210,21 +210,28 @@ def get_connected_devices(self) -> List[str]:
   - 操作图构建和导航分析
   - 分析报告生成
 
-#### 5. **编辑管理模块** (`editor/`)
-- **功能职责**：用户操作与截屏、页面元素的关联编辑
-- **核心文件**：`operation_recorder.py`, `screenshot_manager.py`, `element_editor.py`
-- **前端界面**：`editor/frontend/` - Svelte前端应用
+#### 5. **API服务模块** (`api/`)
+- **功能职责**：提供RESTful API接口，支持用户操作、截屏、页面元素的管理
+- **核心文件**：`main.py` - FastAPI主服务
 - **关键特性**：
-  - 用户操作与截屏的精确关联
+  - 用户操作记录的增删改查
+  - 截屏管理和页面分析
   - 页面元素标注和重要性标记
   - 自动化脚本生成优化
-  - 编辑后的精准导航和元素信息
+
+#### 6. **前端界面模块** (`frontend/`)
+- **功能职责**：提供用户友好的Web界面进行应用分析和数据管理
+- **技术栈**：Svelte + Vite + TailwindCSS
+- **关键特性**：
+  - 实时监控和操作记录显示
+  - 截屏管理和页面分析界面
+  - 用户操作与截屏的精确关联
   - **截屏按钮功能**：前端提供"截屏"按钮，支持手动截屏并自动关联后续用户操作
 
 ### 前端截屏按钮功能设计
 
 #### 功能描述
-在编辑管理模块的前端界面（`d:\git\autodroid\autodroid-analyzer\editor\frontend`）中，提供一个"截屏"按钮，实现以下功能：
+在前端界面模块（`d:\git\autodroid\autodroid-analyzer\frontend`）中，提供一个"截屏"按钮，实现以下功能：
 
 1. **截屏触发**：用户点击"截屏"按钮后，前端调用后台截屏API
 2. **截屏保存**：后台截取设备屏幕并保存为screenshots记录

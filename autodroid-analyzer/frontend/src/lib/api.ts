@@ -8,7 +8,7 @@ import type {
 } from './types';
 
 class ApiClient {
-	private baseUrl = '/api';
+	private baseUrl = 'http://localhost:8001/api';
 
 	async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
 		try {
