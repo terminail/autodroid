@@ -4,27 +4,56 @@
 
 Autodroid Analyzer 是一个基于 Python 的 Android 应用分析工具，专门用于自动化分析和理解 Android 应用的用户界面和交互流程。
 
+## 架构说明
+
+前后端分离架构：
+- **后端API**: Python FastAPI (端口8001)
+- **前端应用**: SvelteKit + Vite (端口3000)
+- **数据库**: SQLite
+
 ## 快速开始
+
+### 环境要求
+
+- Python 3.10+
+- Node.js 16+
+- npm 8+
 
 ### 安装依赖
 
 ```bash
-# 安装项目依赖
-pip install -r requirements.txt
-
-# 安装项目包
+# 安装项目包（自动安装依赖）
 pip install -e .
 ```
-
-### 简单使用
-
-```bash
-# 进入项目目录
-cd d:\git\autodroid\autodroid-analyzer
-
-# 直接运行分析器（使用config.yaml中的配置）
-python run_analysis.py
+# 安装前端依赖
+cd frontend
+npm install
 ```
+
+### 启动方式
+
+**Windows用户**：双击运行批处理文件：
+```bash
+start_server.bat
+```
+
+**命令行启动**：
+```bash
+cd 'd:/git/autodroid/autodroid-analyzer'; conda activate liugejiao; python run_server.py
+```
+
+**注意**: 启动脚本只会启动API服务器。前端需要单独启动：
+```bash
+cd 'd:/git/autodroid/autodroid-analyzer/frontend' && npm run dev
+```
+
+### 服务启动后
+
+- **API服务器**: `http://localhost:8001`
+- **前端应用**: `http://localhost:3000`
+- **API文档**: `http://localhost:8001/docs`
+
+启动成功后，控制台会显示访问地址。
 
 ## 核心功能
 
@@ -32,6 +61,40 @@ python run_analysis.py
 - 📊 **用户操作监控**：自动记录用户操作序列
 - 🌳 **操作图构建**：生成应用交互流程的可视化图表
 - 📈 **分析报告生成**：输出详细的HTML和Markdown报告
+
+## API 接口
+
+### 基础接口
+
+| 端点 | 方法 | 描述 |
+|------|------|------|
+| `/` | GET | 获取API基本信息 |
+| `/docs` | GET | 查看API文档 |
+
+### 模块化API结构
+
+Autodroid Analyzer API采用模块化设计，包含以下功能模块：
+
+- **analysis** - 分析功能模块 (`/api/analysis`)
+- **apks** - APK管理模块 (`/api/apks`)
+- **devices** - 设备管理模块 (`/api/devices`)
+- **server** - 服务器管理模块 (`/api/server`)
+
+所有API端点都位于 `/api` 前缀下，例如：`http://localhost:8001/api/analysis`
+
+### API访问示例
+
+```bash
+# 获取API基本信息
+curl http://localhost:8001/
+
+# 响应示例
+{
+  "message": "Autodroid Analyzer API",
+  "version": "1.0.0",
+  "modules": ["analysis", "apks", "devices", "server"]
+}
+```
 
 ## 项目结构
 
@@ -54,8 +117,16 @@ autodroid-analyzer/
 │   ├── screenshot_manager.py     # 截屏管理器
 │   ├── page_analyzer.py          # 页面分析器
 │   └── page_recognizer.py        # 页面识别器
-├── editor/                       # 编辑管理模块
-│   └── editor_manager.py         # 编辑器管理器（待实现）
+├── api/                          # API服务模块
+│   ├── main.py                   # FastAPI主服务
+│   ├── __init__.py               # 模块初始化
+│   └── analyzer.db               # 分析器数据库
+├── frontend/                     # 前端界面模块
+│   ├── package.json              # 项目配置
+│   ├── svelte.config.js          # Svelte配置
+│   ├── vite.config.js            # Vite配置
+│   ├── src/                      # 源代码目录
+│   └── static/                   # 静态资源
 ├── tests/                        # 测试模块
 │   ├── test_basic.py
 │   ├── test_database.py
@@ -76,24 +147,25 @@ autodroid-analyzer/
 
 ## 配置文件
 
-项目使用 `config.yaml` 进行配置，主要设置包括：
-
-- 输出目录路径
-- 截图保存设置
-- 分析深度限制
-- 数据库连接配置
+`config.yaml` 设置：
+- **分析设置**: 监控开关、最大深度等
+- **数据库**: SQLite路径
+- **输出目录**: 报告、截图保存路径
+- **服务器**: API端口(8001)和前端配置
+- **日志**: 日志文件和级别
 
 ## 故障排除
 
-### 常见问题
+### 连接问题
 
-1. **设备连接失败**
-   - 确保设备已连接且ADB调试已启用
-   - 检查设备ID是否正确
+- **API无法访问**: 确认服务已启动，检查端口8001
+- **前端连接失败**: 确认前后端都已启动，检查CORS错误
+- **健康检查**: 访问 `http://localhost:8001/api/health`
 
-2. **应用启动失败**
-   - 确认应用包名正确
-   - 检查应用是否已安装
+### 设备问题
+
+- **设备连接失败**: 检查ADB调试是否启用
+- **应用启动失败**: 确认包名正确且应用已安装
 
 ## 许可证
 

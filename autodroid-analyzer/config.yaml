@@ -29,3 +29,16 @@ ui:
   interactive_mode: true
   max_elements_display: 10
   show_element_importance: true
+
+# Server configuration
+server:
+  backend:
+    host: "0.0.0.0"
+    port: 8001
+    log_level: "info"
+    reload: false
+  # Frontend configuration - only used in production deployment
+  # In development, frontend runs separately on port 3000
+  frontend:
+    mount_path: "/app"
+    build_directory: "frontend/build"
