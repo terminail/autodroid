@@ -67,11 +67,17 @@ class Device(BaseModel):
     """设备信息模型"""
     id = CharField(primary_key=True)  # 设备ID
     device_name = CharField()  # 设备名称
+    device_model = CharField(default='Unknown')  # 设备型号
     android_version = CharField()  # Android版本
+    api_level = IntegerField(default=0)  # API级别
     is_connected = BooleanField(default=False)  # 是否连接
     connection_type = CharField(default='USB')  # 连接类型
     battery_level = IntegerField(default=0)  # 电池电量
+    battery_status = CharField(default='Unknown')  # 电池状态
+    is_charging = BooleanField(default=False)  # 是否正在充电
     created_at = DateTimeField(default=datetime.now)
+    last_updated = DateTimeField(default=datetime.now)  # 最后更新时间
+    last_connected = DateTimeField(null=True)  # 最后连接时间
     
     class Meta:
         table_name = 'device_info'

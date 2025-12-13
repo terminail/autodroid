@@ -73,16 +73,53 @@ class ApkInfo(BaseModel):
 
 class DeviceInfo(BaseModel):
     """设备信息模型"""
-    id: str
-    udid: str
-    name: str
-    model: str
-    platform: str
-    version: str
-    connected: bool = False
-    last_connected: Optional[datetime] = None
-    total_operations: int = 0
-    total_screenshots: int = 0
+    id: str  # 设备ID
+    device_name: str  # 设备名称
+    android_version: str  # Android版本
+    api_level: int = 0  # API级别
+    is_connected: bool = False  # 是否连接
+    connection_type: str = 'USB'  # 连接类型
+    battery_level: int = 0  # 电池电量
+    battery_status: str = 'Unknown'  # 电池状态
+    is_charging: bool = False  # 是否充电
+    device_model: str = ''  # 设备型号
+    created_at: Optional[datetime] = None  # 创建时间
+    last_updated: Optional[datetime] = None  # 最后更新时间
+    last_connected: Optional[datetime] = None  # 最后连接时间
+    wifi_debug_guide: Optional[Dict[str, Any]] = None  # WiFi调试指导信息
+    
+    
+class WifiDebugGuide(BaseModel):
+    """WiFi调试指导信息模型"""
+    android_version: str  # Android版本
+    connection_type: str  # 当前连接类型
+    supported: bool  # 是否支持WiFi调试
+    steps: List[Dict[str, str]]  # 操作步骤列表，每个步骤包含标题和详细说明
+    commands: Optional[List[str]] = None  # 需要执行的ADB命令（如适用）
+    requirements: Optional[List[str]] = None  # 前置条件列表
+    estimated_time: str = ""  # 预计完成时间
+
+
+class DeviceApksResponse(BaseModel):
+    """设备APK列表响应模型"""
+    device_id: str
+    apks: List[Dict[str, Any]]
+    count: int
+
+
+class DeviceStatistics(BaseModel):
+    """设备统计信息模型"""
+    device_id: str
+    operations_count: int
+    screenshots_count: int
+    apks_count: int
+
+
+class DeviceOperationsSummary(BaseModel):
+    """设备操作摘要模型"""
+    device_id: str
+    operation_types: Dict[str, Any]
+    time_distribution: Dict[str, Any]
 
 
 class AnalysisResult(BaseModel):

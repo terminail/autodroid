@@ -78,3 +78,31 @@ export interface ApiResponse<T> {
 	error?: string;
 }
 
+// 设备信息类型定义
+export interface DeviceInfo {
+	id: string;
+	device_name: string;
+	android_version: string;
+	api_level: number;
+	is_connected: boolean;
+	connection_type: string;
+	battery_level: number;
+	device_model: string;
+	last_connected: string | null;
+	wifi_debug_guide?: WifiDebugGuide | null;
+}
+
+// WiFi调试指导类型定义
+export interface WifiDebugGuide {
+	android_version: string;
+	connection_type: string;
+	supported: boolean;
+	steps: Array<{
+		title: string;
+		description: string;
+	}>;
+	commands?: string[];
+	requirements?: string[];
+	estimated_time: string;
+}
+

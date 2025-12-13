@@ -4,9 +4,9 @@ Handles device operations and information retrieval.
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Dict, Any
 
-from .models import DeviceInfo
+from .models import DeviceInfo, WifiDebugGuide, DeviceApksResponse, DeviceStatistics, DeviceOperationsSummary
 
 # Initialize router
 router = APIRouter(prefix="/api/devices", tags=["devices"])
@@ -14,36 +14,25 @@ router = APIRouter(prefix="/api/devices", tags=["devices"])
 
 @router.get("/", response_model=List[DeviceInfo])
 async def get_devices():
-    """获取设备列表"""
+    """获取设备列表 - 按最后连接时间倒序排列"""
     try:
-        # 导入数据库管理器
+        # 导入数据库管理器和设备服务
         import sys
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-        from core.database import get_database_manager
+        from core.device.database import DeviceDatabase
+        from core.device.service import DeviceManager
         
-        db_manager = get_database_manager()
+        device_service = DeviceManager()
+        device_db = DeviceDatabase()
         
-        # 获取设备列表
-        devices = db_manager.get_devices()
+        # 首先扫描并注册当前连接的设备
+        connected_devices = device_service.get_connected_devices()
         
-        # 转换为Pydantic模型
-        api_devices = []
-        for device in devices:
-            api_devices.append(DeviceInfo(
-                id=device.id,
-                udid=device.udid,
-                name=device.name,
-                model=device.model,
-                platform=device.platform,
-                version=device.version,
-                connected=device.connected,
-                last_connected=device.last_connected,
-                total_operations=device.total_operations,
-                total_screenshots=device.total_screenshots
-            ))
+        # 从数据库获取所有设备（包括新注册的），按最后连接时间倒序排列
+        device_infos = device_db.get_all_devices(order_by="last_connected", order_desc=True)
         
-        return api_devices
+        return device_infos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取设备列表失败: {str(e)}")
 
@@ -56,34 +45,23 @@ async def get_device(device_id: str):
         import sys
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-        from core.database import get_database_manager
+        from core.device.database import DeviceDatabase
         
-        db_manager = get_database_manager()
+        device_db = DeviceDatabase()
         
         # 获取特定设备
-        device = db_manager.get_device(device_id)
-        if not device:
+        device_info = device_db.get_device(device_id)
+        if not device_info:
             raise HTTPException(status_code=404, detail="设备未找到")
         
-        return DeviceInfo(
-            id=device.id,
-            udid=device.udid,
-            name=device.name,
-            model=device.model,
-            platform=device.platform,
-            version=device.version,
-            connected=device.connected,
-            last_connected=device.last_connected,
-            total_operations=device.total_operations,
-            total_screenshots=device.total_screenshots
-        )
+        return device_info
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取设备信息失败: {str(e)}")
 
 
-@router.get("/{device_id}/apks")
+@router.get("/{device_id}/apks", response_model=DeviceApksResponse)
 async def get_device_apks(device_id: str):
     """获取设备上的APK列表"""
     try:
@@ -107,7 +85,7 @@ async def get_device_apks(device_id: str):
         raise HTTPException(status_code=500, detail=f"获取设备APK列表失败: {str(e)}")
 
 
-@router.get("/{device_id}/statistics")
+@router.get("/{device_id}/statistics", response_model=DeviceStatistics)
 async def get_device_statistics(device_id: str):
     """获取设备统计信息"""
     try:
@@ -138,7 +116,7 @@ async def get_device_statistics(device_id: str):
         raise HTTPException(status_code=500, detail=f"获取设备统计信息失败: {str(e)}")
 
 
-@router.get("/{device_id}/operations/summary")
+@router.get("/{device_id}/operations/summary", response_model=DeviceOperationsSummary)
 async def get_device_operations_summary(device_id: str):
     """获取设备操作摘要"""
     try:
@@ -163,3 +141,31 @@ async def get_device_operations_summary(device_id: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取设备操作摘要失败: {str(e)}")
+
+
+@router.get("/{device_id}/wifi-debug-guide", response_model=WifiDebugGuide)
+async def get_wifi_debug_guide(device_id: str):
+    """获取WiFi调试开通指导"""
+    try:
+        # 导入数据库管理器
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+        from core.device.database import DeviceDatabase
+        from core.device.wifi_debug import get_wifi_debug_guide as get_guide
+        
+        device_db = DeviceDatabase()
+        
+        # 获取设备信息
+        device = device_db.get_device(device_id)
+        if not device:
+            raise HTTPException(status_code=404, detail="设备未找到")
+            
+        # 获取WiFi调试指导
+        guide = get_guide(device.android_version, device.connection_type)
+        
+        return guide
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取WiFi调试指导失败: {str(e)}")
