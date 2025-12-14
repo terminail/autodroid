@@ -1,0 +1,12 @@
+name: 测试流程A
+description: 这是一个测试流程A
+steps:
+  - name: 步骤1
+    file: step1.xml
+    description: 这是步骤1
+  - name: 步骤2
+    file: step2.xml
+    description: 这是步骤2
+  - name: 步骤3
+    file: step3.xml
+    description: 这是步骤3
