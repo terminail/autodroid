@@ -53,6 +53,17 @@ class FlowPagesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Set up back button
+        val backButton = view.findViewById<android.widget.ImageButton>(R.id.back_button)
+        backButton.setOnClickListener {
+            // Navigate back to previous screen
+            parentFragmentManager.popBackStack()
+            
+            // Show the navigation list and hide the fragment container
+            requireActivity().findViewById<android.widget.FrameLayout>(R.id.fragmentContainer).visibility = View.GONE
+            requireActivity().findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerView).visibility = View.VISIBLE
+        }
+        
         // 设置流程信息
         val flowName = arguments?.getString("flow_name") ?: ""
         val flowDescription = arguments?.getString("flow_description") ?: ""
@@ -70,15 +81,35 @@ class FlowPagesFragment : Fragment() {
     }
     
     private fun onPageClick(pageItem: NavigationItem.PageItem) {
-        // 显示页面加载提示
-        android.widget.Toast.makeText(
-            requireContext(),
-            "加载页面: ${pageItem.fullPath}",
-            android.widget.Toast.LENGTH_SHORT
-        ).show()
+        // 显示步骤详情Fragment
+        val stepFilePath = getStepFilePath(pageItem)
+        if (stepFilePath.isNotEmpty()) {
+            showStepDetailFragment(pageItem, stepFilePath)
+        } else {
+            // 显示页面加载提示
+            android.widget.Toast.makeText(
+                requireContext(),
+                "加载页面: ${pageItem.fullPath}",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+    
+    private fun getStepFilePath(pageItem: NavigationItem.PageItem): String {
+        // 从页面项的fullPath中提取步骤文件路径
+        // 格式示例: cn.com.gjzq.yjb2/testflowa/step1.xml
+        // 由于fullPath移除了.xml后缀，我们需要重新添加
+        return "${pageItem.fullPath}.xml"
+    }
+    
+    private fun showStepDetailFragment(pageItem: NavigationItem.PageItem, stepFilePath: String) {
+        val fragment = StepDetailFragment.newInstance(pageItem, stepFilePath)
         
-        // 这里可以添加页面加载逻辑
-        // showPageFragment(pageItem)
+        // 使用FragmentTransaction替换当前内容
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack("step_detail")
+            .commit()
     }
     
     /**
