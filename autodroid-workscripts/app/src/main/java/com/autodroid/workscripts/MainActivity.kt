@@ -11,6 +11,7 @@ import com.autodroid.workscripts.adapter.ExpandableNavigationAdapter
 import com.autodroid.workscripts.fragment.PageFragment
 import com.autodroid.workscripts.model.NavigationItem
 import com.autodroid.workscripts.ui.FlowPagesFragment
+import com.autodroid.workscripts.ui.StepDetailFragment
 import com.autodroid.workscripts.utils.AppScanner
 
 /**
@@ -114,10 +115,10 @@ class MainActivity : AppCompatActivity() {
     
     private fun showPageFragment(pageItem: NavigationItem.PageItem) {
         try {
-            // 创建页面 Fragment
-            val fragment = PageFragment.newInstance(
-                pageItem.layoutResourceName,
-                pageItem.name
+            // 创建页面 Fragment - 使用 StepDetailFragment 来处理 XML 转换
+            val fragment = StepDetailFragment.newInstance(
+                pageItem,
+                pageItem.layoutResourceName
             )
             
             // 替换整个Activity内容为Fragment

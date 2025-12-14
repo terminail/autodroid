@@ -1,5 +1,7 @@
 package com.autodroid.workscripts.model
 
+import java.io.Serializable
+
 /**
  * recyclerview数据模型 - hybrid结构
  */
@@ -33,5 +35,5 @@ sealed class NavigationItem {
         val layoutResourceName: String,
         val fullPath: String,
         val description: String = ""
-    ) : NavigationItem()
+    ) : NavigationItem(), Serializable
 }
