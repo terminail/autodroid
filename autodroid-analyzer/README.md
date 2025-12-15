@@ -117,6 +117,7 @@ autodroid-analyzer/
 │   ├── screenshot_manager.py     # 截屏管理器
 │   ├── page_analyzer.py          # 页面分析器
 │   └── page_recognizer.py        # 页面识别器
+├── stitch_screenshots.py         # 截图拼接工具
 ├── api/                          # API服务模块
 │   ├── main.py                   # FastAPI主服务
 │   ├── __init__.py               # 模块初始化
@@ -153,6 +154,43 @@ autodroid-analyzer/
 - **输出目录**: 报告、截图保存路径
 - **服务器**: API端口(8001)和前端配置
 - **日志**: 日志文件和级别
+
+## 截图拼接工具
+
+项目包含一个专门用于拼接Android截图的工具，可以将多个可滚动界面的截图拼接成一张长图，并自动去除重复部分。
+
+### 功能特点
+
+- 自动识别相邻截图间的重叠区域
+- 智能去除重复部分，保留唯一内容
+- 支持命令行参数配置
+- 可按文件名排序处理
+
+### 使用方法
+
+```bash
+# 基本用法
+python stitch_screenshots.py image1.png image2.png image3.png -o result.png
+
+# 处理通配符匹配的文件并按文件名排序
+python stitch_screenshots.py images/screenshot*.png --sort -o final_result.png
+```
+
+### 参数说明
+
+- `images`：要拼接的图像文件路径（支持通配符）
+- `-o, --output`：输出文件路径（默认：stitched_result.png）
+- `--sort`：按文件名排序输入图像
+
+### 工作原理
+
+1. 加载所有输入图像
+2. 分析相邻图像间的重叠区域
+3. 对于每对相邻图像：
+   - 前一张图像去除尾部重复部分
+   - 后一张图像去除头部重复部分
+   - 第一张图像保留头部，最后一张图像保留尾部
+4. 拼接处理后的图像生成最终结果
 
 ## 故障排除
 
