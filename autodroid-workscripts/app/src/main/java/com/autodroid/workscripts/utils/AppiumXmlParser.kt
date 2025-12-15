@@ -142,6 +142,9 @@ class AppiumXmlParser {
                 val width = bounds.width()
                 val height = bounds.height()
                 
+                // 调试日志：显示每个控件的bounds信息
+                Log.d(TAG, "Control bounds check: ${className}, bounds=[${bounds.left},${bounds.top}][${bounds.right},${bounds.bottom}], width=$width, height=$height")
+                
                 if (width <= 0 || height <= 0) {
                     Log.d(TAG, "Skipping control with invalid bounds: ${className}, bounds=[${bounds.left},${bounds.top}][${bounds.right},${bounds.bottom}], width=$width, height=$height")
                     continue
@@ -186,16 +189,35 @@ class AppiumXmlParser {
         if (boundsStr.isNullOrEmpty()) return Rect(0, 0, 0, 0)
         
         return try {
-            val cleanStr = boundsStr.replace("[", "").replace("]", "")
-            val coords = cleanStr.split(",")
+            // 使用正则表达式解析bounds格式: [left,top][right,bottom]
+            val pattern = Regex("\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]")
+            val match = pattern.find(boundsStr)
             
-            val left = coords[0].trim().toInt()
-            val top = coords[1].trim().toInt()
-            val right = coords[2].trim().toInt()
-            val bottom = coords[3].trim().toInt()
-            
-            Rect(left, top, right, bottom)
+            if (match != null) {
+                val left = match.groupValues[1].toInt()
+                val top = match.groupValues[2].toInt()
+                val right = match.groupValues[3].toInt()
+                val bottom = match.groupValues[4].toInt()
+                
+                Rect(left, top, right, bottom)
+            } else {
+                // 如果正则匹配失败，尝试旧的解析方法
+                val cleanStr = boundsStr.replace("[", "").replace("]", "")
+                val coords = cleanStr.split(",")
+                
+                if (coords.size >= 4) {
+                    val left = coords[0].trim().toInt()
+                    val top = coords[1].trim().toInt()
+                    val right = coords[2].trim().toInt()
+                    val bottom = coords[3].trim().toInt()
+                    
+                    Rect(left, top, right, bottom)
+                } else {
+                    Rect(0, 0, 0, 0)
+                }
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse bounds: $boundsStr, error: ${e.message}")
             Rect(0, 0, 0, 0)
         }
     }
