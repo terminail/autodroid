@@ -1,6 +1,11 @@
-name: 测试流程2
-description: 这是一个测试流程2
+name: 网格交易
+description: 这是一个网格交易流程，自动高抛低吸，卖出、买入
 steps:
-  - name: 步骤0
-    file: home.xml
+  - name: 首页
+    layout: home.xml
+    screenshot: home.png
     description: 这是Home
+    step: 0
+    actions:
+      - click: resource-id="entry-xzsg"
+        description: 点击【条件单】，在Home页面，resource-id="entry-xzsg"，text="条件单"

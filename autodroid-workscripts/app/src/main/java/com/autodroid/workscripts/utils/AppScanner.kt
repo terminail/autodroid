@@ -34,8 +34,8 @@ object AppScanner {
                 }
             }
             
-            // 按显示顺序排序
-            appItems.sortBy { it.displayOrder }
+            // Sort by name as we don't have displayOrder in AppItem anymore
+            appItems.sortBy { it.name }
             
         } catch (e: Exception) {
             e.printStackTrace()
@@ -62,11 +62,7 @@ object AppScanner {
         // 创建AppItem
         return NavigationItem.AppItem(
             name = configMap["name"] as? String ?: appFolder,
-            description = configMap["description"] as? String ?: "",
-            category = configMap["category"] as? String ?: "",
-            version = configMap["version"] as? String ?: "",
-            author = configMap["author"] as? String ?: "",
-            displayOrder = (configMap["display_order"] as? Int) ?: 999,
+            packageName = configMap["package"] as? String ?: "",
             flows = flows
         )
     }
@@ -110,8 +106,8 @@ object AppScanner {
                 }
             }
             
-            // 按显示顺序排序
-            flows.sortBy { it.displayOrder }
+            // Sort by name as we don't have displayOrder in FlowItem anymore
+            flows.sortBy { it.name }
             
         } catch (e: Exception) {
             println("Error scanning flow folders for $appFolder: ${e.message}")

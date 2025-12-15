@@ -4,14 +4,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.autodroid.workscripts.adapter.ExpandableNavigationAdapter
-import com.autodroid.workscripts.fragment.PageFragment
+import com.autodroid.workscripts.adapter.NavigationAdapter
 import com.autodroid.workscripts.model.NavigationItem
-import com.autodroid.workscripts.ui.FlowPagesFragment
-import com.autodroid.workscripts.ui.StepDetailFragment
+import com.autodroid.workscripts.fragment.FlowFragment
+import com.autodroid.workscripts.fragment.StepFragment
 import com.autodroid.workscripts.utils.AppScanner
 
 /**
@@ -21,7 +19,7 @@ import com.autodroid.workscripts.utils.AppScanner
 class MainActivity : AppCompatActivity() {
     
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: ExpandableNavigationAdapter
+    private lateinit var adapter: NavigationAdapter
     private var appItems: List<NavigationItem.AppItem> = emptyList()
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         
-        adapter = ExpandableNavigationAdapter(
+        adapter = NavigationAdapter(
             onAppClick = { appItem ->
                 onAppClick(appItem)
             },
@@ -44,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 onFlowClick(flowItem)
             },
             onPageClick = { pageItem ->
-                onPageClick(pageItem)
+                onStepClick(pageItem)
             }
         )
         
@@ -83,10 +81,10 @@ class MainActivity : AppCompatActivity() {
     
     private fun onFlowClick(flowItem: NavigationItem.FlowItem) {
         // 显示流程页面Fragment
-        showFlowPagesFragment(flowItem)
+        showFlowStepsFragment(flowItem)
     }
     
-    private fun onPageClick(pageItem: NavigationItem.PageItem) {
+    private fun onStepClick(pageItem: NavigationItem.StepItem) {
         // 显示页面加载提示
         Toast.makeText(
             this, 
@@ -95,39 +93,70 @@ class MainActivity : AppCompatActivity() {
         ).show()
         
         // 显示页面Fragment
-        showPageFragment(pageItem)
+        showStepPageFragment(pageItem)
     }
     
-    private fun showFlowPagesFragment(flowItem: NavigationItem.FlowItem) {
-        // 创建并显示流程页面Fragment
-        val fragment = FlowPagesFragment.newInstance(flowItem)
-        
-        // 使用FragmentTransaction替换当前内容
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .addToBackStack("flow_pages")
-            .commit()
+    private fun showFlowStepsFragment(flowItem: NavigationItem.FlowItem) {
+        try {
+            // 创建并显示流程页面Fragment
+            val fragment = FlowFragment.newInstance(flowItem)
             
-        // 显示fragment容器，隐藏导航列表
-        findViewById<android.widget.FrameLayout>(R.id.fragmentContainer).visibility = View.VISIBLE
-        recyclerView.visibility = View.GONE
+            // 使用FragmentTransaction替换当前内容
+            val transaction = supportFragmentManager.beginTransaction()
+                .setCustomAnimations(
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
+                )
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack("flow_pages_${flowItem.name}")
+            
+            // Commit the transaction safely
+            if (!isFinishing && !isDestroyed) {
+                transaction.commitAllowingStateLoss()
+            }
+            
+            // 显示fragment容器，隐藏导航列表 with animation
+            val fragmentContainer = findViewById<android.widget.FrameLayout>(R.id.fragmentContainer)
+            fragmentContainer.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error showing flow pages fragment", e)
+            Toast.makeText(
+                this,
+                "显示流程页面失败: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
     
-    private fun showPageFragment(pageItem: NavigationItem.PageItem) {
+    private fun showStepPageFragment(pageItem: NavigationItem.StepItem) {
         try {
             // 创建页面 Fragment - 使用 StepDetailFragment 来处理 XML 转换
-            val fragment = StepDetailFragment.newInstance(
+            val fragment = StepFragment.newInstance(
                 pageItem,
                 pageItem.layoutResourceName
             )
             
-            // 替换整个Activity内容为Fragment
-            supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, fragment)
-                .addToBackStack(null) // 添加到返回栈，支持返回键
-                .commit()
+            // 使用FragmentTransaction替换fragment容器而不是整个Activity内容
+            val transaction = supportFragmentManager.beginTransaction()
+                .setCustomAnimations(
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
+                )
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack("step_detail_${pageItem.name}")
+            
+            // Commit the transaction safely
+            if (!isFinishing && !isDestroyed) {
+                transaction.commitAllowingStateLoss()
+            }
                 
         } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error showing page fragment", e)
             Toast.makeText(
                 this,
                 "显示页面失败: ${e.message}",
@@ -137,14 +166,47 @@ class MainActivity : AppCompatActivity() {
     }
     
     override fun onBackPressed() {
-        // 如果有返回栈，弹出栈顶fragment
+        // 检查Fragment返回栈
         if (supportFragmentManager.backStackEntryCount > 0) {
             supportFragmentManager.popBackStack()
-            // 隐藏fragment容器，显示导航列表
-            findViewById<android.widget.FrameLayout>(R.id.fragmentContainer).visibility = View.GONE
-            recyclerView.visibility = View.VISIBLE
+            
+            // 延迟检查返回栈状态，确保UI更新完成
+            recyclerView.post {
+                // 如果返回栈为空，显示导航列表
+                if (supportFragmentManager.backStackEntryCount == 0) {
+                    val fragmentContainer = findViewById<android.widget.FrameLayout>(R.id.fragmentContainer)
+                    // 添加淡出动画效果
+                    fragmentContainer.animate()
+                        .alpha(0f)
+                        .setDuration(200)
+                        .withEndAction {
+                            fragmentContainer.visibility = View.GONE
+                            fragmentContainer.alpha = 1f // Reset alpha for next time
+                            recyclerView.visibility = View.VISIBLE
+                            // 添加淡入动画效果
+                            recyclerView.alpha = 0f
+                            recyclerView.animate()
+                                .alpha(1f)
+                                .setDuration(200)
+                                .start()
+                        }
+                        .start()
+                }
+            }
         } else {
             super.onBackPressed()
+        }
+    }
+    
+    /**
+     * Refresh the navigation UI
+     */
+    fun refreshNavigation() {
+        try {
+            // Reload navigation data to ensure it's up to date
+            loadNavigationData()
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "Could not refresh navigation", e)
         }
     }
 }

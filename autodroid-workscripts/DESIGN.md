@@ -9,6 +9,13 @@ AutoDroid WorkScripts 是一个用于自动化测试的 Android 应用程序，�
 3. 提供导航和流程管理功能
 4. 支持返回按钮导航
 
+## DEBUG
+```bash
+$ adb logcat -s AppiumXml
+
+$ powershell -Command "adb pull '/sdcard/Android/data/com.autodroid.workscripts/files/temp_xzsg-step0a.xml' ."
+
+```
 ## 核心组件
 
 ### 1. StepDetailFragment

@@ -56,6 +56,8 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("xmlpull:xmlpull:1.1.3.1")
+    testImplementation("xpp3:xpp3:1.1.4c")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }

@@ -32,10 +32,8 @@ object FlowScanner {
             
             // 创建FlowItem
             return NavigationItem.FlowItem(
-                folder = flowPath.substringAfterLast("/"),
                 name = flowName,
                 description = flowDescription,
-                displayOrder = 999, // 流程级别的显示顺序暂时固定
                 pages = pages
             )
             
@@ -48,8 +46,8 @@ object FlowScanner {
     /**
      * 从配置中解析步骤信息
      */
-    private fun parseStepsFromConfig(configMap: Map<String, Any>, flowPath: String): List<NavigationItem.PageItem> {
-        val pages = mutableListOf<NavigationItem.PageItem>()
+    private fun parseStepsFromConfig(configMap: Map<String, Any>, flowPath: String): List<NavigationItem.StepItem> {
+        val pages = mutableListOf<NavigationItem.StepItem>()
         
         val stepsConfig = configMap["steps"] as? List<Map<String, Any>>
         if (stepsConfig != null) {
@@ -58,21 +56,27 @@ object FlowScanner {
             stepsConfig.forEach { stepMap ->
                 try {
                     val stepName = stepMap["name"] as? String ?: ""
-                    val stepFile = stepMap["file"] as? String ?: ""
+                    val stepFile = stepMap["layout"] as? String ?: ""  // Changed from "file" to "layout" to match YAML
                     val stepDescription = stepMap["description"] as? String ?: ""
+                    val stepNumber = stepMap["step"] as? Int ?: 0
+                    val screenshots = stepMap["screenshots"] as? List<String> ?: emptyList()
+                    val actions = parseActions(stepMap["actions"])
                     
                     println("Processing step: $stepName -> $stepFile")
                     
-                    // 创建PageItem
-                    val pageItem = NavigationItem.PageItem(
+                    // 创建StepItem
+                    val stepItem = NavigationItem.StepItem(
                         name = stepName,
                         layoutResourceName = stepFile.removeSuffix(".xml").replace("-", "_"),
                         fullPath = "$flowPath/${stepFile.removeSuffix(".xml")}",
-                        description = stepDescription
+                        description = stepDescription,
+                        step = stepNumber,
+                        screenshots = screenshots,
+                        actions = actions
                     )
                     
-                    pages.add(pageItem)
-                    println("Added page: ${pageItem.name}")
+                    pages.add(stepItem)
+                    println("Added step: ${stepItem.name}")
                     
                 } catch (e: Exception) {
                     println("Error parsing step: ${e.message}")
@@ -83,5 +87,33 @@ object FlowScanner {
         }
         
         return pages
+    }
+    
+    /**
+     * 解析动作配置
+     */
+    private fun parseActions(actionsObj: Any?): List<NavigationItem.Action> {
+        val actions = mutableListOf<NavigationItem.Action>()
+        
+        val actionsList = actionsObj as? List<Map<String, Any>>
+        if (actionsList != null) {
+            actionsList.forEach { actionMap ->
+                try {
+                    val click = actionMap["click"] as? String ?: ""
+                    val description = actionMap["description"] as? String ?: ""
+                    
+                    val action = NavigationItem.Action(
+                        click = click,
+                        description = description
+                    )
+                    
+                    actions.add(action)
+                } catch (e: Exception) {
+                    println("Error parsing action: ${e.message}")
+                }
+            }
+        }
+        
+        return actions
     }
 }
