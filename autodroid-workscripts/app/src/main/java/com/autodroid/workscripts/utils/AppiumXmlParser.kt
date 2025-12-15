@@ -137,6 +137,16 @@ class AppiumXmlParser {
                     continue
                 }
                 
+                // 检查bounds是否有效：宽度和高度必须大于0
+                val bounds = node.bounds ?: Rect(0, 0, 0, 0)
+                val width = bounds.width()
+                val height = bounds.height()
+                
+                if (width <= 0 || height <= 0) {
+                    Log.d(TAG, "Skipping control with invalid bounds: ${className}, bounds=[${bounds.left},${bounds.top}][${bounds.right},${bounds.bottom}], width=$width, height=$height")
+                    continue
+                }
+                
                 // 创建ControlInfo
                 val type = getControlType(className)
                 val control = ControlInfo(
@@ -145,14 +155,14 @@ class AppiumXmlParser {
                     className = className,
                     xpath = node.xpath ?: "",
                     resourceId = node.resourceId,
-                    bounds = node.bounds ?: Rect(0, 0, 0, 0),
+                    bounds = bounds,
                     clickable = node.clickable,
                     visible = node.visible,
                     type = type
                 )
                 
                 controls.add(control)
-                Log.d(TAG, "Added control: ${className}, text=${node.text}, clickable=${node.clickable}, resourceId=${node.resourceId}")
+                Log.d(TAG, "Added control: ${className}, text=${node.text}, clickable=${node.clickable}, resourceId=${node.resourceId}, bounds=[${bounds.left},${bounds.top}][${bounds.right},${bounds.bottom}]")
             }
         }
         
