@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AutoDroid Controller</string>
+    <string name="accessibility_service_description">AutoDroid自动化测试服务，用于执行UI自动化任务</string>
+
+    <!-- Main Activity Strings -->
+    <string name="app_title">AutoDroid Controller</string>
+    <string name="service_status_stopped">服务状态: 未启动</string>
+    <string name="service_status_running">服务状态: 运行中</string>
+    <string name="button_start_service">启动自动化服务</string>
+    <string name="button_stop_service">停止自动化服务</string>
+    <string name="button_test_task">执行测试任务</string>
+    <string name="button_open_accessibility_settings">打开无障碍设置</string>
+    <string name="button_open_app_settings">打开应用设置</string>
+    <string name="app_description">说明：\n1. 确保已安装Appium UIA2 Server\n2. 需要授予必要的权限\n3. 服务将在后台定期检查任务</string>
+
+    <!-- Share Button -->
+    <string name="button_share_adb_commands">分享adb命令</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_service_started">自动化服务已启动</string>
+    <string name="toast_service_stopped">自动化服务已停止</string>
+    <string name="toast_cannot_open_accessibility_settings">无法打开无障碍设置</string>
+    <string name="toast_cannot_open_app_settings">无法打开应用设置</string>
+    <string name="toast_test_task_sent">测试任务已发送</string>
+</resources>

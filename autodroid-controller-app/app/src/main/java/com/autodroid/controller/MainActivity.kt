@@ -909,27 +909,10 @@ adb shell ps | grep appium
             "deviceId": "test_device_${System.currentTimeMillis()}",
             "actions": [
                 {
-                    "action": "initSession",
+                    "action": "getPageSource",
                     "params": {
-                        "capabilities": {
-                            "platformName": "Android",
-                            "appium:automationName": "UiAutomator2",
-                            "appium:udid": "TDCDU17905004388",
-                            "appium:appPackage": "com.tdx.androidCCZQ",
-                            "appium:appActivity": "com.tdx.Android.TdxAndroidActivity",
-                            "appium:noReset": false,
-                            "appium:autoGrantPermissions": true,
-                            "appium:skipServerInstallation": true,
-                            "appium:remoteAppsCacheLimit": 0,
-                            "appium:dontStopAppOnReset": true
-                        }
+                        "appPackage": "com.tdx.androidCCZQ"
                     }
-                },
-                {
-                    "action": "getPageSource"
-                },
-                {
-                    "action": "closeSession"
                 }
             ]
         }
