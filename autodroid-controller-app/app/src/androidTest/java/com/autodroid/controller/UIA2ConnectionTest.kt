@@ -152,30 +152,34 @@ class UIA2ConnectionTest {
         try {
             println("=== UIA2连接和会话初始化测试 ===")
             
-            // 创建capabilities map使用与Appium服务器日志中完全相同的参数
+            // 创建W3C标准capabilities，与Appium服务器日志中的格式完全一致
             val capabilities = mapOf(
-                "platformName" to "Android",
-                "automationName" to "UiAutomator2",
-                "udid" to "TDCDU17905004388",
-                "appPackage" to "com.tdx.androidCCZQ",
-                "appActivity" to "com.tdx.Android.TdxAndroidActivity",  // 使用正确的Activity路径
-                "noReset" to false,
-                "autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
-                "skipServerInstallation" to true,
-                "remoteAppsCacheLimit" to 0,
-                "dontStopAppOnReset" to true,
-                "ensureWebviewsHavePages" to true,
-                "nativeWebScreenshot" to true,
-                "newCommandTimeout" to 3600,
-                "connectHardwareKeyboard" to true,  // 从日志中添加的参数
-                "disableWindowAnimation" to true,   // 添加窗口动画禁用
-                "disableSuppressAccessibilityService" to true, // 禁用无障碍服务抑制
-                "mjpegServerPort" to 7810,          // 添加MJPEG服务器端口
-                "systemPort" to 8200                // 添加系统端口
+                "alwaysMatch" to mapOf(
+                    "platformName" to "Android",
+                    "appium:automationName" to "UiAutomator2",
+                    "appium:udid" to "TDCDU17905004388",
+                    "appium:appPackage" to "com.tdx.androidCCZQ",
+                    "appium:appActivity" to "com.tdx.Android.TdxAndroidActivity",  // 使用正确的Activity路径
+                    "appium:noReset" to false,
+                    "appium:autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
+                    "appium:skipServerInstallation" to true,
+                    "appium:remoteAppsCacheLimit" to 0,
+                    "appium:dontStopAppOnReset" to true,
+                    "appium:ensureWebviewsHavePages" to true,
+                    "appium:nativeWebScreenshot" to true,
+                    "appium:newCommandTimeout" to 3600,
+                    "appium:connectHardwareKeyboard" to true,  // 从日志中添加的参数
+                    "appium:disableWindowAnimation" to true,   // 添加窗口动画禁用
+                    "appium:disableSuppressAccessibilityService" to true, // 禁用无障碍服务抑制
+                    "appium:mjpegServerPort" to 7810,          // 添加MJPEG服务器端口
+                    "appium:systemPort" to 8200                // 添加系统端口
+                ),
+                "firstMatch" to listOf<Map<String, Any>>()
             )
             
             println("✅ 连接参数配置:")
-            capabilities.forEach { (key, value) ->
+            val alwaysMatch = capabilities["alwaysMatch"] as Map<*, *>
+            alwaysMatch.forEach { (key, value) ->
                 println("   $key: $value")
             }
             
@@ -233,30 +237,34 @@ class UIA2ConnectionTest {
         try {
             println("=== 获取页面XML功能测试 ===")
             
-            // 创建capabilities map使用与Appium服务器日志中完全相同的参数
+            // 创建W3C标准capabilities，与Appium服务器日志中的格式完全一致
             val capabilities = mapOf(
-                "platformName" to "Android",
-                "automationName" to "UiAutomator2",
-                "udid" to "TDCDU17905004388",
-                "appPackage" to "com.tdx.androidCCZQ",
-                "appActivity" to "com.tdx.Android.TdxAndroidActivity",  // 使用正确的Activity路径
-                "noReset" to false,
-                "autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
-                "skipServerInstallation" to true,
-                "remoteAppsCacheLimit" to 0,
-                "dontStopAppOnReset" to true,
-                "ensureWebviewsHavePages" to true,
-                "nativeWebScreenshot" to true,
-                "newCommandTimeout" to 3600,
-                "connectHardwareKeyboard" to true,  // 从日志中添加的参数
-                "disableWindowAnimation" to true,   // 添加窗口动画禁用
-                "disableSuppressAccessibilityService" to true, // 禁用无障碍服务抑制
-                "mjpegServerPort" to 7810,          // 添加MJPEG服务器端口
-                "systemPort" to 8200                // 添加系统端口
+                "alwaysMatch" to mapOf(
+                    "platformName" to "Android",
+                    "appium:automationName" to "UiAutomator2",
+                    "appium:udid" to "TDCDU17905004388",
+                    "appium:appPackage" to "com.tdx.androidCCZQ",
+                    "appium:appActivity" to "com.tdx.Android.TdxAndroidActivity",  // 使用正确的Activity路径
+                    "appium:noReset" to false,
+                    "appium:autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
+                    "appium:skipServerInstallation" to true,
+                    "appium:remoteAppsCacheLimit" to 0,
+                    "appium:dontStopAppOnReset" to true,
+                    "appium:ensureWebviewsHavePages" to true,
+                    "appium:nativeWebScreenshot" to true,
+                    "appium:newCommandTimeout" to 3600,
+                    "appium:connectHardwareKeyboard" to true,  // 从日志中添加的参数
+                    "appium:disableWindowAnimation" to true,   // 添加窗口动画禁用
+                    "appium:disableSuppressAccessibilityService" to true, // 禁用无障碍服务抑制
+                    "appium:mjpegServerPort" to 7810,          // 添加MJPEG服务器端口
+                    "appium:systemPort" to 8200                // 添加系统端口
+                ),
+                "firstMatch" to listOf<Map<String, Any>>()
             )
             
             println("✅ 连接参数配置:")
-            capabilities.forEach { (key, value) ->
+            val alwaysMatch = capabilities["alwaysMatch"] as Map<*, *>
+            alwaysMatch.forEach { (key, value) ->
                 println("   $key: $value")
             }
             
@@ -328,33 +336,37 @@ class UIA2ConnectionTest {
         try {
             println("=== UIA2连接参数配置验证 ===")
             
-            // 创建capabilities map使用与Appium服务器日志中完全相同的参数
+            // 创建W3C标准capabilities，与Appium服务器日志中的格式完全一致
             val capabilities = mapOf(
-                "platformName" to "Android",
-                "appium:automationName" to "UiAutomator2",
-                "appium:udid" to "TDCDU17905004388",
-                "appium:appPackage" to "com.tdx.androidCCZQ",
-                "appium:noReset" to false,
-                "appium:autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
-                "appium:skipServerInstallation" to true,
-                "appium:remoteAppsCacheLimit" to 0,
-                "appium:dontStopAppOnReset" to true,
-                "appium:ensureWebviewsHavePages" to true,
-                "appium:nativeWebScreenshot" to true,
-                "appium:newCommandTimeout" to 3600,
-                "appium:connectHardwareKeyboard" to true  // 从日志中添加的参数
+                "alwaysMatch" to mapOf(
+                    "platformName" to "Android",
+                    "appium:automationName" to "UiAutomator2",
+                    "appium:udid" to "TDCDU17905004388",
+                    "appium:appPackage" to "com.tdx.androidCCZQ",
+                    "appium:noReset" to false,
+                    "appium:autoGrantPermissions" to true,  // 关键修改：启用自动权限授予
+                    "appium:skipServerInstallation" to true,
+                    "appium:remoteAppsCacheLimit" to 0,
+                    "appium:dontStopAppOnReset" to true,
+                    "appium:ensureWebviewsHavePages" to true,
+                    "appium:nativeWebScreenshot" to true,
+                    "appium:newCommandTimeout" to 3600,
+                    "appium:connectHardwareKeyboard" to true  // 从日志中添加的参数
+                ),
+                "firstMatch" to listOf<Map<String, Any>>()
             )
             
             // 验证capabilities参数配置
             println("✅ UIA2连接参数配置验证")
-            println("平台名称: ${capabilities["platformName"]}")
-            println("自动化名称: ${capabilities["appium:automationName"]}")
-            println("设备ID: ${capabilities["appium:udid"]}")
-            println("应用包名: ${capabilities["appium:appPackage"]}")
-            println("自动授权权限: ${capabilities["appium:autoGrantPermissions"]}")
+            val alwaysMatch = capabilities["alwaysMatch"] as Map<*, *>
+            println("平台名称: ${alwaysMatch["platformName"]}")
+            println("自动化名称: ${alwaysMatch["appium:automationName"]}")
+            println("设备ID: ${alwaysMatch["appium:udid"]}")
+            println("应用包名: ${alwaysMatch["appium:appPackage"]}")
+            println("自动授权权限: ${alwaysMatch["appium:autoGrantPermissions"]}")
             
             // 验证关键参数
-            assert(capabilities["appium:autoGrantPermissions"] == true) {
+            assert(alwaysMatch["appium:autoGrantPermissions"] == true) {
                 "关键参数appium:autoGrantPermissions未设置为true"
             }
             

@@ -11,7 +11,7 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class WebDriverClient(
-    private val baseUrl: String = "http://localhost:6790"
+    private val baseUrl: String = "http://127.0.0.1:6790"
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -48,6 +48,7 @@ class WebDriverClient(
         val caps = JSONObject().apply {
             // 使用传入的capabilities参数，如果没有则使用默认值
             val platformName = capabilities["platformName"] ?: "Android"
+            // val automationName = capabilities["automationName"] ?: "UiAutomator2"
             val automationName = capabilities["automationName"] ?: "UiAutomator2"
             val udid = capabilities["udid"] ?: "TDCDU17905004388"
             val appPackage = capabilities["appPackage"] ?: "com.tdx.androidCCZQ"

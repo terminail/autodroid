@@ -70,27 +70,27 @@ autodroid-controller-app/
 ### 2. 安装UIA2 Server相关APK
 ```bash
 # 卸载旧版本（如有）
-adb -s <设备序列号> uninstall io.appium.uiautomator2.server
-adb -s <设备序列号> uninstall io.appium.uiautomator2.server.test
-adb -s <设备序列号> uninstall io.appium.settings
+adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server
+adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server.test
+adb -s TDCDU17905004388 uninstall io.appium.settings
 
 # 安装UIA2 Server核心组件
 # 请将以下路径替换为你的实际路径
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
 ```
 
 ### 4. 安装Controller-app
 ```bash
 # 安装AutoDroid Controller应用
-adb -s <设备序列号> install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s TDCDU17905004388 install -r app/build/outputs/apk/debug/app-debug.apk
 
 # 授予系统权限（技术人员执行）
-adb -s <设备序列号> shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
-adb -s <设备序列号> shell appops set com.autodroid.controller android:write_settings allow
-adb -s <设备序列号> shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
-adb -s <设备序列号> shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
+adb -s TDCDU17905004388 shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller android:write_settings allow
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
 ```
 
 ### 5. 初始化设备（技术人员执行）
@@ -113,7 +113,7 @@ adb connect <设备IP>:5555
 #### 启动AutoDroid Controller应用
 ```bash
 # 方式1：手动启动（推荐用于测试）
-adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivity
+adb -s TDCDU17905004388 shell am start -n com.autodroid.controller/.MainActivity
 
 # 方式2：通过Appium自动化启动（推荐用于生产环境）
 # 在Capabilities中配置：
@@ -127,20 +127,20 @@ adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivit
 #### 启动UIA2 Server服务
 ```bash
 # 启动UIA2 Server（后台运行）
-adb -s <设备序列号> shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+adb -s TDCDU17905004388 shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
 
 # 设置端口转发
-adb -s <设备序列号> forward tcp:8200 tcp:6790
+adb -s TDCDU17905004388 forward tcp:8200 tcp:6790
 ```
 
 #### 停止服务
 ```bash
 # 停止AutoDroid Controller应用
-adb -s <设备序列号> shell am force-stop com.autodroid.controller
+adb -s TDCDU17905004388 shell am force-stop com.autodroid.controller
 
 # 停止UIA2 Server
-adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server
-adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server.test
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
 ```
 
 ## UIA2 Server与Controller-app安装管理
@@ -150,37 +150,41 @@ adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server.test
 #### 安装UIA2 Server组件
 ```bash
 # 卸载旧版本
-adb -s <设备序列号> uninstall io.appium.uiautomator2.server
-adb -s <设备序列号> uninstall io.appium.uiautomator2.server.test
-adb -s <设备序列号> uninstall io.appium.settings
+adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server
+adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server.test
+adb -s TDCDU17905004388 uninstall io.appium.settings
 
 # 安装核心组件
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
-adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
+adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
 ```
 
 #### 启动UIA2 Server
 ```bash
+adb devices
+List of devices attached
+TDCDU17905004388        device
+
 # 启动UIA2 Server服务（后台运行）
-adb -s <设备序列号> shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+adb -s TDCDU17905004388 shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
 
 # 设置端口转发
-adb -s <设备序列号> forward tcp:8200 tcp:6790
+adb -s TDCDU17905004388 forward tcp:8200 tcp:6790
 
 # 验证服务状态
-adb -s <设备序列号> shell "ps | grep uiautomator"
-adb -s <设备序列号> shell "netstat -tuln | grep 6790"
+adb -s TDCDU17905004388 shell "ps | grep uiautomator"
+adb -s TDCDU17905004388 shell "netstat -tuln | grep 6790"
 ```
 
 #### 停止UIA2 Server
 ```bash
 # 停止UIA2服务
-adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server
-adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server.test
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
 
 # 清除端口转发
-adb -s <设备序列号> forward --remove tcp:8200
+adb -s TDCDU17905004388 forward --remove tcp:8200
 ```
 
 ### Controller-app安装与启动
@@ -191,19 +195,19 @@ adb -s <设备序列号> forward --remove tcp:8200
 ./gradlew assembleDebug
 
 # 安装APK
-adb -s <设备序列号> install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s TDCDU17905004388 install -r app/build/outputs/apk/debug/app-debug.apk
 
 # 授予系统权限
-adb -s <设备序列号> shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
-adb -s <设备序列号> shell appops set com.autodroid.controller android:write_settings allow
-adb -s <设备序列号> shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
-adb -s <设备序列号> shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
+adb -s TDCDU17905004388 shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller android:write_settings allow
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
+adb -s TDCDU17905004388 shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
 ```
 
 #### 启动Controller-app
 ```bash
 # 方式1：手动启动（推荐用于测试）
-adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivity
+adb -s TDCDU17905004388 shell am start -n com.autodroid.controller/.MainActivity
 
 # 方式2：通过Appium自动化启动（推荐用于生产环境）
 # 在Capabilities中配置：
@@ -217,10 +221,10 @@ adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivit
 #### 停止Controller-app
 ```bash
 # 停止应用
-adb -s <设备序列号> shell am force-stop com.autodroid.controller
+adb -s TDCDU17905004388 shell am force-stop com.autodroid.controller
 
 # 清除应用数据（可选）
-adb -s <设备序列号> shell pm clear com.autodroid.controller
+adb -s TDCDU17905004388 shell pm clear com.autodroid.controller
 ```
 
 ## 权限配置

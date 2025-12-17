@@ -838,7 +838,7 @@ class MainActivity : AppCompatActivity() {
                     .build()
                 
                 val request = Request.Builder()
-                    .url("http://127.0.0.1:6790/status")
+                    .url("http://localhost:6790/status")
                     .build()
                 
                 val response = client.newCall(request).execute()
