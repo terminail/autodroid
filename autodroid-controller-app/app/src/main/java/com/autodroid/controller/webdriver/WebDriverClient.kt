@@ -11,7 +11,7 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class WebDriverClient(
-    private val baseUrl: String = "http://127.0.0.1:6790"
+    private val baseUrl: String = "http://localhost:6790"
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -46,25 +46,26 @@ class WebDriverClient(
     
     fun initSession(capabilities: Map<*, *>): String {
         val caps = JSONObject().apply {
-            put("platformName", "Android")
-            put("appium:automationName", "UiAutomator2")
-            
             // 使用传入的capabilities参数，如果没有则使用默认值
-            val udid = capabilities["appium:udid"] ?: "TDCDU17905004388"
-            val appPackage = capabilities["appium:appPackage"] ?: "com.tdx.androidCCZQ"
-            val noReset = capabilities["appium:noReset"] ?: false
-            val autoGrantPermissions = capabilities["appium:autoGrantPermissions"] ?: true
-            val skipServerInstallation = capabilities["appium:skipServerInstallation"] ?: true
-            val remoteAppsCacheLimit = capabilities["appium:remoteAppsCacheLimit"] ?: 0
-            val dontStopAppOnReset = capabilities["appium:dontStopAppOnReset"] ?: true
+            val platformName = capabilities["platformName"] ?: "Android"
+            val automationName = capabilities["automationName"] ?: "UiAutomator2"
+            val udid = capabilities["udid"] ?: "TDCDU17905004388"
+            val appPackage = capabilities["appPackage"] ?: "com.tdx.androidCCZQ"
+            val noReset = capabilities["noReset"] ?: false
+            val autoGrantPermissions = capabilities["autoGrantPermissions"] ?: true
+            val skipServerInstallation = capabilities["skipServerInstallation"] ?: true
+            val remoteAppsCacheLimit = capabilities["remoteAppsCacheLimit"] ?: 0
+            val dontStopAppOnReset = capabilities["dontStopAppOnReset"] ?: true
             
-            put("appium:udid", udid)
-            put("appium:appPackage", appPackage)
-            put("appium:noReset", noReset)
-            put("appium:autoGrantPermissions", autoGrantPermissions)
-            put("appium:skipServerInstallation", skipServerInstallation)
-            put("appium:remoteAppsCacheLimit", remoteAppsCacheLimit)
-            put("appium:dontStopAppOnReset", dontStopAppOnReset)
+            put("platformName", platformName)
+            put("automationName", automationName)
+            put("udid", udid)
+            put("appPackage", appPackage)
+            put("noReset", noReset)
+            put("autoGrantPermissions", autoGrantPermissions)
+            put("skipServerInstallation", skipServerInstallation)
+            put("remoteAppsCacheLimit", remoteAppsCacheLimit)
+            put("dontStopAppOnReset", dontStopAppOnReset)
         }
         
         val data = JSONObject().apply {

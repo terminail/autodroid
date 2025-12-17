@@ -67,31 +67,161 @@ autodroid-controller-app/
 - 确保设备已安装Appium UIA2 Server相关APK
 - 准备ADB工具和USB连接线
 
-### 2. 编译应用
+### 2. 安装UIA2 Server相关APK
 ```bash
-./gradlew assembleDebug
+# 卸载旧版本（如有）
+adb -s <设备序列号> uninstall io.appium.uiautomator2.server
+adb -s <设备序列号> uninstall io.appium.uiautomator2.server.test
+adb -s <设备序列号> uninstall io.appium.settings
+
+# 安装UIA2 Server核心组件
+# 请将以下路径替换为你的实际路径
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
 ```
 
-### 3. 初始化设备（技术人员执行）
+### 4. 安装Controller-app
+```bash
+# 安装AutoDroid Controller应用
+adb -s <设备序列号> install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 授予系统权限（技术人员执行）
+adb -s <设备序列号> shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
+adb -s <设备序列号> shell appops set com.autodroid.controller android:write_settings allow
+adb -s <设备序列号> shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
+adb -s <设备序列号> shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
+```
+
+### 5. 初始化设备（技术人员执行）
 运行初始化脚本：
 ```bash
 init_script.bat
 ```
 
 脚本将自动完成：
-- 安装APK
 - 授予系统权限
 - 开启无线调试
 
-### 4. 无线连接（可选）
+### 6. 无线连接（可选）
 ```bash
 adb connect <设备IP>:5555
 ```
 
-### 5. 启动应用
-- 手动启动AutoDroid Controller应用
-- 授予必要权限
-- 点击"启动自动化服务"
+### 7. 启动应用
+
+#### 启动AutoDroid Controller应用
+```bash
+# 方式1：手动启动（推荐用于测试）
+adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivity
+
+# 方式2：通过Appium自动化启动（推荐用于生产环境）
+# 在Capabilities中配置：
+{
+  "appium:appPackage": "com.autodroid.controller",
+  "appium:appActivity": ".MainActivity",
+  "appium:noReset": false
+}
+```
+
+#### 启动UIA2 Server服务
+```bash
+# 启动UIA2 Server（后台运行）
+adb -s <设备序列号> shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+
+# 设置端口转发
+adb -s <设备序列号> forward tcp:8200 tcp:6790
+```
+
+#### 停止服务
+```bash
+# 停止AutoDroid Controller应用
+adb -s <设备序列号> shell am force-stop com.autodroid.controller
+
+# 停止UIA2 Server
+adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server
+adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server.test
+```
+
+## UIA2 Server与Controller-app安装管理
+
+### UIA2 Server安装与启动
+
+#### 安装UIA2 Server组件
+```bash
+# 卸载旧版本
+adb -s <设备序列号> uninstall io.appium.uiautomator2.server
+adb -s <设备序列号> uninstall io.appium.uiautomator2.server.test
+adb -s <设备序列号> uninstall io.appium.settings
+
+# 安装核心组件
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
+adb -s <设备序列号> install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
+```
+
+#### 启动UIA2 Server
+```bash
+# 启动UIA2 Server服务（后台运行）
+adb -s <设备序列号> shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+
+# 设置端口转发
+adb -s <设备序列号> forward tcp:8200 tcp:6790
+
+# 验证服务状态
+adb -s <设备序列号> shell "ps | grep uiautomator"
+adb -s <设备序列号> shell "netstat -tuln | grep 6790"
+```
+
+#### 停止UIA2 Server
+```bash
+# 停止UIA2服务
+adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server
+adb -s <设备序列号> shell am force-stop io.appium.uiautomator2.server.test
+
+# 清除端口转发
+adb -s <设备序列号> forward --remove tcp:8200
+```
+
+### Controller-app安装与启动
+
+#### 安装Controller-app
+```bash
+# 编译应用
+./gradlew assembleDebug
+
+# 安装APK
+adb -s <设备序列号> install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 授予系统权限
+adb -s <设备序列号> shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
+adb -s <设备序列号> shell appops set com.autodroid.controller android:write_settings allow
+adb -s <设备序列号> shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
+adb -s <设备序列号> shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
+```
+
+#### 启动Controller-app
+```bash
+# 方式1：手动启动（推荐用于测试）
+adb -s <设备序列号> shell am start -n com.autodroid.controller/.MainActivity
+
+# 方式2：通过Appium自动化启动（推荐用于生产环境）
+# 在Capabilities中配置：
+{
+  "appium:appPackage": "com.autodroid.controller",
+  "appium:appActivity": ".MainActivity",
+  "appium:noReset": false
+}
+```
+
+#### 停止Controller-app
+```bash
+# 停止应用
+adb -s <设备序列号> shell am force-stop com.autodroid.controller
+
+# 清除应用数据（可选）
+adb -s <设备序列号> shell pm clear com.autodroid.controller
+```
 
 ## 权限配置
 

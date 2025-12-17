@@ -89,6 +89,17 @@ class MainActivity : AppCompatActivity() {
                 status = AppiumStatus.STOPPED,
                 lastCheckTime = null
             ),
+            ControlItem.UIA2StatusItem(
+                id = "uia2_status",
+                title = "UIA2 服务状态信息",
+                description = "显示 UIA2 服务的实时状态信息",
+                status = "未知",
+                version = "",
+                port = "",
+                sessionId = "",
+                message = "",
+                lastCheckTime = null
+            ),
             ControlItem.TestControlItem(
                 id = "test_control",
                 title = "测试任务",
@@ -161,6 +172,22 @@ class MainActivity : AppCompatActivity() {
             },
             onShareToWechatClick = { appiumControl ->
                 shareToWechat()
+            },
+            onGetUIA2InfoClick = { uia2Status ->
+                when (uia2Status.id) {
+                    "uia2_status" -> {
+                        // 获取UIA2服务信息
+                        getUIA2ServiceInfo()
+                    }
+                }
+            },
+            onClearUIA2InfoClick = { uia2Status ->
+                when (uia2Status.id) {
+                    "uia2_status" -> {
+                        // 清除UIA2服务信息
+                        clearUIA2ServiceInfo()
+                    }
+                }
             }
         )
         
@@ -220,6 +247,13 @@ class MainActivity : AppCompatActivity() {
      * @return true表示权限充足，false表示权限不足
      */
     private fun checkAndHandlePermissions(): Boolean {
+        // 首先检查无障碍服务是否启用
+        if (!isAccessibilityServiceEnabled()) {
+            Toast.makeText(this, "需要启用无障碍服务才能使用自动化功能", Toast.LENGTH_LONG).show()
+            openAccessibilitySettings()
+            return false
+        }
+        
         // 对于 Android 14+ (API 34+)，FOREGROUND_SERVICE 是一个普通权限，会在安装时自动授予
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // Android 14+ 只需检查通知权限
@@ -249,6 +283,53 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
         }
+    }
+    
+    /**
+     * 检查无障碍服务是否已启用
+     */
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        return try {
+            val accessibilityEnabled = Settings.Secure.getInt(
+                contentResolver,
+                Settings.Secure.ACCESSIBILITY_ENABLED
+            ) == 1
+            
+            if (accessibilityEnabled) {
+                // 检查具体的无障碍服务是否启用
+                val enabledServices = Settings.Secure.getString(
+                    contentResolver,
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                ) ?: ""
+                
+                // 检查是否包含UiAutomator相关的服务
+                enabledServices.contains("io.appium.uiautomator2") || 
+                enabledServices.contains("com.android.systemui") ||
+                enabledServices.contains(packageName)
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking accessibility service", e)
+            false
+        }
+    }
+    
+    /**
+     * 显示无障碍服务启用对话框
+     */
+    private fun showAccessibilityServiceDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要启用无障碍服务")
+            .setMessage("自动化功能需要无障碍服务权限才能正常工作。\n\n请点击\"确定\"跳转到设置页面，然后找到\"AutoDroid Controller\"并启用无障碍服务。")
+            .setPositiveButton("确定") { _, _ ->
+                openAccessibilitySettings()
+            }
+            .setNegativeButton("取消") { _, _ ->
+                Toast.makeText(this, "您需要启用无障碍服务才能使用自动化功能", Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(false)
+            .show()
     }
     
 
@@ -602,7 +683,13 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(appiumStatusReceiver, filter)
         }
         
-        checkAndRequestPermissions()
+        // 检查无障碍服务是否启用
+        if (!isAccessibilityServiceEnabled()) {
+            showAccessibilityServiceDialog()
+        } else {
+            // 检查并请求权限
+            checkAndRequestPermissions()
+        }
     }
     
     override fun onDestroy() {
@@ -943,6 +1030,86 @@ adb shell ps | grep appium
             }
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to start get page XML test task", e)
+        }
+    }
+    
+    private fun getUIA2ServiceInfo() {
+        Thread {
+            try {
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(5, TimeUnit.SECONDS)
+                    .readTimeout(5, TimeUnit.SECONDS)
+                    .build()
+                
+                val request = Request.Builder()
+                    .url("http://localhost:6790/status")
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                
+                runOnUiThread {
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                        
+                        // 解析JSON响应
+                        try {
+                            val jsonObject = org.json.JSONObject(responseBody)
+                            val valueObject = jsonObject.getJSONObject("value")
+                            val buildObject = valueObject.getJSONObject("build")
+                            
+                            val status = if (valueObject.getBoolean("ready")) "运行中" else "未就绪"
+                            val version = buildObject.getString("version")
+                            val port = "6790"
+                            val sessionId = jsonObject.getString("sessionId")
+                            val message = valueObject.getString("message")
+                            
+                            // 更新UIA2状态信息
+                            updateUIA2StatusInfo(status, version, port, sessionId, message, currentTime)
+                            
+                            Toast.makeText(this@MainActivity, "UIA2服务信息获取成功", Toast.LENGTH_SHORT).show()
+                            Log.d("MainActivity", "UIA2 service info: $responseBody")
+                        } catch (e: Exception) {
+                            Toast.makeText(this@MainActivity, "解析UIA2服务信息失败", Toast.LENGTH_LONG).show()
+                            Log.e("MainActivity", "Failed to parse UIA2 service info", e)
+                        }
+                    } else {
+                        Toast.makeText(this@MainActivity, "UIA2服务无响应", Toast.LENGTH_LONG).show()
+                        updateUIA2StatusInfo("未运行", "", "", "", "服务无响应", null)
+                    }
+                }
+                
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "无法连接到UIA2服务", Toast.LENGTH_LONG).show()
+                    updateUIA2StatusInfo("连接失败", "", "", "", e.message ?: "未知错误", null)
+                    Log.e("MainActivity", "Error connecting to UIA2 service", e)
+                }
+            }
+        }.start()
+    }
+    
+    private fun clearUIA2ServiceInfo() {
+        updateUIA2StatusInfo("未知", "", "", "", "", null)
+        Toast.makeText(this, "UIA2服务信息已清除", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun updateUIA2StatusInfo(status: String, version: String, port: String, sessionId: String, message: String, lastCheckTime: String?) {
+        val uia2StatusIndex = controlItems.indexOfFirst { 
+            it is ControlItem.UIA2StatusItem && it.id == "uia2_status" 
+        }
+        
+        if (uia2StatusIndex != -1) {
+            val currentItem = controlItems[uia2StatusIndex] as ControlItem.UIA2StatusItem
+            controlItems[uia2StatusIndex] = currentItem.copy(
+                status = status,
+                version = version,
+                port = port,
+                sessionId = sessionId,
+                message = message,
+                lastCheckTime = lastCheckTime ?: currentItem.lastCheckTime
+            )
+            adapter.setData(controlItems)
         }
     }
 }

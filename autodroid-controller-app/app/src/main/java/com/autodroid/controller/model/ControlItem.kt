@@ -41,6 +41,18 @@ sealed class ControlItem {
         val action: String,
         val settingsType: SettingsType = SettingsType.ACCESSIBILITY
     ) : ControlItem()
+    
+    data class UIA2StatusItem(
+        val id: String,
+        val title: String,
+        val description: String,
+        val status: String = "未知",
+        val version: String = "",
+        val port: String = "",
+        val sessionId: String = "",
+        val message: String = "",
+        val lastCheckTime: String? = null
+    ) : ControlItem()
 }
 
 enum class ButtonStyle {

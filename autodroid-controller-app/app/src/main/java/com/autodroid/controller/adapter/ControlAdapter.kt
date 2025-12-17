@@ -20,7 +20,9 @@ class ControlAdapter(
     private val onSettingsClick: (ControlItem.SettingsItem) -> Unit,
     private val onCheckAppiumStatusClick: (ControlItem.AppiumControlItem) -> Unit,
     private val onAppiumAppInfoClick: (ControlItem.AppiumControlItem) -> Unit,
-    private val onShareToWechatClick: (ControlItem.AppiumControlItem) -> Unit
+    private val onShareToWechatClick: (ControlItem.AppiumControlItem) -> Unit,
+    private val onGetUIA2InfoClick: (ControlItem.UIA2StatusItem) -> Unit,
+    private val onClearUIA2InfoClick: (ControlItem.UIA2StatusItem) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var items: List<ControlItem> = emptyList()
@@ -37,6 +39,7 @@ class ControlAdapter(
             is ControlItem.AppiumControlItem -> VIEW_TYPE_APPIUM_CONTROL
             is ControlItem.TestControlItem -> VIEW_TYPE_TEST_CONTROL
             is ControlItem.SettingsItem -> VIEW_TYPE_SETTINGS
+            is ControlItem.UIA2StatusItem -> VIEW_TYPE_UIA2_STATUS
         }
     }
 
@@ -54,7 +57,7 @@ class ControlAdapter(
             }
             VIEW_TYPE_APPIUM_CONTROL -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_appium_control, parent, false)
+                    .inflate(R.layout.item_appium_uia2_control, parent, false)
                 AppiumControlViewHolder(view)
             }
             VIEW_TYPE_TEST_CONTROL -> {
@@ -67,6 +70,11 @@ class ControlAdapter(
                     .inflate(R.layout.item_settings, parent, false)
                 SettingsViewHolder(view)
             }
+            VIEW_TYPE_UIA2_STATUS -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_appium_uia2_status, parent, false)
+                UIA2StatusViewHolder(view)
+            }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -78,6 +86,7 @@ class ControlAdapter(
             is ControlItem.AppiumControlItem -> (holder as AppiumControlViewHolder).bind(item)
             is ControlItem.TestControlItem -> (holder as TestControlViewHolder).bind(item)
             is ControlItem.SettingsItem -> (holder as SettingsViewHolder).bind(item)
+            is ControlItem.UIA2StatusItem -> (holder as UIA2StatusViewHolder).bind(item)
         }
     }
 
@@ -241,11 +250,37 @@ class ControlAdapter(
         }
     }
 
+    inner class UIA2StatusViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvUIA2Status: TextView = itemView.findViewById(R.id.tvUIA2Status)
+        private val tvUIA2Version: TextView = itemView.findViewById(R.id.tvUIA2Version)
+        private val tvUIA2Port: TextView = itemView.findViewById(R.id.tvUIA2Port)
+        private val tvSessionId: TextView = itemView.findViewById(R.id.tvSessionId)
+        private val tvServiceMessage: TextView = itemView.findViewById(R.id.tvServiceMessage)
+        private val btnGetUIA2Info: Button = itemView.findViewById(R.id.btnGetUIA2Info)
+        private val btnClearUIA2Info: Button = itemView.findViewById(R.id.btnClearUIA2Info)
+        
+        fun bind(uia2Status: ControlItem.UIA2StatusItem) {
+            tvUIA2Status.text = uia2Status.status
+            tvUIA2Version.text = uia2Status.version
+            tvUIA2Port.text = uia2Status.port
+            tvSessionId.text = uia2Status.sessionId
+            tvServiceMessage.text = uia2Status.message
+            
+            btnGetUIA2Info.setOnClickListener {
+                onGetUIA2InfoClick(uia2Status)
+            }
+            btnClearUIA2Info.setOnClickListener {
+                onClearUIA2InfoClick(uia2Status)
+            }
+        }
+    }
+
     companion object {
         private const val VIEW_TYPE_HEADER = 0
         private const val VIEW_TYPE_SERVICE_CONTROL = 1
         private const val VIEW_TYPE_APPIUM_CONTROL = 2
         private const val VIEW_TYPE_TEST_CONTROL = 3
         private const val VIEW_TYPE_SETTINGS = 4
+        private const val VIEW_TYPE_UIA2_STATUS = 5
     }
 }
