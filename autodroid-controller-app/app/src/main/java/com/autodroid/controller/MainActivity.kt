@@ -854,10 +854,12 @@ adb shell ps | grep appium
                             "appium:appPackage": "com.tdx.androidCCZQ",
                             "appium:appActivity": "com.tdx.Android.TdxAndroidActivity",
                             "appium:noReset": false,
-                            "appium:autoGrantPermissions": true,
+                            "appium:autoGrantPermissions": false,
                             "appium:skipServerInstallation": true,
                             "appium:remoteAppsCacheLimit": 0,
-                            "appium:dontStopAppOnReset": true
+                            "appium:dontStopAppOnReset": true,
+                            "appium:disableWindowAnimation": true,
+                            "appium:ignoreUnimportantViews": true
                         }
                     }
                 },

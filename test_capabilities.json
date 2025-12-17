@@ -1,0 +1,29 @@
+{
+  "capabilities": {
+    "alwaysMatch": {
+      "platformName": "Android",
+      "appium:automationName": "UiAutomator2",
+      "appium:udid": "TDCDU17905004388",
+      "appium:appPackage": "com.tdx.androidCCZQ",
+      "appium:appActivity": "com.tdx.Android.TdxAndroidActivity",
+      "appium:noReset": false,
+      "appium:autoGrantPermissions": true,
+      "appium:skipServerInstallation": true,
+      "appium:remoteAppsCacheLimit": 0,
+      "appium:dontStopAppOnReset": true
+    },
+    "firstMatch": []
+  },
+  "desiredCapabilities": {
+    "platformName": "Android",
+    "appium:automationName": "UiAutomator2",
+    "appium:udid": "TDCDU17905004388",
+    "appium:appPackage": "com.tdx.androidCCZQ",
+    "appium:appActivity": "com.tdx.Android.TdxAndroidActivity",
+    "appium:noReset": false,
+    "appium:autoGrantPermissions": true,
+    "appium:skipServerInstallation": true,
+    "appium:remoteAppsCacheLimit": 0,
+    "appium:dontStopAppOnReset": true
+  }
+}
