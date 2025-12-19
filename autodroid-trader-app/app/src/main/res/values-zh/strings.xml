@@ -91,4 +91,6 @@
     <string name="nav_trade_plans">交计花</string>
     <string name="item_scan_qrcode">SCAN QRCODE</string>
     <string name="item_manual_set">MANUAL SET</string>
+    <string name="item_select_discovery_method">Select discovery method</string>
+
 </resources>

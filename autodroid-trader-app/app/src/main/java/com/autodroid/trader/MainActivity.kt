@@ -53,8 +53,7 @@ class MainActivity : AppCompatActivity() {
         // Check and request permissions
         checkAndRequestPermissions()
         
-        // Start floating window service
-        FloatWindowManager.showFloatWindow(this)
+        // Don't start float window service here - it will be started when app goes to background
         
     }
 

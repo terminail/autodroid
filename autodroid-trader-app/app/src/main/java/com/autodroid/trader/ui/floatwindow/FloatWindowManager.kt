@@ -61,7 +61,11 @@ object FloatWindowManager {
     fun hideFloatWindow(context: Context) {
         val intent = Intent(context, FloatWindowService::class.java)
         intent.action = FloatWindowService.ACTION_HIDE
-        context.stopService(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
     }
     
     /**

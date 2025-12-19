@@ -231,10 +231,10 @@ class LoginActivity : BaseActivity() {
 
         // Validate email
         if (TextUtils.isEmpty(email)) {
-            emailEditText!!.error = getString(R.string.email_required)
+            emailEditText!!.error = getString(R.string.email_required) as CharSequence
             isValid = false
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailEditText!!.error = getString(R.string.email_invalid)
+            emailEditText!!.error = getString(R.string.email_invalid) as CharSequence
             isValid = false
         }
 

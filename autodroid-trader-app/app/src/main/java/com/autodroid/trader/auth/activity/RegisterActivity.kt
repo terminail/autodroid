@@ -113,10 +113,10 @@ class RegisterActivity : BaseActivity() {
 
         // Validate email
         if (TextUtils.isEmpty(email)) {
-            emailEditText!!.setError(getString(R.string.email_required))
+            emailEditText!!.setError(getString(R.string.email_required) as CharSequence)
             isValid = false
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailEditText!!.setError(getString(R.string.email_invalid))
+            emailEditText!!.setError(getString(R.string.email_invalid) as CharSequence)
             isValid = false
         }
 

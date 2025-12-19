@@ -48,6 +48,9 @@ class FloatWindowService : Service() {
         super.onCreate()
         Log.d(TAG, "FloatWindowService created")
         
+        // 立即设置前台服务，避免RemoteServiceException
+        setupForegroundNotification()
+        
         // 初始化ViewModel
         floatWindowViewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(application).create(FloatWindowViewModel::class.java)
         
@@ -70,15 +73,45 @@ class FloatWindowService : Service() {
                 }
             }
         }
-        
-        // Android 8.0+ 需要设置前台服务
-        startForeground(1, android.app.Notification())
 
         return START_STICKY
     }
     
     override fun onBind(intent: Intent?): IBinder? {
         return null
+    }
+    
+    /**
+     * 设置前台服务通知
+     */
+    private fun setupForegroundNotification() {
+        // 所有Android版本都需要设置前台服务
+        val notification: android.app.Notification
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                "float_window",
+                "Float Window",
+                android.app.NotificationManager.IMPORTANCE_LOW
+            )
+            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+            
+            notification = android.app.Notification.Builder(this, "float_window")
+                .setContentTitle("Float Window")
+                .setContentText("Running in background")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .build()
+        } else {
+            // Android 8.0以下版本的通知
+            notification = android.app.Notification.Builder(this)
+                .setContentTitle("Float Window")
+                .setContentText("Running in background")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .build()
+        }
+        
+        startForeground(1, notification)
     }
     
     override fun onDestroy() {

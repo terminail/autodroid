@@ -33,14 +33,7 @@
         android:name="com.autodroid.trader.ui.my.MyFragment"
         android:label="My" />
 
-    <fragment
-        android:id="@+id/nav_server_detail"
-        android:name="com.autodroid.trader.ui.server.ServerDetailFragment"
-        android:label="Server Detail">
-        <argument
-            android:name="apiEndpoint"
-            app:argType="string" />
-    </fragment>
+
 
     <fragment
         android:id="@+id/tradeplanDetailFragment"
