@@ -230,9 +230,9 @@ class FloatWindowService : Service() {
         floatView = inflater.inflate(R.layout.float_window_collapse, null)
         
         // 更新窗口参数
-        layoutParams?.width = 48
-        layoutParams?.height = 300
-        layoutParams?.x = screenWidth - 48
+        layoutParams?.width = screenWidth/14
+        layoutParams?.height = screenHeight/5
+        layoutParams?.x = screenWidth - screenWidth/14
         layoutParams?.y = centerY
         
         // 重新设置触摸事件，支持点击展开
