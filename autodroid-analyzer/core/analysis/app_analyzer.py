@@ -897,7 +897,7 @@ def analyze_autodroid_manager(device_id: Optional[str] = None, output_dir: str =
     analyzer = AppAnalyzer(device_id=device_id, output_dir=output_dir)
     
     # Autodroid Manager的包名
-    autodroid_package = "com.autodroid.manager"
+    autodroid_package = "com.autodroid.trader"
     
     # 分析应用结构
     report = analyzer.analyze_app_structure(autodroid_package, max_depth=5)

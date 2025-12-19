@@ -13,7 +13,7 @@ The Server Connection UI was not properly updating when mDNS discovery failed. T
 ### Fixes Implemented
 
 #### 1. NetworkService Fix
-**File**: `autodroid-app/app/src/main/java/com/autodroid/manager/service/NetworkService.kt`
+**File**: `autodroid-trader-app/app/src/main/java/com/autodroid/manager/service/NetworkService.kt`
 
 **Before**:
 ```kotlin
@@ -34,7 +34,7 @@ private fun notifyDiscoveryFailedListeners() {
 ```
 
 #### 2. DashboardFragment Enhancement
-**File**: `autodroid-app/app/src/main/java/com/autodroid/manager/ui/dashboard/DashboardFragment.kt`
+**File**: `autodroid-trader-app/app/src/main/java/com/autodroid/manager/ui/dashboard/DashboardFragment.kt`
 
 **Before**: Hardcoded 56-second failure time
 ```kotlin

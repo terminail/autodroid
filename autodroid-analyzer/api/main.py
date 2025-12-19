@@ -1,6 +1,6 @@
 """
 Autodroid Analyzer FastAPI后端服务
-基于模块化设计的API服务，仿照autodroid-container结构
+基于模块化设计的API服务，仿照autodroid-trader-server结构
 """
 
 from fastapi import FastAPI, HTTPException, Request
@@ -114,7 +114,7 @@ async def root():
         "api_root": "/api"
     }
 
-# API根路径（与autodroid-container保持一致）
+# API根路径（与autodroid-trader-server保持一致）
 @app.get("/api")
 async def api_root():
     """API根路径"""
@@ -132,7 +132,7 @@ async def api_root():
         "documentation": "/docs"
     }
 
-# 健康检查端点（与autodroid-container保持一致）
+# 健康检查端点（与autodroid-trader-server保持一致）
 @app.get("/api/health")
 async def health_check():
     """健康检查端点"""

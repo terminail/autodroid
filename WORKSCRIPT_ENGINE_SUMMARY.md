@@ -19,25 +19,25 @@
 ### 1. 运行测试
 ```bash
 cd d:/git/autodroid
-python autodroid-container/core/workscript/test_engine.py
+python autodroid-trader-server/core/workscript/test_engine.py
 ```
 
 ### 2. 运行完整示例
 ```bash
 cd d:/git/autodroid
-python autodroid-container/workscripts/examples/complete_workflow_example.py
+python autodroid-trader-server/workscripts/examples/complete_workflow_example.py
 ```
 
 ### 3. 查看登录测试脚本
 ```bash
 cd d:/git/autodroid
-python autodroid-container/workscripts/examples/run_workplan.py
+python autodroid-trader-server/workscripts/examples/run_workplan.py
 ```
 
 ## 项目结构
 
 ```
-autodroid-container/
+autodroid-trader-server/
 ├── core/
 │   └── workscript/
 │       ├── __init__.py              # 模块初始化
@@ -48,7 +48,7 @@ autodroid-container/
 ├── workscripts/
 │   ├── WORKSCRIPTS_ENGINE_DESIGN.md    # 原始设计文档
 │   ├── WORKSCRIPT_SPECIFICATION.md     # 脚本规范文档
-│   ├── com.autodroid.manager/
+│   ├── com.autodroid.trader/
 │   │   └── login_test.py              # 登录功能测试脚本 ✅
 │   └── examples/
 │       ├── sample_workplan.json       # 工作计划示例
@@ -71,7 +71,7 @@ autodroid-container/
 
 ### login_test.py (实际测试例子)
 - 基于`BaseWorkScript`实现的登录功能测试脚本
-- 演示了如何测试`d:/git/autodroid/autodroid-app`的登录功能
+- 演示了如何测试`d:/git/autodroid/autodroid-trader-app`的登录功能
 - 包含完整的测试步骤和报告生成
 
 ## 使用示例
@@ -109,9 +109,9 @@ result = engine.execute_script(workplan)
 
 ## 文档
 
-- [工作脚本引擎详细文档](autodroid-container/core/workscript/README.md)
-- [工作脚本编写规范](autodroid-container/workscripts/WORKSCRIPT_SPECIFICATION.md)
-- [引擎设计原始文档](autodroid-container/workscripts/WORKSCRIPTS_ENGINE_DESIGN.md)
+- [工作脚本引擎详细文档](autodroid-trader-server/core/workscript/README.md)
+- [工作脚本编写规范](autodroid-trader-server/workscripts/WORKSCRIPT_SPECIFICATION.md)
+- [引擎设计原始文档](autodroid-trader-server/workscripts/WORKSCRIPTS_ENGINE_DESIGN.md)
 
 ## 测试结果
 

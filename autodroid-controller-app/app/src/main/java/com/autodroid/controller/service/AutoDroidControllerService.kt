@@ -14,7 +14,7 @@ import com.autodroid.controller.model.ActionType
 import com.autodroid.controller.model.AppiumStatus
 import com.autodroid.controller.model.AutomationTask
 import com.autodroid.controller.util.NotificationHelper
-import com.autodroid.controller.webdriver.WebDriverClient
+import com.autodroid.controller.webdriver.ContentProviderClient
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -26,7 +26,7 @@ class AutoDroidControllerService : Service() {
     private val TAG = "AutoDroidControllerService"
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
-    private lateinit var webDriverClient: WebDriverClient
+    private lateinit var webDriverClient: ContentProviderClient
     
     companion object {
         const val ACTION_START = "com.autodroid.controller.START"
@@ -45,15 +45,15 @@ class AutoDroidControllerService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "AutomationService created")
-        webDriverClient = WebDriverClient()
+        webDriverClient = ContentProviderClient(this)
         
         // 注意：不在这里启动定期任务检查，而是在服务真正启动时启动
         // schedulePeriodicTaskCheck() 移动到 onStartCommand 中
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 立即启动前台服务通知，避免RemoteServiceException
-        startForegroundService()
+        // 启动服务
+        startService()
         
         when (intent?.action) {
             ACTION_START -> {
@@ -299,29 +299,8 @@ class AutoDroidControllerService : Service() {
         Log.d(TAG, "Broadcasted Service status: $status")
     }
     
-    private fun startForegroundService() {
-        try {
-            val notification = NotificationHelper.createServiceNotification(this)
-            startForeground(NotificationHelper.SERVICE_NOTIFICATION_ID, notification)
-            Log.i(TAG, "Foreground service started successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start foreground service", e)
-            // 即使通知创建失败，也要确保服务能启动
-            try {
-                val fallbackNotification = NotificationCompat.Builder(this, NotificationHelper.SERVICE_CHANNEL_ID)
-                    .setContentTitle("AutoDroid Controller")
-                    .setContentText("自动化测试服务运行中")
-                    .setSmallIcon(android.R.drawable.stat_notify_sync)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .build()
-                startForeground(NotificationHelper.SERVICE_NOTIFICATION_ID, fallbackNotification)
-                Log.i(TAG, "Fallback foreground service started")
-            } catch (fallbackException: Exception) {
-                Log.e(TAG, "Failed to start fallback foreground service", fallbackException)
-                // 最后的备用方案
-                stopSelf()
-            }
-        }
+    private fun startService() {
+        Log.i(TAG, "Service started successfully")
     }
     
     private fun schedulePeriodicTaskCheck() {
@@ -565,11 +544,7 @@ class TaskCheckWorker(context: android.content.Context, params: WorkerParameters
             action = AutoDroidControllerService.ACTION_START
         }
         
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            applicationContext.startForegroundService(intent)
-        } else {
-            applicationContext.startService(intent)
-        }
+        applicationContext.startService(intent)
         
         return Result.success()
     }

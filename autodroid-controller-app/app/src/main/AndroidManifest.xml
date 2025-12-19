@@ -6,7 +6,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- 存储权限（已移除，应用使用作用域存储） -->
+    <!-- 存储权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <!-- 前台服务权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -22,9 +24,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- 无障碍服务权限 -->
-    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE"
-        tools:ignore="ProtectedPermissions" />
 
     <!-- 设备信息权限 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -54,30 +53,12 @@
             </intent-filter>
         </activity>
 
-        <!-- UIA2 Server Service Activity -->
-        <activity
-            android:name="io.appium.uiautomator2.server.Service"
-            android:exported="true"
-            tools:ignore="MissingClass" />
-
         <service
             android:name=".service.AutoDroidControllerService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:stopWithTask="false" />
 
-        <!-- 无障碍服务配置（可选） -->
-        <service
-            android:name=".service.AutoDroidAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
 
     </application>
 

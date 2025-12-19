@@ -200,7 +200,7 @@ class AnalysisRunner:
                 {
                     "page_id": "demo_login",
                     "title": "登录页面",
-                    "activity_name": "com.autodroid.manager.LoginActivity",
+                    "activity_name": "com.autodroid.trader.LoginActivity",
                     "element_count": 8,
                     "elements": [
                         {"text": "用户名", "clickable": True, "class": "android.widget.EditText"},
@@ -212,7 +212,7 @@ class AnalysisRunner:
                 {
                     "page_id": "demo_main",
                     "title": "主页面",
-                    "activity_name": "com.autodroid.manager.MainActivity",
+                    "activity_name": "com.autodroid.trader.MainActivity",
                     "element_count": 15,
                     "elements": [
                         {"text": "设备列表", "clickable": True, "class": "android.widget.Button"},
@@ -224,7 +224,7 @@ class AnalysisRunner:
                 {
                     "page_id": "demo_settings",
                     "title": "设置页面",
-                    "activity_name": "com.autodroid.manager.SettingsActivity",
+                    "activity_name": "com.autodroid.trader.SettingsActivity",
                     "element_count": 12,
                     "elements": [
                         {"text": "语言设置", "clickable": True, "class": "android.widget.TextView"},
@@ -278,7 +278,7 @@ class AnalysisRunner:
 
 ## 分析概要
 - 分析时间: 演示模式
-- 分析应用: com.autodroid.manager
+- 分析应用: com.autodroid.trader
 - 最大深度: {max_depth}
 - 启用监控: {enable_monitoring}
 

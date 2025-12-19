@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AutoDroid Controller</string>
-    <string name="accessibility_service_description">AutoDroid自动化测试服务，用于执行UI自动化任务</string>
+    <string name="app_name">autodroid.controller</string>
 
     <!-- Main Activity Strings -->
     <string name="app_title">AutoDroid Controller</string>

@@ -56,7 +56,7 @@ class ConfigManager:
                 'id': 'emulator-5554'
             },
             'app': {
-                'package_name': 'com.autodroid.manager'
+                'package_name': 'com.autodroid.trader'
             },
             'output': {
                 'screenshots_dir': 'analysis_output/screenshots',

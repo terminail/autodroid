@@ -53,6 +53,21 @@ sealed class ControlItem {
         val message: String = "",
         val lastCheckTime: String? = null
     ) : ControlItem()
+    
+    data class AppiumStatusItem(
+        val id: String,
+        val title: String,
+        val description: String,
+        val status: String = "未知",
+        val processStatus: String = "未检查",
+        val portStatus: String = "未检查",
+        val httpStatus: String = "未检查",
+        val version: String = "",
+        val port: String = "",
+        val sessionId: String = "",
+        val message: String = "",
+        val lastCheckTime: String? = null
+    ) : ControlItem()
 }
 
 enum class ButtonStyle {

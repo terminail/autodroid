@@ -192,7 +192,7 @@ class UIA2ConnectionTest {
                     println("尝试创建会话 (第${retryCount + 1}次)...")
                     
                     // 直接使用WebDriverClient测试连接UIA2服务
-                    sessionId = webDriverClient.initSession(capabilities)
+                    sessionId = webDriverClient.initSession("com.tdx.androidCCZQ", ".MainActivity")
                     
                     // 验证会话是否成功创建
                     assert(sessionId.isNotEmpty()) {
@@ -278,7 +278,7 @@ class UIA2ConnectionTest {
                     println("尝试创建会话 (第${retryCount + 1}次)...")
                     
                     // 直接使用WebDriverClient测试连接手机UIA2服务
-                    sessionId = webDriverClient.initSession(capabilities)
+                    sessionId = webDriverClient.initSession("com.tdx.androidCCZQ", ".MainActivity")
                     
                     // 验证会话是否成功创建
                     assert(sessionId.isNotEmpty()) {
@@ -382,7 +382,7 @@ class UIA2ConnectionTest {
                     println("尝试创建会话 (第${retryCount + 1}次)...")
                     
                     // 实际连接到UIA2服务器创建会话
-                    sessionId = webDriverClient.initSession(capabilities)
+                    sessionId = webDriverClient.initSession("com.tdx.androidCCZQ", ".MainActivity")
                     
                     // 验证会话是否成功创建
                     assert(sessionId.isNotEmpty()) {

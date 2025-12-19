@@ -2,7 +2,7 @@
 
 ## 概述
 
-Autodroid Analyzer 是一个基于 Python 的 Android 应用分析工具，专门用于自动化分析和理解 Android 应用的用户界面和交互流程。
+Autodroid Analyzer 是一个基于 Python 的 Android 应用分析工具，专门用于自动化分析和理解 Android 应用的用户界面和交互流程。[废弃（还是采用appium方案）]
 
 ## 架构说明
 
@@ -365,7 +365,7 @@ python example_usage.py
 # 直接分析指定应用
 from autodroid_analyzer.analysis.interactive_analyzer import InteractiveAppAnalyzer
 
-analyzer = InteractiveAppAnalyzer("emulator-5554", "com.autodroid.manager")
+analyzer = InteractiveAppAnalyzer("emulator-5554", "com.autodroid.trader")
 analyzer.analyze_with_user_interaction(max_depth=3)
 ```
 

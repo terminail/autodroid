@@ -47,8 +47,7 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     
-    // OkHttp for WebDriver communication
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Note: OkHttp dependency removed - using Content Provider instead of HTTP
     
     // Coroutines for background tasks
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")

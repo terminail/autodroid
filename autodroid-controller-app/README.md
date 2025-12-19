@@ -25,7 +25,7 @@ autodroid-controller-app/
 │   │   ├── model/
 │   │   │   └── TaskModel.kt          # 任务数据模型
 │   │   ├── webdriver/
-│   │   │   └── WebDriverClient.kt    # WebDriver客户端
+│   │   │   └── ContentProviderClient.kt    # Content Provider客户端
 │   │   ├── service/
 │   │   │   └── AutomationService.kt  # 自动化服务
 │   │   ├── util/
@@ -46,8 +46,9 @@ autodroid-controller-app/
 - 管理WebDriver会话状态
 - 支持变量引用（如`${lastElementId}`）
 
-### 2. WebDriverClient (WebDriver客户端)
-- 封装与UIA2 Server的HTTP通信
+### 2. ContentProviderClient (Content Provider客户端)
+- 使用HttpProxyProvider Content Provider与UIA2 Server通信
+- 避免Android沙盒限制，无需网络权限
 - 支持完整的WebDriver协议操作
 - 错误处理和重试机制
 
@@ -61,13 +62,13 @@ autodroid-controller-app/
 - 权限管理和设置跳转
 - 测试任务执行
 
-## 部署流程
+## 快速开始
 
 ### 1. 环境准备
 - 确保设备已安装Appium UIA2 Server相关APK
 - 准备ADB工具和USB连接线
 
-### 2. 安装UIA2 Server相关APK
+### 2. 安装UIA2 Server组件
 ```bash
 # 卸载旧版本（如有）
 adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server
@@ -76,14 +77,17 @@ adb -s TDCDU17905004388 uninstall io.appium.settings
 
 # 安装UIA2 Server核心组件
 # 请将以下路径替换为你的实际路径
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
+adb -s TDCDU17905004388 install "C:\\Users\\Administrator\\.appium\\node_modules\\appium-uiautomator2-driver\\node_modules\\appium-uiautomator2-server\\apks\\appium-uiautomator2-server-v9.9.0.apk"
+adb -s TDCDU17905004388 install "C:\\Users\\Administrator\\.appium\\node_modules\\appium-uiautomator2-driver\\node_modules\\appium-uiautomator2-server\\apks\\appium-uiautomator2-server-debug-androidTest.apk"
+adb -s TDCDU17905004388 install "C:\\Users\\Administrator\\.appium\\node_modules\\appium-uiautomator2-driver\\node_modules\\io.appium.settings\\apks\\settings_apk-debug.apk"
 ```
 
-### 4. 安装Controller-app
+### 3. 安装Controller-app
 ```bash
-# 安装AutoDroid Controller应用
+# 编译应用
+./gradlew assembleDebug
+
+# 安装APK
 adb -s TDCDU17905004388 install -r app/build/outputs/apk/debug/app-debug.apk
 
 # 授予系统权限（技术人员执行）
@@ -93,7 +97,7 @@ adb -s TDCDU17905004388 shell appops set com.autodroid.controller REQUEST_INSTAL
 adb -s TDCDU17905004388 shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
 ```
 
-### 5. 初始化设备（技术人员执行）
+### 4. 初始化设备（技术人员执行）
 运行初始化脚本：
 ```bash
 init_script.bat
@@ -103,105 +107,26 @@ init_script.bat
 - 授予系统权限
 - 开启无线调试
 
-### 6. 无线连接（可选）
+### 5. 无线连接（可选）
 ```bash
 adb connect <设备IP>:5555
 ```
 
-### 7. 启动应用
+### 6. 启动服务
 
-#### 启动AutoDroid Controller应用
+#### 启动UIA2 Server
 ```bash
-# 方式1：手动启动（推荐用于测试）
-adb -s TDCDU17905004388 shell am start -n com.autodroid.controller/.MainActivity
+# 停止/重新启动ADB服务
+adb kill-server; adb start-server 
 
-# 方式2：通过Appium自动化启动（推荐用于生产环境）
-# 在Capabilities中配置：
-{
-  "appium:appPackage": "com.autodroid.controller",
-  "appium:appActivity": ".MainActivity",
-  "appium:noReset": false
-}
-```
-
-#### 启动UIA2 Server服务
-```bash
 # 启动UIA2 Server（后台运行）
 adb -s TDCDU17905004388 shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
 
 # 设置端口转发
 adb -s TDCDU17905004388 forward tcp:8200 tcp:6790
-```
 
-#### 停止服务
-```bash
-# 停止AutoDroid Controller应用
-adb -s TDCDU17905004388 shell am force-stop com.autodroid.controller
 
-# 停止UIA2 Server
-adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
-adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
-```
-
-## UIA2 Server与Controller-app安装管理
-
-### UIA2 Server安装与启动
-
-#### 安装UIA2 Server组件
-```bash
-# 卸载旧版本
-adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server
-adb -s TDCDU17905004388 uninstall io.appium.uiautomator2.server.test
-adb -s TDCDU17905004388 uninstall io.appium.settings
-
-# 安装核心组件
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-v9.9.0.apk"
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\appium-uiautomator2-server\apks\appium-uiautomator2-server-debug-androidTest.apk"
-adb -s TDCDU17905004388 install "C:\Users\Administrator\.appium\node_modules\appium-uiautomator2-driver\node_modules\io.appium.settings\apks\settings_apk-debug.apk"
-```
-
-#### 启动UIA2 Server
-```bash
-adb devices
-List of devices attached
-TDCDU17905004388        device
-
-# 启动UIA2 Server服务（后台运行）
-adb -s TDCDU17905004388 shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
-
-# 设置端口转发
-adb -s TDCDU17905004388 forward tcp:8200 tcp:6790
-
-# 验证服务状态
-adb -s TDCDU17905004388 shell "ps | grep uiautomator"
-adb -s TDCDU17905004388 shell "netstat -tuln | grep 6790"
-```
-
-#### 停止UIA2 Server
-```bash
-# 停止UIA2服务
-adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
-adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
-
-# 清除端口转发
-adb -s TDCDU17905004388 forward --remove tcp:8200
-```
-
-### Controller-app安装与启动
-
-#### 安装Controller-app
-```bash
-# 编译应用
-./gradlew assembleDebug
-
-# 安装APK
-adb -s TDCDU17905004388 install -r app/build/outputs/apk/debug/app-debug.apk
-
-# 授予系统权限
-adb -s TDCDU17905004388 shell pm grant com.autodroid.controller android.permission.WRITE_SECURE_SETTINGS
-adb -s TDCDU17905004388 shell appops set com.autodroid.controller android:write_settings allow
-adb -s TDCDU17905004388 shell appops set com.autodroid.controller REQUEST_INSTALL_PACKAGES allow
-adb -s TDCDU17905004388 shell appops set com.autodroid.controller SYSTEM_ALERT_WINDOW allow
+adb shell pm list packages | grep -E "(autodroid|appium)"
 ```
 
 #### 启动Controller-app
@@ -218,10 +143,43 @@ adb -s TDCDU17905004388 shell am start -n com.autodroid.controller/.MainActivity
 }
 ```
 
-#### 停止Controller-app
+### 7. 验证服务状态
+
+#### 检查UIA2 Server状态
 ```bash
-# 停止应用
+# 验证UIA2 Server是否正常运行
+adb -s TDCDU17905004388 shell "ps | grep uiautomator"
+
+# 检查端口是否监听
+adb -s TDCDU17905004388 shell "netstat -tuln | grep 6790"
+
+# 通过HTTP接口验证服务状态
+curl localhost:8200/status
+
+# 期望响应：
+{"sessionId":"None","value":{"build":{"version":"9.9.0","versionCode":244},"message":"UiAutomator2 Server is ready to accept commands","ready":true}}
+```
+
+#### 检查Controller-app状态
+```bash
+# 检查应用是否在运行
+adb -s TDCDU17905004388 shell "ps | grep autodroid"
+
+# 检查应用进程状态
+adb -s TDCDU17905004388 shell "dumpsys activity services com.autodroid.controller"
+```
+
+### 8. 停止服务
+```bash
+# 停止AutoDroid Controller应用
 adb -s TDCDU17905004388 shell am force-stop com.autodroid.controller
+
+# 停止UIA2 Server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
+
+# 清除端口转发
+adb -s TDCDU17905004388 forward --remove tcp:8200
 
 # 清除应用数据（可选）
 adb -s TDCDU17905004388 shell pm clear com.autodroid.controller
@@ -245,12 +203,8 @@ adb -s TDCDU17905004388 shell pm clear com.autodroid.controller
     {
       "action": "initSession",
       "params": {
-        "capabilities": {
-          "platformName": "Android",
-          "appPackage": "com.example.app",
-          "appActivity": ".MainActivity",
-          "automationName": "UiAutomator2"
-        }
+        "appPackage": "com.example.app",
+        "appActivity": ".MainActivity"
       }
     },
     {
@@ -271,7 +225,7 @@ adb -s TDCDU17905004388 shell pm clear com.autodroid.controller
 ```
 
 ### 支持的操作类型
-- `initSession` - 初始化WebDriver会话
+- `initSession` - 初始化WebDriver会话（仅需appPackage和appActivity参数）
 - `findElement` - 查找元素
 - `click` - 点击元素
 - `sendKeys` - 输入文本
@@ -324,6 +278,26 @@ Content-Type: application/json
 2. **网络连接失败**: 检查设备网络和服务器地址
 3. **UIA2 Server未响应**: 确认Server是否正常运行
 4. **任务执行失败**: 检查任务JSON格式和参数
+
+### UIA2 Server状态检查
+```bash
+# 检查UIA2 Server进程状态
+adb -s TDCDU17905004388 shell "ps | grep uiautomator"
+
+# 检查端口监听状态
+adb -s TDCDU17905004388 shell "netstat -tuln | grep 6790"
+
+# 检查服务是否可访问
+curl localhost:8200/status
+
+# 重启UIA2 Server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server
+adb -s TDCDU17905004388 shell am force-stop io.appium.uiautomator2.server.test
+adb -s TDCDU17905004388 shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+
+# 重新建立端口转发
+adb -s TDCDU17905004388 forward tcp:8200 tcp:6790
+```
 
 ### 日志查看
 ```bash
