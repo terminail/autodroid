@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 # 设置参数
 width = 48  # dp
 height = 300  # dp
-background_color = "#80CC0000"  # 半透明中国红
+background_color = "#80CC0000"  # 50%透明度的中国红
 text_color = "#FFFFFF"  # 白色
 text = "自动交计花"
 
