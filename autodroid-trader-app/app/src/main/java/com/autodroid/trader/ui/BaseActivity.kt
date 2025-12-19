@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.MyApplication
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 /**
  * BaseActivity类提供所有Activity的通用功能
@@ -117,4 +119,29 @@ abstract class BaseActivity : AppCompatActivity() {
             }
         })
     }
+    
+    protected fun checkPermissions() {
+        // Move permission checking logic here
+    }
+
+    protected val localIpAddress: String?
+        get() {
+            try {
+                val wifiInterface =
+                    NetworkInterface.getByName("wlan0")
+                if (wifiInterface != null) {
+                    val addresses =
+                        wifiInterface.getInetAddresses()
+                    while (addresses.hasMoreElements()) {
+                        val address = addresses.nextElement()
+                        if (!address.isLoopbackAddress && address is Inet4Address) {
+                            return address.hostAddress
+                        }
+                    }
+                }
+                return "Not Available"
+            } catch (e: Exception) {
+                return "Not Available"
+            }
+        }
 }

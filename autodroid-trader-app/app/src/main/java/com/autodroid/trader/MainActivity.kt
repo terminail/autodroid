@@ -13,6 +13,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
 import com.autodroid.trader.R
+import com.autodroid.trader.ui.floatwindow.FloatWindowManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -51,6 +52,9 @@ class MainActivity : AppCompatActivity() {
         
         // Check and request permissions
         checkAndRequestPermissions()
+        
+        // Start floating window service
+        FloatWindowManager.showFloatWindow(this)
         
     }
 

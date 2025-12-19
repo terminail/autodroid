@@ -18,11 +18,6 @@ graph TB
     D -.->|LiveData更新| A
     E -.->|数据同步| D
     
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#e8f5e8
-    style D fill:#fff3e0
-    style E fill:#ffebee
 ```
 
 ### 本地优先设计理念
@@ -109,11 +104,6 @@ graph TD
     C --> D[ServerRepository<br/>数据访问]
     D --> E[ServerDao<br/>数据库操作]
     
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#e8f5e8
-    style D fill:#fff3e0
-    style E fill:#ffebee
 ```
 
 ### 依赖倒置原则 (DIP)
@@ -126,9 +116,6 @@ graph BT
     F[Repository Layer] --> E
     G[Data Source] --> H[数据源抽象接口]
     
-    style B fill:#f3e5f5
-    style E fill:#fff3e0
-    style H fill:#e8f5e8
 ```
 
 ## 数据持久化方案
