@@ -76,6 +76,18 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         // NetworkService now handles its own lifecycle
     }
+    
+    override fun onResume() {
+        super.onResume()
+        // Hide float window when app is in foreground
+        FloatWindowManager.hideFloatWindow(this)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Show float window when app is in background
+        FloatWindowManager.showFloatWindow(this)
+    }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()

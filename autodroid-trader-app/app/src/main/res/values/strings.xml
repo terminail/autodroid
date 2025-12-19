@@ -12,14 +12,14 @@
     <string name="menu_about">About</string>
     <string name="notification_title">Auto Trader</string>
     <string name="notification_message">Connected to Autodroid Server</string>
-    
+
     <!-- Biometric Authentication -->
     <string name="biometric_login_title">Biometric Login</string>
     <string name="biometric_login_subtitle">Use your fingerprint to login</string>
     <string name="biometric_login_description">Authenticate using your registered fingerprint</string>
     <string name="biometric_auth_failed">Biometric authentication failed</string>
     <string name="biometric_error">Biometric error: </string>
-    
+
     <!-- Login Screen -->
     <string name="login_button">Login</string>
     <string name="login_button_loading">Logging in...</string>
@@ -27,13 +27,13 @@
     <string name="email_invalid">Please enter a valid email address</string>
     <string name="password_required">Password is required</string>
     <string name="password_min_length">Password must be at least 6 characters</string>
-    
+
     <!-- Register Screen -->
     <string name="register_button">Register</string>
     <string name="register_button_loading">Registering...</string>
     <string name="confirm_password">Please confirm your password</string>
     <string name="passwords_mismatch">Passwords do not match</string>
-    
+
     <!-- Main Screen -->
     <string name="disconnected">Disconnected</string>
     <string name="server_ip">Server IP: </string>
@@ -49,7 +49,7 @@
     <string name="android_version_label">Android Version: </string>
     <string name="local_ip_label">Local IP: </string>
     <string name="unknown">unknown</string>
-    
+
     <!-- Parameter Strings -->
     <string name="show_parameters">Show Parameters</string>
     <string name="hide_parameters">Hide Parameters</string>
@@ -57,7 +57,7 @@
     <string name="retry_count">Retry Count:</string>
     <string name="step_delay_ms">Step Delay (ms):</string>
     <string name="device_selection">Device Selection:</string>
-    
+
     <!-- Device Selection Options -->
     <string-array name="device_selection_options">
         <item>Auto Select</item>
@@ -69,7 +69,7 @@
         <item>current</item>
         <item>all</item>
     </string-array>
-    
+
     <!-- Server Connection Status -->
     <string name="server_connection_checking">Checking server connection...</string>
     <string name="server_connection_success">Server connection successful</string>
@@ -85,7 +85,8 @@
     <string name="server_not_connected">Server not connected. Please check server connection first.</string>
     <string name="server_connection_retrying">Retrying server connection...</string>
     <string name="server_connection_timeout">Server connection timeout</string>
-    <string name="server_connection_network_error">Network error, please check your network connection</string>
+    <string name="server_connection_network_error">Network error, please check your network
+        connection</string>
     <string name="server_connection_method_qr">Connect via QR code manually</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_my">My</string>
