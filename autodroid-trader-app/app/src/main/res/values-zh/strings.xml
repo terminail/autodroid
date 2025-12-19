@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">自动交计花</string>
+    <string name="app_description">Autodroid 自动化系统的 Android 管理器应用</string>
+    <string name="connection_status_label">连接状态</string>
+    <string name="device_info">设备信息</string>
+    <string name="status_connected">已连接</string>
+    <string name="status_disconnected">已断开</string>
+    <string name="status_connecting">连接中...</string>
+    <string name="action_settings">设置</string>
+    <string name="action_about">关于</string>
+    <string name="menu_settings">设置</string>
+    <string name="menu_about">关于</string>
+    <string name="notification_title">Auto Trader</string>
+    <string name="notification_message">已连接到 Autodroid 服务器</string>
+    
+    <!-- Biometric Authentication -->
+    <string name="biometric_login_title">生物识别登录</string>
+    <string name="biometric_login_subtitle">使用指纹登录</string>
+    <string name="biometric_login_description">使用已注册的指纹进行身份验证</string>
+    <string name="biometric_auth_failed">生物识别验证失败</string>
+    <string name="biometric_error">生物识别错误: </string>
+    
+    <!-- Login Screen -->
+    <string name="login_button">登录</string>
+    <string name="login_button_loading">登录中...</string>
+    <string name="email_required">请输入邮箱</string>
+    <string name="email_invalid">请输入有效的邮箱地址</string>
+    <string name="password_required">请输入密码</string>
+    <string name="password_min_length">密码长度至少为6个字符</string>
+    
+    <!-- Register Screen -->
+    <string name="register_button">注册</string>
+    <string name="register_button_loading">注册中...</string>
+    <string name="confirm_password">请确认密码</string>
+    <string name="passwords_mismatch">密码不匹配</string>
+    
+    <!-- Main Screen -->
+    <string name="disconnected">已断开</string>
+    <string name="server_ip">服务器IP: </string>
+    <string name="server_status">服务器状态: </string>
+    <string name="connected">已连接</string>
+    <string name="no_trade_plans">没有可用的交易计划</string>
+<string name="available_trade_plans">可用交易计划:</string>
+    <string name="permissions_granted">权限已授予</string>
+    <string name="permissions_denied">部分权限被拒绝</string>
+    <string name="connection_status">连接状态: </string>
+    <string name="device_label">设备: </string>
+    <string name="android_version_label">Android版本: </string>
+    <string name="local_ip_label">本地IP: </string>
+    <string name="unknown">未知</string>
+    <string name="show_parameters">显示参数</string>
+    <string name="hide_parameters">隐藏参数</string>
+    <string name="timeout_seconds">超时时间 (秒):</string>
+    <string name="retry_count">重试次数:</string>
+    <string name="step_delay_ms">步骤延迟 (毫秒):</string>
+    <string name="device_selection">设备选择:</string>
+    
+    <!-- Device Selection Options -->
+    <string-array name="device_selection_options">
+        <item>自动选择</item>
+        <item>当前设备</item>
+        <item>所有设备</item>
+    </string-array>
+    <string-array name="device_selection_values">
+        <item>auto</item>
+        <item>current</item>
+        <item>all</item>
+    </string-array>
+    
+    <!-- Server Connection Status -->
+    <string name="server_connection_checking">正在检查服务器连接...</string>
+    <string name="server_connection_success">服务器连接成功</string>
+    <string name="server_connection_failed">服务器连接失败</string>
+    <string name="server_connection_waiting">正在等待服务器连接...</string>
+    <string name="server_discovery_in_progress">正在发现服务器...</string>
+    <string name="server_discovery_failed">服务器发现失败</string>
+    <string name="qr_code_fallback_available">QR码回退可用</string>
+    <string name="connection_method_qr">QR码扫描</string>
+    <string name="connection_method_manual">手动输入</string>
+    <string name="login_requires_server_connection">请先建立服务器连接</string>
+    <string name="server_connection_required">需要服务器连接</string>
+    <string name="server_not_connected">服务器未连接，请先检查服务器连接</string>
+    <string name="server_connection_retrying">正在重试服务器连接...</string>
+    <string name="server_connection_timeout">服务器连接超时</string>
+    <string name="server_connection_network_error">网络错误，请检查网络连接</string>
+    <string name="server_connection_method_qr">通过QR码手动连接</string>
+    <string name="nav_dashboard">交计盘</string>
+    <string name="nav_my">我的</string>
+    <string name="nav_trade_orders">交割单</string>
+    <string name="nav_trade_plans">交计花</string>
+    <string name="item_scan_qrcode">SCAN QRCODE</string>
+    <string name="item_manual_set">MANUAL SET</string>
+</resources>

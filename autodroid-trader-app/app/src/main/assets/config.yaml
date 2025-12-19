@@ -1,0 +1,110 @@
+# AutoDroid Android App Configuration
+# 应用配置文件 - 驱动开发配置
+
+# 服务器配置
+server:
+  # 默认API端点
+  defaultApiEndpoint: "http://192.168.1.59:8004/api"
+  
+  # 连接超时设置（秒）
+  connectionTimeout: 10
+  
+  # 重试次数
+  maxRetries: 3
+  
+  # 健康检查间隔（秒）
+  healthCheckInterval: 30
+
+# 网络配置
+network:
+  # WiFi配置
+  wifi:
+    scanInterval: 60
+    autoConnect: true
+
+# 设备配置
+device:
+  # 设备信息配置
+  info:
+    autoRefresh: true
+    refreshInterval: 60
+  
+  # UDID配置
+  udid:
+    generationMethod: "android_id"  # android_id, serial, random
+    cacheEnabled: true
+
+# 驱动开发配置
+driverDevelopment:
+  # 调试模式
+  debugMode: false
+  
+  # 日志级别
+  logLevel: "INFO"  # DEBUG, INFO, WARN, ERROR
+  
+  # 性能监控
+  performanceMonitoring:
+    enabled: true
+    metricsInterval: 60
+  
+  # 测试配置
+  testing:
+    mockServerEnabled: false
+    testTimeout: 30
+
+# UI配置
+ui:
+  # 主题配置
+  theme:
+    primaryColor: "#2196F3"
+    accentColor: "#FF4081"
+    darkMode: false
+  
+  # 导航配置
+  navigation:
+    animationEnabled: true
+    bottomNavigationEnabled: true
+  
+  # 刷新配置
+  refresh:
+    pullToRefresh: true
+    autoRefreshInterval: 300
+
+# 安全配置
+security:
+  # 认证配置
+  authentication:
+    tokenExpiry: 86400  # 24小时
+    autoLogin: true
+  
+  # 加密配置
+  encryption:
+    enabled: true
+    algorithm: "AES"
+
+# 数据库配置
+database:
+  # 数据库名称
+  name: "autodroid_database"
+  
+  # Room数据库配置
+  room:
+    schemaLocation: "schemas"
+    exportSchema: true
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    maxSizeMb: 50
+
+# 开发环境配置
+development:
+  # 开发工具
+  tools:
+    adbEnabled: true
+    logcatEnabled: true
+  
+  # 热重载配置
+  hotReload:
+    enabled: false
+    port: 8080

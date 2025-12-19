@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_dashboard">
+
+    <fragment
+        android:id="@+id/nav_trade_plans"
+        android:name="com.autodroid.trader.ui.tradeplan.TradePlansFragment"
+        android:label="Trade Plans">
+        <action
+            android:id="@+id/action_nav_tradeplans_to_tradeplanDetailFragment"
+            app:destination="@id/tradeplanDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_orders"
+        android:name="com.autodroid.trader.ui.tradeorder.TradeOrdersFragment"
+        android:label="Orders">
+        <action
+            android:id="@+id/action_nav_orders_to_orderDetailFragment"
+            app:destination="@id/orderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.autodroid.trader.ui.dashboard.DashboardFragment"
+        android:label="Dashboard">
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_my"
+        android:name="com.autodroid.trader.ui.my.MyFragment"
+        android:label="My" />
+
+    <fragment
+        android:id="@+id/nav_server_detail"
+        android:name="com.autodroid.trader.ui.server.ServerDetailFragment"
+        android:label="Server Detail">
+        <argument
+            android:name="apiEndpoint"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tradeplanDetailFragment"
+        android:name="com.autodroid.trader.ui.tradeplan.TradePlanFragment"
+        android:label="Trade Plan Details">
+        <argument
+            android:name="tradeplan"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/orderDetailFragment"
+        android:name="com.autodroid.trader.ui.tradeorder.TradeOrderFragment"
+        android:label="Order Details">
+        <argument
+            android:name="order_id"
+            app:argType="string" />
+        <argument
+            android:name="order_title"
+            app:argType="string" />
+        <argument
+            android:name="order_status"
+            app:argType="string" />
+        <argument
+            android:name="order_created"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

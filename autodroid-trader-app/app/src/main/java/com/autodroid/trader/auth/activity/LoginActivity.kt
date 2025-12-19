@@ -1,0 +1,252 @@
+package com.autodroid.trader.auth.activity
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Bundle
+import android.text.TextUtils
+import android.util.Log
+import android.util.Patterns
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricPrompt.PromptInfo
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import com.autodroid.trader.auth.viewmodel.AuthViewModel
+import com.autodroid.trader.auth.viewmodel.SharedViewModelFactory
+import com.autodroid.trader.model.User
+import com.autodroid.trader.AppViewModel
+import com.autodroid.trader.ui.BaseActivity
+import com.autodroid.trader.R
+
+class LoginActivity : BaseActivity() {
+    private var emailEditText: EditText? = null
+    private var passwordEditText: EditText? = null
+    private var loginButton: Button? = null
+    private var fingerprintLoginButton: Button? = null
+    private var registerLink: TextView? = null
+    override lateinit var errorTextView: TextView
+
+    private var authViewModel: AuthViewModel? = null
+    override lateinit var appViewModel: AppViewModel
+    private var biometricPrompt: BiometricPrompt? = null
+    private var promptInfo: PromptInfo? = null
+    
+
+
+    override fun getLayoutId(): Int = R.layout.activity_login
+
+    override fun initViews() {
+        // Hide the action bar
+        supportActionBar?.hide()
+        
+        // Initialize UI components
+        emailEditText = findViewById<EditText>(R.id.login_email)
+        passwordEditText = findViewById<EditText>(R.id.login_password)
+        loginButton = findViewById<Button>(R.id.login_button)
+        fingerprintLoginButton = findViewById<Button>(R.id.fingerprint_login_button)
+        registerLink = findViewById<TextView>(R.id.register_link)
+
+        // Initialize error text view for base class
+        errorTextView = findViewById<TextView>(R.id.login_error)
+
+        // Set focus on the Login button instead of the email field
+        loginButton?.requestFocus()
+
+        // Set up biometric authentication
+        setupBiometricAuthentication()
+    }
+
+    override fun setupObservers() {
+        observeViewModel()
+        observeErrorMessages()
+    }
+
+    override fun setupClickListeners() {
+        setupClickListenersImpl()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Check if we have valid authentication data from MainActivity
+        val isAuthenticatedFromIntent = intent.getBooleanExtra("isAuthenticated", false)
+        
+        if (!isAuthenticatedFromIntent) {
+            // Only observe authentication state if not already authenticated
+            observeViewModel()
+        }
+        
+        // Setup biometric authentication if available
+        setupBiometricAuthentication()
+    }
+    
+    override fun initializeViewModel() {
+        // Let BaseActivity handle the global appViewModel initialization
+        // This ensures all activities have access to the global AppViewModel
+        super.initializeViewModel()
+        
+        // Initialize AuthViewModel
+        authViewModel = ViewModelProvider(this, SharedViewModelFactory())[AuthViewModel::class.java]
+    }
+
+
+
+    private fun observeViewModel() {
+        // Observe authentication state from AuthViewModel
+        authViewModel!!.isAuthenticated.observe(this, Observer { isAuthenticated: Boolean? ->
+            Log.d("LoginActivity", "Authentication state changed: " + isAuthenticated)
+            if (isAuthenticated != null && isAuthenticated) {
+                Log.d("LoginActivity", "Login successful, updating AppViewModel and navigating to MainActivity")
+
+                // Update AppViewModel directly with authentication data
+                val userInfo = User(
+                    userId = authViewModel!!.userId.getValue(),
+                    email = authViewModel!!.email.getValue(),
+                    token = authViewModel!!.token.getValue(),
+                    isAuthenticated = true
+                )
+                appViewModel.setUser(userInfo)
+
+
+
+                // Navigate back to MainActivity with the intended destination
+                // Use result to pass the intended destination back to MainActivity
+                Log.d("LoginActivity", "Login successful, returning to MainActivity with intended destination")
+                
+                val resultIntent = Intent()
+                resultIntent.putExtra("login_successful", true)
+                setResult(RESULT_OK, resultIntent)
+                
+                // Ensure the authentication state is properly set before finishing
+                Thread.sleep(100) // Small delay to ensure state is set
+                finish()
+            }
+        })
+    }
+
+    private fun setupBiometricAuthentication() {
+        // Check if biometric authentication is available
+        val biometricManager = BiometricManager.from(this)
+        when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
+            BiometricManager.BIOMETRIC_SUCCESS -> {
+                // Biometric authentication is available
+                fingerprintLoginButton!!.setEnabled(true)
+            }
+
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE, BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE, BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                // Biometric authentication is not available
+                fingerprintLoginButton!!.setEnabled(false)
+            }
+
+            BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
+                TODO()
+            }
+
+            BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> {
+                TODO()
+            }
+
+            BiometricManager.BIOMETRIC_STATUS_UNKNOWN -> {
+                TODO()
+            }
+        }
+
+        // Create executor for biometric prompt
+        val executor = ContextCompat.getMainExecutor(this)
+
+        // Create biometric prompt with callbacks
+        biometricPrompt = BiometricPrompt(
+            this@LoginActivity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    // Biometric authentication succeeded, login the user using AuthViewModel
+                    authViewModel!!.loginWithBiometrics()
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    errorTextView.text = getString(R.string.biometric_auth_failed)
+                    errorTextView.visibility = View.VISIBLE
+                }
+
+                @SuppressLint("SetTextI18n")
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_CANCELED) {
+                        val errorMessage = getString(R.string.biometric_error) ?: ""
+                    errorTextView.text = "$errorMessage$errString"
+                        errorTextView.visibility = View.VISIBLE
+                    }
+                }
+            })
+
+        // Configure prompt info
+        promptInfo = PromptInfo.Builder()
+            .setTitle(getString(R.string.biometric_login_title))
+            .setSubtitle(getString(R.string.biometric_login_subtitle))
+            .setDescription(getString(R.string.biometric_login_description))
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+            .build()
+    }
+
+    override fun setupClickListenersImpl() {
+        // Login button click listener
+        loginButton!!.setOnClickListener { v: View? ->
+            val email = emailEditText!!.getText().toString().trim { it <= ' ' }
+            val password = passwordEditText!!.getText().toString().trim { it <= ' ' }
+
+            // Validate input
+            if (validateInput(email, password)) {
+                // Call login method in AuthViewModel
+                authViewModel!!.login(email, password)
+            }
+        }
+
+        // Fingerprint login button click listener
+        fingerprintLoginButton!!.setOnClickListener { v: View? ->
+            // Show biometric prompt
+            biometricPrompt!!.authenticate(promptInfo!!)
+        }
+
+        // Register link click listener
+        registerLink!!.setOnClickListener { v: View? ->
+            // Navigate to register activity
+            val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun validateInput(email: String?, password: String?): Boolean {
+        var isValid = true
+
+        // Clear previous error
+        errorTextView.visibility = View.GONE
+
+        // Validate email
+        if (TextUtils.isEmpty(email)) {
+            emailEditText!!.error = getString(R.string.email_required)
+            isValid = false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailEditText!!.error = getString(R.string.email_invalid)
+            isValid = false
+        }
+
+        // Validate password
+        if (TextUtils.isEmpty(password)) {
+            passwordEditText!!.error = getString(R.string.password_required)
+            isValid = false
+        } else if (password!!.length < 6) {
+            passwordEditText!!.error = getString(R.string.password_min_length)
+            isValid = false
+        }
+
+        return isValid
+    }
+}
