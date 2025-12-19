@@ -28,9 +28,7 @@ import com.autodroid.controller.databinding.ActivityMainBinding
 import com.autodroid.controller.model.AppiumStatus
 import com.autodroid.controller.model.ControlItem
 import com.autodroid.controller.service.AutoDroidControllerService
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.util.concurrent.TimeUnit
+import com.autodroid.controller.webdriver.ContentProviderClient
 
 class MainActivity : AppCompatActivity() {
     
@@ -44,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 AutoDroidControllerService.ACTION_APPIUM_STATUS_UPDATE -> {
                     val statusName = intent.getStringExtra(AutoDroidControllerService.EXTRA_APPIUM_STATUS)
                     val status = AppiumStatus.valueOf(statusName ?: AppiumStatus.STOPPED.name)
-                    updateAppiumStatusInUI("appium_control", status)
+                    updateAppiumStatusInUI("appium_status", status)
                 }
                 AutoDroidControllerService.ACTION_SERVICE_STATUS_UPDATE -> {
                     val statusName = intent.getStringExtra(AutoDroidControllerService.EXTRA_SERVICE_STATUS)
@@ -72,32 +70,18 @@ class MainActivity : AppCompatActivity() {
     private fun setupUI() {
         controlItems = mutableListOf(
             ControlItem.HeaderItem("Appium UIA2 Server 控制器"),
-            ControlItem.ServiceControlItem(
-                id = "service_control",
-                title = "自动化服务控制",
-                description = "启动和停止自动化服务",
-                startAction = "start_service",
-                stopAction = "stop_service",
-                status = com.autodroid.controller.model.ServiceStatus.STOPPED
-            ),
-            ControlItem.AppiumControlItem(
-                id = "appium_control",
-                title = "Appium UIA2 Server 控制",
-                description = "启动和停止 Appium 服务器",
-                startAction = "start_appium",
-                stopAction = "stop_appium",
-                status = AppiumStatus.STOPPED,
-                lastCheckTime = null
-            ),
-            ControlItem.UIA2StatusItem(
-                id = "uia2_status",
-                title = "UIA2 服务状态信息",
-                description = "显示 UIA2 服务的实时状态信息",
+            ControlItem.AppiumStatusItem(
+                id = "appium_status",
+                title = "Appium UIA2 Server 状态信息",
+                description = "显示 UIA2 服务的实时状态、进程、端口和HTTP状态",
                 status = "未知",
+                processStatus = "未检查",
+                portStatus = "未检查", 
+                httpStatus = "未检查",
                 version = "",
-                port = "",
+                port = "6790",
                 sessionId = "",
-                message = "",
+                message = "未连接",
                 lastCheckTime = null
             ),
             ControlItem.TestControlItem(
@@ -115,77 +99,50 @@ class MainActivity : AppCompatActivity() {
         )
         
         adapter = ControlAdapter(
-            onServiceStartClick = { serviceControl ->
-                when (serviceControl.id) {
-                    "service_control" -> {
-                        // 启动自动化服务
-                        handleServiceStart(serviceControl)
-                    }
-                }
-            },
-            onServiceStopClick = { serviceControl ->
-                when (serviceControl.id) {
-                    "service_control" -> {
-                        // 停止自动化服务
-                        handleServiceStop(serviceControl)
-                    }
-                }
-            },
-            onServiceCheckStatusClick = { serviceControl ->
-                when (serviceControl.id) {
-                    "service_control" -> {
-                        // 检查服务状态
-                        handleServiceCheckStatus(serviceControl)
-                    }
-                }
-            },
-            onTestControlClick = { testControl ->
-                when (testControl.id) {
-                    "test_control" -> executeTestTask()
-                }
-            },
-            onTestMingYongBaoClick = { testControl ->
-                when (testControl.id) {
+            onTestMingYongBaoClick = {
+                when (it.id) {
                     "test_control" -> testMingYongBao()
                 }
             },
-            onTestGetPageXmlClick = { testControl ->
-                when (testControl.id) {
+            onTestGetPageXmlClick = {
+                when (it.id) {
                     "test_control" -> testGetPageXml()
                 }
             },
-            onSettingsClick = { settings ->
-                when (settings.id) {
-                    "settings" -> openAccessibilitySettings()
+            onSettingsClick = {
+                when (it.id) {
+                    "settings" -> openAppSettings()
                 }
             },
-            onCheckAppiumStatusClick = { appiumControl ->
-                when (appiumControl.id) {
-                    "appium_control" -> {
-                        // 只检查Appium服务器状态，不进行控制操作
+            onCheckAppiumStatusClick = {
+                when (it.id) {
+                    "appium_status" -> {
+                        // 检查Appium服务器状态
                         checkAppiumServerStatus()
                     }
                 }
             },
-            onAppiumAppInfoClick = { appiumControl ->
-                openAppiumAppInfo()
-            },
-            onShareToWechatClick = { appiumControl ->
-                shareToWechat()
-            },
-            onGetUIA2InfoClick = { uia2Status ->
-                when (uia2Status.id) {
-                    "uia2_status" -> {
-                        // 获取UIA2服务信息
-                        getUIA2ServiceInfo()
+            onClearAppiumInfoClick = {
+                when (it.id) {
+                    "appium_status" -> {
+                        // 清除Appium状态信息
+                        clearAppiumStatusInfo()
                     }
                 }
             },
-            onClearUIA2InfoClick = { uia2Status ->
-                when (uia2Status.id) {
-                    "uia2_status" -> {
-                        // 清除UIA2服务信息
-                        clearUIA2ServiceInfo()
+            onShareAdbCommandsClick = {
+                when (it.id) {
+                    "appium_status" -> {
+                        // 分享ADB命令
+                        shareAdbCommands()
+                    }
+                }
+            },
+            onAppiumAppInfoClick = {
+                when (it.id) {
+                    "appium_status" -> {
+                        // 查看Appium应用信息
+                        openAppiumAppInfo()
                     }
                 }
             }
@@ -216,6 +173,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             // 检查前台服务权限
             if (checkAndHandlePermissions()) {
+                // 权限通过后自动启动服务
                 startAutomationService()
             } else {
                 // 注意：checkAndHandlePermissions() 已经会显示错误消息并打开设置页面
@@ -247,13 +205,6 @@ class MainActivity : AppCompatActivity() {
      * @return true表示权限充足，false表示权限不足
      */
     private fun checkAndHandlePermissions(): Boolean {
-        // 首先检查无障碍服务是否启用
-        if (!isAccessibilityServiceEnabled()) {
-            Toast.makeText(this, "需要启用无障碍服务才能使用自动化功能", Toast.LENGTH_LONG).show()
-            openAccessibilitySettings()
-            return false
-        }
-        
         // 对于 Android 14+ (API 34+)，FOREGROUND_SERVICE 是一个普通权限，会在安装时自动授予
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // Android 14+ 只需检查通知权限
@@ -285,63 +236,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    /**
-     * 检查无障碍服务是否已启用
-     */
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        return try {
-            val accessibilityEnabled = Settings.Secure.getInt(
-                contentResolver,
-                Settings.Secure.ACCESSIBILITY_ENABLED
-            ) == 1
-            
-            if (accessibilityEnabled) {
-                // 检查具体的无障碍服务是否启用
-                val enabledServices = Settings.Secure.getString(
-                    contentResolver,
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-                ) ?: ""
-                
-                // 检查是否包含UiAutomator相关的服务
-                enabledServices.contains("io.appium.uiautomator2") || 
-                enabledServices.contains("com.android.systemui") ||
-                enabledServices.contains(packageName)
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error checking accessibility service", e)
-            false
-        }
-    }
-    
-    /**
-     * 显示无障碍服务启用对话框
-     */
-    private fun showAccessibilityServiceDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("需要启用无障碍服务")
-            .setMessage("自动化功能需要无障碍服务权限才能正常工作。\n\n请点击\"确定\"跳转到设置页面，然后找到\"AutoDroid Controller\"并启用无障碍服务。")
-            .setPositiveButton("确定") { _, _ ->
-                openAccessibilitySettings()
-            }
-            .setNegativeButton("取消") { _, _ ->
-                Toast.makeText(this, "您需要启用无障碍服务才能使用自动化功能", Toast.LENGTH_LONG).show()
-            }
-            .setCancelable(false)
-            .show()
-    }
+
     
 
     
-    private fun openAccessibilitySettings() {
-        try {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            startActivity(intent)
-        } catch (_: Exception) {
-            Toast.makeText(this, getString(R.string.toast_cannot_open_accessibility_settings), Toast.LENGTH_SHORT).show()
-        }
-    }
+
+    
+
     
     private fun openAppSettings() {
         try {
@@ -361,35 +262,24 @@ class MainActivity : AppCompatActivity() {
         }
         
         // 立即更新UI状态为"启动中"
-        updateAppiumStatusInUI("appium_control", AppiumStatus.STARTING)
+        updateAppiumStatusInUI("appium_status", AppiumStatus.STARTING)
         
         try {
             val intent = Intent(this, AutoDroidControllerService::class.java).apply {
                 action = AutoDroidControllerService.ACTION_START_APPIUM_SERVER
             }
 
-            startForegroundService(intent)
+            startService(intent)
 
             Toast.makeText(this, "正在启动Appium UIA2 Server...", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
-            val errorMsg = when {
-                e is SecurityException -> {
-                    // 根据Android版本提供更准确的错误消息
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        "请检查通知权限是否已启用"
-                    } else {
-                        "缺少前台服务权限，请检查权限设置"
-                    }
-                }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "启动Appium服务器失败: ${e.message}"
-            }
+            val errorMsg = "启动Appium服务器失败: ${e.message}"
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to start Appium server", e)
             
             // 启动失败时更新状态为"已停止"
-            updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
+            updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
         }
     }
     
@@ -404,23 +294,12 @@ class MainActivity : AppCompatActivity() {
                 action = AutoDroidControllerService.ACTION_STOP_APPIUM_SERVER
             }
 
-            startForegroundService(intent)
+            startService(intent)
 
             Toast.makeText(this, "正在停止Appium UIA2 Server...", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
-            val errorMsg = when {
-                e is SecurityException -> {
-                    // 根据Android版本提供更准确的错误消息
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        "请检查通知权限是否已启用"
-                    } else {
-                        "缺少前台服务权限，请检查权限设置"
-                    }
-                }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "停止Appium服务器失败: ${e.message}"
-            }
+            val errorMsg = "停止Appium服务器失败: ${e.message}"
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to stop Appium server", e)
         }
@@ -429,23 +308,64 @@ class MainActivity : AppCompatActivity() {
     private fun checkAppiumServerStatus() {
         try {
             // 更新UI状态为检查中
-            updateAppiumStatusInUI("appium_control", AppiumStatus.STARTING)
+            updateAppiumStatusInUI("appium_status", AppiumStatus.STARTING)
             
-            // 检查Appium服务器进程是否在运行
-            val isRunning = checkAppiumProcessRunning()
-            
-            if (isRunning) {
-                // 如果进程在运行，检查HTTP连接
-                checkAppiumHttpStatus()
-            } else {
-                // 更新UI状态为已停止
-                updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
-                Toast.makeText(this, "Appium UIA2 Server 未运行", Toast.LENGTH_SHORT).show()
-            }
+            // 使用增强的多层级检测逻辑
+            Thread {
+                try {
+                    // 第一步：检查进程状态
+                    val isProcessRunning = checkUIA2Process()
+                    
+                    // 第二步：检查端口监听状态
+                    val isPortListening = checkUIA2Port()
+                    
+                    // 第三步：通过Content Provider检查UIA2 Server状态
+                    val cpResult = ContentProviderClient.checkUIA2ServerStatus(this@MainActivity)
+                    val isHttpResponding = cpResult.getBoolean("success")
+                    
+                    runOnUiThread {
+                        // 根据多层级检测结果确定Appium状态
+                        val appiumStatus = when {
+                            isProcessRunning && isPortListening && isHttpResponding -> AppiumStatus.RUNNING
+                            !isProcessRunning -> AppiumStatus.STOPPED
+                            isProcessRunning && !isPortListening -> AppiumStatus.STOPPED
+                            isProcessRunning && isPortListening && !isHttpResponding -> AppiumStatus.STOPPED
+                            else -> AppiumStatus.STOPPED
+                        }
+                        
+                        updateAppiumStatusInUI("appium_status", appiumStatus)
+                        
+                        // 同时更新状态信息面板，确保两个UI组件显示一致
+                        val statusInfo = determineUIA2Status(isProcessRunning, isPortListening, isHttpResponding, cpResult)
+                        updateAppiumStatusInfo(statusInfo.status, 
+                            if (isProcessRunning) "运行中" else "未运行",
+                            if (isPortListening) "监听中" else "未监听",
+                            if (isHttpResponding) "正常" else "无响应",
+                            statusInfo.version, statusInfo.port, statusInfo.sessionId, 
+                            statusInfo.message, 
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
+                        
+                        // 显示相应的Toast消息
+                        when (appiumStatus) {
+                            AppiumStatus.RUNNING -> Toast.makeText(this@MainActivity, "UIA2服务运行正常", Toast.LENGTH_SHORT).show()
+                            else -> Toast.makeText(this@MainActivity, "UIA2服务未运行或状态异常", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
+                        updateAppiumStatusInfo("连接失败", "未检查", "未检查", "未检查", "", "", "", "检查状态时发生错误", null)
+                        Toast.makeText(this@MainActivity, "检查服务器状态失败: ${e.message}", Toast.LENGTH_LONG).show()
+                        Log.e("MainActivity", "Failed to check Appium server status", e)
+                    }
+                }
+            }.start()
             
         } catch (e: Exception) {
-            // 更新UI状态为未知
-            updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
+            // 更新UI状态为已停止
+            updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
+            updateUIA2StatusInfo("检查失败", "", "", "", "检查状态时发生异常", null)
             Toast.makeText(this, "检查服务器状态失败: ${e.message}", Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to check Appium server status", e)
         }
@@ -469,34 +389,26 @@ class MainActivity : AppCompatActivity() {
     private fun checkAppiumHttpStatus() {
         Thread {
             try {
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .build()
-                
-                val request = Request.Builder()
-                    .url("http://127.0.0.1:6790/status")
-                    .build()
-                
-                val response = client.newCall(request).execute()
+                // 通过Content Provider检查UIA2 Server状态
+                val cpResult = ContentProviderClient.checkUIA2ServerStatus(this@MainActivity)
                 
                 runOnUiThread {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body?.string()
-                        updateAppiumStatusInUI("appium_control", AppiumStatus.RUNNING)
+                    if (cpResult.getBoolean("success")) {
+                        val responseBody = cpResult.getString("response")
+                        updateAppiumStatusInUI("appium_status", AppiumStatus.RUNNING)
                         Toast.makeText(this, "Appium UIA2 Server 正常运行", Toast.LENGTH_LONG).show()
-                        Log.d("MainActivity", "Appium server status: $responseBody")
+                        Log.d("MainActivity", "Appium server status via Content Provider: $responseBody")
                     } else {
-                        updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
+                        updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
                         Toast.makeText(this, "Appium UIA2 Server 无响应", Toast.LENGTH_LONG).show()
                     }
                 }
                 
             } catch (e: Exception) {
                 runOnUiThread {
-                    updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
-                    Toast.makeText(this, "无法连接到Appium UIA2 Server", Toast.LENGTH_LONG).show()
-                    Log.e("MainActivity", "Error connecting to Appium server", e)
+                    updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
+                    Toast.makeText(this@MainActivity, "无法通过Content Provider连接到Appium UIA2 Server", Toast.LENGTH_LONG).show()
+                    Log.e("MainActivity", "Error connecting to Appium server via Content Provider", e)
                 }
             }
         }.start()
@@ -516,17 +428,8 @@ class MainActivity : AppCompatActivity() {
                 {
                     "action": "initSession",
                     "params": {
-                        "capabilities": {
-                            "platformName": "Android",
-                            "appium:automationName": "UiAutomator2",
-                            "appium:udid": "TDCDU17905004388",
-                            "appium:appPackage": "com.tdx.androidCCZQ",
-                            "appium:noReset": false,
-                            "appium:autoGrantPermissions": true,
-                            "appium:skipServerInstallation": true,
-                            "appium:remoteAppsCacheLimit": 0,
-                            "appium:dontStopAppOnReset": true
-                        }
+                        "appPackage": "com.tdx.androidCCZQ",
+                        "appActivity": "com.tdx.Android.TdxAndroidActivity"
                     }
                 },
                 {
@@ -545,21 +448,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
-            startForegroundService(intent)
+            startService(intent)
             Toast.makeText(this, getString(R.string.toast_test_task_sent), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            val errorMsg = when {
-                e is SecurityException -> {
-                    // 根据Android版本提供更准确的错误消息
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        "请检查通知权限是否已启用"
-                    } else {
-                        "缺少前台服务权限，请检查权限设置"
-                    }
-                }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "发送测试任务失败: ${e.message}"
-            }
+            val errorMsg = "发送测试任务失败: ${e.message}"
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to send test task", e)
         }
@@ -594,22 +486,11 @@ class MainActivity : AppCompatActivity() {
                 action = AutoDroidControllerService.ACTION_START
             }
 
-            startForegroundService(intent)
+            startService(intent)
 
             Toast.makeText(this, "自动化服务正在启动...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            val errorMsg = when {
-                e is SecurityException -> {
-                    // 根据Android版本提供更准确的错误消息
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        "请检查通知权限是否已启用"
-                    } else {
-                        "缺少前台服务权限，请检查权限设置"
-                    }
-                }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "启动自动化服务失败: ${e.message}"
-            }
+            val errorMsg = "启动自动化服务失败: ${e.message}"
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to start automation service", e)
         }
@@ -659,6 +540,7 @@ class MainActivity : AppCompatActivity() {
             adapter.setData(controlItems)
         }
     }
+}
     
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -683,13 +565,8 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(appiumStatusReceiver, filter)
         }
         
-        // 检查无障碍服务是否启用
-        if (!isAccessibilityServiceEnabled()) {
-            showAccessibilityServiceDialog()
-        } else {
-            // 检查并请求权限
-            checkAndRequestPermissions()
-        }
+        // 检查并请求权限，权限通过后自动启动服务
+        checkAndRequestPermissions()
     }
     
     override fun onDestroy() {
@@ -730,15 +607,24 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Updating Appium status in UI: $status")
         
         // 更新控制项中的状态和最后检查时间
-        val appiumControlIndex = controlItems.indexOfFirst { 
-            it is ControlItem.AppiumControlItem && it.id == appiumId 
+        val appiumStatusIndex = controlItems.indexOfFirst { 
+            it is ControlItem.AppiumStatusItem && it.id == appiumId 
         }
         
-        if (appiumControlIndex != -1) {
-            val currentItem = controlItems[appiumControlIndex] as ControlItem.AppiumControlItem
+        if (appiumStatusIndex != -1) {
+            val currentItem = controlItems[appiumStatusIndex] as ControlItem.AppiumStatusItem
             val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-            controlItems[appiumControlIndex] = currentItem.copy(
-                status = status,
+            
+            // 根据Appium状态更新相应的状态文本
+            val statusText = when (status) {
+                AppiumStatus.RUNNING -> "运行中"
+                AppiumStatus.STOPPED -> "已停止"
+                AppiumStatus.STARTING -> "启动中"
+                AppiumStatus.STOPPING -> "停止中"
+            }
+            
+            controlItems[appiumStatusIndex] = currentItem.copy(
+                status = statusText,
                 lastCheckTime = currentTime
             )
             adapter.setData(controlItems)
@@ -829,31 +715,46 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun checkCurrentAppiumStatus() {
-        // 在后台线程中检查当前服务器状态
+        // 在后台线程中检查当前服务器状态，使用增强的多层级检测
         Thread {
             try {
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(3, TimeUnit.SECONDS)
-                    .readTimeout(3, TimeUnit.SECONDS)
-                    .build()
+                // 第一步：检查进程状态
+                val isProcessRunning = checkUIA2Process()
                 
-                val request = Request.Builder()
-                    .url("http://localhost:6790/status")
-                    .build()
+                // 第二步：检查端口监听状态
+                val isPortListening = checkUIA2Port()
                 
-                val response = client.newCall(request).execute()
+                // 第三步：通过Content Provider检查UIA2 Server状态
+                val cpResult = ContentProviderClient.checkUIA2ServerStatus(this@MainActivity)
+                val isHttpResponding = cpResult.getBoolean("success")
                 
                 runOnUiThread {
-                    if (response.isSuccessful) {
-                        updateAppiumStatusInUI("appium_control", AppiumStatus.RUNNING)
-                    } else {
-                        updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
+                    // 根据多层级检测结果确定Appium状态
+                    val appiumStatus = when {
+                        isProcessRunning && isPortListening && isHttpResponding -> AppiumStatus.RUNNING
+                        !isProcessRunning -> AppiumStatus.STOPPED
+                        isProcessRunning && !isPortListening -> AppiumStatus.STOPPED
+                        isProcessRunning && isPortListening && !isHttpResponding -> AppiumStatus.STOPPED
+                        else -> AppiumStatus.STOPPED
                     }
+                    
+                    updateAppiumStatusInUI("appium_status", appiumStatus)
+                    
+                    // 同时更新状态信息面板，确保两个UI组件显示一致
+                    val statusInfo = determineUIA2Status(isProcessRunning, isPortListening, isHttpResponding, cpResult)
+                    updateAppiumStatusInfo(statusInfo.status, 
+                        if (isProcessRunning) "运行中" else "未运行",
+                        if (isPortListening) "监听中" else "未监听",
+                        if (isHttpResponding) "正常" else "无响应",
+                        statusInfo.version, statusInfo.port, statusInfo.sessionId, 
+                        statusInfo.message, 
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
                 }
 
             } catch (_: Exception) {
                 runOnUiThread {
-                    updateAppiumStatusInUI("appium_control", AppiumStatus.STOPPED)
+                    updateAppiumStatusInUI("appium_status", AppiumStatus.STOPPED)
+                    updateAppiumStatusInfo("连接失败", "未检查", "未检查", "未检查", "", "", "", "检查状态时发生错误", null)
                 }
             }
         }.start()
@@ -912,10 +813,10 @@ adb shell ps | grep appium
             
             // 使用系统分享选择器
             startActivity(Intent.createChooser(shareIntent, "分享Appium命令到..."))
-            Toast.makeText(this, "请选择分享应用", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "请选择分享应用", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "分享失败: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@MainActivity, "分享失败: ${e.message}", Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to share to WeChat", e)
         }
     }
@@ -934,20 +835,8 @@ adb shell ps | grep appium
                 {
                     "action": "initSession",
                     "params": {
-                        "capabilities": {
-                            "platformName": "Android",
-                            "appium:automationName": "UiAutomator2",
-                            "appium:udid": "TDCDU17905004388",
-                            "appium:appPackage": "com.tdx.androidCCZQ",
-                            "appium:appActivity": "com.tdx.Android.TdxAndroidActivity",
-                            "appium:noReset": false,
-                            "appium:autoGrantPermissions": false,
-                            "appium:skipServerInstallation": true,
-                            "appium:remoteAppsCacheLimit": 0,
-                            "appium:dontStopAppOnReset": true,
-                            "appium:disableWindowAnimation": true,
-                            "appium:ignoreUnimportantViews": true
-                        }
+                        "appPackage": "com.tdx.androidCCZQ",
+                        "appActivity": "com.tdx.Android.TdxAndroidActivity"
                     }
                 },
                 {
@@ -966,7 +855,7 @@ adb shell ps | grep appium
                 putExtra(AutoDroidControllerService.EXTRA_TASK_JSON, testTaskJson)
             }
             
-            startForegroundService(intent)
+            ContextCompat.startForegroundService(this, intent)
             Toast.makeText(this, "正在启动明佣宝测试任务...", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
@@ -978,8 +867,12 @@ adb shell ps | grep appium
                         "缺少前台服务权限，请检查权限设置"
                     }
                 }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "启动明佣宝测试任务失败: ${e.message}"
+                e.message?.contains("ForegroundService") == true -> {
+                    "前台服务启动失败，请检查通知权限"
+                }
+                else -> {
+                    "启动明佣宝测试任务失败: ${e.message}"
+                }
             }
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to start MingYongBao test task", e)
@@ -1013,7 +906,7 @@ adb shell ps | grep appium
                 putExtra(AutoDroidControllerService.EXTRA_TASK_JSON, testTaskJson)
             }
             
-            startForegroundService(intent)
+            ContextCompat.startForegroundService(this, intent)
             Toast.makeText(this, "正在获取明佣宝页面XML...", Toast.LENGTH_SHORT).show()
             
         } catch (e: Exception) {
@@ -1025,8 +918,12 @@ adb shell ps | grep appium
                         "缺少前台服务权限，请检查权限设置"
                     }
                 }
-                e.message?.contains("ForegroundService") == true -> "前台服务启动失败，请检查通知权限"
-                else -> "获取页面XML测试任务失败: ${e.message}"
+                e.message?.contains("ForegroundService") == true -> {
+                    "前台服务启动失败，请检查通知权限"
+                }
+                else -> {
+                    "获取页面XML测试任务失败: ${e.message}"
+                }
             }
             Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
             Log.e("MainActivity", "Failed to start get page XML test task", e)
@@ -1036,68 +933,174 @@ adb shell ps | grep appium
     private fun getUIA2ServiceInfo() {
         Thread {
             try {
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .build()
+                // 第一步：检查进程状态
+                val isProcessRunning = checkUIA2Process()
                 
-                val request = Request.Builder()
-                    .url("http://localhost:6790/status")
-                    .build()
+                // 第二步：检查端口监听状态
+                val isPortListening = checkUIA2Port()
                 
-                val response = client.newCall(request).execute()
+                // 第三步：通过Content Provider检查UIA2 Server状态
+                val cpResult = ContentProviderClient.checkUIA2ServerStatus(this@MainActivity)
+                val isHttpResponding = cpResult.getBoolean("success")
                 
-                runOnUiThread {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body?.string()
-                        val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                        
-                        // 解析JSON响应
-                        try {
-                            val jsonObject = org.json.JSONObject(responseBody)
-                            val valueObject = jsonObject.getJSONObject("value")
-                            val buildObject = valueObject.getJSONObject("build")
-                            
-                            val status = if (valueObject.getBoolean("ready")) "运行中" else "未就绪"
-                            val version = buildObject.getString("version")
-                            val port = "6790"
-                            val sessionId = jsonObject.getString("sessionId")
-                            val message = valueObject.getString("message")
-                            
-                            // 更新UIA2状态信息
-                            updateUIA2StatusInfo(status, version, port, sessionId, message, currentTime)
-                            
-                            Toast.makeText(this@MainActivity, "UIA2服务信息获取成功", Toast.LENGTH_SHORT).show()
-                            Log.d("MainActivity", "UIA2 service info: $responseBody")
-                        } catch (e: Exception) {
-                            Toast.makeText(this@MainActivity, "解析UIA2服务信息失败", Toast.LENGTH_LONG).show()
-                            Log.e("MainActivity", "Failed to parse UIA2 service info", e)
-                        }
-                    } else {
-                        Toast.makeText(this@MainActivity, "UIA2服务无响应", Toast.LENGTH_LONG).show()
-                        updateUIA2StatusInfo("未运行", "", "", "", "服务无响应", null)
-                    }
+                this@MainActivity.runOnUiThread {
+                    val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    
+                    // 多层级状态判断
+                    val statusInfo = determineUIA2Status(isProcessRunning, isPortListening, isHttpResponding, cpResult)
+                    
+                    // 更新Appium状态信息
+                    updateAppiumStatusInfo(statusInfo.status, 
+                        if (isProcessRunning) "运行中" else "未运行",
+                        if (isPortListening) "监听中" else "未监听",
+                        if (isHttpResponding) "正常" else "无响应",
+                        statusInfo.version, statusInfo.port, statusInfo.sessionId, 
+                        statusInfo.message, currentTime)
+                    
+                    Toast.makeText(this@MainActivity, statusInfo.toastMessage, Toast.LENGTH_SHORT).show()
+                    Log.d("MainActivity", "UIA2 service status: process=$isProcessRunning, port=$isPortListening, http=$isHttpResponding")
                 }
                 
             } catch (e: Exception) {
-                runOnUiThread {
+                this@MainActivity.runOnUiThread {
                     Toast.makeText(this@MainActivity, "无法连接到UIA2服务", Toast.LENGTH_LONG).show()
-                    updateUIA2StatusInfo("连接失败", "", "", "", e.message ?: "未知错误", null)
+                    updateAppiumStatusInfo("连接失败", "未检查", "未检查", "未检查", "", "", "", e.message ?: "未知错误", null)
                     Log.e("MainActivity", "Error connecting to UIA2 service", e)
                 }
             }
         }.start()
     }
     
+    private fun checkUIA2Process(): Boolean {
+        try {
+            val process = Runtime.getRuntime().exec("ps | grep uiautomator")
+            val inputStream = process.inputStream
+            val reader = inputStream.bufferedReader()
+            val output = reader.readText()
+            process.waitFor()
+            
+            // 检查输出中是否包含uiautomator相关进程
+            return output.contains("uiautomator") && !output.contains("grep uiautomator")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking UIA2 process", e)
+            return false
+        }
+    }
+    
+    private fun checkUIA2Port(): Boolean {
+        try {
+            val process = Runtime.getRuntime().exec("netstat -tuln | grep 6790")
+            val inputStream = process.inputStream
+            val reader = inputStream.bufferedReader()
+            val output = reader.readText()
+            process.waitFor()
+            
+            // 检查端口6790是否在监听状态
+            return output.contains("LISTEN") && output.contains("6790")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking UIA2 port", e)
+            return false
+        }
+    }
+    
+    private data class UIA2StatusInfo(
+        val status: String,
+        val version: String,
+        val port: String,
+        val sessionId: String,
+        val message: String,
+        val toastMessage: String
+    )
+    
+    private fun determineUIA2Status(
+        isProcessRunning: Boolean,
+        isPortListening: Boolean,
+        isHttpResponding: Boolean,
+        cpResult: org.json.JSONObject
+    ): UIA2StatusInfo {
+        return when {
+            !isProcessRunning -> {
+                UIA2StatusInfo(
+                    status = "进程未运行",
+                    version = "",
+                    port = "6790",
+                    sessionId = "",
+                    message = "UIA2 Server进程未启动",
+                    toastMessage = "UIA2服务进程未运行"
+                )
+            }
+            !isPortListening -> {
+                UIA2StatusInfo(
+                    status = "端口未监听",
+                    version = "",
+                    port = "6790",
+                    sessionId = "",
+                    message = "端口6790未在监听状态",
+                    toastMessage = "UIA2服务端口未监听"
+                )
+            }
+            !isHttpResponding -> {
+                UIA2StatusInfo(
+                    status = "HTTP无响应",
+                    version = "",
+                    port = "6790",
+                    sessionId = "",
+                    message = "HTTP接口无响应",
+                    toastMessage = "UIA2服务HTTP接口无响应"
+                )
+            }
+            else -> {
+                // Content Provider接口正常响应，解析详细信息
+                try {
+                    if (cpResult.getBoolean("success")) {
+                        val responseJson = org.json.JSONObject(cpResult.getString("response"))
+                        val valueObject = responseJson.getJSONObject("value")
+                        
+                        val status = if (valueObject.getBoolean("ready")) "运行中" else "未就绪"
+                        val version = valueObject.getJSONObject("build").getString("version")
+                        val port = "6790"
+                        val sessionId = responseJson.getString("sessionId")
+                        val message = valueObject.getString("message")
+                        
+                        UIA2StatusInfo(
+                            status = status,
+                            version = version,
+                            port = port,
+                            sessionId = sessionId,
+                            message = message,
+                            toastMessage = "UIA2服务信息获取成功"
+                        )
+                    } else {
+                        UIA2StatusInfo(
+                            status = "Content Provider失败",
+                            version = "",
+                            port = "6790",
+                            sessionId = "",
+                            message = cpResult.getString("message"),
+                            toastMessage = "通过Content Provider获取UIA2服务信息失败"
+                        )
+                    }
+                } catch (e: Exception) {
+                    UIA2StatusInfo(
+                        status = "解析失败",
+                        version = "",
+                        port = "6790",
+                        sessionId = "",
+                        message = "解析服务信息失败: ${e.message}",
+                        toastMessage = "解析UIA2服务信息失败"
+                    )
+                }
+            }
+        }
+    }
+    
     private fun clearUIA2ServiceInfo() {
         updateUIA2StatusInfo("未知", "", "", "", "", null)
-        Toast.makeText(this, "UIA2服务信息已清除", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this@MainActivity, "UIA2服务信息已清除", Toast.LENGTH_SHORT).show()
     }
     
     private fun updateUIA2StatusInfo(status: String, version: String, port: String, sessionId: String, message: String, lastCheckTime: String?) {
-        val uia2StatusIndex = controlItems.indexOfFirst { 
-            it is ControlItem.UIA2StatusItem && it.id == "uia2_status" 
-        }
+        val uia2StatusIndex = controlItems.indexOfFirst { it is ControlItem.UIA2StatusItem && it.id == "uia2_status" }
         
         if (uia2StatusIndex != -1) {
             val currentItem = controlItems[uia2StatusIndex] as ControlItem.UIA2StatusItem
@@ -1112,4 +1115,51 @@ adb shell ps | grep appium
             adapter.setData(controlItems)
         }
     }
-}
+    
+    private fun clearAppiumStatusInfo() {
+        updateAppiumStatusInfo("未知", "未检查", "未检查", "未检查", "", "6790", "", "未连接", null)
+        Toast.makeText(this@MainActivity, "Appium状态信息已清除", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun shareAdbCommands() {
+        val adbCommands = """使用以下ADB命令操作UIA2 Server：
+
+启动服务器：
+adb shell am instrument -w -e disableAnalytics true io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+
+停止服务器：
+adb shell am force-stop io.appium.uiautomator2.server
+
+检查进程：
+adb shell ps | grep uiautomator
+
+检查端口：
+adb shell netstat -tuln | grep 6790"""
+        
+        val clipboard = this@MainActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("ADB Commands", adbCommands)
+        clipboard.setPrimaryClip(clip)
+        
+        Toast.makeText(this@MainActivity, "ADB命令已复制到剪贴板", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun updateAppiumStatusInfo(status: String, processStatus: String, portStatus: String, httpStatus: String, 
+                                      version: String, port: String, sessionId: String, message: String, lastCheckTime: String?) {
+        val appiumStatusIndex = controlItems.indexOfFirst { it is ControlItem.AppiumStatusItem && it.id == "appium_status" }
+        
+        if (appiumStatusIndex != -1) {
+            val currentItem = controlItems[appiumStatusIndex] as ControlItem.AppiumStatusItem
+            controlItems[appiumStatusIndex] = currentItem.copy(
+                status = status,
+                processStatus = processStatus,
+                portStatus = portStatus,
+                httpStatus = httpStatus,
+                version = version,
+                port = port,
+                sessionId = sessionId,
+                message = message,
+                lastCheckTime = lastCheckTime ?: currentItem.lastCheckTime
+            )
+            adapter.setData(controlItems)
+        }
+    }
