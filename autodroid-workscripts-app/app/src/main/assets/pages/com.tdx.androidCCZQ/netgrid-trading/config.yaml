@@ -1,0 +1,78 @@
+name: 网格交易
+description: 这是一个网格交易流程，自动高抛低吸，卖出、买入
+steps:
+  - name: 首页
+    layout: home.xml
+    screenshot: home.png
+    description: 这是Home
+    step: 0
+    actions:
+      - click: resource-id="entry-xzsg"
+        description: 点击【条件单】，在Home页面，resource-id="entry-xzsg"，text="条件单"
+  - name: 条件单
+    layout: entry-xzsg.xml
+    screenshot: entry-xzsg0.png
+    description: 这是条件单页面
+    step: 1
+    actions:
+      - click: text="6d13594be6254ee3c53cf86bd9783178"
+        description: 点击Image【网格交易】，.Image text="6d13594be6254ee3c53cf86bd9783178"
+  - name: 网格交易
+    layout: netgrid-trading.xml
+    screenshot: netgrid-trading.png
+    description: 这是网格交易页面
+    step: 2
+    actions:
+      - click: text="请输入名称/代码"父控件
+        description: 点击text="请输入名称/代码"父控件，打开【股票搜索】界面
+  - name: 股票搜索
+    layout: stock-search.xml
+    screenshot: stock-search.png
+    description: 这是股票搜索页面
+    step: 3
+    actions:
+      - input: resource-id="searchBox"
+        description: 在股票搜索页面，点击resource-id="searchBox"，输入股票代码如"600000"
+  - name: 股票搜索结果
+    layout: stock-search-result.xml
+    screenshot: stock-search-result.png
+    description: 这是股票搜索结果页面
+    step: 4
+    actions:
+      - click: text="600000"祖父控件
+        description: 在股票搜索结果页面，点击text="600000"祖父控件，选择股票"600000"
+  - name: 网格交易填好股票代码
+    layout: netgrid-trading-with-stock.xml  
+    screenshot: netgrid-trading-with-stock0.png
+    description: 这是网格交易填好股票代码页面
+    step: 5
+    actions:
+      - click: Button text="确定下单"
+        description: 在网格交易填好股票代码页面，点击Button text="确定下单"，确认下单
+  - name: 网格交易确认
+    layout: netgrid-trading-confirm.xml
+    screenshot: netgrid-trading-confirm.png
+    description: 这是网格交易确认页面
+    step: 6
+    actions:
+      - click: Button text="确认"
+        description: 在网格交易确认对话框，点击Button text="确认"，确认下单
+  - name: 条件单创建成功
+    layout: netgrid-trading-success.xml
+    screenshot: netgrid-trading-success.png
+    description: 这是网格交易成功页面
+    step: 7
+    actions:
+      - click: text="提交结果"
+        description: 在网格交易成功页面，点击text="提交结果"，返回【条件单】页面
+      - click: Button text="前往查看"
+        description: 在【条件单】页面，点击Button text="前往查看"，返回【我的条件单】页面
+  - name: 我的条件单
+    layout: my-condition-orders.xml
+    screenshot: my-condition-orders.png
+    description: 这是我的条件单页面
+    step: 8
+    actions:
+      - click: View text="我的条件单"
+        description: 在【我的条件单】页面，点击View text="我的条件单"的兄弟View，返回【我的条件单】页面
+

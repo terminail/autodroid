@@ -1,0 +1,9 @@
+{
+  "test_name": "Autodroid Manager Login Test",
+  "username": "15317227@qq.com",
+  "timestamp": "2025-12-09 18:35:22",
+  "result": "PASS",
+  "device_udid": null,
+  "workplan_id": "login_test_default",
+  "execution_time": 8.003779411315918
+}

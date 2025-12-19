@@ -1,0 +1,9 @@
+{
+  "test_name": "Autodroid Manager Login Test",
+  "username": "15317227@qq.com",
+  "timestamp": "2025-12-09 22:17:52",
+  "result": "FAIL",
+  "device_udid": "emulator-5554",
+  "workplan_id": "real_device_test",
+  "execution_time": 0.0008685588836669922
+}
