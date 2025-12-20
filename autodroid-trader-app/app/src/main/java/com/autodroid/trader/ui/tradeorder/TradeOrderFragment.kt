@@ -25,7 +25,7 @@ class TradeOrderFragment : BaseFragment() {
     private lateinit var stopButton: Button
 
     override fun getLayoutId(): Int {
-        return R.layout.fragment_order
+        return R.layout.fragment_trade_order
     }
 
     override fun initViews(view: View) {

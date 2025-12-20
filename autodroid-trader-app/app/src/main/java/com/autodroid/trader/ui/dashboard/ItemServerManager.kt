@@ -9,6 +9,7 @@ import com.autodroid.trader.model.Server
 // import com.autodroid.trader.model.DiscoveredServer
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.ui.dashboard.DashboardAdapter
+import com.autodroid.trader.managers.ServerManager
 
 import com.autodroid.trader.data.repository.ServerRepository
 import androidx.activity.result.ActivityResultLauncher
@@ -35,6 +36,9 @@ class ItemServerManager(
     // Server repository for database operations
     private val serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
     
+    // Server manager for auto scan functionality
+    private val serverManager = ServerManager.getInstance(context)
+    
     // Activity Result API launchers for QR code scanning
     private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var startQRCodeScannerLauncher: ActivityResultLauncher<Intent>
@@ -47,9 +51,8 @@ class ItemServerManager(
      * Initialize the trader and start observing server status
      */
     fun initialize() {
-
-        
         setupObservers()
+        setupServerManagerObservers()
         
         // Server discovery will be started manually by user - do not auto-start
     }
@@ -112,6 +115,71 @@ class ItemServerManager(
         // All discovery status handling is now internal
         
 
+    }
+    
+    /**
+     * Set up observers for server manager
+     */
+    private fun setupServerManagerObservers() {
+        // Observe scan status
+        serverManager.scanStatus.observe(lifecycleOwner) { status ->
+            updateItem(
+                serverDiscoveryStatus = status
+            )
+        }
+        
+        // Observe scan state
+        serverManager.scanState.observe(lifecycleOwner) { state ->
+            when (state) {
+                com.autodroid.trader.managers.ScanState.IDLE -> {
+                    updateItem(
+                        serverStatus = "IDLE"
+                    )
+                }
+                com.autodroid.trader.managers.ScanState.SCANNING -> {
+                    updateItem(
+                        serverStatus = "SCANNING"
+                    )
+                }
+                com.autodroid.trader.managers.ScanState.PAUSED -> {
+                    updateItem(
+                        serverStatus = "PAUSED"
+                    )
+                }
+                com.autodroid.trader.managers.ScanState.COMPLETED -> {
+                    updateItem(
+                        serverStatus = "IDLE"
+                    )
+                }
+            }
+        }
+        
+        // Observe scan progress
+        serverManager.scanProgress.observe(lifecycleOwner) { progress ->
+            updateItem(
+                serverDiscoveryStatus = progress
+            )
+        }
+        
+        // Observe discovered server
+        serverManager.discoveredServer.observe(lifecycleOwner) { server ->
+            server?.let {
+                // Update AppViewModel with discovered server
+                appViewModel.setServer(it)
+                
+                updateItem(
+                    status = "已连接到服务器",
+                    serverStatus = "CONNECTED",
+                    apiEndpoint = it.apiEndpoint ?: "-",
+                    discoveryMethod = "自动扫描",
+                    serverName = it.name ?: "-",
+                    hostname = it.hostname ?: "",
+                    platform = it.platform ?: "Unknown"
+                )
+                
+                showSuccessMessage("服务器连接成功", "已自动发现并连接到 ${it.name}")
+            }
+        }
     }
     
     /**
@@ -179,20 +247,20 @@ class ItemServerManager(
         serverStatus: String = currentItem.serverStatus,
         apiEndpoint: String = currentItem.apiEndpoint,
         discoveryMethod: String = currentItem.discoveryMethod,
-
         serverName: String = currentItem.serverName,
         hostname: String = currentItem.hostname,
-        platform: String = currentItem.platform
+        platform: String = currentItem.platform,
+        serverDiscoveryStatus: String = currentItem.serverDiscoveryStatus
     ) {
         currentItem = DashboardItem.ItemServer(
             status = status,
             serverStatus = serverStatus,
             apiEndpoint = apiEndpoint,
             discoveryMethod = discoveryMethod,
-    
             serverName = serverName,
             hostname = hostname,
-            platform = platform
+            platform = platform,
+            serverDiscoveryStatus = serverDiscoveryStatus
         )
         
         onItemUpdate(currentItem)
@@ -342,6 +410,56 @@ class ItemServerManager(
     }
     
 
+    
+    /**
+     * Handle auto scan button click - toggles between start, pause, and resume
+     */
+    fun handleAutoScanClick() {
+        val currentState = serverManager.scanState.value ?: com.autodroid.trader.managers.ScanState.IDLE
+        
+        when (currentState) {
+            com.autodroid.trader.managers.ScanState.IDLE -> {
+                // Start new scan
+                serverManager.startServerScan()
+                updateItem(
+                    status = "正在自动扫描服务器...",
+                    discoveryMethod = "自动扫描",
+                    serverDiscoveryStatus = "初始化扫描..."
+                )
+                showDetailedToast("开始扫描", "正在扫描局域网内的服务器", Toast.LENGTH_SHORT)
+            }
+            com.autodroid.trader.managers.ScanState.PAUSED -> {
+                // Resume paused scan
+                serverManager.startServerScan()
+                updateItem(
+                    status = "正在恢复扫描...",
+                    discoveryMethod = "自动扫描",
+                    serverDiscoveryStatus = "恢复扫描中..."
+                )
+                showDetailedToast("恢复扫描", "正在恢复服务器扫描", Toast.LENGTH_SHORT)
+            }
+            com.autodroid.trader.managers.ScanState.SCANNING -> {
+                // Pause ongoing scan
+                serverManager.pauseServerScan()
+                updateItem(
+                    status = "扫描已暂停",
+                    discoveryMethod = "自动扫描",
+                    serverDiscoveryStatus = "扫描已暂停，点击继续"
+                )
+                showDetailedToast("扫描暂停", "服务器扫描已暂停", Toast.LENGTH_SHORT)
+            }
+            com.autodroid.trader.managers.ScanState.COMPLETED -> {
+                // Start new scan
+                serverManager.startServerScan()
+                updateItem(
+                    status = "正在自动扫描服务器...",
+                    discoveryMethod = "自动扫描",
+                    serverDiscoveryStatus = "初始化扫描..."
+                )
+                showDetailedToast("开始扫描", "正在扫描局域网内的服务器", Toast.LENGTH_SHORT)
+            }
+        }
+    }
     
     /**
      * Handle manual input button click

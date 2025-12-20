@@ -24,7 +24,33 @@ class ServerRepository private constructor(application: Application) {
     private val apiClient = ApiClient.getInstance()
     
     /**
-     * 获取所有服务器列表
+     * 更新服务器信息
+     */
+    suspend fun update(server: Server) {
+        // 将Server对象转换为ServerEntity
+        val serverEntity = ServerEntity(
+            apiEndpoint = server.apiEndpoint,
+            name = server.name,
+            isConnected = server.connected,
+            lastConnectedTime = if (server.connected) System.currentTimeMillis() else 0,
+            hostname = server.hostname ?: "",
+            platform = server.platform ?: "",
+            version = "",
+            deviceCount = 0,
+            supportsDeviceRegistration = server.supportsDeviceRegistration,
+            supportsApkManagement = server.supportsApkManagement,
+            supportsTradePlanExecution = server.supportsTradePlanExecution,
+            supportsTradeScheduling = server.supportsTradeScheduling(),
+            supportsEventTriggering = false, // Server类中没有这个属性，设为默认值
+            discoveryType = server.discoveryMethod ?: "",
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        serverProvider.updateServer(serverEntity)
+    }
+    
+    /**
+     * 获取所有服务器
      */
     fun getAllServers(): LiveData<List<ServerEntity>> {
         return serverProvider.getAllServers()

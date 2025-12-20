@@ -42,7 +42,7 @@ class ApiClient private constructor() {
     /**
      * Set the API endpoint (for dynamic server discovery)
      */
-    fun setApiEndpoint(url: String) {
+    fun setApiEndpoint(url: String) : ApiClient{
         // Validate API endpoint format
         if (!isValidApiEndpoint(url)) {
             throw IllegalArgumentException("Invalid API endpoint format: $url")
@@ -51,6 +51,8 @@ class ApiClient private constructor() {
         // Use user input as-is
         apiEndpoint = url.trim()
         Log.d(TAG, "API endpoint set to: $apiEndpoint")
+
+        return this
     }
     
     /**
@@ -166,7 +168,7 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to parse health check response", e)
         }
     }
-    
+
     /**
      * Get server information from FastAPI
      */

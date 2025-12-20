@@ -124,6 +124,10 @@ class DashboardFragment : BaseFragment() {
                 itemServerManager.checkCameraPermissionAndScanQR()
             }
             
+            override fun onAutoScanClick() {
+                itemServerManager.handleAutoScanClick()
+            }
+            
             override fun onManualInputClick() {
                 // 委托给ServerItemManager处理手动输入
                 itemServerManager.handleManualInputClick()
@@ -220,6 +224,17 @@ class DashboardFragment : BaseFragment() {
             deviceModel = "Unknown",
             deviceStatus = "在线",
             connectionTime = "Never"
+        ))
+        
+        // 5. Port Range Settings
+        // 从SharedPreferences读取端口范围
+        val prefs = requireContext().getSharedPreferences("server_scan_settings", 0)
+        val portStart = prefs.getInt("port_start", 8000)
+        val portEnd = prefs.getInt("port_end", 9000)
+        
+        dashboardItems.add(DashboardItem.ItemPortRange(
+            portStart = portStart,
+            portEnd = portEnd
         ))
         
         // Update adapter with new items

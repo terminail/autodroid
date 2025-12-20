@@ -95,4 +95,7 @@
     <string name="item_scan_qrcode">SCAN QRCODE</string>
     <string name="item_manual_set">MANUAL SET</string>
     <string name="item_select_discovery_method">Select discovery method</string>
+    <string name="item_auto_scan">自动扫描</string>
+    <string name="server_discovery_method">Discovery Method:</string>
+    <string name="server_discovery_status">Server discovery progress information</string>
 </resources>

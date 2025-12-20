@@ -17,6 +17,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.autodroid.trader.data.repository.ServerRepository
 import com.autodroid.trader.model.Server
+import com.autodroid.trader.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -262,27 +263,7 @@ class NetworkService : Service() {
 
     private val localIpAddress: String?
         get() {
-            try {
-                // Try to get the first non-loopback IPv4 address from any network interface
-                val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-                while (interfaces.hasMoreElements()) {
-                    val networkInterface = interfaces.nextElement()
-                    val addresses = networkInterface.inetAddresses
-                    while (addresses.hasMoreElements()) {
-                        val address = addresses.nextElement()
-                        if (!address.isLoopbackAddress && address is java.net.Inet4Address) {
-                            return address.hostAddress
-                        }
-                    }
-                }
-                return "unknown"
-            } catch (e: Exception) {
-                Log.e(
-                    TAG,
-                    "Failed to get local IP address: " + e.message
-                )
-                return "unknown"
-            }
+            return NetworkUtils.getLocalIpAddress() ?: "unknown"
         }
 
     private fun matchTradePlansForApks(apkInfoListJson: String?) {

@@ -10,7 +10,8 @@ sealed class DashboardItem(val type: Int) {
         val discoveryMethod: String = "Auto Discovery",
         val serverName: String = "-",
         val hostname: String = "-",
-        val platform: String = "-"
+        val platform: String = "-",
+        val serverDiscoveryStatus: String = "等待扫描..."
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_SERVER)
 
     data class ItemWiFi(
@@ -32,4 +33,9 @@ sealed class DashboardItem(val type: Int) {
         val deviceStatus: String = "在线",
         val connectionTime: String = "2024-01-01 00:00:00"
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
+
+    data class ItemPortRange(
+        val portStart: Int = 8000,
+        val portEnd: Int = 9000
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_PORT_RANGE)
 }

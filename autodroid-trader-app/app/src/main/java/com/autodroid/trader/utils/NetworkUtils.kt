@@ -155,9 +155,9 @@ object NetworkUtils {
      * Get current WiFi information (name, IP)
      * 
      * @param context The application context
-     * @return A pair containing WiFi name and IP address, both nullable
+     * @return A Wifi object containing WiFi information
      */
-    fun getCurrentWiFiInfo(context: Context): Pair<String?, String?> {
+    fun getCurrentWiFiInfo(context: Context): Wifi {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -169,7 +169,13 @@ object NetworkUtils {
                 val linkProperties = connectivityManager.getLinkProperties(network)
                 val wifiName = getWifiName(context)
                 val wifiIp = getIpAddressFromLinkProperties(linkProperties)
-                return Pair(wifiName, wifiIp)
+                
+                if (wifiName != null && wifiIp != null) {
+                    return Wifi.connected(
+                        ssid = wifiName,
+                        ipAddress = wifiIp
+                    )
+                }
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // For Android 6.0-9 (API 23-28)
@@ -189,7 +195,14 @@ object NetworkUtils {
                     @Suppress("DEPRECATION")
                     intToIp(wifiInfo.ipAddress)
                 }
-                return Pair(wifiName, wifiIp)
+                
+                if (wifiName != null && wifiIp != null) {
+                    return Wifi.connected(
+                        ssid = wifiName,
+                        ipAddress = wifiIp,
+                        signalStrength = wifiInfo.rssi
+                    )
+                }
             }
         } else {
             // For older Android versions
@@ -206,11 +219,18 @@ object NetworkUtils {
                     @Suppress("DEPRECATION")
                     intToIp(wifiInfo.ipAddress)
                 }
-                return Pair(wifiName, wifiIp)
+                
+                if (wifiName != null && wifiIp != null) {
+                    return Wifi.connected(
+                        ssid = wifiName,
+                        ipAddress = wifiIp,
+                        signalStrength = wifiInfo.rssi
+                    )
+                }
             }
         }
         
-        return Pair(null, null)
+        return Wifi.empty()
     }
     
     /**
@@ -296,6 +316,38 @@ object NetworkUtils {
             null
         } catch (e: Exception) {
             null
+        }
+    }
+    
+    /**
+     * Check if an IP address is reachable
+     * 
+     * @param ipAddress The IP address to check
+     * @param timeoutMs Timeout in milliseconds
+     * @return true if the IP address is reachable, false otherwise
+     */
+    fun isReachable(ipAddress: String, timeoutMs: Int = 5000): Boolean {
+        return try {
+            val address = java.net.InetAddress.getByName(ipAddress)
+            address.isReachable(timeoutMs)
+        } catch (e: java.io.IOException) {
+            false
+        }
+    }
+    
+    /**
+     * Check if WiFi is enabled
+     * 
+     * @param context The application context
+     * @return true if WiFi is enabled, false otherwise
+     */
+    fun isWifiEnabled(context: Context): Boolean {
+        return try {
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            wifiManager.isWifiEnabled
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking WiFi enabled status: ${e.message}")
+            false
         }
     }
 }

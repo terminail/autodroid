@@ -151,7 +151,11 @@ class ItemWiFiManager(
             val wifiInfo = NetworkUtils.getCurrentWiFiInfo(context)
             
             // Update WiFi information in dashboard item
-            updateWiFiItem(wifiInfo.first ?: "Not connected", wifiInfo.second ?: "-", wifiInfo.first != null)
+            updateWiFiItem(
+                wifiInfo.ssid ?: "Not connected", 
+                wifiInfo.ipAddress ?: "-", 
+                wifiInfo.isWifiConnected()
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Error updating WiFi info with NetworkUtils: ${e.message}")
         }
