@@ -10,6 +10,7 @@ import android.view.ViewConfiguration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
+import com.autodroid.trader.model.User
 import com.autodroid.trader.ui.BaseFragment
 import com.autodroid.trader.ui.my.MyAdapter
 import com.autodroid.trader.ui.my.MyItem
@@ -77,7 +78,7 @@ class MyFragment : BaseFragment() {
 
     override fun setupObservers() {
         // Observe authentication state from AppViewModel
-        appViewModel.user.observe(viewLifecycleOwner) { user ->
+        appViewModel.user.observe(viewLifecycleOwner) { user: User? ->
             updateMyItems()
         }
     }

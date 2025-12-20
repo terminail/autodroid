@@ -39,16 +39,16 @@ class ItemDeviceManager(
      */
     private fun setupDeviceObservers() {
         // Observe device information changes from ViewModel
-        appViewModel.device.observe(lifecycleOwner) { device ->
-            device?.let {
-                updateDeviceItem(it)
+        appViewModel.device.observe(lifecycleOwner) { device: Device? ->
+            device?.let { deviceInfo: Device ->
+                updateDeviceItem(deviceInfo)
             }
         }
         
         // Observe network connectivity changes
-        appViewModel.network.observe(lifecycleOwner) { network ->
-            network?.let {
-                updateDeviceItemWithNetworkInfo(it)
+        appViewModel.network.observe(lifecycleOwner) { network: Network? ->
+            network?.let { networkInfo: Network ->
+                updateDeviceItemWithNetworkInfo(networkInfo)
             }
         }
     }

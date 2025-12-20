@@ -127,10 +127,9 @@ graph BT
 ```mermaid
 erDiagram
     SERVER {
-        string id PK "使用apiEndpoint的shorturl"
-        string apiEndpoint "服务器API端点"
+        string ip PK "复合主键：服务器IP地址"
+        string port PK "符合主键：服务器端口"
         string name "服务器名称"
-        string host "服务器主机地址"
         boolean connected "连接状态"
         long last_connected_at "最后连接时间戳"
     }

@@ -28,13 +28,20 @@ class ServerProvider private constructor(context: Context) {
     fun getConnectedServer(): LiveData<ServerEntity?> {
         return serverDao.getConnectedServer()
     }
+
+    /**
+     * 获取最后更新的服务器
+     */
+    fun getLastUpdatedServer(): LiveData<ServerEntity?> {
+        return serverDao.getLastUpdatedServer()
+    }
     
     /**
      * 根据服务器主键获取服务器
      */
-    suspend fun getServerByKey(apiEndpoint: String): ServerEntity? {
+    suspend fun getServerByKey(ip: String, port: Int): ServerEntity? {
         return withContext(Dispatchers.IO) {
-            serverDao.getServerByKey(apiEndpoint)
+            serverDao.getServerByKey(ip, port)
         }
     }
     
@@ -44,7 +51,7 @@ class ServerProvider private constructor(context: Context) {
     suspend fun getServerByHostname(hostname: String): ServerEntity? {
         return withContext(Dispatchers.IO) {
             // 由于ServerEntity没有host和port字段，需要从所有服务器中查找匹配hostname的服务器
-            serverDao.getAllServers().value?.find { it.hostname == hostname }
+            serverDao.getAllServers().value?.find { it.ip == hostname }
         }
     }
     
@@ -54,17 +61,17 @@ class ServerProvider private constructor(context: Context) {
     suspend fun insertOrUpdateServer(server: ServerEntity): String {
         return withContext(Dispatchers.IO) {
             // 检查是否已存在相同主键的服务器
-            val existingServer = serverDao.getServerByKey(server.apiEndpoint)
+            val existingServer = serverDao.getServerByKey(server.ip, server.port)
             
             val result: String = if (existingServer != null) {
                 // 更新现有服务器
                 val updatedServer = server.copy(updatedAt = System.currentTimeMillis())
                 serverDao.updateServer(updatedServer)
-                existingServer.apiEndpoint!!
+                "${server.ip}:${server.port}"
             } else {
                 // 插入新服务器
                 serverDao.insertServer(server)
-                server.apiEndpoint
+                "${server.ip}:${server.port}"
             }
             
             return@withContext result
@@ -93,19 +100,19 @@ class ServerProvider private constructor(context: Context) {
     /**
      * 根据服务器主键删除服务器
      */
-    suspend fun deleteServerByKey(apiEndpoint: String) {
+    suspend fun deleteServerByKey(ip: String, port: Int) {
         withContext(Dispatchers.IO) {
-            serverDao.deleteServerByKey(apiEndpoint)
+            serverDao.deleteServerByKey(ip, port)
         }
     }
 
     /**
      * 更新服务器连接状态
      */
-    suspend fun updateConnectionStatus(apiEndpoint: String, isConnected: Boolean) {
+    suspend fun updateConnectionStatus(ip: String, port: Int, isConnected: Boolean) {
         withContext(Dispatchers.IO) {
             val now = System.currentTimeMillis()
-            serverDao.updateConnectionStatus(apiEndpoint, isConnected, now, now)
+            serverDao.updateConnectionStatus(ip, port, isConnected, now, now)
         }
     }
     

@@ -8,10 +8,8 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.utils.NetworkUtils
-import com.autodroid.trader.ui.dashboard.DashboardItem
 import com.autodroid.trader.model.Wifi
 import com.autodroid.trader.model.Network
-import com.autodroid.trader.ui.dashboard.DashboardAdapter
 
 /**
  * Manager class for handling WiFi Information dashboard item functionality
@@ -19,7 +17,7 @@ import com.autodroid.trader.ui.dashboard.DashboardAdapter
 class ItemWiFiManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val viewModel: AppViewModel,
+    private val appViewModel: AppViewModel,
     private val onItemUpdate: (DashboardItem) -> Unit
 ) {
     
@@ -48,16 +46,16 @@ class ItemWiFiManager(
      */
     private fun setupWiFiObservers() {
         // Observe WiFi information changes from ViewModel
-        viewModel.wifi.observe(lifecycleOwner) { wifi ->
+        appViewModel.wifi.observe(lifecycleOwner) { wifi: Wifi? ->
             if (wifi != null) {
                 updateWiFiItem(wifi)
             }
         }
         
         // Observe network connectivity changes
-        viewModel.network.observe(lifecycleOwner) { network ->
-            network?.let {
-                updateWiFiItemWithNetwork(network)
+        appViewModel.network.observe(lifecycleOwner) { network: Network? ->
+            network?.let { networkInfo: Network ->
+                updateWiFiItemWithNetwork(networkInfo)
             }
         }
     }
@@ -70,7 +68,7 @@ class ItemWiFiManager(
             val wifiInfoObj = getCurrentWiFiInfo()
             
             // Update ViewModel with WiFi info
-            viewModel.setWifi(wifiInfoObj)
+            appViewModel.setWifi(wifiInfoObj)
             
             // Create and update dashboard item using the WifiInfo object
             val wifiItemWiFi = DashboardItem.ItemWiFi(
@@ -117,7 +115,7 @@ class ItemWiFiManager(
      */
     private fun updateWiFiItemWithNetwork(network: Network) {
         try {
-            val currentWifi = viewModel.wifi.value ?: Wifi.empty()
+            val currentWifi = appViewModel.wifi.value ?: Wifi.empty()
             
             val wifiItemWiFi = DashboardItem.ItemWiFi(
                 ssid = currentWifi.ssid ?: "Unknown",

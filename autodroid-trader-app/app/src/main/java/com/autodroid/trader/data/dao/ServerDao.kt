@@ -28,10 +28,16 @@ interface ServerDao {
     fun getConnectedServer(): LiveData<ServerEntity?>
 
     /**
+     * 获取最后更新的服务器
+     */
+    @Query("SELECT * FROM servers ORDER BY updatedAt DESC LIMIT 1")
+    fun getLastUpdatedServer(): LiveData<ServerEntity?>
+
+    /**
      * 根据服务器主键获取服务器
      */
-    @Query("SELECT * FROM servers WHERE apiEndpoint = :apiEndpoint")
-    fun getServerByKey(apiEndpoint: String): ServerEntity?
+    @Query("SELECT * FROM servers WHERE ip = :ip AND port = :port")
+    fun getServerByKey(ip: String, port: Int): ServerEntity?
 
     /**
      * 插入新服务器
@@ -54,14 +60,14 @@ interface ServerDao {
     /**
      * 根据服务器主键删除服务器
      */
-    @Query("DELETE FROM servers WHERE apiEndpoint = :apiEndpoint")
-    fun deleteServerByKey(apiEndpoint: String)
+    @Query("DELETE FROM servers WHERE ip = :ip AND port = :port")
+    fun deleteServerByKey(ip: String, port: Int)
 
     /**
      * 更新服务器连接状态
      */
-    @Query("UPDATE servers SET isConnected = :isConnected, lastConnectedTime = :lastConnectedTime, updatedAt = :updatedAt WHERE apiEndpoint = :apiEndpoint")
-    fun updateConnectionStatus(apiEndpoint: String, isConnected: Boolean, lastConnectedTime: Long, updatedAt: Long)
+    @Query("UPDATE servers SET isConnected = :isConnected, lastConnectedTime = :lastConnectedTime, updatedAt = :updatedAt WHERE ip = :ip AND port = :port")
+    fun updateConnectionStatus(ip: String, port: Int, isConnected: Boolean, lastConnectedTime: Long, updatedAt: Long)
 
     /**
      * 断开所有服务器的连接

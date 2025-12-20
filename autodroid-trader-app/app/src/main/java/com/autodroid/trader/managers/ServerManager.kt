@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.autodroid.trader.data.repository.ServerRepository
 import com.autodroid.trader.data.dao.ServerEntity
-import com.autodroid.trader.model.Server
 import com.autodroid.trader.network.ApiClient
 import com.autodroid.trader.network.ServerInfoResponse
 import com.autodroid.trader.utils.NetworkUtils
@@ -34,6 +33,15 @@ enum class ScanState {
  * 服务器管理器
  * 负责自动扫描局域网内的服务器，并将扫描结果更新到数据库
  */
+/**
+ * 服务器扫描结果，包含服务器信息和IP地址、端口
+ */
+data class ServerScanResult(
+    val serverInfo: ServerInfoResponse,
+    val ip: String,
+    val port: Int
+)
+
 class ServerManager private constructor(private val context: Context) {
     
     companion object {
@@ -77,8 +85,8 @@ class ServerManager private constructor(private val context: Context) {
     val scanProgress: MutableLiveData<String> = _scanProgress
     
     // 发现的服务器
-    private val _discoveredServer = MutableLiveData<Server?>()
-    val discoveredServer: MutableLiveData<Server?> = _discoveredServer
+    private val _discoveredServer = MutableLiveData<ServerScanResult?>()
+    val discoveredServer: MutableLiveData<ServerScanResult?> = _discoveredServer
     
     // 扫描任务
     private var scanJob: Job? = null
@@ -159,30 +167,22 @@ class ServerManager private constructor(private val context: Context) {
                             break
                         }
                         
-                        _scanProgress.postValue("正在检查服务器: ${server.name} (${server.apiEndpoint})")
-                        Log.d(TAG, "正在检查服务器: ${server.name} (${server.apiEndpoint})")
+                        _scanProgress.postValue("正在检查服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
+                        Log.d(TAG, "正在检查服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
                         
-                        // 从apiEndpoint解析IP和端口
-                        val urlParts = server.apiEndpoint.replace("http://", "").replace("https://", "").split(":")
-                        if (urlParts.size >= 2) {
-                            val ip = urlParts[0]
-                            val port = urlParts[1].toIntOrNull()
+                        // 检查服务器状态
+                        val serverInfo = checkServer(server.ip, server.port)
+                        if (serverInfo != null) {
+                            // 找到可用服务器，更新数据库
+                            val apiEndpoint = "http://${server.ip}:${server.port}/api"
+                            serverRepository.updateServer(apiEndpoint, serverInfo)
+                            _scanStatus.postValue("已连接到服务器: ${server.name}")
+                            _scanProgress.postValue("服务器信息: ${server.name} (http://${server.ip}:${server.port}/api)")
+                            Log.i(TAG, "已连接到服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
                             
-                            if (port != null) {
-                                // 检查服务器状态
-                                val serverInfo = checkServer(ip, port)
-                                if (serverInfo != null) {
-                                    // 找到可用服务器，更新数据库
-                                    serverRepository.update(serverInfo)
-                                    _scanStatus.postValue("已连接到服务器: ${server.name}")
-                                    _scanProgress.postValue("服务器信息: ${server.name} (${server.apiEndpoint})")
-                                    Log.i(TAG, "已连接到服务器: ${server.name} (${server.apiEndpoint})")
-                                    
-                                    // 停止扫描
-                                    stopServerScan()
-                                    return@launch
-                                }
-                            }
+                            // 停止扫描
+                            stopServerScan()
+                            return@launch
                         }
                     }
                     
@@ -227,14 +227,14 @@ class ServerManager private constructor(private val context: Context) {
                 _scanProgress.postValue("发现 ${reachableIps.size} 个设备，正在检查服务器...")
                 
                 // 检查每个IP地址是否是服务器
-                val serverFound = checkForServers(reachableIps)
+                val serverScanResult = checkForServers(reachableIps)
                 
-                if (serverFound != null) {
-                    _scanStatus.postValue("成功发现服务器: ${serverFound.name}")
-                    _discoveredServer.postValue(serverFound)
+                if (serverScanResult != null) {
+                    _scanStatus.postValue("成功发现服务器: ${serverScanResult.serverInfo.name}")
+                    _discoveredServer.postValue(serverScanResult)
                     
                     // 保存服务器到数据库
-                    saveServerToDatabase(serverFound)
+                    saveServerToDatabase(serverScanResult.serverInfo, serverScanResult.ip, serverScanResult.port)
                 } else {
                     _scanStatus.postValue("未发现任何服务器")
                 }
@@ -347,9 +347,9 @@ class ServerManager private constructor(private val context: Context) {
     /**
      * 检查IP地址是否是服务器
      */
-    private suspend fun checkForServers(ipAddresses: List<String>): Server? = withContext(Dispatchers.IO) {
+    private suspend fun checkForServers(ipAddresses: List<String>): ServerScanResult? = withContext(Dispatchers.IO) {
         val jobs = mutableListOf<Job>()
-        var foundServer: Server? = null
+        var foundServerResult: ServerScanResult? = null
         val (portStart, portEnd) = getPortRange()
         
         _scanProgress.postValue("开始检查 ${ipAddresses.size} 个ping可达的设备是否为服务器 (端口范围: $portStart-$portEnd)")
@@ -366,7 +366,7 @@ class ServerManager private constructor(private val context: Context) {
             }
             
             // 如果已经找到服务器，提前退出
-            if (foundServer != null) {
+            if (foundServerResult != null) {
                 _scanProgress.postValue("已找到服务器，停止检查其他设备")
                 break
             }
@@ -386,15 +386,15 @@ class ServerManager private constructor(private val context: Context) {
                     }
                     
                     // 如果已经找到服务器，停止检查
-                    if (foundServer != null) {
+                    if (foundServerResult != null) {
                         _scanProgress.postValue("已找到服务器，停止检查 $ip 的其他端口")
                         break
                     }
                     
-                    val server = checkServer(ip, port)
-                    if (server != null) {
-                        foundServer = server
-                        _scanProgress.postValue("找到服务器: ${server.name} ($ip:$port)，停止扫描")
+                    val serverInfo = checkServer(ip, port)
+                    if (serverInfo != null) {
+                        foundServerResult = ServerScanResult(serverInfo, ip, port)
+                        _scanProgress.postValue("找到服务器: ${serverInfo.name} ($ip:$port)，停止扫描")
                         break
                     }
                 }
@@ -407,7 +407,7 @@ class ServerManager private constructor(private val context: Context) {
                 jobs.clear()
                 
                 // 如果已经找到服务器，提前退出
-                if (foundServer != null) {
+                if (foundServerResult != null) {
                     _scanProgress.postValue("已找到服务器，停止创建新的检查任务")
                     break
                 }
@@ -417,19 +417,19 @@ class ServerManager private constructor(private val context: Context) {
         // 等待剩余任务完成
         jobs.joinAll()
         
-        if (foundServer != null) {
-            _scanProgress.postValue("服务器检查完成，已找到服务器: ${foundServer.name}")
+        if (foundServerResult != null) {
+            _scanProgress.postValue("服务器检查完成，已找到服务器: ${foundServerResult.serverInfo.name}")
         } else {
             _scanProgress.postValue("服务器检查完成，未找到任何服务器")
         }
         
-        return@withContext foundServer
+        return@withContext foundServerResult
     }
     
     /**
      * 检查指定IP和端口是否是服务器
      */
-    private suspend fun checkServer(ip: String, port: Int): Server? = withContext(Dispatchers.IO) {
+    private suspend fun checkServer(ip: String, port: Int): ServerInfoResponse? = withContext(Dispatchers.IO) {
         try {
             val apiEndpoint = "http://$ip:$port/api"
             val apiClient = ApiClient.getInstance().setApiEndpoint(apiEndpoint)
@@ -444,15 +444,7 @@ class ServerManager private constructor(private val context: Context) {
                 _scanProgress.postValue("检查服务器: $ip:$port - /api/server 响应正常，正在解析服务器信息")
                 
                 _scanProgress.postValue("成功发现服务器: ${serverInfo.name} ($ip:$port)")
-                return@withContext Server(
-                    apiEndpoint = "$apiEndpoint/api",
-                    serviceName = serverInfo.name ?: "AutoDroid Server",
-                    name = serverInfo.name,
-                    hostname = serverInfo.hostname ?: ip,
-                    platform = serverInfo.platform ?: "Unknown",
-                    connected = true,
-                    discoveryMethod = "AutoScan"
-                )
+                return@withContext serverInfo
             } else {
                 _scanProgress.postValue("检查服务器: $ip:$port - /api/server 无响应")
             }
@@ -479,25 +471,25 @@ class ServerManager private constructor(private val context: Context) {
     /**
      * 保存服务器到数据库
      */
-    private suspend fun saveServerToDatabase(server: Server) {
+    private suspend fun saveServerToDatabase(serverInfo: ServerInfoResponse, ip: String, port: Int) {
         try {
-            // 将Server转换为ServerEntity并保存到数据库
+            // 将ServerInfoResponse转换为ServerEntity并保存到数据库
             val serverEntity = com.autodroid.trader.data.dao.ServerEntity(
-                apiEndpoint = server.apiEndpoint,
-                name = server.name,
+                ip = ip,
+                port = port,
+                name = serverInfo.name,
+                platform = serverInfo.platform,
+                services = serverInfo.services,
+                capabilities = serverInfo.capabilities,
                 isConnected = true,
                 lastConnectedTime = System.currentTimeMillis(),
-                hostname = server.hostname ?: "",
-                platform = server.platform ?: "",
-                version = "1.0.0",
-                deviceCount = 0,
                 discoveryType = "autoscan"
             )
             
             // 使用Repository保存服务器信息
-            serverRepository.insertOrUpdateServer(server)
+            serverRepository.insertOrUpdateServer(serverEntity)
             
-            Log.d(TAG, "服务器已保存到数据库: ${server.name}")
+            Log.d(TAG, "服务器已保存到数据库: ${serverInfo.name}")
         } catch (e: Exception) {
             Log.e(TAG, "保存服务器到数据库失败: ${e.message}", e)
         }

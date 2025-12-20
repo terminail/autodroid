@@ -5,8 +5,8 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.ui.dashboard.DashboardItem
-import com.autodroid.trader.model.Server
-// import com.autodroid.trader.model.DiscoveredServer
+import com.autodroid.trader.network.ServerInfoResponse
+import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.ui.dashboard.DashboardAdapter
 import com.autodroid.trader.managers.ServerManager
@@ -62,11 +62,11 @@ class ItemServerManager(
      */
     private fun setupObservers() {
         // Observe server info from AppViewModel (single source of truth)
-        appViewModel.server.observe(lifecycleOwner) { server ->
-            server?.let {
-                val connected = it.connected
-                val hostname = it.hostname ?: ""
-                val apiEndpoint = it.apiEndpoint ?: "-"
+        appViewModel.server.observe(lifecycleOwner) { serverEntity ->
+            serverEntity?.let {
+                val connected = it.isConnected
+                val hostname = it.ip
+                val apiEndpoint = "http://${it.ip}:${it.port}/api"
                 
                 isServerConnected = connected
                 
@@ -81,13 +81,9 @@ class ItemServerManager(
                     },
                     serverStatus = if (connected) "CONNECTED" else "DISCOVERED",
                     apiEndpoint = apiEndpoint,
-                    discoveryMethod = it.discoveryMethod ?: when {
-                        connected -> "Connected"
-                        isDiscoveryInProgress -> "Discovery..."
-                        else -> "Discovered"
-                    },
+                    discoveryMethod = "Connected",
                     serverName = it.name ?: "-",
-                    hostname = it.hostname ?: "",
+                    hostname = it.ip,
                     platform = it.platform ?: "Unknown"
                 )
                 
@@ -162,22 +158,22 @@ class ItemServerManager(
         }
         
         // Observe discovered server
-        serverManager.discoveredServer.observe(lifecycleOwner) { server ->
-            server?.let {
-                // Update AppViewModel with discovered server
-                appViewModel.setServer(it)
+        serverManager.discoveredServer.observe(lifecycleOwner) { serverScanResult ->
+            serverScanResult?.let {
+                // Note: Server info is now automatically updated in the database
+                // and will be reflected in the AppViewModel's server LiveData
                 
                 updateItem(
                     status = "已连接到服务器",
                     serverStatus = "CONNECTED",
-                    apiEndpoint = it.apiEndpoint ?: "-",
+                    apiEndpoint = "http://${it.ip}:${it.port}/api",
                     discoveryMethod = "自动扫描",
-                    serverName = it.name ?: "-",
-                    hostname = it.hostname ?: "",
-                    platform = it.platform ?: "Unknown"
+                    serverName = it.serverInfo.name ?: "-",
+                    hostname = it.ip,
+                    platform = it.serverInfo.platform ?: "Unknown"
                 )
                 
-                showSuccessMessage("服务器连接成功", "已自动发现并连接到 ${it.name}")
+                showSuccessMessage("服务器连接成功", "已自动发现并连接到 ${it.serverInfo.name}")
             }
         }
     }
@@ -342,22 +338,34 @@ class ItemServerManager(
                     showLoadingIndicator("正在连接到服务器")
                 }
                 
-                // Create server model
-                val server = Server(
-                    serviceName = serverName,
+                // Extract IP and port from apiEndpoint
+                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
+                val ip = urlParts.getOrNull(0) ?: throw IllegalArgumentException("无效的API端点")
+                val port = urlParts.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("无效的端口号")
+                
+                // Create ServerEntity
+                val serverEntity = ServerEntity(
+                    ip = ip,
+                    port = port,
                     name = serverName,
-                    hostname = "localhost", // We'll update this later
                     platform = platform,
-                    apiEndpoint = apiEndpoint,
-                    connected = true,
-                    discoveryMethod = "QRCode"
+                    isConnected = true,
+                    discoveryType = "QRCode"
                 )
                 
                 // Insert or update server in repository
-                serverRepository.insertOrUpdateServer(server)
+                serverRepository.insertOrUpdateServer(serverEntity)
                 
-                // Update AppViewModel with server information
-                appViewModel.setServer(server)
+                // Create ServerInfoResponse for AppViewModel
+                val serverInfo = ServerInfoResponse(
+                    ip = ip,
+                    port = port,
+                    name = serverName,
+                    platform = platform
+                )
+                
+                // Note: Server info is now automatically updated in the database
+                // and will be reflected in the AppViewModel's server LiveData
                 
                 // Show success message
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -510,22 +518,26 @@ class ItemServerManager(
                     val isValid = validateServerEndpoint(apiEndpoint)
                     
                     if (isValid) {
-                        // Create server model
-                        val server = Server(
-                            serviceName = "Manual Server",
+                        // Create server entity
+                        val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
+                        val ip = urlParts.getOrNull(0) ?: throw IllegalArgumentException("无效的API端点")
+                        val port = urlParts.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("无效的端口号")
+                        
+                        val serverEntity = ServerEntity(
+                            ip = ip,
+                            port = port,
                             name = "Manual Server",
-                            hostname = "localhost", // We'll update this later
                             platform = "Unknown",
-                            apiEndpoint = apiEndpoint,
-                            connected = true,
-                            discoveryMethod = "Manual"
+                            isConnected = true,
+                            lastConnectedTime = System.currentTimeMillis(),
+                            discoveryType = "manual"
                         )
                         
                         // Insert or update server in repository
-                        serverRepository.insertOrUpdateServer(server)
+                        serverRepository.insertOrUpdateServer(serverEntity)
                         
-                        // Update AppViewModel with server information
-                        appViewModel.setServer(server)
+                        // Note: Server info is now automatically updated in the database
+                        // and will be reflected in the AppViewModel's server LiveData
                         
                         // Show success message
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -637,7 +649,7 @@ class ItemServerManager(
     /**
      * Get current server info
      */
-    fun getCurrentServer(): Server? {
+    fun getCurrentServer(): ServerEntity? {
         // Note: Server info management has been moved to AppViewModel
         return appViewModel.server.value
     }
@@ -645,12 +657,13 @@ class ItemServerManager(
     /**
      * Update server status in UI
      */
-    private fun updateServerStatusUI(server: Server, status: String) {
+    private fun updateServerStatusUI(server: ServerEntity, status: String) {
+        val apiEndpoint = "http://${server.ip}:${server.port}"
         updateItem(
             status = status,
-            serverStatus = if (server.connected) "CONNECTED" else "DISCONNECTED",
-            apiEndpoint = server.apiEndpoint ?: "-",
-            discoveryMethod = server.discoveryMethod ?: "Unknown"
+            serverStatus = if (server.isConnected) "CONNECTED" else "DISCONNECTED",
+            apiEndpoint = apiEndpoint,
+            discoveryMethod = server.discoveryType ?: "Unknown"
         )
     }
     
@@ -659,7 +672,7 @@ class ItemServerManager(
      */
     fun isServerConnected(): Boolean {
         // Note: Server info management has been moved to AppViewModel
-        return appViewModel.server.value?.connected == true
+        return appViewModel.server.value?.isConnected == true
     }
     
     /**
@@ -705,19 +718,20 @@ class ItemServerManager(
         val currentServer = appViewModel.server.value
         
         if (currentServer != null) {
+            val apiEndpoint = "http://${currentServer.ip}:${currentServer.port}"
             // Server is connected or discovered, update UI immediately
             updateItem(
                 status = when {
-                    currentServer.connected -> "Connected via ${currentServer.discoveryMethod ?: "Unknown"}"
-                    currentServer.discoveryMethod == "QRCode" -> "QR Code Scanned"
+                    currentServer.isConnected -> "Connected via ${currentServer.discoveryType ?: "Unknown"}"
+                    currentServer.discoveryType == "qrcode" -> "QR Code Scanned"
                     else -> "Server Found"
                 },
-                serverStatus = if (currentServer.connected) "CONNECTED" else "DISCOVERED",
-                apiEndpoint = currentServer.apiEndpoint ?: "-",
-                discoveryMethod = currentServer.discoveryMethod ?: "Auto Discovery",
+                serverStatus = if (currentServer.isConnected) "CONNECTED" else "DISCOVERED",
+                apiEndpoint = apiEndpoint,
+                discoveryMethod = currentServer.discoveryType ?: "Auto Discovery",
 
                 serverName = currentServer.name ?: "Autodroid Server",
-                hostname = currentServer.hostname ?: "-",
+                hostname = currentServer.ip,
                 platform = currentServer.platform ?: "-"
             )
         } else {

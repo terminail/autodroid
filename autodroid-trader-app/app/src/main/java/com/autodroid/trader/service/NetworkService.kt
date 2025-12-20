@@ -16,7 +16,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.autodroid.trader.data.repository.ServerRepository
-import com.autodroid.trader.model.Server
+import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +41,7 @@ class NetworkService : Service() {
 
     private var httpClient: OkHttpClient? = null
     private var serverRepository: ServerRepository? = null
-    var discoveredServer: Server? = null
+    var discoveredServer: ServerEntity? = null
         private set
 
 

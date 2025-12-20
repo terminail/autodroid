@@ -4,8 +4,15 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.repository.ServerRepository
-import com.autodroid.trader.model.*
+import com.autodroid.trader.data.dao.ServerEntity
+import com.autodroid.trader.model.User
+import com.autodroid.trader.model.Network
+import com.autodroid.trader.model.Device
+import com.autodroid.trader.model.Wifi
+import com.autodroid.trader.model.TradePlan
 import com.autodroid.trader.auth.viewmodel.AuthViewModel
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -32,7 +39,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val errorMessage = MutableLiveData<String?>()
     
     // Server connection state (global shared state)
-    val server = MutableLiveData<Server>()
+    val server = MediatorLiveData<ServerEntity?>()
     
     // Device information (global shared state)
     val device = MutableLiveData<Device>()
@@ -51,6 +58,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun initialize(context: Context) {
         serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
+        
+        // 直接监控 Room 数据库中最后更新的服务器
+        serverRepository?.getLastUpdatedServer()?.let { liveData: LiveData<ServerEntity?> ->
+            // 将数据库中的服务器数据映射到 ViewModel 的 server LiveData
+            server.addSource(liveData) { serverEntity: ServerEntity? ->
+                server.value = serverEntity
+            }
+        }
     }
     
     /**
@@ -86,10 +101,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     
     fun setAvailableTradePlans(tradePlans: MutableList<TradePlan>) {
         availableTradePlans.setValue(tradePlans)
-    }
-    
-    fun setServer(serverInfo: Server) {
-        server.setValue(serverInfo)
     }
     
     // Authentication methods
@@ -175,17 +186,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         setErrorMessage(null)
     }
     
-    // Authentication state management
-    // Note: setServerInfo method is already defined at line 41
-    
-    // Server connection status observer for authentication state coordination
-    // This is the only authentication-related state that should be in AppViewModel
-    // as it's needed for server change detection
-    private var previousServer: Server? = null
-
-    // Server change detection callback - can be used by AuthViewModel
-    var onServerChanged: ((oldServer: Server?, newServer: Server?) -> Unit)? = null
-    
     // Convenience methods for initializing encapsulated states
     fun initializeDevice(ip: String? = null, name: String? = null) {
         setDevice(Device.empty().copy(ip = ip, name = name))
@@ -205,7 +205,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun disconnectDevice() {
-        device.value?.let { currentInfo ->
+        device.value?.let { currentInfo: Device ->
             setDevice(currentInfo.disconnected())
         }
     }
@@ -215,7 +215,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun disconnectWifi() {
-        wifi.value?.let { currentInfo ->
+        wifi.value?.let { currentInfo: Wifi ->
             setWifi(currentInfo.disconnected())
         }
     }

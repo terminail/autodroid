@@ -85,7 +85,7 @@
     <string name="server_connection_timeout">服务器连接超时</string>
     <string name="server_connection_network_error">网络错误，请检查网络连接</string>
     <string name="server_connection_method_qr">通过QR码手动连接</string>
-    <string name="nav_dashboard">连接盘</string>
+    <string name="nav_dashboard">连服盘</string>
     <string name="nav_my">我的</string>
     <string name="nav_trade_orders">交割单</string>
     <string name="nav_trade_plans">交计花</string>

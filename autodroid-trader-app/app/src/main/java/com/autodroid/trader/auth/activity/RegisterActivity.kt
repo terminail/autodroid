@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.lifecycle.Observer
 import com.autodroid.trader.MainActivity
 import com.autodroid.trader.R
+import com.autodroid.trader.model.User
 import com.autodroid.trader.ui.BaseActivity
 
 class RegisterActivity : BaseActivity() {
@@ -66,7 +67,7 @@ class RegisterActivity : BaseActivity() {
 
     private fun observeViewModel() {
         // Observe authentication state from AppViewModel
-        appViewModel.user.observe(this, Observer { user ->
+        appViewModel.user.observe(this, Observer { user: User? ->
             if (user?.isAuthenticated == true) {
                 // Navigate to main activity on successful registration
                 val intent = Intent(this@RegisterActivity, MainActivity::class.java)

@@ -6,35 +6,25 @@ import androidx.room.PrimaryKey
 /**
  * 服务器信息实体类
  * 用于Room数据库持久化存储服务器连接信息
- * 使用服务器名称作为主键，简化数据管理
+ * 使用ip+port作为复合主键，确保每个服务器地址唯一
  */
-@Entity(tableName = "servers")
+@Entity(tableName = "servers", primaryKeys = ["ip", "port"])
 data class ServerEntity(
-    @PrimaryKey
-    val apiEndpoint: String, // API端点作为主键
-
     // 服务器基本信息
-    val name: String?,
+    val ip: String,
+    val port: Int,
+    val name: String? = null,
+    val platform: String? = null,
+    val services: Map<String, String> = emptyMap(),
+    val capabilities: Map<String, Boolean> = emptyMap(),
 
+    // 手机端管理用信息
     // 连接状态
     val isConnected: Boolean = false,
     val lastConnectedTime: Long = 0,
 
-    // 服务器详细信息（从ServerInfoResponse获取）
-    val hostname: String = "",
-    val platform: String = "",
-    val version: String = "",
-    val deviceCount: Int = 0,
-
-    // 服务器能力信息
-    val supportsDeviceRegistration: Boolean = false,
-    val supportsApkManagement: Boolean = false,
-    val supportsTradePlanExecution: Boolean = false,
-    val supportsTradeScheduling: Boolean = false,
-    val supportsEventTriggering: Boolean = false,
-
     // 发现方式
-    val discoveryType: String = "", // "qrcode", "manual"
+    val discoveryType: String = "", // "qrcode", "manual", "autoscan"
 
     // 时间戳
     val createdAt: Long = System.currentTimeMillis(),

@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.database.ServerProvider
 import com.autodroid.trader.data.dao.ServerEntity
-import com.autodroid.trader.model.Server
 import com.autodroid.trader.network.ApiClient
 import com.autodroid.trader.network.ServerInfoResponse
 import kotlinx.coroutines.CoroutineScope
@@ -26,26 +25,7 @@ class ServerRepository private constructor(application: Application) {
     /**
      * 更新服务器信息
      */
-    suspend fun update(server: Server) {
-        // 将Server对象转换为ServerEntity
-        val serverEntity = ServerEntity(
-            apiEndpoint = server.apiEndpoint,
-            name = server.name,
-            isConnected = server.connected,
-            lastConnectedTime = if (server.connected) System.currentTimeMillis() else 0,
-            hostname = server.hostname ?: "",
-            platform = server.platform ?: "",
-            version = "",
-            deviceCount = 0,
-            supportsDeviceRegistration = server.supportsDeviceRegistration,
-            supportsApkManagement = server.supportsApkManagement,
-            supportsTradePlanExecution = server.supportsTradePlanExecution,
-            supportsTradeScheduling = server.supportsTradeScheduling(),
-            supportsEventTriggering = false, // Server类中没有这个属性，设为默认值
-            discoveryType = server.discoveryMethod ?: "",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
-        )
+    suspend fun update(serverEntity: ServerEntity) {
         serverProvider.updateServer(serverEntity)
     }
     
@@ -65,35 +45,38 @@ class ServerRepository private constructor(application: Application) {
         updateAllServers()
         return serverProvider.getConnectedServer()
     }
+
+    /**
+     * 获取最后更新的服务器
+     */
+    fun getLastUpdatedServer(): LiveData<ServerEntity?> {
+        return serverProvider.getLastUpdatedServer()
+    }
     
     /**
      * 插入或更新服务器
      */
-    suspend fun insertOrUpdateServer(server: Server): String {
+    suspend fun insertOrUpdateServer(serverEntity: ServerEntity): String {
         return withContext(Dispatchers.IO) {
-            // 使用apiEndpoint作为主键，必须非空
-            val apiEndpoint = server.apiEndpoint ?: throw IllegalArgumentException("服务器API端点不能为空")
-            
-            // 直接使用Server的信息构建ServerEntity，不需要再次调用API
-            val serverEntity = ServerEntity(
-                apiEndpoint = apiEndpoint,
-                name = server.serviceName,
+            try {
+                // 检查服务器是否已存在
+                val existingServer = serverProvider.getServerByKey(serverEntity.ip, serverEntity.port)
                 
-                // 使用Server中的信息
-                hostname = server.hostname ?: throw IllegalArgumentException("服务器主机名不能为空"),
-                platform = server.platform ?: throw IllegalArgumentException("服务器平台不能为空"),
-                version = "1.0.0", // 版本号可以使用默认值
-                deviceCount = 0, // 设备数量可以使用默认值
-                
-                discoveryType = "manual" // 手动输入方式
-            )
-            
-            val apiEndpointResult = serverProvider.insertOrUpdateServer(serverEntity)
-            
-            // 对于手动添加的服务器，自动设置为已连接
-            serverProvider.updateConnectionStatus(apiEndpointResult!!, true)
-            
-            return@withContext apiEndpointResult
+                if (existingServer != null) {
+                    // 更新现有服务器
+                    serverProvider.updateServer(serverEntity)
+                    Log.d("ServerRepository", "服务器已更新: ${serverEntity.name}")
+                    return@withContext "服务器已更新: ${serverEntity.name}"
+                } else {
+                    // 插入新服务器
+                    serverProvider.insertOrUpdateServer(serverEntity)
+                    Log.d("ServerRepository", "新服务器已添加: ${serverEntity.name}")
+                    return@withContext "新服务器已添加: ${serverEntity.name}"
+                }
+            } catch (e: Exception) {
+                Log.e("ServerRepository", "插入或更新服务器失败: ${e.message}", e)
+                throw e
+            }
         }
     }
     
@@ -102,7 +85,12 @@ class ServerRepository private constructor(application: Application) {
      */
     suspend fun deleteServer(apiEndpoint: String) {
         withContext(Dispatchers.IO) {
-            serverProvider.deleteServerByKey(apiEndpoint)
+            // 从apiEndpoint中提取ip和port
+            val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
+            val ip = urlParts.getOrNull(0) ?: return@withContext
+            val port = urlParts.getOrNull(1)?.toIntOrNull() ?: return@withContext
+            
+            serverProvider.deleteServerByKey(ip, port)
         }
     }
     
@@ -120,8 +108,11 @@ class ServerRepository private constructor(application: Application) {
                 // 对每个服务器进行完整信息检查
                 allServers.forEach { server ->
                     try {
+                        // 构建API端点
+                        val apiEndpoint = "http://${server.ip}:${server.port}/api"
+                        
                         // 设置API端点并获取服务器信息
-                        apiClient.setApiEndpoint(server.apiEndpoint)
+                        apiClient.setApiEndpoint(apiEndpoint)
                         
                         // 调用getServerInfo()获取完整的服务器信息
                         val serverInfo = apiClient.getServerInfo()
@@ -129,20 +120,17 @@ class ServerRepository private constructor(application: Application) {
                         // 根据服务器信息更新本地数据库
                         if (serverInfo != null) {
                             // 服务器可用，更新服务器信息
-                            updateServer(server.apiEndpoint, serverInfo)
-                            Log.d("ServerRepository", "服务器信息同步成功: ${server.apiEndpoint}")
+                            updateServer(apiEndpoint, serverInfo)
+                            Log.d("ServerRepository", "服务器信息同步成功: ${apiEndpoint}")
                         } else {
                             // 服务器不可用，断开连接
-                            serverProvider.updateConnectionStatus(
-                                server.apiEndpoint, 
-                                false
-                            )
-                            Log.w("ServerRepository", "服务器信息获取失败: ${server.apiEndpoint}")
+                            serverProvider.updateConnectionStatus(server.ip, server.port, false)
+                            Log.w("ServerRepository", "服务器信息获取失败: ${apiEndpoint}")
                         }
                     } catch (e: Exception) {
-                        Log.e("ServerRepository", "检查服务器${server.apiEndpoint}状态时出错: ${e.message}")
+                        Log.e("ServerRepository", "检查服务器${server.ip}:${server.port}状态时出错: ${e.message}")
                         // 检查失败时断开连接
-                        serverProvider.updateConnectionStatus(server.apiEndpoint, false)
+                        serverProvider.updateConnectionStatus(server.ip, server.port, false)
                     }
                 }
             } catch (e: Exception) {
@@ -156,17 +144,20 @@ class ServerRepository private constructor(application: Application) {
     /**
      * 更新服务器信息
      */
-    private suspend fun updateServer(apiEndpoint: String, serverInfo: ServerInfoResponse) {
+    suspend fun updateServer(apiEndpoint: String, serverInfo: ServerInfoResponse) {
         withContext(Dispatchers.IO) {
             try {
-                val serverEntity = serverProvider.getServerByKey(apiEndpoint)
+                // 从apiEndpoint中提取ip和port
+                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
+                val ip = urlParts.getOrNull(0) ?: return@withContext
+                val port = urlParts.getOrNull(1)?.toIntOrNull() ?: return@withContext
+                
+                val serverEntity = serverProvider.getServerByKey(ip, port)
                 if (serverEntity != null) {
                     // 使用服务器返回的完整信息更新本地数据库
                     val updatedServer = serverEntity.copy(
                         name = serverInfo.name ?: serverEntity.name,
-                        hostname = serverInfo.hostname ?: serverEntity.hostname,
                         platform = serverInfo.platform ?: serverEntity.platform,
-                        version = "1.0.0", // 可以从serverInfo中获取版本信息
                         isConnected = true,
                         lastConnectedTime = System.currentTimeMillis()
                     )

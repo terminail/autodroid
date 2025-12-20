@@ -5,20 +5,14 @@ package com.autodroid.trader.network
  * This is the type-safe response model for getServerInfo() API call
  */
 data class ServerInfoResponse(
-    val apiEndpoint: String,
+    val ip: String,
+    val port: Int,
     val name: String? = null,
-    val hostname: String? = null,
-    val ipAddress: String? = null,
     val platform: String? = null,
     val services: Map<String, String> = emptyMap(),
     val capabilities: Map<String, Boolean> = emptyMap()
 ) {
-    /**
-     * Check if the server info response is valid
-     */
-    fun isValid(): Boolean {
-        return name != null && hostname != null && ipAddress != null
-    }
+
     
     /**
      * Check if device registration capability is enabled
@@ -47,9 +41,9 @@ data class ServerInfoResponse(
     fun supportsEventTriggering(): Boolean {
         return capabilities["event_triggering"] ?: false
     }
-    
+
     override fun toString(): String {
-        return "ServerInfoResponse(name='$name', hostname='$hostname', ipAddress='$ipAddress', " +
-                "platform='$platform', apiEndpoint='$apiEndpoint', services=$services, capabilities=$capabilities)"
+        return "ServerInfoResponse(name='$name', ip='$ip', " +
+                "port=$port, platform='$platform', services=$services, capabilities=$capabilities)"
     }
 }
