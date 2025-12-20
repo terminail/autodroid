@@ -29,4 +29,9 @@ data class ServerEntity(
     // 时间戳
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    /**
+     * 获取API端点URL
+     */
+    fun apiEndpoint(): String = "http://${ip}:${port}/api"
+}

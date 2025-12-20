@@ -30,9 +30,9 @@ class ServerProvider private constructor(context: Context) {
     }
 
     /**
-     * 获取最后更新的服务器
+     * 获取当前服务器
      */
-    fun getLastUpdatedServer(): LiveData<ServerEntity?> {
+    fun getCurrentServer(): LiveData<ServerEntity?> {
         return serverDao.getLastUpdatedServer()
     }
     

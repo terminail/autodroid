@@ -3,7 +3,6 @@ package com.autodroid.trader.ui.dashboard
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.view.View.GONE
 import android.view.View.VISIBLE
 // TextView import removed - UI updates are now handled through data model
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,10 +13,13 @@ import com.autodroid.trader.managers.TradePlanManager
 // import com.autodroid.trader.apk.ApkScannerManager
 // import com.autodroid.trader.model.DiscoveredServer
 import com.autodroid.trader.ui.BaseFragment
-import com.autodroid.trader.ui.dashboard.DashboardAdapter
-import com.autodroid.trader.ui.dashboard.DashboardItem
 import android.view.MotionEvent
 import android.view.ViewConfiguration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.widget.Toast
 import com.google.android.material.appbar.AppBarLayout
 
 class DashboardFragment : BaseFragment() {
@@ -49,7 +51,7 @@ class DashboardFragment : BaseFragment() {
     
     // Item managers for modular architecture
     private lateinit var itemServerManager: ItemServerManager
-    private lateinit var deviceInfoItemManager: ItemDeviceManager
+    private lateinit var itemDeviceManager: ItemDeviceManager
     private lateinit var wifiItemManager: ItemWiFiManager
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,10 +102,10 @@ class DashboardFragment : BaseFragment() {
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
-            ::onServerConnectionItemUpdate
+            ::onItemServerUpdate
         )
         
-        deviceInfoItemManager = ItemDeviceManager(
+        itemDeviceManager = ItemDeviceManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
@@ -132,6 +134,10 @@ class DashboardFragment : BaseFragment() {
                 // 委托给ServerItemManager处理手动输入
                 itemServerManager.handleManualInputClick()
             }
+            
+            override fun onRegisterDeviceClick() {
+                handleRegisterDeviceClick()
+            }
         })
         
         dashboardRecyclerView?.adapter = dashboardAdapter
@@ -141,7 +147,7 @@ class DashboardFragment : BaseFragment() {
          
          // Start item managers
         itemServerManager.initialize()
-        deviceInfoItemManager.initialize()
+        itemDeviceManager.initialize()
         wifiItemManager.initialize()
 
         // Debug: Check if NetworkService is running
@@ -171,11 +177,11 @@ class DashboardFragment : BaseFragment() {
     /**
      * Simplified callback for server connection item updates
      */
-    private fun onServerConnectionItemUpdate(item: DashboardItem.ItemServer) {
-        Log.d("DashboardFragment", "onServerConnectionItemUpdate called: status=${item.status}, serverStatus=${item.serverStatus}")
+    private fun onItemServerUpdate(item: DashboardItem.ItemServer) {
+        Log.d("DashboardFragment", "onItemServerUpdate called: status=${item.status}, serverStatus=${item.serverStatus}")
         
         try {
-            val result = itemServerManager.handleServerConnectionUpdate(item, dashboardItems, dashboardAdapter)
+            val result = itemServerManager.handleItemServerUpdate(item, dashboardItems, dashboardAdapter)
             Log.d("DashboardFragment", "handleServerConnectionUpdate result: $result")
         } catch (e: Exception) {
             Log.e("DashboardFragment", "Error in handleServerConnectionUpdate: ${e.message}", e)
@@ -186,7 +192,7 @@ class DashboardFragment : BaseFragment() {
      * Simplified callback for device info item updates
      */
     private fun onDeviceInfoItemUpdate(item: DashboardItem) {
-        deviceInfoItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+        itemDeviceManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
     }
     
     /**
@@ -194,6 +200,34 @@ class DashboardFragment : BaseFragment() {
      */
     private fun onWiFiInfoItemUpdate(item: DashboardItem) {
         wifiItemManager.handleListUpdate(item, dashboardItems, dashboardAdapter)
+    }
+    
+    /**
+     * Handle device registration button click
+     */
+    private fun handleRegisterDeviceClick() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Use DeviceManager to register the device with the server
+                val response = appViewModel.deviceManager.registerLocalDeviceWithServer()
+                
+                withContext(Dispatchers.Main) {
+                    if (response.success) {
+                        Toast.makeText(requireContext(), "设备注册成功: ${response.message}", Toast.LENGTH_LONG).show()
+                        Log.d(TAG, "Device registered successfully: ${response.device_id}")
+                    } else {
+                        Toast.makeText(requireContext(), "设备注册失败: ${response.message}", Toast.LENGTH_LONG).show()
+                        Log.e(TAG, "Device registration failed: ${response.message}")
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during device registration: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "设备注册出错: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
     
     private fun updateUI() {
@@ -223,7 +257,7 @@ class DashboardFragment : BaseFragment() {
             platform = "Android",
             deviceModel = "Unknown",
             deviceStatus = "在线",
-            connectionTime = "Never"
+            latestRegisteredTime = "Never"
         ))
         
         // 5. Port Range Settings
@@ -245,7 +279,7 @@ class DashboardFragment : BaseFragment() {
         // Start with server connection to ensure it's immediately visible
         itemServerManager.refresh()
         wifiItemManager.refresh()
-        deviceInfoItemManager.refresh()
+        itemDeviceManager.refresh()
         
         // Force immediate UI update to show current server state
         forceServerItemUpdate()
@@ -290,24 +324,6 @@ class DashboardFragment : BaseFragment() {
         return false
     }
 
-    // updateWiFiInfo method removed - WiFi information updates are handled by ItemWiFiManager
-
-    // getDeviceUDID method removed - use DeviceUtils.getDeviceUDID() instead
-
-    // getCurrentWiFiInfo method removed - use NetworkUtils.getCurrentWiFiInfo() instead
-    
-    // getWifiName method removed - use NetworkUtils.getWifiName() instead
-    
-    // getIpAddressFromLinkProperties method removed - use NetworkUtils.getIpAddressFromLinkProperties() instead
-
-    // getLocalIpAddress method removed - use NetworkUtils.getLocalIpAddress() instead
-
-    // intToIp method removed - use NetworkUtils.intToIp() instead
-
-    // Server connection related methods removed - handled by ServerConnectionItemManager
-    
-    // updateConnectionStatus method removed - UI updates are now handled through data model
-    
     /**
      * 处理手动输入按钮点击事件 - 委托给ServerItemManager
      */
@@ -324,7 +340,7 @@ class DashboardFragment : BaseFragment() {
         // Force update all item managers to refresh their data
         itemServerManager.refresh()
         wifiItemManager.refresh()
-        deviceInfoItemManager.refresh()
+        itemDeviceManager.refresh()
         
         // Update navigation state if needed
         updateUI()

@@ -3,14 +3,13 @@ package com.autodroid.trader.ui.dashboard
 
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.trader.ui.dashboard.DashboardItem
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.utils.NetworkUtils
-import com.autodroid.trader.ui.dashboard.DashboardAdapter
 import com.autodroid.trader.model.Network
-import com.autodroid.trader.model.Device
+import com.autodroid.trader.data.dao.DeviceEntity
 
 /**
  * Manager class for handling Device dashboard item functionality
@@ -31,7 +30,6 @@ class ItemDeviceManager(
      */
     fun initialize() {
         setupDeviceObservers()
-        updateDevice()
     }
     
     /**
@@ -39,100 +37,27 @@ class ItemDeviceManager(
      */
     private fun setupDeviceObservers() {
         // Observe device information changes from ViewModel
-        appViewModel.device.observe(lifecycleOwner) { device: Device? ->
-            device?.let { deviceInfo: Device ->
-                updateDeviceItem(deviceInfo)
+        appViewModel.device.observe(lifecycleOwner) { device: DeviceEntity? ->
+            device?.let { deviceInfo: DeviceEntity ->
+                updateItemDevice(deviceInfo)
             }
         }
-        
-        // Observe network connectivity changes
-        appViewModel.network.observe(lifecycleOwner) { network: Network? ->
-            network?.let { networkInfo: Network ->
-                updateDeviceItemWithNetworkInfo(networkInfo)
-            }
-        }
+
     }
-    
-    /**
-     * Update device and refresh the dashboard item
-     */
-    fun updateDevice() {
-        try {
-            val deviceName = Build.MODEL
-            val androidVersion = Build.VERSION.RELEASE
-            val localIp = NetworkUtils.getLocalIpAddress() ?: "Not Available"
-            
-            // Create Device object directly
-            val device = Device(
-                ip = localIp,
-                name = deviceName,
-                model = Build.MODEL,
-                platform = "Android",
-                androidVersion = androidVersion,
-                manufacturer = Build.MANUFACTURER,
-                brand = Build.BRAND,
-                device = Build.DEVICE,
-                product = Build.PRODUCT
-            )
-            
-            // Update ViewModel with device info
-            appViewModel.setDevice(device)
-            
-            // Create and update dashboard item
-            val itemDevice = DashboardItem.ItemDevice(
-                udid = "KNT-AL10-1234567890",
-                userId = "user001",
-                name = deviceName,
-                platform = "Android",
-                deviceModel = Build.MODEL,
-                deviceStatus = "在线",
-                connectionTime = "2024-01-01 00:00:00"
-            )
-            
-            onItemUpdate(itemDevice)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating device info: ${e.message}")
-        }
-    }
-    
-    /**
-     * Update device item with network information
-     */
-    private fun updateDeviceItemWithNetworkInfo(network: Network) {
-        try {
-            val currentDevice = appViewModel.device.value
-            
-            val itemDevice = DashboardItem.ItemDevice(
-                udid = "KNT-AL10-1234567890",
-                userId = "user001",
-                name = currentDevice?.name ?: Build.MODEL,
-                platform = "Android",
-                deviceModel = currentDevice?.model ?: Build.MODEL,
-                deviceStatus = "在线",
-                connectionTime = "2024-01-01 00:00:00"
-            )
-            
-            onItemUpdate(itemDevice)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating device item with network info: ${e.message}")
-        }
-    }
-    
+
     /**
      * Update device item with device information
      */
-    private fun updateDeviceItem(deviceInfo: Device) {
+    private fun updateItemDevice(deviceInfo: DeviceEntity) {
         try {
             val itemDevice = DashboardItem.ItemDevice(
-                udid = "KNT-AL10-1234567890",
+                udid = deviceInfo.id,
                 userId = "user001",
                 name = deviceInfo.name ?: Build.MODEL,
-                platform = "Android",
+                platform = deviceInfo.platform ?: "Android",
                 deviceModel = deviceInfo.model ?: Build.MODEL,
-                deviceStatus = "在线",
-                connectionTime = "2024-01-01 00:00:00"
+                deviceStatus = if (deviceInfo.isConnected) "在线" else "离线",
+                latestRegisteredTime = "2024-01-01 00:00:00"
             )
             
             onItemUpdate(itemDevice)
@@ -148,7 +73,6 @@ class ItemDeviceManager(
      * Refresh device information manually
      */
     fun refresh() {
-        updateDevice()
     }
     
     /**

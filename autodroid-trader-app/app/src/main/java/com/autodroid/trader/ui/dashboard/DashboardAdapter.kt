@@ -29,6 +29,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onScanQrCodeClick()
         fun onAutoScanClick()
         fun onManualInputClick()
+        fun onRegisterDeviceClick()
     }
 
     private var listener: OnItemClickListener? = null
@@ -159,7 +160,8 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val platform: TextView = itemView.findViewById(R.id.platform)
         private val deviceModel: TextView = itemView.findViewById(R.id.device_model)
         private val deviceStatus: TextView = itemView.findViewById(R.id.device_status)
-        private val connectionTime: TextView = itemView.findViewById(R.id.connection_time)
+        private val deviceLatestRegisteredTime: TextView = itemView.findViewById(R.id.device_latest_registered_time)
+        private val registerDeviceButton: Button = itemView.findViewById(R.id.btn_register_device)
 
         fun bind(item: DashboardItem.ItemDevice) {
             deviceUdid.text = item.udid
@@ -168,7 +170,11 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             platform.text = item.platform
             deviceModel.text = item.deviceModel
             deviceStatus.text = item.deviceStatus
-            connectionTime.text = item.connectionTime
+            deviceLatestRegisteredTime.text = item.latestRegisteredTime
+            
+            registerDeviceButton.setOnClickListener {
+                listener?.onRegisterDeviceClick()
+            }
         }
     }
 

@@ -167,18 +167,18 @@ class ServerManager private constructor(private val context: Context) {
                             break
                         }
                         
-                        _scanProgress.postValue("正在检查服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
-                        Log.d(TAG, "正在检查服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
+                        _scanProgress.postValue("正在检查服务器: ${server.name} (${server.apiEndpoint()})")
+                        Log.d(TAG, "正在检查服务器: ${server.name} (${server.apiEndpoint()})")
                         
                         // 检查服务器状态
                         val serverInfo = checkServer(server.ip, server.port)
                         if (serverInfo != null) {
                             // 找到可用服务器，更新数据库
-                            val apiEndpoint = "http://${server.ip}:${server.port}/api"
+                            val apiEndpoint = server.apiEndpoint()
                             serverRepository.updateServer(apiEndpoint, serverInfo)
                             _scanStatus.postValue("已连接到服务器: ${server.name}")
-                            _scanProgress.postValue("服务器信息: ${server.name} (http://${server.ip}:${server.port}/api)")
-                            Log.i(TAG, "已连接到服务器: ${server.name} (http://${server.ip}:${server.port}/api)")
+                            _scanProgress.postValue("服务器信息: ${server.name} (${server.apiEndpoint()})")
+                            Log.i(TAG, "已连接到服务器: ${server.name} (${server.apiEndpoint()})")
                             
                             // 停止扫描
                             stopServerScan()

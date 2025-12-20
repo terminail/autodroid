@@ -9,6 +9,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autodroid.trader.data.dao.ServerDao
 import com.autodroid.trader.data.dao.ServerEntity
+import com.autodroid.trader.data.dao.DeviceDao
+import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.config.ConfigManager
 
 /**
@@ -16,8 +18,8 @@ import com.autodroid.trader.config.ConfigManager
  * 管理应用程序的数据库实例和数据访问对象
  */
 @Database(
-    entities = [ServerEntity::class],
-    version = 4,
+    entities = [ServerEntity::class, DeviceEntity::class],
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -27,6 +29,11 @@ abstract class AppDatabase : RoomDatabase() {
      * 获取服务器数据访问对象
      */
     abstract fun serverDao(): ServerDao
+    
+    /**
+     * 获取设备数据访问对象
+     */
+    abstract fun deviceDao(): DeviceDao
     
     companion object {
         @Volatile

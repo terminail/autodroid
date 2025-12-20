@@ -2,18 +2,27 @@ package com.autodroid.trader
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
+import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.autodroid.trader.data.repository.ServerRepository
+import com.autodroid.trader.data.repository.DeviceRepository
 import com.autodroid.trader.data.dao.ServerEntity
+import com.autodroid.trader.data.dao.DeviceEntity
+import com.autodroid.trader.data.database.AppDatabase
+import com.autodroid.trader.managers.DeviceManager
 import com.autodroid.trader.model.User
 import com.autodroid.trader.model.Network
-import com.autodroid.trader.model.Device
 import com.autodroid.trader.model.Wifi
 import com.autodroid.trader.model.TradePlan
 import com.autodroid.trader.auth.viewmodel.AuthViewModel
+import com.autodroid.trader.utils.NetworkUtils
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -30,6 +39,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     
     // Repositories
     private var serverRepository: ServerRepository? = null
+    private var deviceRepository: DeviceRepository? = null
+    
+    // Managers
+    val deviceManager = DeviceManager(application, this)
     
     // Authentication ViewModel
     private val authViewModel = AuthViewModel()
@@ -42,7 +55,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val server = MediatorLiveData<ServerEntity?>()
     
     // Device information (global shared state)
-    val device = MutableLiveData<Device>()
+    val device = MediatorLiveData<DeviceEntity?>()
     
     // WiFi information (global shared state)
     val wifi = MutableLiveData<Wifi>()
@@ -54,18 +67,57 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val availableTradePlans = MutableLiveData<MutableList<TradePlan>>()
 
     /**
-     * Initialize the ViewModel with application context
+     * Initialize() with application context
      */
     fun initialize(context: Context) {
+        android.util.Log.d("AppViewModel", "initialize: 开始初始化AppViewModel")
+        
         serverRepository = ServerRepository.getInstance(context.applicationContext as Application)
+        android.util.Log.d("AppViewModel", "initialize: ServerRepository已初始化")
+        
+        // Initialize DeviceRepository and set it to DeviceManager
+        deviceRepository = DeviceRepository.getInstance(context.applicationContext as Application)
+        android.util.Log.d("AppViewModel", "initialize: DeviceRepository已初始化")
+        
+        deviceManager.setDeviceRepository(deviceRepository!!)
+        android.util.Log.d("AppViewModel", "initialize: DeviceRepository已设置到DeviceManager")
+        
+        // 自动初始化本地设备信息
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                android.util.Log.d("AppViewModel", "initialize: 开始自动初始化本地设备信息")
+                val localDevice = deviceManager.device
+                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，ID: ${localDevice.id}, 名称: ${localDevice.name}")
+                
+                // 保存设备信息到数据库
+                deviceRepository?.insertOrUpdateDevice(localDevice)
+                android.util.Log.d("AppViewModel", "initialize: 本地设备信息已保存到数据库")
+            } catch (e: Exception) {
+                android.util.Log.e("AppViewModel", "initialize: 自动初始化设备信息失败", e)
+            }
+        }
         
         // 直接监控 Room 数据库中最后更新的服务器
-        serverRepository?.getLastUpdatedServer()?.let { liveData: LiveData<ServerEntity?> ->
+        serverRepository?.getCurrentServer()?.let { liveData: LiveData<ServerEntity?> ->
+            android.util.Log.d("AppViewModel", "initialize: 开始监控服务器数据变化")
             // 将数据库中的服务器数据映射到 ViewModel 的 server LiveData
             server.addSource(liveData) { serverEntity: ServerEntity? ->
+                android.util.Log.d("AppViewModel", "initialize: 服务器数据更新，服务器: ${serverEntity?.ip}:${serverEntity?.port}")
                 server.value = serverEntity
             }
         }
+        
+        // 直接监控 Room 数据库中最后更新的设备
+        deviceRepository?.getCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
+            android.util.Log.d("AppViewModel", "initialize: 开始监控设备数据变化")
+            // 将数据库中的设备数据映射到 ViewModel 的 device LiveData
+            device.addSource(liveData) { deviceEntity: DeviceEntity? ->
+                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备ID: ${deviceEntity?.id}, 设备名称: ${deviceEntity?.name}")
+                device.value = deviceEntity
+            }
+        }
+        
+        android.util.Log.d("AppViewModel", "initialize: AppViewModel初始化完成")
     }
     
     /**
@@ -78,6 +130,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // Setters
     
+
     // User authentication setters
     fun setUser(userInfo: User) {
         this.user.setValue(userInfo)
@@ -93,10 +146,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     
     fun setNetwork(info: Network) {
         network.setValue(info)
-    }
-    
-    fun setDevice(info: Device) {
-        device.setValue(info)
     }
     
     fun setAvailableTradePlans(tradePlans: MutableList<TradePlan>) {
@@ -118,19 +167,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     
     fun loginWithBiometrics() {
         authViewModel.loginWithBiometrics()
-    }
-    
-    // Device information helper methods
-    fun getDeviceIp(): String? {
-        return device.value?.ip
-    }
-    
-    fun isDeviceConnected(): Boolean {
-        return device.value?.isAvailable() ?: false
-    }
-    
-    fun getDeviceName(): String? {
-        return device.value?.name
     }
     
     // WiFi information helper methods
@@ -187,8 +223,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // Convenience methods for initializing encapsulated states
-    fun initializeDevice(ip: String? = null, name: String? = null) {
-        setDevice(Device.empty().copy(ip = ip, name = name))
+    fun initializeDevice(id: String, ip: String? = null, name: String? = null) {
+        val deviceEntity = DeviceEntity.empty().copy(id = id, ip = ip, name = name)
+        CoroutineScope(Dispatchers.IO).launch {
+            deviceRepository?.insertOrUpdateDevice(deviceEntity)
+        }
     }
     
     fun initializeWifi(ssid: String? = null, ipAddress: String? = null) {
@@ -199,16 +238,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         setNetwork(Network.empty().copy(connectionType = connectionType))
     }
     
-    // Convenience methods for common operations
-    fun connectDevice(ip: String, name: String? = null) {
-        setDevice(Device.connected(ip, name))
-    }
-    
-    fun disconnectDevice() {
-        device.value?.let { currentInfo: Device ->
-            setDevice(currentInfo.disconnected())
-        }
-    }
     
     fun setWifiConnected(ssid: String, ipAddress: String, signalStrength: Int? = null) {
         setWifi(Wifi.connected(ssid, ipAddress, signalStrength))
@@ -219,4 +248,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             setWifi(currentInfo.disconnected())
         }
     }
+    
+
 }

@@ -764,7 +764,7 @@ Network API (远程数据)
 
 ```mermaid
 classDiagram
-    class ServerItemManager {
+    class ItemServerManager {
         +initialize()
         +onScanQrClicked()
         +onManualInputClicked()
@@ -776,19 +776,19 @@ classDiagram
     }
     
     class DashboardFragment {
-        +initializeServerItemManager()
+        +initializeItemServerManager()
         +onResume()
     }
     
-    ServerItemManager --> ServerRepository
-    DashboardFragment --> ServerItemManager
+    ItemServerManager --> ServerRepository
+    DashboardFragment --> ItemServerManager
 ```
 
 ### 服务器状态管理流程
 
 ```mermaid
 flowchart TD
-    A[ServerItemManager初始化] --> B[从数据库加载服务器信息]
+    A[ItemServerManager初始化] --> B[从数据库加载服务器信息]
     B --> C{数据库中有服务器记录?}
     
     C -->|是| D[执行健康检查]
@@ -824,11 +824,11 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant D as DashboardFragment
-    participant S as ServerItemManager
+    participant S as ItemServerManager
     participant R as ServerRepository
     
     D->>D: onViewCreated()
-    D->>S: initializeServerItemManager()
+    D->>S: initializeItemServerManager()
     S->>R: getAllServers()
     R-->>S: 服务器列表
     S->>S: 检查健康状态
@@ -844,7 +844,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[DashboardFragment初始化] --> B[创建ServerItemManager]
+    A[DashboardFragment初始化] --> B[创建ItemServerManager]
     B --> C[从数据库加载服务器信息]
     C --> D{数据库中有服务器记录?}
     
@@ -929,7 +929,7 @@ flowchart TD
 
 ```mermaid
 classDiagram
-    class ServerItemManager {
+    class ItemServerManager {
         +showManualInputDialog()
         +handleManualInputConnection()
         -validateAndConnectToServer()
@@ -944,8 +944,8 @@ classDiagram
         +insertServer()
     }
     
-    ServerItemManager --> ApiClient
-    ServerItemManager --> ServerRepository
+    ItemServerManager --> ApiClient
+    ItemServerManager --> ServerRepository
 ```
 
 ### 数据流时序
@@ -953,7 +953,7 @@ classDiagram
 ```mermaid
 sequenceDiagram
     participant U as 用户
-    participant S as ServerItemManager
+    participant S as ItemServerManager
     participant A as ApiClient
     participant R as ServerRepository
     participant UI as UI组件

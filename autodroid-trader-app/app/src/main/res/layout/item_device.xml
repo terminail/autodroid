@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -32,7 +32,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/device_udid"
                 android:layout_width="0dp"
@@ -40,7 +40,7 @@
                 android:layout_weight="1"
                 android:text="KNT-AL10-1234567890"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -56,7 +56,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/user_id"
                 android:layout_width="0dp"
@@ -64,7 +64,7 @@
                 android:layout_weight="1"
                 android:text="user001"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -80,7 +80,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/device_name"
                 android:layout_width="0dp"
@@ -88,7 +88,7 @@
                 android:layout_weight="1"
                 android:text="KNT-AL10"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -104,7 +104,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/platform"
                 android:layout_width="0dp"
@@ -112,7 +112,7 @@
                 android:layout_weight="1"
                 android:text="Android"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
@@ -120,7 +120,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -128,7 +128,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/device_model"
                 android:layout_width="0dp"
@@ -136,7 +136,7 @@
                 android:layout_weight="1"
                 android:text="HUAWEI KNT-AL10"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
@@ -144,7 +144,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="4dp">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -152,7 +152,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
                 android:id="@+id/device_status"
                 android:layout_width="0dp"
@@ -160,31 +160,39 @@
                 android:layout_weight="1"
                 android:text="在线"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="连接时间:"
+                android:text="注册时间:"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp" />
-                
+
             <TextView
-                android:id="@+id/connection_time"
+                android:id="@+id/device_latest_registered_time"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="2023-12-03 14:30:25"
                 android:textSize="14sp" />
-                
+
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_register_device"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="注册Device"
+            android:textSize="14sp" />
 
     </LinearLayout>
 

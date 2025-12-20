@@ -1,7 +1,5 @@
 package com.autodroid.trader.ui.dashboard
 
-import com.autodroid.trader.ui.dashboard.DashboardAdapter
-
 sealed class DashboardItem(val type: Int) {
     data class ItemServer(
         val status: String = "Discovering servers...",
@@ -31,7 +29,7 @@ sealed class DashboardItem(val type: Int) {
         val platform: String = "Android",
         val deviceModel: String = "KNT-AL10",
         val deviceStatus: String = "在线",
-        val connectionTime: String = "2024-01-01 00:00:00"
+        val latestRegisteredTime: String = "2024-01-01 00:00:00"
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
 
     data class ItemPortRange(

@@ -1,11 +1,17 @@
-package com.autodroid.trader.model
+package com.autodroid.trader.data.dao
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 /**
- * 设备信息封装类
- * 封装设备相关的属性和状态
+ * 设备信息实体类
+ * 用于Room数据库持久化存储设备信息
  */
-data class Device(
-    val ip: String? = null,
+@Entity(tableName = "devices")
+data class DeviceEntity(
+    // 设备基本信息
+    @PrimaryKey
+    val id: String, // 设备唯一标识，可以使用Android ID或其他唯一标识
     val name: String? = null,
     val model: String? = null,
     val manufacturer: String? = null,
@@ -14,19 +20,29 @@ data class Device(
     val brand: String? = null,
     val device: String? = null,
     val product: String? = null,
+    
+    // 网络信息
+    val ip: String? = null,
+    
+    // 状态信息
     val isConnected: Boolean = false,
-    val lastSeen: Long? = null
+    val lastSeen: Long? = null,
+    
+    // 时间戳
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 ) {
     companion object {
         /**
          * 创建空设备信息
          */
-        fun empty(): Device = Device()
+        fun empty(): DeviceEntity = DeviceEntity(id = "")
         
         /**
          * 创建连接状态的设备信息
          */
-        fun connected(ip: String, name: String? = null): Device = Device(
+        fun connected(id: String, ip: String, name: String? = null): DeviceEntity = DeviceEntity(
+            id = id,
             ip = ip,
             name = name,
             isConnected = true,
@@ -37,6 +53,7 @@ data class Device(
          * 创建详细设备信息
          */
         fun detailed(
+            id: String,
             ip: String,
             name: String,
             model: String,
@@ -46,7 +63,8 @@ data class Device(
             brand: String = "",
             device: String = "",
             product: String = ""
-        ): Device = Device(
+        ): DeviceEntity = DeviceEntity(
+            id = id,
             ip = ip,
             name = name,
             model = model,
@@ -69,9 +87,10 @@ data class Device(
     /**
      * 断开设备连接
      */
-    fun disconnected(): Device = this.copy(
+    fun disconnected(): DeviceEntity = this.copy(
         isConnected = false,
-        lastSeen = System.currentTimeMillis()
+        lastSeen = System.currentTimeMillis(),
+        updatedAt = System.currentTimeMillis()
     )
     
     /**
@@ -86,7 +105,7 @@ data class Device(
         brand: String? = this.brand,
         device: String? = this.device,
         product: String? = this.product
-    ): Device = this.copy(
+    ): DeviceEntity = this.copy(
         name = name,
         model = model,
         manufacturer = manufacturer,
@@ -94,6 +113,7 @@ data class Device(
         platform = platform,
         brand = brand,
         device = device,
-        product = product
+        product = product,
+        updatedAt = System.currentTimeMillis()
     )
 }

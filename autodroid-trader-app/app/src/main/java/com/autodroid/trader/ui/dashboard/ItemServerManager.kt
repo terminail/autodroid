@@ -4,11 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.trader.ui.dashboard.DashboardItem
 import com.autodroid.trader.network.ServerInfoResponse
 import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.AppViewModel
-import com.autodroid.trader.ui.dashboard.DashboardAdapter
 import com.autodroid.trader.managers.ServerManager
 
 import com.autodroid.trader.data.repository.ServerRepository
@@ -66,7 +64,7 @@ class ItemServerManager(
             serverEntity?.let {
                 val connected = it.isConnected
                 val hostname = it.ip
-                val apiEndpoint = "http://${it.ip}:${it.port}/api"
+                val apiEndpoint = it.apiEndpoint()
                 
                 isServerConnected = connected
                 
@@ -722,13 +720,13 @@ class ItemServerManager(
             // Server is connected or discovered, update UI immediately
             updateItem(
                 status = when {
-                    currentServer.isConnected -> "Connected via ${currentServer.discoveryType ?: "Unknown"}"
+                    currentServer.isConnected -> "Connected via ${currentServer.discoveryType}"
                     currentServer.discoveryType == "qrcode" -> "QR Code Scanned"
                     else -> "Server Found"
                 },
                 serverStatus = if (currentServer.isConnected) "CONNECTED" else "DISCOVERED",
                 apiEndpoint = apiEndpoint,
-                discoveryMethod = currentServer.discoveryType ?: "Auto Discovery",
+                discoveryMethod = currentServer.discoveryType,
 
                 serverName = currentServer.name ?: "Autodroid Server",
                 hostname = currentServer.ip,
@@ -748,7 +746,7 @@ class ItemServerManager(
     /**
      * Handle server connection item update
      */
-    fun handleServerConnectionUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
+    fun handleItemServerUpdate(item: DashboardItem, dashboardItems: MutableList<DashboardItem>, dashboardAdapter: DashboardAdapter?): Boolean {
         return try {
             if (item is DashboardItem.ItemServer) {
                 // Find existing server connection item in the list

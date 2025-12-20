@@ -21,4 +21,17 @@
     2. 每访问一次api，就显示一次扫描结果，包括IP地址、端口号、返回成功与否信息，并更新DashboardViewModel，以便ItemServer订阅显示扫描进度信息在应用界面上。
     3. 访问api成功返回，立即停止扫描，将获取到的服务器信息保存到数据库。
     4. 支持暂停/恢复扫描功能：用户可以通过点击自动扫描按钮来暂停正在进行的扫描，再次点击可以恢复扫描。扫描状态会在界面上实时显示。
-    
+
+## 自动获取并保存Device信息
+    1. 当用户打开Dashboard界面， ServerManager 会自动获取Device基本信息保存在本地数据库中。
+
+## 向服务器注册Device信息
+    1. 当用户打开Dashboard界面点击注册Device按钮， ServerManager 会调用ServerRepository的registerDevice方法，将DeviceRegistrationRequest信息发送到服务器。
+    2. 服务器收到DeviceRegistrationRequest注册请求后，会验证Device注册信息的有效性。
+    3. 如果Device注册信息有效，服务器会返回一个成功的响应DeviceRegistrationResponse， ServerManager 会显示成功注册信息给用户。**同时服务器会自动尝试扫描该Device的是否安装服务器支持的APK并更新服务器Device信息，等待下次app查询获取Device最新信息。**
+    4. 如果Device注册信息无效，服务器会返回一个错误响应ErrorResponse， ServerManager 会显示错误信息给用户。
+    5. 注册成功后， ServerManager 会更新本地数据库中的DeviceEntity信息。
+
+## 从服务器获取Device信息
+    1. 当用户打开Dashboard界面， ServerManager 会订阅device livedata。
+    2. 服务器会返回一个成功的响应DeviceInfoResponse， ServerManager 会显示Device信息给用户。

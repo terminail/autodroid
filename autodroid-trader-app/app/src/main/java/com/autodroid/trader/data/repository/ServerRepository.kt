@@ -47,10 +47,10 @@ class ServerRepository private constructor(application: Application) {
     }
 
     /**
-     * 获取最后更新的服务器
+     * 获取当前服务器
      */
-    fun getLastUpdatedServer(): LiveData<ServerEntity?> {
-        return serverProvider.getLastUpdatedServer()
+    fun getCurrentServer(): LiveData<ServerEntity?> {
+        return serverProvider.getCurrentServer()
     }
     
     /**
@@ -109,7 +109,7 @@ class ServerRepository private constructor(application: Application) {
                 allServers.forEach { server ->
                     try {
                         // 构建API端点
-                        val apiEndpoint = "http://${server.ip}:${server.port}/api"
+                        val apiEndpoint = server.apiEndpoint()
                         
                         // 设置API端点并获取服务器信息
                         apiClient.setApiEndpoint(apiEndpoint)
