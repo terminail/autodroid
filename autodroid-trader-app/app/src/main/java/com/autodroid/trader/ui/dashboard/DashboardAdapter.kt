@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.EditText
+import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
 import androidx.core.widget.doAfterTextChanged
@@ -30,6 +31,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onAutoScanClick()
         fun onManualInputClick()
         fun onRegisterDeviceClick()
+        fun onDebugCheckClick()
     }
 
     private var listener: OnItemClickListener? = null
@@ -160,8 +162,13 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val platform: TextView = itemView.findViewById(R.id.platform)
         private val deviceModel: TextView = itemView.findViewById(R.id.device_model)
         private val deviceStatus: TextView = itemView.findViewById(R.id.device_status)
-        private val deviceLatestRegisteredTime: TextView = itemView.findViewById(R.id.device_latest_registered_time)
-        private val registerDeviceButton: Button = itemView.findViewById(R.id.btn_register_device)
+        private val deviceUpdatedAt: TextView = itemView.findViewById(R.id.device_updated_at)
+        private val registerDeviceButton: Button = itemView.findViewById(R.id.btn_device_register)
+        private val debugCheckButton: Button = itemView.findViewById(R.id.btn_device_debug_check)
+        private val usbDebugStatus: TextView = itemView.findViewById(R.id.usb_debug_status)
+        private val wifiDebugStatus: TextView = itemView.findViewById(R.id.wifi_debug_status)
+        private val debugCheckResult: TextView = itemView.findViewById(R.id.debug_check_result)
+        private val debugCheckResultLayout: LinearLayout = itemView.findViewById(R.id.debug_check_result_layout)
 
         fun bind(item: DashboardItem.ItemDevice) {
             deviceUdid.text = item.udid
@@ -170,10 +177,33 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             platform.text = item.platform
             deviceModel.text = item.deviceModel
             deviceStatus.text = item.deviceStatus
-            deviceLatestRegisteredTime.text = item.latestRegisteredTime
+            deviceUpdatedAt.text = item.updatedAt
+            
+            // 设置调试状态显示
+            usbDebugStatus.text = if (item.usbDebugEnabled) "开启" else "关闭"
+            wifiDebugStatus.text = if (item.wifiDebugEnabled) "开启" else "关闭"
+            
+            // 设置调试检查结果显示
+            if (item.debugCheckMessage != null && item.debugCheckMessage.isNotEmpty()) {
+                debugCheckResult.text = item.debugCheckMessage
+                debugCheckResultLayout.visibility = View.VISIBLE
+                
+                // 根据检查状态设置文本颜色
+                when (item.debugCheckStatus) {
+                    "SUCCESS" -> debugCheckResult.setTextColor(itemView.context.getColor(android.R.color.holo_green_dark))
+                    "FAILED" -> debugCheckResult.setTextColor(itemView.context.getColor(android.R.color.holo_red_dark))
+                    else -> debugCheckResult.setTextColor(itemView.context.getColor(android.R.color.holo_orange_dark))
+                }
+            } else {
+                debugCheckResultLayout.visibility = View.GONE
+            }
             
             registerDeviceButton.setOnClickListener {
                 listener?.onRegisterDeviceClick()
+            }
+            
+            debugCheckButton.setOnClickListener {
+                listener?.onDebugCheckClick()
             }
         }
     }

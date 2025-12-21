@@ -509,7 +509,6 @@ erDiagram
         boolean is_connected "是否连接"
         string connection_type "连接类型"
         int battery_level "电池电量"
-        datetime last_seen "最后在线时间"
     }
     
     APKS {

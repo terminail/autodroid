@@ -24,14 +24,14 @@ interface DeviceDao {
     /**
      * 获取当前设备信息
      */
-    @Query("SELECT * FROM devices WHERE isConnected = 1 LIMIT 1")
+    @Query("SELECT * FROM devices WHERE isOnline = 1 LIMIT 1")
     fun getCurrentDevice(): LiveData<DeviceEntity?>
 
     /**
      * 根据设备ID获取设备
      */
-    @Query("SELECT * FROM devices WHERE id = :id")
-    suspend fun getDeviceById(id: String): DeviceEntity?
+    @Query("SELECT * FROM devices WHERE udid = :udid")
+    suspend fun getDeviceById(udid: String): DeviceEntity?
 
     /**
      * 插入新设备
@@ -54,19 +54,19 @@ interface DeviceDao {
     /**
      * 根据设备ID删除设备
      */
-    @Query("DELETE FROM devices WHERE id = :id")
-    suspend fun deleteDeviceById(id: String)
+    @Query("DELETE FROM devices WHERE udid = :udid")
+    suspend fun deleteDeviceById(udid: String)
 
     /**
      * 更新设备连接状态
      */
-    @Query("UPDATE devices SET isConnected = :isConnected, lastSeen = :lastSeen, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateConnectionStatus(id: String, isConnected: Boolean, lastSeen: Long, updatedAt: Long)
+    @Query("UPDATE devices SET isOnline = :isOnline, updatedAt = :updatedAt WHERE udid = :udid")
+    suspend fun updateConnectionStatus(udid: String, isOnline: Boolean, updatedAt: Long)
 
     /**
      * 断开所有设备的连接
      */
-    @Query("UPDATE devices SET isConnected = 0, updatedAt = :updatedAt")
+    @Query("UPDATE devices SET isOnline = 0, updatedAt = :updatedAt")
     suspend fun disconnectAllDevices(updatedAt: Long)
 
     /**

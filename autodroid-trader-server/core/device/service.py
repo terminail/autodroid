@@ -26,7 +26,6 @@ class DeviceManager:
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
-                last_seen=getattr(device, 'last_seen', None),
                 status="online" if device.is_online else "offline"
             ) for device in devices
         ]
@@ -51,7 +50,6 @@ class DeviceManager:
             screen_width=device_info.get('screen_width'),
             screen_height=device_info.get('screen_height'),
             registered_at=getattr(device, 'registered_at', None),
-            last_seen=getattr(device, 'last_seen', None),
             status="online" if device.is_online else "offline"
         )
     
@@ -128,7 +126,6 @@ class DeviceManager:
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
-                last_seen=getattr(device, 'last_seen', None),
                 status="online" if device.is_online else "offline"
             ) for device in devices
         ]
@@ -151,7 +148,7 @@ class DeviceManager:
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
-                last_seen=getattr(device, 'last_seen', None),
+                updated_at=getattr(device, 'updated_at', None),
                 status="online" if device.is_online else "offline"
             ) for device in devices
         ]
@@ -171,6 +168,74 @@ class DeviceManager:
     def get_online_device_count(self) -> int:
         """获取在线设备数量"""
         return self.db.get_online_device_count()
+    
+    def check_device_debug_permissions(self, udid: str) -> Dict[str, Any]:
+        """检查设备调试权限状态"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"检查设备调试权限: {udid}")
+        
+        try:
+            # 导入ADB设备类
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'workscripts'))
+            from adb_device import ADBDevice
+            
+            # 创建ADB设备实例
+            adb_device = ADBDevice(udid)
+            
+            # 检查设备连接状态
+            if not adb_device.is_connected():
+                logger.warning(f"设备 {udid} 未连接或无法访问")
+                return {
+                    "success": False,
+                    "message": f"设备 {udid} 未连接或无法访问",
+                    "udid": udid,
+                    "usb_debug_enabled": False,
+                    "wifi_debug_enabled": False
+                }
+            
+            # 检查USB调试状态
+            usb_debug_enabled = adb_device.is_usb_debug_enabled()
+            logger.info(f"设备 {udid} USB调试状态: {usb_debug_enabled}")
+            
+            # 检查WiFi调试状态
+            wifi_debug_enabled = adb_device.is_wifi_debug_enabled()
+            logger.info(f"设备 {udid} WiFi调试状态: {wifi_debug_enabled}")
+            
+            # 更新数据库中的调试权限状态
+            self.db.update_device_debug_status(
+                udid, 
+                usb_debug_enabled, 
+                wifi_debug_enabled,
+                "SUCCESS",
+                "调试权限检查完成"
+            )
+            
+            logger.info(f"设备 {udid} 调试权限检查完成")
+            
+            return {
+                "success": True,
+                "message": "调试权限检查完成",
+                "udid": udid,
+                "usb_debug_enabled": usb_debug_enabled,
+                "wifi_debug_enabled": wifi_debug_enabled
+            }
+            
+        except Exception as e:
+            logger.error(f"检查设备 {udid} 调试权限时出错: {str(e)}")
+            # 更新数据库中的调试权限检查失败状态
+            self.db.update_device_debug_check_failed(udid, str(e))
+            
+            return {
+                "success": False,
+                "message": f"检查调试权限时出错: {str(e)}",
+                "udid": udid,
+                "usb_debug_enabled": False,
+                "wifi_debug_enabled": False
+            }
 
 if __name__ == "__main__":
     """Main entry point for device manager service"""

@@ -230,6 +230,31 @@ class ApiClient private constructor() {
     }
     
     /**
+     * Check device debug permissions
+     */
+    fun checkDeviceDebugPermissions(deviceUdid: String): DeviceDebugCheckResponse {
+        val url = buildApiUrl("/devices/$deviceUdid/debug/check")
+        val response = makePostRequest(url, emptyMap<String, Any>())
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to check device debug permissions: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from debug check endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, DeviceDebugCheckResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing debug check response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse debug check response", e)
+        }
+    }
+    
+    /**
      * Get trade plans from server
      */
     fun getTradePlans(): List<TradePlan> {

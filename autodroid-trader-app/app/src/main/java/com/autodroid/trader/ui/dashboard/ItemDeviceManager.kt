@@ -3,12 +3,9 @@ package com.autodroid.trader.ui.dashboard
 
 import android.content.Context
 import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.AppViewModel
-import com.autodroid.trader.utils.NetworkUtils
-import com.autodroid.trader.model.Network
 import com.autodroid.trader.data.dao.DeviceEntity
 
 /**
@@ -38,8 +35,8 @@ class ItemDeviceManager(
     private fun setupDeviceObservers() {
         // Observe device information changes from ViewModel
         appViewModel.device.observe(lifecycleOwner) { device: DeviceEntity? ->
-            device?.let { deviceInfo: DeviceEntity ->
-                updateItemDevice(deviceInfo)
+            device?.let { de: DeviceEntity ->
+                updateItemDevice(de)
             }
         }
 
@@ -48,24 +45,37 @@ class ItemDeviceManager(
     /**
      * Update device item with device information
      */
-    private fun updateItemDevice(deviceInfo: DeviceEntity) {
-        try {
-            val itemDevice = DashboardItem.ItemDevice(
-                udid = deviceInfo.id,
-                userId = "user001",
-                name = deviceInfo.name ?: Build.MODEL,
-                platform = deviceInfo.platform ?: "Android",
-                deviceModel = deviceInfo.model ?: Build.MODEL,
-                deviceStatus = if (deviceInfo.isConnected) "在线" else "离线",
-                latestRegisteredTime = "2024-01-01 00:00:00"
-            )
-            
-            onItemUpdate(itemDevice)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating device item: ${e.message}")
+    private fun updateItemDevice(deviceEntity: DeviceEntity) {
+            try {
+                // 格式化更新时间
+                val updatedAt = if ((deviceEntity.updatedAt ?: 0) > 0) {
+                    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                        .format(java.util.Date(deviceEntity.updatedAt ?: 0))
+                } else {
+                    "未知"
+                }
+                
+                val itemDevice = DashboardItem.ItemDevice(
+                    udid = deviceEntity.udid,
+                    userId = "user001",
+                    name = deviceEntity.name ?: Build.MODEL,
+                    platform = deviceEntity.platform ?: "Android",
+                    deviceModel = deviceEntity.model ?: Build.MODEL,
+                    deviceStatus = if (deviceEntity.isOnline) "在线" else "离线",
+                    latestRegisteredTime = "2024-01-01 00:00:00",
+                    updatedAt = updatedAt,
+                    usbDebugEnabled = deviceEntity.usbDebugEnabled,
+                    wifiDebugEnabled = deviceEntity.wifiDebugEnabled,
+                    debugCheckStatus = deviceEntity.debugCheckStatus,
+                    debugCheckMessage = deviceEntity.debugCheckMessage
+                )
+                
+                onItemUpdate(itemDevice)
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating device item: ${e.message}")
+            }
         }
-    }
     
 
     

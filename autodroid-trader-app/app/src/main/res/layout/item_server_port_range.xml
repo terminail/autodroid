@@ -67,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="number"
-                android:text="9000"
+                android:text="8080"
                 android:hint="输入结束端口"
                 android:textSize="14sp" />
 

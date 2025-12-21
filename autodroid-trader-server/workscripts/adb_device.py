@@ -217,6 +217,52 @@ class ADBDevice:
         """Check if device is connected."""
         return self._connected
     
+    def is_usb_debug_enabled(self) -> bool:
+        """Check if USB debugging is enabled on the device."""
+        try:
+            # Check if USB debugging is enabled by checking if we can run adb commands
+            result = subprocess.run(
+                self._get_adb_prefix() + ["shell", "settings", "get", "global", "adb_enabled"],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                # adb_enabled returns 1 if USB debugging is enabled
+                return result.stdout.strip() == "1"
+            
+            # Fallback: try to run a simple command to check if debugging is working
+            result = subprocess.run(
+                self._get_adb_prefix() + ["shell", "echo", "test"],
+                capture_output=True, text=True, timeout=5
+            )
+            return result.returncode == 0 and "test" in result.stdout
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            return False
+    
+    def is_wifi_debug_enabled(self) -> bool:
+        """Check if WiFi debugging is enabled on the device."""
+        try:
+            # Check if wireless debugging is enabled
+            result = subprocess.run(
+                self._get_adb_prefix() + ["shell", "settings", "get", "global", "adb_wifi_enabled"],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                # adb_wifi_enabled returns 1 if WiFi debugging is enabled
+                return result.stdout.strip() == "1"
+            
+            # Alternative method: check if adbd is listening on a network port
+            result = subprocess.run(
+                self._get_adb_prefix() + ["shell", "netstat", "-an"],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                # Look for adbd listening on port 5555 (default ADB over WiFi port)
+                return "5555" in result.stdout and "LISTEN" in result.stdout
+            
+            return False
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            return False
+    
     def is_app_installed(self, package_name: str) -> bool:
         """Check if an app is installed on the device.
         

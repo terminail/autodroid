@@ -24,8 +24,13 @@ class DeviceInfoResponse(BaseModel):
     screen_width: Optional[int] = Field(None, description="屏幕宽度")
     screen_height: Optional[int] = Field(None, description="屏幕高度")
     registered_at: Optional[datetime] = Field(None, description="注册时间")
-    last_seen: Optional[datetime] = Field(None, description="最后在线时间")
+    updated_at: Optional[datetime] = Field(None, description="更新时间")
     status: Optional[str] = Field(None, description="设备状态")
+    usb_debug_enabled: Optional[bool] = Field(False, description="USB调试是否开启")
+    wifi_debug_enabled: Optional[bool] = Field(False, description="WiFi调试是否开启")
+    debug_check_status: Optional[str] = Field("UNKNOWN", description="调试权限检查状态")
+    debug_check_message: Optional[str] = Field(None, description="调试权限检查消息")
+    debug_check_time: Optional[datetime] = Field(None, description="调试权限检查时间")
     
     class Config:
         from_attributes = True
@@ -142,3 +147,13 @@ class DeviceApkListResponse(BaseModel):
     """设备APK列表响应模型"""
     apks: List[ApkInfo] = Field(..., description="APK列表")
     total_count: int = Field(..., description="总数")
+
+
+class DeviceDebugCheckResponse(BaseModel):
+    """设备调试权限检查响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
+    udid: str = Field(..., description="设备UDID")
+    usb_debug_enabled: bool = Field(False, description="USB调试是否开启")
+    wifi_debug_enabled: bool = Field(False, description="WiFi调试是否开启")
+    check_time: Optional[datetime] = Field(None, description="检查时间")

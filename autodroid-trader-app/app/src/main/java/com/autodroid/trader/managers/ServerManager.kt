@@ -49,7 +49,7 @@ class ServerManager private constructor(private val context: Context) {
         
         // 默认扫描端口范围
         private const val DEFAULT_PORT_START = 8000
-        private const val DEFAULT_PORT_END = 9000
+        private const val DEFAULT_PORT_END = 8080
         
         // 扫描超时时间（毫秒）
         private const val SCAN_TIMEOUT_MS = 3000

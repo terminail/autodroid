@@ -21,6 +21,13 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     fun setDeviceRepository(repository: DeviceRepository) {
         this.deviceRepository = repository
     }
+    
+    /**
+     * 获取设备仓库
+     */
+    fun getDeviceRepository(): DeviceRepository? {
+        return this.deviceRepository
+    }
 
     /**
      * 获取本地设备信息
@@ -74,7 +81,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         
         // 创建设备信息对象
         val device = DeviceEntity.detailed(
-            id = deviceId,
+            udid = deviceId,
             ip = localIp,
             name = deviceName,
             model = Build.MODEL,
@@ -89,7 +96,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
             screenHeight = screenHeight
         )
         
-        android.util.Log.d(TAG, "getLocalDevice: 设备信息创建完成，ID = ${device.id}")
+        android.util.Log.d(TAG, "getLocalDevice: 设备信息创建完成，ID = ${device.udid}")
         return device
     }
     val device: DeviceEntity
@@ -103,7 +110,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         android.util.Log.d(TAG, "registerLocalDeviceWithServer: 开始注册本地设备到服务器")
         
         val localDevice = getLocalDevice()
-        android.util.Log.d(TAG, "registerLocalDeviceWithServer: 获取到本地设备信息，ID = ${localDevice.id}")
+        android.util.Log.d(TAG, "registerLocalDeviceWithServer: 获取到本地设备信息，ID = ${localDevice.udid}")
         
         val currentServer = appViewModel.server.value
         
@@ -123,6 +130,32 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         return response
     }
 
+
+    /**
+     * 检查设备调试权限
+     */
+    suspend fun checkDeviceDebugPermissions(): com.autodroid.trader.network.DeviceDebugCheckResponse {
+        android.util.Log.d(TAG, "checkDeviceDebugPermissions: 开始检查设备调试权限")
+        
+        val localDevice = getLocalDevice()
+        android.util.Log.d(TAG, "checkDeviceDebugPermissions: 获取到本地设备信息，ID = ${localDevice.udid}")
+        
+        val currentServer = appViewModel.server.value
+        
+        if (currentServer == null) {
+            android.util.Log.e(TAG, "checkDeviceDebugPermissions: 服务器信息为空，无法检查调试权限")
+            throw Exception("请先连接服务器")
+        }
+        
+        android.util.Log.d(TAG, "checkDeviceDebugPermissions: 当前服务器信息 - IP: ${currentServer.ip}, 端口: ${currentServer.port}")
+        
+        // 使用DeviceRepository检查设备调试权限
+        val response = deviceRepository?.checkDeviceDebugPermissions(localDevice.udid, currentServer.apiEndpoint())
+            ?: throw Exception("设备仓库未初始化")
+            
+        android.util.Log.d(TAG, "checkDeviceDebugPermissions: 调试权限检查完成，响应: $response")
+        return response
+    }
 
     companion object {
         private const val TAG = "DeviceManager"

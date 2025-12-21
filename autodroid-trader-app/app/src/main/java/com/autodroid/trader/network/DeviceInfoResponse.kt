@@ -19,8 +19,13 @@ data class DeviceInfoResponse(
     val screen_width: Int? = null,
     val screen_height: Int? = null,
     val registered_at: String? = null,
-    val last_seen: String? = null,
-    val status: String? = null
+    val updated_at: String? = null,
+    val status: String? = null,
+    val usb_debug_enabled: Boolean? = false,
+    val wifi_debug_enabled: Boolean? = false,
+    val debug_check_status: String? = "UNKNOWN",
+    val debug_check_message: String? = null,
+    val debug_check_time: String? = null
 ) {
     /**
      * Check if device is online

@@ -87,7 +87,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 android.util.Log.d("AppViewModel", "initialize: 开始自动初始化本地设备信息")
                 val localDevice = deviceManager.device
-                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，ID: ${localDevice.id}, 名称: ${localDevice.name}")
+                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，ID: ${localDevice.udid}, 名称: ${localDevice.name}")
                 
                 // 保存设备信息到数据库
                 deviceRepository?.insertOrUpdateDevice(localDevice)
@@ -108,11 +108,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         
         // 直接监控 Room 数据库中最后更新的设备
-        deviceRepository?.getCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
+        deviceRepository?.getOrUpdateCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
             android.util.Log.d("AppViewModel", "initialize: 开始监控设备数据变化")
             // 将数据库中的设备数据映射到 ViewModel 的 device LiveData
             device.addSource(liveData) { deviceEntity: DeviceEntity? ->
-                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备ID: ${deviceEntity?.id}, 设备名称: ${deviceEntity?.name}")
+                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备ID: ${deviceEntity?.udid}, 设备名称: ${deviceEntity?.name}")
                 device.value = deviceEntity
             }
         }
@@ -223,8 +223,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // Convenience methods for initializing encapsulated states
-    fun initializeDevice(id: String, ip: String? = null, name: String? = null) {
-        val deviceEntity = DeviceEntity.empty().copy(id = id, ip = ip, name = name)
+    fun initializeDevice(udid: String, ip: String? = null, name: String? = null) {
+        val deviceEntity = DeviceEntity.empty().copy(udid = udid, ip = ip, name = name)
         CoroutineScope(Dispatchers.IO).launch {
             deviceRepository?.insertOrUpdateDevice(deviceEntity)
         }

@@ -291,3 +291,32 @@ class DeviceDatabase(BaseDatabase):
     def get_online_device_count(self) -> int:
         """获取在线设备数量"""
         return Device.select().where(Device.is_online == True).count()
+    
+    def update_device_debug_status(self, udid: str, usb_debug_enabled: bool, wifi_debug_enabled: bool, 
+                                  debug_check_status: str = "SUCCESS", debug_check_message: str = None) -> bool:
+        """更新设备调试权限状态"""
+        try:
+            device = Device.get(Device.udid == udid)
+            device.usb_debug_enabled = usb_debug_enabled
+            device.wifi_debug_enabled = wifi_debug_enabled
+            device.debug_check_status = debug_check_status
+            device.debug_check_message = debug_check_message
+            device.debug_check_time = time.time()
+            device.updated_at = time.time()
+            device.save()
+            return True
+        except DoesNotExist:
+            return False
+    
+    def update_device_debug_check_failed(self, udid: str, error_message: str) -> bool:
+        """更新设备调试权限检查失败状态"""
+        try:
+            device = Device.get(Device.udid == udid)
+            device.debug_check_status = "FAILED"
+            device.debug_check_message = error_message
+            device.debug_check_time = time.time()
+            device.updated_at = time.time()
+            device.save()
+            return True
+        except DoesNotExist:
+            return False

@@ -3,7 +3,6 @@ package com.autodroid.trader.ui.tradeplan
 
 import android.os.Bundle
 import android.view.View
-import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.MotionEvent
 import android.view.ViewConfiguration
@@ -35,7 +34,7 @@ class TradePlansFragment : BaseFragment() {
     }
 
     override fun getLayoutId(): Int {
-        return R.layout.fragment_tradeplans
+        return R.layout.fragment_trade_plans
     }
 
     override fun initViews(view: View) {

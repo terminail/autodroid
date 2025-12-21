@@ -17,11 +17,62 @@ from .mdns import MDNSService, register_mdns_from_config
 import os
 import asyncio
 import yaml
+import logging
+from logging.handlers import RotatingFileHandler
 
 from core.device.service import DeviceManager
 from core.device.models import DeviceInfoResponse
 from core.auth.models import UserCreate, UserLogin, UserResponse, Token
 from core.auth.service import AuthService
+
+def setup_logging(config):
+    """Setup logging configuration based on config.yaml"""
+    logging_config = config.get('logging', {})
+    
+    # Get log file path from config
+    log_file_path = logging_config.get('file_path', 'logs/autodroid.log')
+    log_level = logging_config.get('level', 'info').upper()
+    max_file_size = logging_config.get('max_file_size', 10) * 1024 * 1024  # Convert MB to bytes
+    backup_count = logging_config.get('backup_count', 5)
+    
+    # Create logs directory if it doesn't exist
+    log_dir = os.path.dirname(log_file_path)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    
+    # Convert string log level to logging constant
+    numeric_level = getattr(logging, log_level, logging.INFO)
+    
+    # Configure root logger
+    logger = logging.getLogger()
+    logger.setLevel(numeric_level)
+    
+    # Remove existing handlers to avoid duplicates
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Create file handler with rotation
+    file_handler = RotatingFileHandler(
+        log_file_path, 
+        maxBytes=max_file_size, 
+        backupCount=backup_count,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    print(f"✓ Logging configured: {log_level} level, file: {log_file_path}")
+    return logger
 
 def load_config():
     """Load configuration from config.yaml"""
@@ -40,6 +91,9 @@ def load_config():
 
 # Load configuration
 config = load_config()
+
+# Setup logging
+logger = setup_logging(config)
 
 # Get server configuration with defaults
 server_config = config.get('server', {})

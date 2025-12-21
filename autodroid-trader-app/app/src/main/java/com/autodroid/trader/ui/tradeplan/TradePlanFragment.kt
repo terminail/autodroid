@@ -24,7 +24,7 @@ class TradePlanFragment : BaseFragment() {
     private lateinit var tradePlanDescription: TextView
 
     override fun getLayoutId(): Int {
-        return R.layout.fragment_tradeplan
+        return R.layout.fragment_trade_plan
     }
 
     override fun initViews(view: View) {

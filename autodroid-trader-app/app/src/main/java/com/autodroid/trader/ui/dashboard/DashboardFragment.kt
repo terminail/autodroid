@@ -138,6 +138,10 @@ class DashboardFragment : BaseFragment() {
             override fun onRegisterDeviceClick() {
                 handleRegisterDeviceClick()
             }
+            
+            override fun onDebugCheckClick() {
+                handleDebugCheckClick()
+            }
         })
         
         dashboardRecyclerView?.adapter = dashboardAdapter
@@ -230,6 +234,83 @@ class DashboardFragment : BaseFragment() {
         }
     }
     
+    /**
+     * Handle debug check button click
+     */
+    private fun handleDebugCheckClick() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 调用服务器API检查设备调试权限
+                val response = appViewModel.deviceManager.checkDeviceDebugPermissions()
+                
+                withContext(Dispatchers.Main) {
+                    if (response.success) {
+                        Log.d(TAG, "Debug permissions check successful")
+                        
+                        // 更新设备调试状态
+                        updateDeviceDebugStatus(response.usb_debug_enabled, response.wifi_debug_enabled, "SUCCESS", response.message)
+                    } else {
+                        Log.e(TAG, "Debug permissions check failed: ${response.message}")
+                        
+                        // 更新设备调试状态为失败
+                        updateDeviceDebugStatus(false, false, "FAILED", response.message)
+                    }
+                    
+                    // 刷新设备信息以获取最新的服务器状态
+                    appViewModel.deviceManager.getDeviceRepository()?.getOrUpdateCurrentDevice()
+                }
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during debug permissions check: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    // 更新设备调试状态为异常
+                    updateDeviceDebugStatus(false, false, "FAILED", "检查异常: ${e.message}")
+                    
+                    // 即使出错也尝试刷新设备信息
+                    appViewModel.deviceManager.getDeviceRepository()?.getOrUpdateCurrentDevice()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 更新设备调试状态
+     */
+    private fun updateDeviceDebugStatus(usbEnabled: Boolean, wifiEnabled: Boolean, 
+                                       debugCheckStatus: String = "UNKNOWN", debugCheckMessage: String? = null) {
+        // 找到设备项目并更新调试状态
+        val deviceItemIndex = dashboardItems.indexOfFirst { it is DashboardItem.ItemDevice }
+        if (deviceItemIndex != -1) {
+            val deviceItem = dashboardItems[deviceItemIndex] as DashboardItem.ItemDevice
+            val currentTime = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .format(java.util.Date())
+            
+            dashboardItems[deviceItemIndex] = deviceItem.copy(
+                usbDebugEnabled = usbEnabled,
+                wifiDebugEnabled = wifiEnabled,
+                debugCheckStatus = debugCheckStatus,
+                debugCheckMessage = debugCheckMessage,
+                updatedAt = currentTime
+            )
+            dashboardAdapter?.notifyItemChanged(deviceItemIndex)
+        }
+        
+        // 调用DeviceRepository.getOrUpdateCurrentDevice()同步服务端设备信息
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val deviceRepository = appViewModel.deviceManager.getDeviceRepository()
+                if (deviceRepository != null) {
+                    // 调用getOrUpdateCurrentDevice()会触发updateCurrentDevice()
+                    // 这会从服务端获取最新的设备信息并更新本地数据库
+                    val deviceLiveData = deviceRepository.getOrUpdateCurrentDevice()
+                    Log.d(TAG, "已触发设备信息同步，等待服务端最新数据")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "同步设备信息失败: ${e.message}", e)
+            }
+        }
+    }
+    
     private fun updateUI() {
         // Clear existing items
         dashboardItems.clear()
@@ -257,14 +338,15 @@ class DashboardFragment : BaseFragment() {
             platform = "Android",
             deviceModel = "Unknown",
             deviceStatus = "在线",
-            latestRegisteredTime = "Never"
+            latestRegisteredTime = "Never",
+            updatedAt = "Never"
         ))
         
         // 5. Port Range Settings
         // 从SharedPreferences读取端口范围
         val prefs = requireContext().getSharedPreferences("server_scan_settings", 0)
         val portStart = prefs.getInt("port_start", 8000)
-        val portEnd = prefs.getInt("port_end", 9000)
+        val portEnd = prefs.getInt("port_end", 8080)
         
         dashboardItems.add(DashboardItem.ItemPortRange(
             portStart = portStart,

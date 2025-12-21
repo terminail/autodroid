@@ -70,6 +70,11 @@ class Device(BaseModel):
     battery_level = IntegerField(default=50)  # 电池电量
     is_online = BooleanField(default=False)  # 是否在线
     connection_type = CharField(default='network')  # 连接类型
+    usb_debug_enabled = BooleanField(default=False)  # USB调试是否开启
+    wifi_debug_enabled = BooleanField(default=False)  # WiFi调试是否开启
+    debug_check_status = CharField(default='UNKNOWN')  # 调试权限检查状态：UNKNOWN, SUCCESS, FAILED
+    debug_check_message = CharField(null=True)  # 调试权限检查消息
+    debug_check_time = DateTimeField(null=True)  # 调试权限检查时间
     registered_at = DateTimeField(default=datetime.now)  # 注册时间
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)

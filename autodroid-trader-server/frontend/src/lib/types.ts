@@ -55,7 +55,6 @@ export interface DeviceInfo {
     os_version: string;
     status: 'online' | 'offline' | 'busy';
     ipAddress: string;
-    last_seen: string;
     udid?: string;
     manufacturer?: string;
     version?: string;

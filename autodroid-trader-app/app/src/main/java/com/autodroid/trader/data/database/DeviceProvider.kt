@@ -44,17 +44,17 @@ class DeviceProvider private constructor(context: Context) {
     suspend fun insertOrUpdateDevice(device: DeviceEntity): String {
         return withContext(Dispatchers.IO) {
             // 检查是否已存在相同ID的设备
-            val existingDevice = deviceDao.getDeviceById(device.id)
+            val existingDevice = deviceDao.getDeviceById(device.udid)
             
             val result: String = if (existingDevice != null) {
                 // 更新现有设备
                 val updatedDevice = device.copy(updatedAt = System.currentTimeMillis())
                 deviceDao.updateDevice(updatedDevice)
-                device.id
+                device.udid
             } else {
                 // 插入新设备
                 deviceDao.insertOrUpdateDevice(device)
-                device.id
+                device.udid
             }
             
             return@withContext result
@@ -92,10 +92,9 @@ class DeviceProvider private constructor(context: Context) {
     /**
      * 更新设备连接状态
      */
-    suspend fun updateConnectionStatus(id: String, isConnected: Boolean, lastSeen: Long) {
+    suspend fun updateConnectionStatus(udid: String, isOnline: Boolean, updatedAt: Long) {
         withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
-            deviceDao.updateConnectionStatus(id, isConnected, lastSeen, now)
+            deviceDao.updateConnectionStatus(udid, isOnline, updatedAt)
         }
     }
     

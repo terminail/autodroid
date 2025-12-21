@@ -29,11 +29,16 @@ sealed class DashboardItem(val type: Int) {
         val platform: String = "Android",
         val deviceModel: String = "KNT-AL10",
         val deviceStatus: String = "在线",
-        val latestRegisteredTime: String = "2024-01-01 00:00:00"
+        val latestRegisteredTime: String = "2024-01-01 00:00:00",
+        val updatedAt: String = "2024-01-01 00:00:00",
+        val usbDebugEnabled: Boolean = false,
+        val wifiDebugEnabled: Boolean = false,
+        val debugCheckStatus: String = "UNKNOWN",
+        val debugCheckMessage: String? = null
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
 
     data class ItemPortRange(
         val portStart: Int = 8000,
-        val portEnd: Int = 9000
+        val portEnd: Int = 8080
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_PORT_RANGE)
 }

@@ -32,30 +32,42 @@ class DeviceRepository private constructor(application: Application) {
             try {
                 // 获取当前设备信息
                 val currentDevice = deviceProvider.getCurrentDevice().value
+                Log.d("DeviceRepository", "updateCurrentDevice: currentDevice = $currentDevice")
                 if (currentDevice != null) {
+                    Log.d("DeviceRepository", "updateCurrentDevice: 设备 ${currentDevice.name} 在线状态 = ${currentDevice.isOnline}")
                     // 如果设备已连接到服务器，检查服务器状态
-                    if (currentDevice.isConnected) {
+                    if (currentDevice.isOnline) {
                         try {
+                            Log.d("DeviceRepository", "准备调用API获取设备信息: ${currentDevice.udid}")
                             // 调用API获取设备信息
-                            val deviceInfo = apiClient.getDeviceInfo(currentDevice.id)
+                            val deviceInfoResponse = apiClient.getDeviceInfo(currentDevice.udid)
+                            Log.d("DeviceRepository", "API调用成功，返回: $deviceInfoResponse")
                             
                             // 根据服务器返回的信息更新本地数据库
-                            if (deviceInfo != null) {
+                            if (deviceInfoResponse != null) {
                                 val updatedDevice = currentDevice.copy(
-                                    isConnected = true,
-                                    lastSeen = System.currentTimeMillis()
+                                    isOnline = true,
+                                    usbDebugEnabled = deviceInfoResponse.usb_debug_enabled ?: false,
+                                    wifiDebugEnabled = deviceInfoResponse.wifi_debug_enabled ?: false,
+                                    debugCheckStatus = deviceInfoResponse.debug_check_status ?: "UNKNOWN",
+                                    debugCheckMessage = deviceInfoResponse.debug_check_message,
+                                    debugCheckTime = deviceInfoResponse.debug_check_time?.let {
+                                        java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                                            .parse(it)?.time 
+                                    },
+                                    updatedAt = System.currentTimeMillis()
                                 )
                                 deviceProvider.updateDevice(updatedDevice)
                                 Log.d("DeviceRepository", "设备信息同步成功: ${currentDevice.name}")
                             } else {
                                 // 服务器不可用，断开连接
-                                deviceProvider.updateConnectionStatus(currentDevice.id, false, System.currentTimeMillis())
+                                deviceProvider.updateConnectionStatus(currentDevice.udid, false, System.currentTimeMillis())
                                 Log.w("DeviceRepository", "设备信息获取失败: ${currentDevice.name}")
                             }
                         } catch (e: Exception) {
                             Log.e("DeviceRepository", "检查设备${currentDevice.name}状态时出错: ${e.message}")
                             // 检查失败时断开连接
-                            deviceProvider.updateConnectionStatus(currentDevice.id, false, System.currentTimeMillis())
+                            deviceProvider.updateConnectionStatus(currentDevice.udid, false, System.currentTimeMillis())
                         }
                     }
                 }
@@ -80,10 +92,10 @@ class DeviceRepository private constructor(application: Application) {
     }
     
     /**
-     * 获取当前设备
+     * 获取或更新当前设备
      * 根据"本地优先"设计理念，主动检查设备状态并更新本地数据库
      */
-    fun getCurrentDevice(): LiveData<DeviceEntity?> {
+    fun getOrUpdateCurrentDevice(): LiveData<DeviceEntity?> {
         // 启动异步任务更新设备信息
         updateCurrentDevice()
         return deviceProvider.getCurrentDevice()
@@ -105,7 +117,7 @@ class DeviceRepository private constructor(application: Application) {
         return withContext(Dispatchers.IO) {
             try {
                 // 检查设备是否已存在
-                val existingDevice = deviceProvider.getDeviceById(deviceEntity.id)
+                val existingDevice = deviceProvider.getDeviceById(deviceEntity.udid)
                 
                 if (existingDevice != null) {
                     // 更新现有设备
@@ -141,7 +153,7 @@ class DeviceRepository private constructor(application: Application) {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("DeviceRepository", "registerDevice: 开始注册设备到服务器")
-                Log.d("DeviceRepository", "registerDevice: 设备信息 - ID: ${deviceEntity.id}, 名称: ${deviceEntity.name}, IP: ${deviceEntity.ip}")
+                Log.d("DeviceRepository", "registerDevice: 设备信息 - ID: ${deviceEntity.udid}, 名称: ${deviceEntity.name}, IP: ${deviceEntity.ip}")
                 Log.d("DeviceRepository", "registerDevice: API端点: $apiEndpoint")
                 
                 // 设置API端点
@@ -149,7 +161,7 @@ class DeviceRepository private constructor(application: Application) {
                 
                 // 创建设备注册请求
                 val registrationRequest = DeviceCreateRequest(
-                    udid = deviceEntity.id,
+                    udid = deviceEntity.udid,
                     name = deviceEntity.name ?: "Unknown Device",
                     model = deviceEntity.model,
                     manufacturer = deviceEntity.manufacturer,
@@ -174,8 +186,8 @@ class DeviceRepository private constructor(application: Application) {
                 if (response.success) {
                     Log.d("DeviceRepository", "registerDevice: 设备注册成功，开始更新本地数据库")
                     val updatedDevice = deviceEntity.copy(
-                        isConnected = true,
-                        lastSeen = System.currentTimeMillis()
+                        isOnline = true,
+                        updatedAt = System.currentTimeMillis()
                     )
                     deviceProvider.updateDevice(updatedDevice)
                     Log.d("DeviceRepository", "registerDevice: 本地数据库已更新，设备: ${deviceEntity.name}")
@@ -186,6 +198,52 @@ class DeviceRepository private constructor(application: Application) {
                 return@withContext response
             } catch (e: Exception) {
                 Log.e("DeviceRepository", "registerDevice: 注册设备失败: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * 检查设备调试权限
+     */
+    suspend fun checkDeviceDebugPermissions(deviceId: String, apiEndpoint: String): com.autodroid.trader.network.DeviceDebugCheckResponse {
+        return withContext(Dispatchers.IO) {
+            try {
+                Log.d("DeviceRepository", "checkDeviceDebugPermissions: 开始检查设备调试权限")
+                Log.d("DeviceRepository", "checkDeviceDebugPermissions: 设备ID: $deviceId")
+                Log.d("DeviceRepository", "checkDeviceDebugPermissions: API端点: $apiEndpoint")
+                
+                // 设置API端点
+                apiClient.setApiEndpoint(apiEndpoint)
+                
+                // 调用API检查设备调试权限
+                val response = apiClient.checkDeviceDebugPermissions(deviceId)
+                Log.d("DeviceRepository", "checkDeviceDebugPermissions: API调用完成，响应: $response")
+                
+                // 更新本地设备信息
+                if (response.success) {
+                    val existingDevice = deviceProvider.getDeviceById(deviceId)
+                    if (existingDevice != null) {
+                        val updatedDevice = existingDevice.copy(
+                            isOnline = true,
+                            usbDebugEnabled = response.usb_debug_enabled,
+                            wifiDebugEnabled = response.wifi_debug_enabled,
+                            debugCheckStatus = "SUCCESS",
+                            debugCheckMessage = response.message,
+                            debugCheckTime = response.check_time?.let {
+                                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                                    .parse(it)?.time 
+                            } ?: System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        deviceProvider.updateDevice(updatedDevice)
+                        Log.d("DeviceRepository", "设备调试权限信息已更新: ${updatedDevice.name}")
+                    }
+                }
+                
+                return@withContext response
+            } catch (e: Exception) {
+                Log.e("DeviceRepository", "checkDeviceDebugPermissions: 检查设备调试权限失败: ${e.message}", e)
                 throw e
             }
         }

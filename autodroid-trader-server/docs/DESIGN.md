@@ -206,7 +206,6 @@ erDiagram
         string status  "状态：CONNECTED、DISCONNECTED"
         datetime connected_at
         datetime created_at
-        datetime last_seen
     }
     
     Apk {
