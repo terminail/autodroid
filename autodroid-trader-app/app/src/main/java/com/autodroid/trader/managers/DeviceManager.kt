@@ -102,7 +102,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         
         // 使用DeviceRepository向远程服务器注册设备
         // registerDevice方法会处理数据库的保存和更新
-        val response = deviceRepository?.registerDevice(localDevice, currentServer.ip, currentServer.port)
+        val response = deviceRepository?.registerDevice(localDevice, currentServer.apiEndpoint())
             ?: throw Exception("设备仓库未初始化")
             
         android.util.Log.d(TAG, "registerLocalDeviceWithServer: 设备注册完成，响应: $response")

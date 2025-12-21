@@ -24,6 +24,48 @@ class DeviceRepository private constructor(application: Application) {
     private val apiClient = ApiClient.getInstance()
     
     /**
+     * 更新当前设备信息
+     * 根据"本地优先"设计理念，主动检查设备状态并更新本地数据库
+     */
+    private fun updateCurrentDevice() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 获取当前设备信息
+                val currentDevice = deviceProvider.getCurrentDevice().value
+                if (currentDevice != null) {
+                    // 如果设备已连接到服务器，检查服务器状态
+                    if (currentDevice.isConnected) {
+                        try {
+                            // 调用API获取设备信息
+                            val deviceInfo = apiClient.getDeviceInfo(currentDevice.id)
+                            
+                            // 根据服务器返回的信息更新本地数据库
+                            if (deviceInfo != null) {
+                                val updatedDevice = currentDevice.copy(
+                                    isConnected = true,
+                                    lastSeen = System.currentTimeMillis()
+                                )
+                                deviceProvider.updateDevice(updatedDevice)
+                                Log.d("DeviceRepository", "设备信息同步成功: ${currentDevice.name}")
+                            } else {
+                                // 服务器不可用，断开连接
+                                deviceProvider.updateConnectionStatus(currentDevice.id, false, System.currentTimeMillis())
+                                Log.w("DeviceRepository", "设备信息获取失败: ${currentDevice.name}")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DeviceRepository", "检查设备${currentDevice.name}状态时出错: ${e.message}")
+                            // 检查失败时断开连接
+                            deviceProvider.updateConnectionStatus(currentDevice.id, false, System.currentTimeMillis())
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("DeviceRepository", "检查设备状态时出错: ${e.message}")
+            }
+        }
+    }
+
+    /**
      * 更新设备信息
      */
     suspend fun update(deviceEntity: DeviceEntity) {
@@ -42,6 +84,8 @@ class DeviceRepository private constructor(application: Application) {
      * 根据"本地优先"设计理念，主动检查设备状态并更新本地数据库
      */
     fun getCurrentDevice(): LiveData<DeviceEntity?> {
+        // 启动异步任务更新设备信息
+        updateCurrentDevice()
         return deviceProvider.getCurrentDevice()
     }
 
@@ -93,15 +137,11 @@ class DeviceRepository private constructor(application: Application) {
     /**
      * 向服务器注册设备
      */
-    suspend fun registerDevice(deviceEntity: DeviceEntity, serverIp: String, serverPort: Int): DeviceRegistrationResponse {
+    suspend fun registerDevice(deviceEntity: DeviceEntity, apiEndpoint: String): DeviceRegistrationResponse {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("DeviceRepository", "registerDevice: 开始注册设备到服务器")
                 Log.d("DeviceRepository", "registerDevice: 设备信息 - ID: ${deviceEntity.id}, 名称: ${deviceEntity.name}, IP: ${deviceEntity.ip}")
-                Log.d("DeviceRepository", "registerDevice: 服务器信息 - IP: $serverIp, 端口: $serverPort")
-                
-                // 构建API端点
-                val apiEndpoint = "http://$serverIp:$serverPort/api"
                 Log.d("DeviceRepository", "registerDevice: API端点: $apiEndpoint")
                 
                 // 设置API端点

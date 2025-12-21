@@ -11,6 +11,8 @@ import com.autodroid.trader.data.dao.ServerDao
 import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.data.dao.DeviceDao
 import com.autodroid.trader.data.dao.DeviceEntity
+import com.autodroid.trader.data.dao.TradePlanDao
+import com.autodroid.trader.data.dao.TradePlanEntity
 import com.autodroid.trader.config.ConfigManager
 
 /**
@@ -18,8 +20,8 @@ import com.autodroid.trader.config.ConfigManager
  * 管理应用程序的数据库实例和数据访问对象
  */
 @Database(
-    entities = [ServerEntity::class, DeviceEntity::class],
-    version = 5,
+    entities = [ServerEntity::class, DeviceEntity::class, TradePlanEntity::class],
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -34,6 +36,11 @@ abstract class AppDatabase : RoomDatabase() {
      * 获取设备数据访问对象
      */
     abstract fun deviceDao(): DeviceDao
+    
+    /**
+     * 获取交易计划数据访问对象
+     */
+    abstract fun tradePlanDao(): TradePlanDao
     
     companion object {
         @Volatile

@@ -487,7 +487,11 @@ class ServerManager private constructor(private val context: Context) {
             )
             
             // 使用Repository保存服务器信息
-            serverRepository.insertOrUpdateServer(serverEntity)
+            serverRepository.insertOrUpdateServer(
+                serverEntity.apiEndpoint(), 
+                serverInfo.name ?: "未知服务器", 
+                serverInfo.platform
+            )
             
             Log.d(TAG, "服务器已保存到数据库: ${serverInfo.name}")
         } catch (e: Exception) {

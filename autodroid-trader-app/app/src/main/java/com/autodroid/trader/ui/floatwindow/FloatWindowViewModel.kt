@@ -1,16 +1,18 @@
 package com.autodroid.trader.ui.floatwindow
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autodroid.trader.data.repository.TradeRepository
+import com.autodroid.trader.data.repository.TradePlanRepository
 import com.autodroid.trader.model.TradeData
 import kotlinx.coroutines.launch
 
-class FloatWindowViewModel : ViewModel() {
+class FloatWindowViewModel(application: Application) : AndroidViewModel(application) {
     
-    private val tradeRepository = TradeRepository.getInstance()
+    private val tradePlanRepository = TradePlanRepository.getInstance(application)
     
     // 内部可变LiveData
     private val _latestPrice = MutableLiveData<String>("¥0.00")
@@ -32,7 +34,7 @@ class FloatWindowViewModel : ViewModel() {
     
     private fun loadLatestTradeData() {
         viewModelScope.launch {
-            val tradeData = tradeRepository.getLatestTradeData()
+            val tradeData = tradePlanRepository.getLatestTradeData()
             updateTradeData(tradeData)
         }
     }

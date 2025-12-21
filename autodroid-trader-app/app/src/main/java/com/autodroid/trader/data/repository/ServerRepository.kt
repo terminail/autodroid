@@ -23,6 +23,22 @@ class ServerRepository private constructor(application: Application) {
     private val apiClient = ApiClient.getInstance()
     
     /**
+     * 更新服务器连接状态
+     */
+    suspend fun updateConnectionStatus(apiEndpoint: String, isConnected: Boolean) {
+        withContext(Dispatchers.IO) {
+            // 从API端点中提取IP和端口
+            val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split("/")
+            val hostPort = urlParts.getOrNull(0) ?: return@withContext
+            val hostParts = hostPort.split(":")
+            val ip = hostParts.getOrNull(0) ?: return@withContext
+            val port = hostParts.getOrNull(1)?.toIntOrNull() ?: return@withContext
+            
+            serverProvider.updateConnectionStatus(ip, port, isConnected)
+        }
+    }
+    
+    /**
      * 更新服务器信息
      */
     suspend fun update(serverEntity: ServerEntity) {
@@ -37,30 +53,39 @@ class ServerRepository private constructor(application: Application) {
     }
     
     /**
-     * 获取已连接的服务器
+     * 获取当前服务器
      * 根据"本地优先"设计理念，主动检查服务器状态并更新本地数据库
      */
-    fun getConnectedServer(): LiveData<ServerEntity?> {
+    fun getCurrentServer(): LiveData<ServerEntity?> {
         // 启动异步任务更新所有服务器信息
         updateAllServers()
-        return serverProvider.getConnectedServer()
-    }
-
-    /**
-     * 获取当前服务器
-     */
-    fun getCurrentServer(): LiveData<ServerEntity?> {
         return serverProvider.getCurrentServer()
     }
     
     /**
      * 插入或更新服务器
      */
-    suspend fun insertOrUpdateServer(serverEntity: ServerEntity): String {
+    suspend fun insertOrUpdateServer(apiEndpoint: String, name: String, platform: String? = null): String {
         return withContext(Dispatchers.IO) {
             try {
+                // 从API端点中提取IP和端口
+                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split("/")
+                val hostPort = urlParts.getOrNull(0) ?: return@withContext "无效的API端点"
+                val hostParts = hostPort.split(":")
+                val ip = hostParts.getOrNull(0) ?: return@withContext "无效的API端点"
+                val port = hostParts.getOrNull(1)?.toIntOrNull() ?: return@withContext "无效的API端点"
+                
+                // 创建服务器实体
+                val serverEntity = ServerEntity(
+                    ip = ip,
+                    port = port,
+                    name = name,
+                    platform = platform,
+                    isConnected = false
+                )
+                
                 // 检查服务器是否已存在
-                val existingServer = serverProvider.getServerByKey(serverEntity.ip, serverEntity.port)
+                val existingServer = serverProvider.getServerByKey(ip, port)
                 
                 if (existingServer != null) {
                     // 更新现有服务器
@@ -166,6 +191,32 @@ class ServerRepository private constructor(application: Application) {
                 }
             } catch (e: Exception) {
                 Log.e("ServerRepository", "更新服务器信息失败: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * 测试服务器连接
+     */
+    suspend fun testServerConnection(apiEndpoint: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 设置API端点
+                apiClient.setApiEndpoint(apiEndpoint)
+                
+                // 调用API获取服务器信息
+                val serverInfo = apiClient.getServerInfo()
+                
+                // 如果能获取到服务器信息，说明连接成功
+                if (serverInfo != null) {
+                    // 更新服务器信息
+                    updateServer(apiEndpoint, serverInfo)
+                    return@withContext true
+                }
+                return@withContext false
+            } catch (e: Exception) {
+                Log.e("ServerRepository", "测试服务器连接失败: ${e.message}")
+                return@withContext false
             }
         }
     }

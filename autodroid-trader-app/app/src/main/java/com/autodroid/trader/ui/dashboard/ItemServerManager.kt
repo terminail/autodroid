@@ -352,7 +352,7 @@ class ItemServerManager(
                 )
                 
                 // Insert or update server in repository
-                serverRepository.insertOrUpdateServer(serverEntity)
+                serverRepository.insertOrUpdateServer(serverEntity.apiEndpoint(), serverName, platform)
                 
                 // Create ServerInfoResponse for AppViewModel
                 val serverInfo = ServerInfoResponse(
@@ -532,7 +532,7 @@ class ItemServerManager(
                         )
                         
                         // Insert or update server in repository
-                        serverRepository.insertOrUpdateServer(serverEntity)
+                        serverRepository.insertOrUpdateServer(serverEntity.apiEndpoint(), "Manual Server", "Unknown")
                         
                         // Note: Server info is now automatically updated in the database
                         // and will be reflected in the AppViewModel's server LiveData
@@ -611,7 +611,7 @@ class ItemServerManager(
             try {
                 // 断开所有服务器的连接状态
                 // serverRepository.getAllServers().value?.forEach { serverEntity ->
-                    // Server info is automatically updated when getConnectedServer() is called
+                    // Server info is automatically updated when getCurrentServer() is called
                         // No need to manually update server info here
                 // }
                 showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)

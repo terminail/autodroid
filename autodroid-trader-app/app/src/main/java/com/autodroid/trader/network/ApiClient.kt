@@ -1,7 +1,9 @@
 package com.autodroid.trader.network
 
 import android.util.Log
+import com.autodroid.trader.model.TradePlan
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -193,6 +195,32 @@ class ApiClient private constructor() {
             Log.e(TAG, "Error parsing server info response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
             throw RuntimeException("Failed to parse server info response", e)
+        }
+    }
+    
+    /**
+     * Get trade plans from server
+     */
+    fun getTradePlans(): List<TradePlan> {
+        val url = buildApiUrl("/tradeplans")
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to fetch trade plans: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from trade plans endpoint")
+        }
+        
+        try {
+            val tradePlanType = object : TypeToken<List<TradePlan>>() {}.type
+            return gson.fromJson(responseBody, tradePlanType)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing trade plans response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse trade plans response", e)
         }
     }
     

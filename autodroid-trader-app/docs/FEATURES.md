@@ -23,7 +23,12 @@
     4. 支持暂停/恢复扫描功能：用户可以通过点击自动扫描按钮来暂停正在进行的扫描，再次点击可以恢复扫描。扫描状态会在界面上实时显示。
 
 ## 自动获取并保存Device信息
-    1. 当用户打开Dashboard界面， ServerManager 会自动获取Device基本信息保存在本地数据库中。
+    1. 应用启动时，AppViewModel 会自动初始化并获取设备信息保存在本地数据库中。
+    2. DeviceManager 使用设备序列号 (Build.SERIAL) 作为设备唯一标识符，确保与终端显示的序列号一致。
+    3. 如果设备序列号不可用，系统会自动使用 Android ID 作为备用标识符。
+    4. 自动收集的设备信息包括：设备ID、设备名称、型号、制造商、Android版本、本地IP地址等详细信息。
+    5. 遵循 Local-First 设计原则，设备信息优先保存在本地数据库，确保离线状态下也能正常访问。
+    6. 添加详细的日志记录，便于调试和追踪设备初始化过程。
 
 ## 向服务器注册Device信息
     1. 当用户打开Dashboard界面点击注册Device按钮， ServerManager 会调用ServerRepository的registerDevice方法，将DeviceRegistrationRequest信息发送到服务器。

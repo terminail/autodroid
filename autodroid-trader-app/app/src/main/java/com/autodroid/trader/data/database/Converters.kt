@@ -44,4 +44,21 @@ class Converters {
         val type = object : TypeToken<Map<String, Boolean>>() {}.type
         return gson.fromJson(json, type)
     }
+    
+    /**
+     * 将Map<String, Any>转换为JSON字符串存储
+     */
+    @TypeConverter
+    fun fromStringAnyMap(map: Map<String, Any>): String {
+        return gson.toJson(map)
+    }
+    
+    /**
+     * 将JSON字符串转换为Map<String, Any>
+     */
+    @TypeConverter
+    fun toStringAnyMap(json: String): Map<String, Any> {
+        val type = object : TypeToken<Map<String, Any>>() {}.type
+        return gson.fromJson(json, type)
+    }
 }
