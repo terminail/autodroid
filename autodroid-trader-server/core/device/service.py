@@ -239,16 +239,12 @@ class DeviceManager:
                     if app_package and adb_device.is_app_installed(app_package):
                         # 获取应用的主Activity
                         app_activity = self._get_app_main_activity(adb_device, app_package)
-                        # 只有在找到确切的主Activity时才添加到已安装列表
-                        if app_activity is not None:
-                            installed_apps.append({
-                                "app_package": app_package,
-                                "name": app_name,
-                                "app_activity": app_activity
-                            })
-                            logger.info(f"应用 {app_name} ({app_package}) 已安装，主Activity: {app_activity}")
-                        else:
-                            logger.warning(f"应用 {app_name} ({app_package}) 已安装但无法确定主Activity")
+                        installed_apps.append({
+                            "app_package": app_package,
+                            "name": app_name,
+                            "app_activity": app_activity
+                        })
+                        logger.info(f"应用 {app_name} ({app_package}) 已安装，主Activity: {app_activity}")
                     else:
                         logger.info(f"应用 {app_name} ({app_package}) 未安装")
                 
@@ -294,8 +290,11 @@ class DeviceManager:
     
     def _get_app_main_activity(self, adb_device, package_name: str) -> str:
         """获取应用的主Activity"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
-            # 使用dumpsys package获取应用信息
+            # 方法1: 使用dumpsys package获取应用信息
             result = subprocess.run(
                 adb_device._get_adb_prefix() + ["shell", "dumpsys", "package", package_name],
                 capture_output=True, text=True, timeout=10
@@ -323,34 +322,88 @@ class DeviceManager:
                                                 activity = activity[1:]
                                             else:
                                                 activity = '.' + activity
+                                        logger.debug(f"方法1找到Activity: {activity}")
                                         return activity
                 
-                # 尝试另一种方法：使用pm获取启动Activity
-                result = subprocess.run(
-                    adb_device._get_adb_prefix() + ["shell", "cmd", "package", "resolve-activity", "--brief", package_name],
-                    capture_output=True, text=True, timeout=10
-                )
-                
-                if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')
-                    for line in lines:
-                        if package_name in line:
-                            activity = line.strip()
-                            # 如果是完整包名，简化为相对路径
-                            if activity.startswith(package_name):
-                                activity = activity.replace(package_name, '')
+                # 方法2: 尝试从dumpsys中查找Activity Resolver Table
+                for line in result.stdout.split('\n'):
+                    if package_name in line and 'Activity' in line and 'filter' not in line:
+                        parts = line.strip().split()
+                        for part in parts:
+                            if package_name in part and '/' in part:
+                                activity = part.split('/')[-1]
                                 if activity.startswith('.'):
                                     activity = activity[1:]
-                                else:
-                                    activity = '.' + activity
-                            return activity
-                            
+                                logger.debug(f"方法2找到Activity: {activity}")
+                                return activity
+            
+            # 方法3: 使用pm获取启动Activity
+            result = subprocess.run(
+                adb_device._get_adb_prefix() + ["shell", "pm", "dump", package_name],
+                capture_output=True, text=True, timeout=10
+            )
+            
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'android.intent.action.MAIN' in line and 'Activity' in line:
+                        # 尝试提取Activity名称
+                        if package_name in line:
+                            parts = line.split()
+                            for part in parts:
+                                if package_name in part and '/' in part:
+                                    activity = part.split('/')[-1]
+                                    if activity.startswith('.'):
+                                        activity = activity[1:]
+                                    logger.debug(f"方法3找到Activity: {activity}")
+                                    return activity
+            
+            # 方法4: 使用cmd package resolve-activity
+            result = subprocess.run(
+                adb_device._get_adb_prefix() + ["shell", "cmd", "package", "resolve-activity", "--brief", package_name],
+                capture_output=True, text=True, timeout=10
+            )
+            
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')
+                for line in lines:
+                    if package_name in line:
+                        activity = line.strip()
+                        # 如果是完整包名，简化为相对路径
+                        if activity.startswith(package_name):
+                            activity = activity.replace(package_name, '')
+                            if activity.startswith('.'):
+                                activity = activity[1:]
+                            else:
+                                activity = '.' + activity
+                        logger.debug(f"方法4找到Activity: {activity}")
+                        return activity
+            
+            # 方法5: 使用monkey命令获取应用包信息
+            result = subprocess.run(
+                adb_device._get_adb_prefix() + ["shell", "monkey", "-p", package_name, "-c", "android.intent.category.LAUNCHER", "-v", "1"],
+                capture_output=True, text=True, timeout=10
+            )
+            
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'Using:' in line and package_name in line:
+                        # 提取Activity名称
+                        parts = line.split()
+                        for i, part in enumerate(parts):
+                            if part == package_name and i+1 < len(parts):
+                                activity = parts[i+1]
+                                if activity.startswith('.'):
+                                    activity = activity[1:]
+                                logger.debug(f"方法5找到Activity: {activity}")
+                                return activity
+            
+            # 所有方法都失败，记录警告并返回默认值
+            logger.warning(f"无法确定应用 {package_name} 的主Activity，将使用默认值.MainActivity")
+            return ".MainActivity"
+            
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"获取应用 {package_name} 的主Activity时出错: {str(e)}")
-        
-        return None  # 如果无法确定主Activity，返回None
+            return ".MainActivity"  # 出错时返回默认值
     
     def check_device_debug_permissions(self, udid: str) -> Dict[str, Any]:
         """检查设备调试权限状态"""
