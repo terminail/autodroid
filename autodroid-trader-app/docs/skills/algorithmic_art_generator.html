@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autodroid Trading Icon Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #1a3a5f;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .control-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .control-group h3 {
+      margin-top: 0;
+      color: #2c5282;
+      font-size: 16px;
+    }
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .icon-container {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      background-color: #f8fafc;
+    }
+    .icon-container h3 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+    .icon-description {
+      font-size: 14px;
+      color: #4a5568;
+      margin-bottom: 15px;
+    }
+    button {
+      background-color: #3182ce;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #2c5282;
+    }
+    .export-button {
+      background-color: #38a169;
+    }
+    .export-button:hover {
+      background-color: #2f855a;
+    }
+    .export-section {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #edf2f7;
+      border-radius: 8px;
+    }
+    .export-section h2 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+    .code-output {
+      background-color: #2d3748;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    .value-display {
+      text-align: right;
+      font-size: 12px;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Autodroid Trading Icon Generator</h1>
+    
+    <div class="controls">
+      <div class="control-group">
+        <h3>Icon Parameters</h3>
+        <label for="complexity">Complexity</label>
+        <input type="range" id="complexity" min="3" max="12" value="7">
+        <div class="value-display" id="complexity-value">7</div>
+        
+        <label for="density">Density</label>
+        <input type="range" id="density" min="0.3" max="0.9" step="0.1" value="0.6">
+        <div class="value-display" id="density-value">0.6</div>
+        
+        <label for="rotation">Rotation</label>
+        <input type="range" id="rotation" min="0" max="360" value="0">
+        <div class="value-display" id="rotation-value">0°</div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Color Scheme</h3>
+        <label for="primary-hue">Primary Hue</label>
+        <input type="range" id="primary-hue" min="0" max="360" value="210">
+        <div class="value-display" id="primary-hue-value">210</div>
+        
+        <label for="saturation">Saturation</label>
+        <input type="range" id="saturation" min="30" max="100" value="70">
+        <div class="value-display" id="saturation-value">70%</div>
+        
+        <label for="brightness">Brightness</label>
+        <input type="range" id="brightness" min="40" max="90" value="65">
+        <div class="value-display" id="brightness-value">65%</div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Actions</h3>
+        <button id="regenerate-all">Regenerate All Icons</button>
+        <button id="randomize-params">Randomize Parameters</button>
+        <button id="export-parameters">Export Parameters</button>
+      </div>
+    </div>
+    
+    <div class="icon-grid">
+      <div class="icon-container">
+        <h3>Dashboard Icon</h3>
+        <div class="icon-description">Data monitoring and visualization</div>
+        <div id="dashboard-canvas"></div>
+        <button class="export-button" data-icon="dashboard">Export SVG</button>
+      </div>
+      
+      <div class="icon-container">
+        <h3>Trading Plan Icon</h3>
+        <div class="icon-description">Strategy management and planning</div>
+        <div id="tradingplan-canvas"></div>
+        <button class="export-button" data-icon="tradingplan">Export SVG</button>
+      </div>
+      
+      <div class="icon-container">
+        <h3>Orders Icon</h3>
+        <div class="icon-description">Trade execution and management</div>
+        <div id="orders-canvas"></div>
+        <button class="export-button" data-icon="orders">Export SVG</button>
+      </div>
+      
+      <div class="icon-container">
+        <h3>Personal Center Icon</h3>
+        <div class="icon-description">User management and profile</div>
+        <div id="personal-canvas"></div>
+        <button class="export-button" data-icon="personal">Export SVG</button>
+      </div>
+    </div>
+    
+    <div class="export-section">
+      <h2>Android Vector Drawable Export</h2>
+      <button id="export-all-android">Export All as Android Drawables</button>
+      <div class="code-output" id="android-output">
+        Click "Export All as Android Drawables" to generate Android Vector Drawable code.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global parameters
+    let params = {
+      complexity: 7,
+      density: 0.6,
+      rotation: 0,
+      primaryHue: 210,
+      saturation: 70,
+      brightness: 65
+    };
+    
+    // Icon-specific seeds for consistency
+    const iconSeeds = {
+      dashboard: 1001,
+      tradingplan: 2002,
+      orders: 3003,
+      personal: 4004
+    };
+    
+    // Update parameter displays
+    function updateParameterDisplays() {
+      document.getElementById('complexity-value').textContent = params.complexity;
+      document.getElementById('density-value').textContent = params.density;
+      document.getElementById('rotation-value').textContent = params.rotation + '°';
+      document.getElementById('primary-hue-value').textContent = params.primaryHue;
+      document.getElementById('saturation-value').textContent = params.saturation + '%';
+      document.getElementById('brightness-value').textContent = params.brightness + '%';
+    }
+    
+    // Generate icon sketch
+    function createIconSketch(iconType, seed) {
+      return function(p) {
+        p.setup = function() {
+          const canvas = p.createCanvas(200, 200);
+          canvas.parent(iconType + '-canvas');
+          p.noLoop();
+          generateIcon(p, iconType, seed);
+        };
+        
+        p.draw = function() {
+          // Static icon, no animation needed
+        };
+      };
+    }
+    
+    // Generate the actual icon
+    function generateIcon(p, iconType, seed) {
+      // Set seed for reproducibility
+      p.randomSeed(seed);
+      p.noiseSeed(seed);
+      
+      // Clear canvas
+      p.clear();
+      p.background(0, 0);
+      
+      // Center and scale
+      p.translate(p.width / 2, p.height / 2);
+      p.rotate(p.radians(params.rotation));
+      
+      // Apply icon-specific transformations
+      applyIconSpecificTransform(p, iconType);
+      
+      // Generate the icon based on Financial Precision philosophy
+      drawFinancialPrecisionIcon(p, iconType, seed);
+    }
+    
+    // Apply icon-specific transformations
+    function applyIconSpecificTransform(p, iconType) {
+      switch(iconType) {
+        case 'dashboard':
+          // Dashboard: circular, data-focused
+          break;
+        case 'tradingplan':
+          // Trading Plan: structured, grid-like
+          p.rotate(p.radians(45));
+          break;
+        case 'orders':
+          // Orders: directional, arrow-like
+          break;
+        case 'personal':
+          // Personal: centered, user-focused
+          break;
+      }
+    }
+    
+    // Draw the Financial Precision icon
+    function drawFinancialPrecisionIcon(p, iconType, seed) {
+      const size = p.width * 0.8;
+      const complexity = params.complexity;
+      const density = params.density;
+      
+      // Set colors based on our color scheme
+      const primaryColor = p.color(params.primaryHue, params.saturation, params.brightness);
+      const secondaryColor = p.color((params.primaryHue + 120) % 360, params.saturation, params.brightness);
+      const accentColor = p.color((params.primaryHue + 240) % 360, params.saturation, params.brightness);
+      
+      p.strokeWeight(1.5);
+      p.noFill();
+      
+      // Generate icon-specific patterns
+      switch(iconType) {
+        case 'dashboard':
+          drawDashboardIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor);
+          break;
+        case 'tradingplan':
+          drawTradingPlanIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor);
+          break;
+        case 'orders':
+          drawOrdersIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor);
+          break;
+        case 'personal':
+          drawPersonalIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor);
+          break;
+      }
+    }
+    
+    // Dashboard icon - circular data visualization
+    function drawDashboardIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor) {
+      // Draw circular data visualization
+      const radius = size / 2;
+      const segments = complexity;
+      
+      // Draw outer ring
+      p.stroke(primaryColor);
+      p.ellipse(0, 0, size, size);
+      
+      // Draw data segments
+      for (let i = 0; i < segments; i++) {
+        const angle = p.TWO_PI / segments;
+        const startAngle = i * angle;
+        const endAngle = (i + 1) * angle;
+        
+        // Vary the radius based on "data"
+        const r = radius * (0.5 + p.random() * 0.5);
+        
+        p.stroke(i % 3 === 0 ? primaryColor : i % 3 === 1 ? secondaryColor : accentColor);
+        p.arc(0, 0, r * 2, r * 2, startAngle, endAngle);
+      }
+      
+      // Draw center point
+      p.stroke(primaryColor);
+      p.fill(primaryColor);
+      p.ellipse(0, 0, 10, 10);
+      p.noFill();
+      
+      // Draw connecting lines
+      for (let i = 0; i < segments; i++) {
+        const angle = i * p.TWO_PI / segments;
+        const r = radius * (0.5 + p.random() * 0.5);
+        const x = p.cos(angle) * r;
+        const y = p.sin(angle) * r;
+        
+        p.stroke(secondaryColor);
+        p.line(0, 0, x, y);
+      }
+    }
+    
+    // Trading Plan icon - structured grid
+    function drawTradingPlanIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor) {
+      // Draw structured grid representing strategy
+      const gridSize = Math.floor(complexity);
+      const cellSize = size / gridSize;
+      
+      // Draw grid
+      p.stroke(primaryColor);
+      for (let i = 0; i <= gridSize; i++) {
+        const pos = (i - gridSize / 2) * cellSize;
+        p.line(pos, -size / 2, pos, size / 2);
+        p.line(-size / 2, pos, size / 2, pos);
+      }
+      
+      // Fill some cells to represent strategy elements
+      for (let i = 0; i < gridSize * gridSize * density; i++) {
+        const x = Math.floor(p.random(gridSize));
+        const y = Math.floor(p.random(gridSize));
+        
+        const xPos = (x - gridSize / 2 + 0.5) * cellSize;
+        const yPos = (y - gridSize / 2 + 0.5) * cellSize;
+        
+        p.fill(p.random() > 0.5 ? primaryColor : secondaryColor);
+        p.noStroke();
+        p.rect(xPos - cellSize / 3, yPos - cellSize / 3, cellSize * 2 / 3, cellSize * 2 / 3);
+        p.noFill();
+        p.stroke(primaryColor);
+      }
+      
+      // Draw diagonal trend line
+      p.stroke(accentColor);
+      p.strokeWeight(2);
+      p.line(-size / 2, size / 2, size / 2, -size / 2);
+      p.strokeWeight(1.5);
+    }
+    
+    // Orders icon - directional arrows
+    function drawOrdersIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor) {
+      // Draw directional arrows representing trade execution
+      const arrowCount = Math.floor(complexity / 2);
+      
+      for (let i = 0; i < arrowCount; i++) {
+        const angle = i * p.TWO_PI / arrowCount;
+        const length = size * 0.4 * (0.5 + p.random() * 0.5);
+        
+        const startX = p.cos(angle) * size * 0.2;
+        const startY = p.sin(angle) * size * 0.2;
+        const endX = p.cos(angle) * length;
+        const endY = p.sin(angle) * length;
+        
+        // Draw arrow
+        p.stroke(i % 2 === 0 ? primaryColor : secondaryColor);
+        p.strokeWeight(2);
+        p.line(startX, startY, endX, endY);
+        
+        // Draw arrowhead
+        const headSize = 8;
+        const angle1 = angle + p.PI * 0.8;
+        const angle2 = angle - p.PI * 0.8;
+        
+        p.line(endX, endY, endX + p.cos(angle1) * headSize, endY + p.sin(angle1) * headSize);
+        p.line(endX, endY, endX + p.cos(angle2) * headSize, endY + p.sin(angle2) * headSize);
+      }
+      
+      // Draw center circle
+      p.strokeWeight(1.5);
+      p.stroke(accentColor);
+      p.fill(255);
+      p.ellipse(0, 0, 20, 20);
+      p.noFill();
+    }
+    
+    // Personal icon - centered user representation
+    function drawPersonalIcon(p, size, complexity, density, primaryColor, secondaryColor, accentColor) {
+      // Draw user representation with orbiting elements
+      const orbitCount = Math.floor(complexity / 2);
+      
+      // Draw center circle (user)
+      p.stroke(primaryColor);
+      p.fill(primaryColor);
+      p.ellipse(0, 0, size * 0.3, size * 0.3);
+      p.noFill();
+      
+      // Draw orbits
+      for (let i = 0; i < orbitCount; i++) {
+        const radius = size * (0.3 + i * 0.15);
+        const segments = 6 + i * 2;
+        
+        p.stroke(i % 3 === 0 ? primaryColor : i % 3 === 1 ? secondaryColor : accentColor);
+        
+        // Draw orbit path
+        p.ellipse(0, 0, radius * 2, radius * 2);
+        
+        // Draw orbiting elements
+        for (let j = 0; j < segments; j++) {
+          const angle = j * p.TWO_PI / segments;
+          const x = p.cos(angle) * radius;
+          const y = p.sin(angle) * radius;
+          
+          p.fill(i % 3 === 0 ? primaryColor : i % 3 === 1 ? secondaryColor : accentColor);
+          p.noStroke();
+          p.ellipse(x, y, 5, 5);
+          p.noFill();
+          p.stroke(i % 3 === 0 ? primaryColor : i % 3 === 1 ? secondaryColor : accentColor);
+        }
+      }
+      
+      // Draw connecting lines from center
+      for (let i = 0; i < orbitCount; i++) {
+        const radius = size * (0.3 + i * 0.15);
+        const angle = p.random(p.TWO_PI);
+        const x = p.cos(angle) * radius;
+        const y = p.sin(angle) * radius;
+        
+        p.stroke(secondaryColor);
+        p.line(0, 0, x, y);
+      }
+    }
+    
+    // Convert canvas to SVG
+    function canvasToSVG(p5Instance) {
+      // This is a simplified SVG conversion
+      // In a real implementation, you'd need to capture the drawing commands
+      // and convert them to proper SVG elements
+      const canvas = p5Instance.canvas;
+      const dataURL = canvas.toDataURL('image/png');
+      return dataURL;
+    }
+    
+    // Export all icons as Android Vector Drawables
+    function exportAllAsAndroidDrawables() {
+      let output = "// Android Vector Drawable Icons for Autodroid Trading App\n";
+      output += "// Generated using Financial Precision algorithmic art philosophy\n\n";
+      
+      // For each icon, generate a basic Android Vector Drawable
+      // In a real implementation, you'd need to convert the p5.js drawing to SVG paths
+      output += generateAndroidDrawable('ic_dashboard', 'Dashboard Icon');
+      output += generateAndroidDrawable('ic_tradingplan', 'Trading Plan Icon');
+      output += generateAndroidDrawable('ic_orders', 'Orders Icon');
+      output += generateAndroidDrawable('ic_personal', 'Personal Center Icon');
+      
+      document.getElementById('android-output').textContent = output;
+    }
+    
+    // Generate a basic Android Vector Drawable
+    function generateAndroidDrawable(name, description) {
+      return `<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- ${description} -->
+    <!-- Generated with parameters: complexity=${params.complexity}, density=${params.density}, rotation=${params.rotation} -->
+    <!-- Color scheme: hue=${params.primaryHue}, saturation=${params.saturation}%, brightness=${params.brightness}% -->
+    
+    <!-- Placeholder paths - replace with actual SVG paths from p5.js output -->
+    <path
+        android:fillColor="#FF${Math.floor(params.primaryHue/360*255).toString(16).padStart(2, '0')}${Math.floor(params.saturation/100*255).toString(16).padStart(2, '0')}${Math.floor(params.brightness/100*255).toString(16).padStart(2, '0')}"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM13,17h-2v-6h2v6zM13,9h-2L11,7h2v2z"/>
+</vector>
+
+`;
+    }
+    
+    // Initialize all icon sketches
+    let iconSketches = {};
+    
+    function initializeIcons() {
+      // Create new p5 instances for each icon
+      if (iconSketches.dashboard) iconSketches.dashboard.remove();
+      if (iconSketches.tradingplan) iconSketches.tradingplan.remove();
+      if (iconSketches.orders) iconSketches.orders.remove();
+      if (iconSketches.personal) iconSketches.personal.remove();
+      
+      iconSketches.dashboard = new p5(createIconSketch('dashboard', iconSeeds.dashboard));
+      iconSketches.tradingplan = new p5(createIconSketch('tradingplan', iconSeeds.tradingplan));
+      iconSketches.orders = new p5(createIconSketch('orders', iconSeeds.orders));
+      iconSketches.personal = new p5(createIconSketch('personal', iconSeeds.personal));
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize parameter displays
+      updateParameterDisplays();
+      
+      // Initialize icons
+      initializeIcons();
+      
+      // Parameter change listeners
+      document.getElementById('complexity').addEventListener('input', function(e) {
+        params.complexity = parseInt(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('density').addEventListener('input', function(e) {
+        params.density = parseFloat(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('rotation').addEventListener('input', function(e) {
+        params.rotation = parseInt(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('primary-hue').addEventListener('input', function(e) {
+        params.primaryHue = parseInt(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('saturation').addEventListener('input', function(e) {
+        params.saturation = parseInt(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('brightness').addEventListener('input', function(e) {
+        params.brightness = parseInt(e.target.value);
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      // Button listeners
+      document.getElementById('regenerate-all').addEventListener('click', function() {
+        initializeIcons();
+      });
+      
+      document.getElementById('randomize-params').addEventListener('click', function() {
+        params.complexity = Math.floor(Math.random() * 10) + 3;
+        params.density = Math.round((Math.random() * 0.6 + 0.3) * 10) / 10;
+        params.rotation = Math.floor(Math.random() * 360);
+        params.primaryHue = Math.floor(Math.random() * 360);
+        params.saturation = Math.floor(Math.random() * 70 + 30);
+        params.brightness = Math.floor(Math.random() * 50 + 40);
+        
+        // Update UI
+        document.getElementById('complexity').value = params.complexity;
+        document.getElementById('density').value = params.density;
+        document.getElementById('rotation').value = params.rotation;
+        document.getElementById('primary-hue').value = params.primaryHue;
+        document.getElementById('saturation').value = params.saturation;
+        document.getElementById('brightness').value = params.brightness;
+        
+        updateParameterDisplays();
+        initializeIcons();
+      });
+      
+      document.getElementById('export-parameters').addEventListener('click', function() {
+        const paramStr = JSON.stringify(params, null, 2);
+        const blob = new Blob([paramStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'icon-parameters.json';
+        a.click();
+      });
+      
+      document.getElementById('export-all-android').addEventListener('click', function() {
+        exportAllAsAndroidDrawables();
+      });
+      
+      // Export individual icons
+      document.querySelectorAll('.export-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const iconType = this.getAttribute('data-icon');
+          const dataURL = canvasToSVG(iconSketches[iconType]);
+          
+          // Create download link
+          const a = document.createElement('a');
+          a.href = dataURL;
+          a.download = `${iconType}-icon.png`;
+          a.click();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

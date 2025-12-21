@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoDroid 交易应用图标预览</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #326ca6;
+            margin-bottom: 30px;
+        }
+
+        .icon-set {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .icon-pair {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .icon-container {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .normal-state {
+            background-color: #f0f0f0;
+        }
+
+        .selected-state {
+            background-color: #fff5f5;
+        }
+
+        .icon-label {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .state-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AutoDroid 交易应用图标预览</h1>
+
+        <div class="description">
+            基于算法艺术生成的交易图标，采用"金融精准"设计哲学<br>
+            普通状态使用灰色调，选中状态使用中国红(#DE2910)作为主色调
+        </div>
+
+        <div class="icon-set">
+            <!-- Dashboard Icons -->
+            <div class="icon-pair">
+                <div class="state-label">仪表盘</div>
+                <div class="icon-container normal-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Dashboard Icon - Data monitoring and visualization -->
+                        <path fill="#888888" d="M12,12 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+                        <path fill="none" stroke="#888888" d="M12,12 m-10,0 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0" />
+                        <path fill="none" stroke="#888888" d="M12,12 L17,7" />
+                        <path fill="none" stroke="#AAAAAA" d="M12,12 L7,7" />
+                        <path fill="none" stroke="#CCCCCC" d="M12,12 L17,17" />
+                        <path fill="none" stroke="#888888" d="M12,12 L7,17" />
+                        <path fill="none" stroke="#AAAAAA" d="M17,7 A7,7 0 0,1 17,17" />
+                        <path fill="none" stroke="#CCCCCC" d="M7,7 A7,7 0 0,1 17,7" />
+                        <path fill="none" stroke="#888888" d="M7,17 A7,7 0 0,1 7,7" />
+                        <path fill="none" stroke="#AAAAAA" d="M17,17 A7,7 0 0,1 7,17" />
+                    </svg>
+                </div>
+                <div class="icon-label">普通状态</div>
+            </div>
+
+            <div class="icon-pair">
+                <div class="icon-container selected-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Dashboard Icon (Selected) - Data monitoring and visualization -->
+                        <path fill="#DE2910" d="M12,12 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+                        <path fill="none" stroke="#DE2910" d="M12,12 m-10,0 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0" />
+                        <path fill="none" stroke="#DE2910" d="M12,12 L17,7" />
+                        <path fill="none" stroke="#FF5722" d="M12,12 L7,7" />
+                        <path fill="none" stroke="#FF9800" d="M12,12 L17,17" />
+                        <path fill="none" stroke="#DE2910" d="M12,12 L7,17" />
+                        <path fill="none" stroke="#FF5722" d="M17,7 A7,7 0 0,1 17,17" />
+                        <path fill="none" stroke="#FF9800" d="M7,7 A7,7 0 0,1 17,7" />
+                        <path fill="none" stroke="#DE2910" d="M7,17 A7,7 0 0,1 7,7" />
+                        <path fill="none" stroke="#FF5722" d="M17,17 A7,7 0 0,1 7,17" />
+                    </svg>
+                </div>
+                <div class="icon-label">选中状态</div>
+            </div>
+
+            <!-- Trade Plans Icons -->
+            <div class="icon-pair">
+                <div class="state-label">交易计划</div>
+                <div class="icon-container normal-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Trade Plans Icon - Strategy management and planning -->
+                        <path fill="none" stroke="#888888" d="M0,0 L0,24 L24,24 L24,0 Z" />
+                        <path fill="none" stroke="#888888" d="M0,8 L24,8" />
+                        <path fill="none" stroke="#888888" d="M0,16 L24,16" />
+                        <path fill="none" stroke="#888888" d="M8,0 L8,24" />
+                        <path fill="none" stroke="#888888" d="M16,0 L16,24" />
+                        <path fill="#888888" d="M2,2 L6,2 L6,6 L2,6 Z" />
+                        <path fill="#AAAAAA" d="M10,10 L14,10 L14,14 L10,14 Z" />
+                        <path fill="#888888" d="M18,2 L22,2 L22,6 L18,6 Z" />
+                        <path fill="#AAAAAA" d="M2,18 L6,18 L6,22 L2,22 Z" />
+                        <path fill="#888888" d="M18,18 L22,18 L22,22 L18,22 Z" />
+                        <path fill="#AAAAAA" d="M10,2 L14,2 L14,6 L10,6 Z" />
+                        <path fill="none" stroke="#CCCCCC" stroke-width="2" d="M0,24 L24,0" />
+                    </svg>
+                </div>
+                <div class="icon-label">普通状态</div>
+            </div>
+
+            <div class="icon-pair">
+                <div class="icon-container selected-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Trade Plans Icon (Selected) - Strategy management and planning -->
+                        <path fill="none" stroke="#DE2910" d="M0,0 L0,24 L24,24 L24,0 Z" />
+                        <path fill="none" stroke="#DE2910" d="M0,8 L24,8" />
+                        <path fill="none" stroke="#DE2910" d="M0,16 L24,16" />
+                        <path fill="none" stroke="#DE2910" d="M8,0 L8,24" />
+                        <path fill="none" stroke="#DE2910" d="M16,0 L16,24" />
+                        <path fill="#DE2910" d="M2,2 L6,2 L6,6 L2,6 Z" />
+                        <path fill="#FF5722" d="M10,10 L14,10 L14,14 L10,14 Z" />
+                        <path fill="#DE2910" d="M18,2 L22,2 L22,6 L18,6 Z" />
+                        <path fill="#FF5722" d="M2,18 L6,18 L6,22 L2,22 Z" />
+                        <path fill="#DE2910" d="M18,18 L22,18 L22,22 L18,22 Z" />
+                        <path fill="#FF5722" d="M10,2 L14,2 L14,6 L10,6 Z" />
+                        <path fill="none" stroke="#FF9800" stroke-width="2" d="M0,24 L24,0" />
+                    </svg>
+                </div>
+                <div class="icon-label">选中状态</div>
+            </div>
+
+            <!-- Trade Orders Icons -->
+            <div class="icon-pair">
+                <div class="state-label">交易订单</div>
+                <div class="icon-container normal-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Trade Orders Icon - Trade execution and delivery receipts -->
+                        <path fill="#FFFFFF" stroke="#888888" d="M5,3 h14 v18 h-14 Z" />
+                        <path fill="none" stroke="#888888" stroke-width="2" d="M7,6 h10" />
+                        <path fill="none" stroke="#AAAAAA" d="M7,9 h6.611608728777355" />
+                        <path fill="none" stroke="#CCCCCC" d="M7,11 h7.063802153661527" />
+                        <path fill="none" stroke="#AAAAAA" d="M7,13 h9.250118554846267" />
+                        <path fill="none" stroke="#CCCCCC" d="M7,15 h9.217136116829352" />
+                        <path fill="none" stroke="#AAAAAA" d="M7,17 h7.507432314505422" />
+                        <path fill="none" stroke="#CCCCCC" stroke-width="1.5" d="M7,18 h10" />
+                        <path fill="none" stroke="#CCCCCC" stroke-width="1.5"
+                            d="M15,16 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+                        <path fill="none" stroke="#CCCCCC" d="M13.75,16 L16.25,16 M15,14.75 L15,17.25" />
+                        <path fill="none" stroke="#CCCCCC" d="M7,14 L7,16 M6.5,15.5 L7,16 L7.5,15.5" />
+                        <path fill="none" stroke="#AAAAAA" d="M10,16 L10,14 M9.5,14.5 L10,14 L10.5,14.5" />
+                        <path fill="none" stroke="#CCCCCC" d="M13,14 L13,16 M12.5,15.5 L13,16 L13.5,15.5" />
+                    </svg>
+                </div>
+                <div class="icon-label">普通状态</div>
+            </div>
+
+            <div class="icon-pair">
+                <div class="icon-container selected-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- Trade Orders Icon (Selected) - Trade execution and delivery receipts -->
+                        <path fill="#FFFFFF" stroke="#DE2910" d="M5,3 h14 v18 h-14 Z" />
+                        <path fill="none" stroke="#DE2910" stroke-width="2" d="M7,6 h10" />
+                        <path fill="none" stroke="#FF5722" d="M7,9 h6.611608728777355" />
+                        <path fill="none" stroke="#FF9800" d="M7,11 h7.063802153661527" />
+                        <path fill="none" stroke="#FF5722" d="M7,13 h9.250118554846267" />
+                        <path fill="none" stroke="#FF9800" d="M7,15 h9.217136116829352" />
+                        <path fill="none" stroke="#FF5722" d="M7,17 h7.507432314505422" />
+                        <path fill="none" stroke="#FF9800" stroke-width="1.5" d="M7,18 h10" />
+                        <path fill="none" stroke="#FF9800" stroke-width="1.5"
+                            d="M15,16 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+                        <path fill="none" stroke="#FF9800" d="M13.75,16 L16.25,16 M15,14.75 L15,17.25" />
+                        <path fill="none" stroke="#FF9800" d="M7,14 L7,16 M6.5,15.5 L7,16 L7.5,15.5" />
+                        <path fill="none" stroke="#FF5722" d="M10,16 L10,14 M9.5,14.5 L10,14 L10.5,14.5" />
+                        <path fill="none" stroke="#FF9800" d="M13,14 L13,16 M12.5,15.5 L13,16 L13.5,15.5" />
+                    </svg>
+                </div>
+                <div class="icon-label">选中状态</div>
+            </div>
+
+            <!-- My Icons -->
+            <div class="icon-pair">
+                <div class="state-label">个人中心</div>
+                <div class="icon-container normal-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- My Icon - User management and profile -->
+                        <path fill="#888888" d="M12,12 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+                        <path fill="none" stroke="#888888" d="M12,12 m-5,0 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0" />
+                        <path fill="#888888" d="M7,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#AAAAAA" d="M17,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#CCCCCC" d="M12,7 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#AAAAAA" d="M12,17 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#888888" d="M12,2 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#AAAAAA" d="M12,22 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#CCCCCC" d="M2,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#888888" d="M22,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="none" stroke="#AAAAAA" d="M12,12 L7,7" />
+                        <path fill="none" stroke="#CCCCCC" d="M12,12 L17,7" />
+                    </svg>
+                </div>
+                <div class="icon-label">普通状态</div>
+            </div>
+
+            <div class="icon-pair">
+                <div class="icon-container selected-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+                        <!-- My Icon (Selected) - User management and profile -->
+                        <path fill="#DE2910" d="M12,12 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+                        <path fill="none" stroke="#DE2910" d="M12,12 m-5,0 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0" />
+                        <path fill="#DE2910" d="M7,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#FF5722" d="M17,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#FF9800" d="M12,7 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#FF5722" d="M12,17 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#DE2910" d="M12,2 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#FF5722" d="M12,22 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#FF9800" d="M2,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="#DE2910" d="M22,12 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0" />
+                        <path fill="none" stroke="#FF5722" d="M12,12 L7,7" />
+                        <path fill="none" stroke="#FF9800" d="M12,12 L17,7" />
+                    </svg>
+                </div>
+                <div class="icon-label">选中状态</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>图标文件已生成并放置在 app/src/main/res/drawable/ 目录中</p>
+            <p>选择器文件已配置，可直接在应用中使用</p>
+        </div>
+    </div>
+</body>
+
+</html>

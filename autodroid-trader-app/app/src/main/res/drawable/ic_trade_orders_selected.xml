@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Trade Orders Icon (Selected) - Trade execution and delivery receipts -->
+    <!-- Generated with parameters: complexity=7, density=0.6, rotation=0 -->
+    <!-- Color scheme: hue=210, saturation=70%, brightness=65% -->
+    <path
+        android:strokeColor="#DE2910"
+        android:strokeWidth="2"
+        android:pathData="M12,12 m-10,0 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0"
+        />
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M8,16 L8,10 L6,12 M8,10 L10,12"
+        />
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M16,8 L16,14 L14,12 M16,14 L18,12"
+        />
+    <path
+        android:strokeColor="#DE2910"
+        android:strokeWidth="2"
+        android:pathData="M5,10.935945870654658 L 8.5,13.270819981858656 L 12,14.8348317448113 L 15.5,14.67927261110257 L 19,12.89850266383982"
+        />
+    <path
+        android:strokeColor="#FF5722"
+        android:strokeWidth="1.5"
+        android:pathData="M6,6 h8.917413093166033"
+        />
+    <path
+        android:strokeColor="#FF9800"
+        android:strokeWidth="1.5"
+        android:pathData="M6,10 h9.59570323049229"
+        />
+    <path
+        android:strokeColor="#FF5722"
+        android:strokeWidth="1.5"
+        android:pathData="M6,14 h12.8751778322694"
+        />
+    <path
+        android:fillColor="#DE2910"
+        android:pathData="M12,12 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0"
+        />
+</vector>
