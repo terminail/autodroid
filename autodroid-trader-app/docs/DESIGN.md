@@ -166,7 +166,7 @@ erDiagram
         datetime created_at "创建时间"
     }
     
-    WORKSCRIPT {
+    TRADESCRIPT {
         string id PK "工作脚本唯一标识"
         string apk_id FK "关联APK ID"
         string name "脚本名称"
@@ -176,7 +176,7 @@ erDiagram
         datetime created_at "创建时间"
     }
     
-    WORKPLAN {
+    TRADEPLAN {
         string id PK "工作计划唯一标识"
         string script_id FK "关联工作脚本ID"
         string name "计划名称"
@@ -185,17 +185,7 @@ erDiagram
         datetime created_at "创建时间"
         datetime started_at "开始时间"
         datetime ended_at "结束时间"
-    }
-    
-    WORKREPORT {
-        string id PK "工作报告唯一标识"
-        string user_id FK "关联用户ID"
-        string plan_id FK "关联工作计划ID"
-        string description "报告描述"
         json execution_log "执行日志"
-        json result_data "结果数据"
-        datetime created_at "创建时间"
-        string error_message "错误信息"
     }
     
     CONTRACT {
@@ -208,7 +198,7 @@ erDiagram
         datetime created_at "创建时间"
     }
     
-    ORDER {
+    TRADEORDER {
         string id PK "订单唯一标识"
         string plan_id FK "关联工作计划ID"
         string contract_id FK "关联合约ID"
@@ -223,11 +213,10 @@ erDiagram
     
     USER ||--o{ DEVICE : "拥有设备"
     DEVICE }o--o{ APK : "安装应用"
-    WORKSCRIPT ||--o{ APK : "测试应用"
-    WORKSCRIPT ||--o{ WORKPLAN : "使用计划"
-    WORKPLAN ||--|| WORKREPORT : "生成报告"
-    WORKPLAN ||--o{ ORDER : "可能创建"
-    CONTRACT ||--o{ ORDER : "交易合约"
+    TRADESCRIPT ||--o{ APK : "测试应用"
+    TRADESCRIPT ||--o{ TRADEPLAN : "使用计划"
+    TRADEPLAN ||--o{ TRADEORDER : "可能创建"
+    CONTRACT ||--o{ TRADEORDER : "交易合约"
 ```
 
 ### 数据模型定义
@@ -619,7 +608,7 @@ data class DiscoveredServer(
 ```kotlin
 @Dao
 interface ServerDao {
-    @Query("SELECT * FROM servers ORDER BY lastSeen DESC")
+    @Query("SELECT * FROM servers TRADEORDER BY lastSeen DESC")
     fun getAllServers(): LiveData<List<ServerEntity>>
     
     @Query("SELECT * FROM servers WHERE connected = 1 LIMIT 1")
