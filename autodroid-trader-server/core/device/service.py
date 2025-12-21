@@ -239,12 +239,16 @@ class DeviceManager:
                     if app_package and adb_device.is_app_installed(app_package):
                         # 获取应用的主Activity
                         app_activity = self._get_app_main_activity(adb_device, app_package)
-                        installed_apps.append({
-                            "app_package": app_package,
-                            "name": app_name,
-                            "app_activity": app_activity
-                        })
-                        logger.info(f"应用 {app_name} ({app_package}) 已安装")
+                        # 只有在找到确切的主Activity时才添加到已安装列表
+                        if app_activity is not None:
+                            installed_apps.append({
+                                "app_package": app_package,
+                                "name": app_name,
+                                "app_activity": app_activity
+                            })
+                            logger.info(f"应用 {app_name} ({app_package}) 已安装，主Activity: {app_activity}")
+                        else:
+                            logger.warning(f"应用 {app_name} ({app_package}) 已安装但无法确定主Activity")
                     else:
                         logger.info(f"应用 {app_name} ({app_package}) 未安装")
                 
@@ -320,12 +324,33 @@ class DeviceManager:
                                             else:
                                                 activity = '.' + activity
                                         return activity
+                
+                # 尝试另一种方法：使用pm获取启动Activity
+                result = subprocess.run(
+                    adb_device._get_adb_prefix() + ["shell", "cmd", "package", "resolve-activity", "--brief", package_name],
+                    capture_output=True, text=True, timeout=10
+                )
+                
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split('\n')
+                    for line in lines:
+                        if package_name in line:
+                            activity = line.strip()
+                            # 如果是完整包名，简化为相对路径
+                            if activity.startswith(package_name):
+                                activity = activity.replace(package_name, '')
+                                if activity.startswith('.'):
+                                    activity = activity[1:]
+                                else:
+                                    activity = '.' + activity
+                            return activity
+                            
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"获取应用 {package_name} 的主Activity时出错: {str(e)}")
         
-        return ".MainActivity"  # 默认返回.MainActivity
+        return None  # 如果无法确定主Activity，返回None
     
     def check_device_debug_permissions(self, udid: str) -> Dict[str, Any]:
         """检查设备调试权限状态"""

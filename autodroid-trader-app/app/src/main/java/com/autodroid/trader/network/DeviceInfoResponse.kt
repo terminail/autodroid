@@ -6,7 +6,7 @@ package com.autodroid.trader.network
 data class AppInfo(
     val app_package: String,
     val name: String,
-    val app_activity: String? = null
+    val app_activity: String
 )
 
 /**
