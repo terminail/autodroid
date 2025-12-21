@@ -45,6 +45,25 @@ class DeviceRepository private constructor(application: Application) {
                             
                             // 根据服务器返回的信息更新本地数据库
                             if (deviceInfoResponse != null) {
+                                // 将应用列表转换为JSON字符串
+                                val appsJson = deviceInfoResponse.apps?.let { apps ->
+                                    try {
+                                        val jsonArray = org.json.JSONArray()
+                                        for (app in apps) {
+                                            val appObject = org.json.JSONObject().apply {
+                                                put("app_package", app.app_package)
+                                                put("name", app.name)
+                                                app.app_activity?.let { put("app_activity", it) }
+                                            }
+                                            jsonArray.put(appObject)
+                                        }
+                                        jsonArray.toString()
+                                    } catch (e: Exception) {
+                                        Log.e("DeviceRepository", "Error converting apps to JSON: ${e.message}")
+                                        null
+                                    }
+                                }
+                                
                                 val updatedDevice = currentDevice.copy(
                                     isOnline = true,
                                     usbDebugEnabled = deviceInfoResponse.usb_debug_enabled ?: false,
@@ -55,6 +74,7 @@ class DeviceRepository private constructor(application: Application) {
                                         java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
                                             .parse(it)?.time 
                                     },
+                                    apps = appsJson,
                                     updatedAt = System.currentTimeMillis()
                                 )
                                 deviceProvider.updateDevice(updatedDevice)

@@ -23,6 +23,20 @@
 ### 检测设备有否安装某个应用
 - 服务自动检测注册的设备有否安装系统配置好的应用并更新到数据库的Device信息表中
 - 客户端再次查询设备信息时，会包含应用安装状态，并说明服务支持在该设备上自动化测试某个应用
-
-
+- 首先服务端配置支持的应用列表，配置项包括应用包名、应用名称等
+- Device表中添加一个json字段apps，当然apps仅限于服务端支持的应用,参见supported_apps配置项；device.apps字段格式如下：
+```json
+[
+    {
+        "app_package": "com.autodroid.trader",
+        "name": "自动交计花",
+        "app_activity": ".MainActivity"
+    },
+    {
+        "app_package": "com.tdx.androidCCZQ",
+        "name": "明佣宝",
+        "app_activity": "com.tdx.Android.TdxAndroidActivity"
+    }
+]
+```
 

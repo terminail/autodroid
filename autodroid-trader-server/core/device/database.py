@@ -320,3 +320,16 @@ class DeviceDatabase(BaseDatabase):
             return True
         except DoesNotExist:
             return False
+    
+    def update_device_apps(self, udid: str, installed_apps: list) -> bool:
+        """更新设备已安装的应用列表"""
+        import json
+        try:
+            device = Device.get(Device.udid == udid)
+            # 将应用列表转换为JSON字符串存储
+            device.apps = json.dumps(installed_apps)
+            device.updated_at = time.time()
+            device.save()
+            return True
+        except DoesNotExist:
+            return False

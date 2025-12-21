@@ -34,7 +34,8 @@ sealed class DashboardItem(val type: Int) {
         val usbDebugEnabled: Boolean = false,
         val wifiDebugEnabled: Boolean = false,
         val debugCheckStatus: String = "UNKNOWN",
-        val debugCheckMessage: String? = null
+        val debugCheckMessage: String? = null,
+        val apps: List<String> = emptyList()
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
 
     data class ItemPortRange(

@@ -169,6 +169,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val wifiDebugStatus: TextView = itemView.findViewById(R.id.wifi_debug_status)
         private val debugCheckResult: TextView = itemView.findViewById(R.id.debug_check_result)
         private val debugCheckResultLayout: LinearLayout = itemView.findViewById(R.id.debug_check_result_layout)
+        private val installedAppsText: TextView = itemView.findViewById(R.id.text_installed_apps)
 
         fun bind(item: DashboardItem.ItemDevice) {
             deviceUdid.text = item.udid
@@ -182,6 +183,13 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             // 设置调试状态显示
             usbDebugStatus.text = if (item.usbDebugEnabled) "开启" else "关闭"
             wifiDebugStatus.text = if (item.wifiDebugEnabled) "开启" else "关闭"
+            
+            // 设置已安装应用显示
+            installedAppsText.text = if (item.apps.isNotEmpty()) {
+                item.apps.joinToString(", ")
+            } else {
+                "无"
+            }
             
             // 设置调试检查结果显示
             if (item.debugCheckMessage != null && item.debugCheckMessage.isNotEmpty()) {

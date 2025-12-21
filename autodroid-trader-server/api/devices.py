@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 
 from core.device.service import DeviceManager
-from core.device.models import DeviceInfoResponse, DeviceCreateRequest, DeviceUpdateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest, DeviceCreateResponse, DeviceUpdateResponse, DeviceDeleteResponse, DeviceAssignmentResponse, DeviceStatusUpdateResponse, DeviceDebugCheckResponse
+from core.device.models import DeviceInfoResponse, DeviceCreateRequest, DeviceUpdateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest, DeviceCreateResponse, DeviceUpdateResponse, DeviceDeleteResponse, DeviceAssignmentResponse, DeviceStatusUpdateResponse, DeviceCheckResponse
 from core.apk.models import ApkInfo, ApkCreateRequest
 
 # Initialize router
@@ -326,19 +326,20 @@ async def update_device_status(udid: str, status_request: DeviceStatusUpdateRequ
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/{udid}/debug/check", response_model=DeviceDebugCheckResponse)
-async def check_device_debug_permissions(udid: str):
-    """检查设备调试权限状态"""
+@router.post("/{udid}/check", response_model=DeviceCheckResponse)
+async def check_device(udid: str):
+    """检查设备调试设置、安装app等情况"""
     try:
-        # 调用设备管理器检查调试权限
-        debug_info = device_manager.check_device_debug_permissions(udid)
+        # 调用设备管理器检查设备状态
+        device_info = device_manager.check_device(udid)
         
-        return DeviceDebugCheckResponse(
-            success=debug_info["success"],
-            message=debug_info["message"],
-            udid=debug_info["udid"],
-            usb_debug_enabled=debug_info["usb_debug_enabled"],
-            wifi_debug_enabled=debug_info["wifi_debug_enabled"]
+        return DeviceCheckResponse(
+            success=device_info["success"],
+            message=device_info["message"],
+            udid=device_info["udid"],
+            usb_debug_enabled=device_info["usb_debug_enabled"],
+            wifi_debug_enabled=device_info["wifi_debug_enabled"],
+            installed_apps=device_info["installed_apps"]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

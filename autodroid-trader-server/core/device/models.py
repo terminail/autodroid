@@ -31,6 +31,7 @@ class DeviceInfoResponse(BaseModel):
     debug_check_status: Optional[str] = Field("UNKNOWN", description="调试权限检查状态")
     debug_check_message: Optional[str] = Field(None, description="调试权限检查消息")
     debug_check_time: Optional[datetime] = Field(None, description="调试权限检查时间")
+    apps: Optional[List[Dict[str, Any]]] = Field(None, description="已安装的支持应用列表")
     
     class Config:
         from_attributes = True
@@ -149,11 +150,12 @@ class DeviceApkListResponse(BaseModel):
     total_count: int = Field(..., description="总数")
 
 
-class DeviceDebugCheckResponse(BaseModel):
-    """设备调试权限检查响应模型"""
+class DeviceCheckResponse(BaseModel):
+    """设备检查响应模型"""
     success: bool = Field(..., description="操作是否成功")
     message: str = Field(..., description="响应消息")
     udid: str = Field(..., description="设备UDID")
     usb_debug_enabled: bool = Field(False, description="USB调试是否开启")
     wifi_debug_enabled: bool = Field(False, description="WiFi调试是否开启")
+    installed_apps: List[Dict[str, Any]] = Field(default_factory=list, description="已安装的支持应用列表")
     check_time: Optional[datetime] = Field(None, description="检查时间")

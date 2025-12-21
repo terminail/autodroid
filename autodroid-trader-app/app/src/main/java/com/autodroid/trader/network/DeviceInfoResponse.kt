@@ -1,6 +1,15 @@
 package com.autodroid.trader.network
 
 /**
+ * Data class representing app information
+ */
+data class AppInfo(
+    val app_package: String,
+    val name: String,
+    val app_activity: String? = null
+)
+
+/**
  * Data class representing device information response from FastAPI
  * This is the type-safe response model for device API calls
  */
@@ -25,7 +34,8 @@ data class DeviceInfoResponse(
     val wifi_debug_enabled: Boolean? = false,
     val debug_check_status: String? = "UNKNOWN",
     val debug_check_message: String? = null,
-    val debug_check_time: String? = null
+    val debug_check_time: String? = null,
+    val apps: List<AppInfo>? = null
 ) {
     /**
      * Check if device is online

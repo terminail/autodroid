@@ -44,6 +44,9 @@ data class DeviceEntity(
     val debugCheckMessage: String? = null, // 对应服务器端的debug_check_message
     val debugCheckTime: Long? = null, // 对应服务器端的debug_check_time
     
+    // 已安装应用
+    val apps: String? = null, // 对应服务器端的apps，JSON格式存储已安装的应用列表
+    
     // 时间戳 - 使用Long类型存储时间戳，与服务器端DateTimeField对应
     val registeredAt: Long = System.currentTimeMillis(), // 对应服务器端的registered_at
     val createdAt: Long = System.currentTimeMillis(), // 对应服务器端的created_at

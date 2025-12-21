@@ -55,6 +55,24 @@ class ItemDeviceManager(
                     "未知"
                 }
                 
+                // 解析已安装应用
+                val appNames = mutableListOf<String>()
+                deviceEntity.apps?.let { appsJson ->
+                    try {
+                        // 使用JSON解析器解析应用列表
+                        val jsonArray = org.json.JSONArray(appsJson)
+                        for (i in 0 until jsonArray.length()) {
+                            val appObject = jsonArray.getJSONObject(i)
+                            val appName = appObject.optString("name", "")
+                            if (appName.isNotEmpty()) {
+                                appNames.add(appName)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error parsing apps JSON: ${e.message}")
+                    }
+                }
+                
                 val itemDevice = DashboardItem.ItemDevice(
                     udid = deviceEntity.udid,
                     userId = "user001",
@@ -67,7 +85,8 @@ class ItemDeviceManager(
                     usbDebugEnabled = deviceEntity.usbDebugEnabled,
                     wifiDebugEnabled = deviceEntity.wifiDebugEnabled,
                     debugCheckStatus = deviceEntity.debugCheckStatus,
-                    debugCheckMessage = deviceEntity.debugCheckMessage
+                    debugCheckMessage = deviceEntity.debugCheckMessage,
+                    apps = appNames
                 )
                 
                 onItemUpdate(itemDevice)

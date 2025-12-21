@@ -78,4 +78,8 @@ ui:
   default_theme: light
   show_help_text: true
   show_tooltips: true
-
+supported_apps:
+  - app_package: com.autodroid.trader
+    name: 自动交计花
+  - app_package: com.tdx.androidCCZQ
+    name: 明佣宝
