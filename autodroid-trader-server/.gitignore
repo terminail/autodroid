@@ -85,6 +85,7 @@ lint/tmp/
 
 # Python package metadata
 autodroid_container.egg-info/
+autodroid_trader_server.egg-info/
 
 # Database files
 *.db

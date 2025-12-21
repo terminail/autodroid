@@ -117,14 +117,22 @@ class QrCodeScannerActivity : AppCompatActivity() {
     }
     
     private fun processQRCodeResult(qrCode: String) {
-        Log.d(TAG, "QR Code detected: $qrCode")
-        
-        // Return the result to the calling activity
-        val resultIntent = Intent()
-        resultIntent.putExtra("QR_RESULT", qrCode)
-        setResult(Activity.RESULT_OK, resultIntent)
-        finish()
-    }
+            Log.d(TAG, "QR Code detected: $qrCode")
+            
+            // Validate QR code content
+            if (qrCode.isBlank()) {
+                Log.w(TAG, "QR Code content is blank or empty")
+                Toast.makeText(this@QrCodeScannerActivity, "二维码内容为空", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // Return the result to the calling activity
+            val resultIntent = Intent()
+            resultIntent.putExtra("qr_code_content", qrCode)
+            Log.d(TAG, "Setting result with qr_code_content: $qrCode")
+            setResult(Activity.RESULT_OK, resultIntent)
+            finish()
+        }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -150,16 +158,25 @@ class QrCodeScannerActivity : AppCompatActivity() {
                 
                 scanner.process(imageBitmap)
                     .addOnSuccessListener { barcodes ->
+                        Log.d(TAG, "Barcode scanning completed. Found ${barcodes.size} barcodes")
+                        
                         for (barcode in barcodes) {
+                            Log.d(TAG, "Barcode format: ${barcode.format}, rawValue: ${barcode.rawValue}")
+                            
                             // Handle QR code
                             if (barcode.format == Barcode.FORMAT_QR_CODE) {
                                 val rawValue = barcode.rawValue
-                                if (rawValue != null) {
+                                if (rawValue != null && rawValue.isNotEmpty()) {
+                                    Log.d(TAG, "QR Code detected successfully: $rawValue")
                                     onQrCodeDetected(rawValue)
                                     return@addOnSuccessListener
+                                } else {
+                                    Log.w(TAG, "QR Code format detected but rawValue is null or empty")
                                 }
                             }
                         }
+                        
+                        Log.d(TAG, "No valid QR code found in this frame")
                     }
                     .addOnFailureListener { e ->
                         Log.e(TAG, "QR Code detection failed", e)

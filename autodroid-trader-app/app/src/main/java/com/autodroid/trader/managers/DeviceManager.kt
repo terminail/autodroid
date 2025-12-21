@@ -4,10 +4,12 @@ package com.autodroid.trader.managers
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import android.util.DisplayMetrics
+import android.view.WindowManager
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.data.repository.DeviceRepository
-import com.autodroid.trader.network.DeviceRegistrationResponse
+import com.autodroid.trader.network.DeviceCreateResponse
 import com.autodroid.trader.utils.NetworkUtils
 
 class DeviceManager(private val context: Context?, private val appViewModel: AppViewModel) {
@@ -57,9 +59,18 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         // 获取设备基本信息
         val deviceName = Build.MODEL
         val androidVersion = Build.VERSION.RELEASE
+        val apiLevel = Build.VERSION.SDK_INT
         val localIp = NetworkUtils.getLocalIpAddress() ?: "Unknown"
         
-        android.util.Log.d(TAG, "getLocalDevice: 设备名称 = $deviceName, Android版本 = $androidVersion, 本地IP = $localIp")
+        // 获取屏幕尺寸
+        val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+        val displayMetrics = DisplayMetrics()
+        windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+        
+        android.util.Log.d(TAG, "getLocalDevice: 设备名称 = $deviceName, Android版本 = $androidVersion, API级别 = $apiLevel, 本地IP = $localIp")
+        android.util.Log.d(TAG, "getLocalDevice: 屏幕尺寸 = ${screenWidth}x${screenHeight}")
         
         // 创建设备信息对象
         val device = DeviceEntity.detailed(
@@ -69,10 +80,13 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
             androidVersion = androidVersion,
+            apiLevel = apiLevel,
             platform = "Android",
             brand = Build.BRAND,
             device = Build.DEVICE,
-            product = Build.PRODUCT
+            product = Build.PRODUCT,
+            screenWidth = screenWidth,
+            screenHeight = screenHeight
         )
         
         android.util.Log.d(TAG, "getLocalDevice: 设备信息创建完成，ID = ${device.id}")
@@ -85,7 +99,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     /**
      * 向服务器注册设备
      */
-    suspend fun registerLocalDeviceWithServer(): DeviceRegistrationResponse {
+    suspend fun registerLocalDeviceWithServer(): DeviceCreateResponse {
         android.util.Log.d(TAG, "registerLocalDeviceWithServer: 开始注册本地设备到服务器")
         
         val localDevice = getLocalDevice()

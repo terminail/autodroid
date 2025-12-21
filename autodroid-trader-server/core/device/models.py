@@ -8,31 +8,62 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class DeviceInfo(BaseModel):
+class DeviceInfoResponse(BaseModel):
     """设备信息响应模型"""
     udid: str = Field(..., description="设备UDID")
-    device_name: str = Field(..., description="设备名称")
-    android_version: str = Field(..., description="Android版本")
-    battery_level: int = Field(..., description="电池电量")
-    is_online: bool = Field(..., description="是否在线")
-    connection_type: str = Field(..., description="连接类型")
-    user_id: Optional[str] = Field(None, description="用户ID")
+    name: Optional[str] = Field(None, description="设备名称")
+    model: Optional[str] = Field(None, description="设备型号")
+    manufacturer: Optional[str] = Field(None, description="设备制造商")
+    android_version: Optional[str] = Field(None, description="Android版本")
+    api_level: Optional[int] = Field(None, description="API级别")
+    platform: Optional[str] = Field(None, description="平台")
+    brand: Optional[str] = Field(None, description="品牌")
+    device: Optional[str] = Field(None, description="设备")
+    product: Optional[str] = Field(None, description="产品")
+    ip: Optional[str] = Field(None, description="IP地址")
+    screen_width: Optional[int] = Field(None, description="屏幕宽度")
+    screen_height: Optional[int] = Field(None, description="屏幕高度")
+    registered_at: Optional[datetime] = Field(None, description="注册时间")
+    last_seen: Optional[datetime] = Field(None, description="最后在线时间")
+    status: Optional[str] = Field(None, description="设备状态")
+    
+    class Config:
+        from_attributes = True
 
 
 class DeviceCreateRequest(BaseModel):
     """设备创建请求模型"""
     udid: str = Field(..., description="设备UDID")
-    device_name: str = Field(..., description="设备名称")
-    android_version: str = Field(..., description="Android版本")
-    battery_level: int = Field(..., description="电池电量")
-    is_online: bool = Field(..., description="是否在线")
-    connection_type: str = Field(..., description="连接类型")
+    name: str = Field(..., description="设备名称")
+    model: Optional[str] = Field(None, description="设备型号")
+    manufacturer: Optional[str] = Field(None, description="设备制造商")
+    android_version: Optional[str] = Field(None, description="Android版本")
+    api_level: Optional[int] = Field(None, description="API级别")
+    platform: Optional[str] = Field(None, description="平台")
+    brand: Optional[str] = Field(None, description="品牌")
+    device: Optional[str] = Field(None, description="设备")
+    product: Optional[str] = Field(None, description="产品")
+    ip: Optional[str] = Field(None, description="IP地址")
+    screen_width: Optional[int] = Field(None, description="屏幕宽度")
+    screen_height: Optional[int] = Field(None, description="屏幕高度")
 
 
 class DeviceUpdateRequest(BaseModel):
     """设备更新请求模型"""
-    device_name: Optional[str] = Field(None, description="设备名称")
+    name: Optional[str] = Field(None, description="设备名称")
+    model: Optional[str] = Field(None, description="设备型号")
+    manufacturer: Optional[str] = Field(None, description="设备制造商")
     android_version: Optional[str] = Field(None, description="Android版本")
+    api_level: Optional[int] = Field(None, description="API级别")
+    platform: Optional[str] = Field(None, description="平台")
+    brand: Optional[str] = Field(None, description="品牌")
+    device: Optional[str] = Field(None, description="设备")
+    product: Optional[str] = Field(None, description="产品")
+    ip: Optional[str] = Field(None, description="IP地址")
+    screen_width: Optional[int] = Field(None, description="屏幕宽度")
+    screen_height: Optional[int] = Field(None, description="屏幕高度")
+    # 保留原有字段以兼容其他可能的请求
+    device_name: Optional[str] = Field(None, description="设备名称")
     battery_level: Optional[int] = Field(None, description="电池电量")
     is_online: Optional[bool] = Field(None, description="是否在线")
     connection_type: Optional[str] = Field(None, description="连接类型")
@@ -40,7 +71,7 @@ class DeviceUpdateRequest(BaseModel):
 
 class DeviceListResponse(BaseModel):
     """设备列表响应模型"""
-    devices: List[DeviceInfo] = Field(..., description="设备列表")
+    devices: List[DeviceInfoResponse] = Field(..., description="设备列表")
     total_count: int = Field(..., description="总数")
     online_count: int = Field(..., description="在线设备数量")
 
@@ -66,6 +97,41 @@ class DeviceStatusUpdateRequest(BaseModel):
     """设备状态更新请求模型"""
     is_online: bool = Field(..., description="是否在线")
     battery_level: int = Field(..., description="电池电量")
+
+
+class DeviceCreateResponse(BaseModel):
+    """设备创建响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
+    device_id: Optional[str] = Field(None, description="设备ID")
+    udid: Optional[str] = Field(None, description="设备UDID")
+    registered_at: Optional[datetime] = Field(None, description="注册时间")
+    device: Optional[DeviceInfoResponse] = Field(None, description="设备信息")
+
+
+class DeviceUpdateResponse(BaseModel):
+    """设备更新响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
+    device: Optional[DeviceInfoResponse] = Field(None, description="设备信息")
+
+
+class DeviceDeleteResponse(BaseModel):
+    """设备删除响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
+
+
+class DeviceAssignmentResponse(BaseModel):
+    """设备分配响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
+
+
+class DeviceStatusUpdateResponse(BaseModel):
+    """设备状态更新响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: str = Field(..., description="响应消息")
 
 
 # 从apk模块导入ApkInfo模型，避免循环导入

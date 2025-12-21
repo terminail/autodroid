@@ -33,7 +33,7 @@
 ## 向服务器注册Device信息
     1. 当用户打开Dashboard界面点击注册Device按钮， ServerManager 会调用ServerRepository的registerDevice方法，将DeviceRegistrationRequest信息发送到服务器。
     2. 服务器收到DeviceRegistrationRequest注册请求后，会验证Device注册信息的有效性。
-    3. 如果Device注册信息有效，服务器会返回一个成功的响应DeviceRegistrationResponse， ServerManager 会显示成功注册信息给用户。**同时服务器会自动尝试扫描该Device的是否安装服务器支持的APK并更新服务器Device信息，等待下次app查询获取Device最新信息。**
+    3. 如果Device注册信息有效，服务器会返回一个成功的响应DeviceCreateResponse， ServerManager 会显示成功注册信息给用户。**同时服务器会自动尝试扫描该Device的是否安装服务器支持的APK并更新服务器Device信息，等待下次app查询获取Device最新信息。**
     4. 如果Device注册信息无效，服务器会返回一个错误响应ErrorResponse， ServerManager 会显示错误信息给用户。
     5. 注册成功后， ServerManager 会更新本地数据库中的DeviceEntity信息。
 

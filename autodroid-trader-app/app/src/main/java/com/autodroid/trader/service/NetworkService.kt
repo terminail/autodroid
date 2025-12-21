@@ -239,7 +239,7 @@ class NetworkService : Service() {
                 Log.e(TAG, "Cannot send device info: serverHost is null")
                 return
             }
-            val url = String.format("http://%s:%d/api/devices/register", serverHost, serverPort)
+            val url = String.format("http://%s:%d/api/devices", serverHost, serverPort)
 
             val body = deviceInfoJson!!
                 .toRequestBody("application/json".toMediaTypeOrNull())

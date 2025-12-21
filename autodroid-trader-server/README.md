@@ -1,38 +1,74 @@
-# Autodroid Container (ADB-Based)
+# Autodroid Trader Server
 
-Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。**基于纯ADB命令实现，已移除Appium依赖。**
+Autodroid Trader Server 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。
 
 ## 环境要求
 
-- Python 3.10+
+- Python 3.13+
 - pip 22.0+
+- Node.js 18+ (Appium 需要)
+- Java 11+ (Android SDK 需要)
 
 ## 安装
 
-1. 使用 Conda 创建并激活虚拟环境：
-   ```bash
-    # 创建虚拟环境
-      
-    cd autodroid-trader-server
+### 1. 安装 Node.js (Appium 依赖)
 
-    conda create -n autodroid python=3.10
-   
-   # 激活虚拟环境
-    
-    conda activate autodroid
-   ```
+#### Windows:
+```bash
+# 下载并安装 Node.js 18.x LTS
+# 访问 https://nodejs.org/ 下载安装包或使用以下命令
+winget install OpenJS.NodeJS.LTS
+```
 
-2. 安装依赖（使用中国镜像提高速度）：
-   ```bash
-   # 使用阿里云镜像
-   pip install -e . -i https://mirrors.aliyun.com/pypi/simple/
-   
-   # 或使用腾讯云镜像
-   # pip install -e . -i https://mirrors.cloud.tencent.com/pypi/simple/
-   
-   # 或使用华为云镜像
-   # pip install -e . -i https://mirrors.huaweicloud.com/repository/pypi/simple/
-   ```
+#### macOS/Linux:
+```bash
+# 使用包管理器安装
+# Ubuntu/Debian:
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# macOS (使用 Homebrew):
+brew install node@18
+```
+
+### 2. 安装 Appium
+
+```bash
+# 全局安装 Appium
+npm install -g appium
+
+# 安装 Android 驱动
+appium driver install uiautomator2
+
+# 验证安装
+appium driver list
+```
+
+### 3. 使用 Conda 创建并激活虚拟环境：
+```bash
+# 创建虚拟环境
+cd autodroid-trader-server
+conda create -n autodroid python=3.13.5
+
+# 激活虚拟环境
+conda activate autodroid
+```
+
+### 4. 安装 Python 依赖（使用中国镜像提高速度）：
+```bash
+# 使用阿里云镜像
+pip install -e . -i https://mirrors.aliyun.com/pypi/simple/
+
+# 或使用腾讯云镜像
+# pip install -e . -i https://mirrors.cloud.tencent.com/pypi/simple/
+
+# 或使用华为云镜像
+# pip install -e . -i https://mirrors.huaweicloud.com/repository/pypi/simple/
+
+
+cd /d/git/autodroid/autodroid-trader-server && conda activate autodroid && pip install -e . -v --index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+```
 
 ## 启动服务器
 
@@ -40,40 +76,40 @@ Autodroid Container 是 Autodroid Android 自动化系统的服务端组件，�
 
 1. 确保虚拟环境已激活
 
-2. 启动服务器（推荐方式）：
+2. 启动 Appium 服务器（新终端窗口）：
    ```bash
-   cd 'd:/git/autodroid/autodroid-trader-server'; conda activate liugejiao; python run_server.py
+   appium --port 4723 --base-path /wd/hub
    ```
 
-3. **Windows用户**：双击运行批处理文件：
-  ```bash
-  
-  cd 'd:/git/autodroid/autodroid-trader-server'; conda activate liugejiao; ./start_server.bat
-   
-  ```
+3. 启动 Autodroid 服务器（推荐方式）：
+   ```bash
+   cd 'd:/git/autodroid/autodroid-trader-server'; conda activate autodroid; python run_server.py
+   ```
 
-### 服务启动后
+4. **Windows用户**：
+   ```bash
+   cd 'd:/git/autodroid/autodroid-trader-server'; conda activate autodroid; ./start_server.bat
+   ```
 
-- **API服务器**将在 `http://0.0.0.0:8004` 上运行
-- **前端应用**将在 `http://0.0.0.0:8004/app` 上运行
-- **API文档**将在 `http://localhost:8004/docs` 上可用
-- 可通过 `http://localhost:8004/redoc` 查看另一种格式的 API 文档
+### Docker 方式
 
-### 启动信息
+1. 构建 Docker 镜像：
+   ```bash
+   cd workscripts
+   docker build -t autodroid-test .
+   ```
 
-启动后，您将看到以下信息：
-```
-============================================================
-🚀 Autodroid Container Server Started
-============================================================
-📡 API Server: http://127.0.0.1:8004
-📚 API Documentation: http://127.0.0.1:8004/docs
-🌐 Frontend Application: http://127.0.0.1:8004/app
-🔍 API Health Check: http://127.0.0.1:8004/api/health
-============================================================
-Press Ctrl+C to stop the server
-============================================================
-```
+2. 运行 Docker 容器：
+   ```bash
+   docker run -it --rm \
+     -e PHONE_IP=192.168.1.100 \
+     -e APP_PACKAGE=com.your.app \
+     -e APPIUM_SERVER=http://host.docker.internal:4723 \
+     -p 5555:5555 \
+     -p 4723:4723 \
+     -v $(pwd)/screenshots:/app/screenshots \
+     autodroid-test
+   ```
 
 ## API 访问示例
 
@@ -200,39 +236,114 @@ autodroid-trader-server/
 │   │   └── device_manager.py  # 设备管理器
 │   ├── workflow/        # 工作脚本引擎
 │   └── scheduling/      # 调度器
+├── workscripts/         # Appium 测试脚本
+│   ├── Dockerfile       # Docker 容器配置
+│   └── com.example.app/ # 示例测试脚本
 ├── pyproject.toml       # 项目配置和依赖
 └── README.md            # 项目说明文档
+```
+
+### Appium 测试脚本开发
+
+Appium 测试脚本位于 `workscripts/` 目录下，使用 Python 编写。主要特点：
+
+1. **基于 Appium 框架**：使用 Appium Python Client 进行设备操作
+2. **多种定位策略**：支持 ID、XPath、Android UIAutomator 等多种元素定位方式
+3. **图像识别支持**：集成 Airtest 图像识别功能，适配加固应用
+4. **异常处理**：完善的错误捕获和截图保存机制
+
+#### 示例测试脚本结构：
+
+```python
+from appium import webdriver
+from appium.webdriver.common.appiumby import AppiumBy
+import pytest
+
+# 设备能力配置
+DESIRED_CAPS = {
+    'platformName': 'Android',
+    'platformVersion': '10',
+    'deviceName': 'Android Device',
+    'appPackage': 'com.example.app',
+    'appActivity': '.MainActivity',
+    'automationName': 'UiAutomator2',
+    'noReset': True
+}
+
+# 连接设备
+driver = webdriver.Remote('http://localhost:4723/wd/hub', DESIRED_CAPS)
+
+# 元素定位和操作
+element = driver.find_element(AppiumBy.ID, 'com.example.app:id/button')
+element.click()
 ```
 
 ### 测试
 
 运行测试：
 ```bash
+# 运行所有测试
 pytest
+
+# 运行特定测试文件
+pytest workscripts/com.example.app/test_script.py
+
+# 运行测试并生成报告
+pytest --html=report.html workscripts/com.example.app/test_script.py
 ```
 
 ## 注意事项
 
-1. 确保在启动服务器前已安装所有依赖
-2. 服务器默认监听所有网络接口（0.0.0.0），在生产环境中请根据需要调整
-3. 开发环境下使用 `--reload` 参数可以实现代码热重载
-4. 生产环境建议使用 Gunicorn 等 WSGI 服务器配合 Uvicorn
+1. **Appium 服务器**：确保在启动 Autodroid 服务器前已启动 Appium 服务器
+2. **设备连接**：确保测试设备已通过 ADB 连接并授权
+3. **端口配置**：Appium 默认使用 4723 端口，Autodroid 服务器默认使用 8004 端口
+4. **Android SDK**：确保已安装 Android SDK 并配置了环境变量
+5. **Java 环境**：Appium 需要 Java 11 或更高版本
 
 ## 故障排除
 
+### Appium 相关问题
+
+1. **Appium 服务器启动失败**：
+   ```bash
+   # 检查 Node.js 版本
+   node --version
+   
+   # 重新安装 Appium
+   npm uninstall -g appium
+   npm install -g appium
+   ```
+
+2. **驱动安装失败**：
+   ```bash
+   # 重新安装 Android 驱动
+   appium driver uninstall uiautomator2
+   appium driver install uiautomator2
+   ```
+
+3. **设备连接问题**：
+   ```bash
+   # 检查设备连接状态
+   adb devices
+   
+   # 重启 ADB 服务
+   adb kill-server
+   adb start-server
+   ```
+
 ### 端口被占用
 
-如果端口 8004 已被占用，可以修改配置文件中的端口设置：
+如果端口 8004 或 4723 已被占用，可以修改配置：
 
-1. 编辑 `config` 文件
-2. 修改 `server.backend.port` 的值
-3. 重新启动服务器
+1. 修改 Appium 端口：
+   ```bash
+   appium --port 4724 --base-path /wd/hub
+   ```
 
-或者临时使用其他端口：
-
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
-```
+2. 修改 Autodroid 服务器端口（编辑配置文件）：
+   ```bash
+   uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+   ```
 
 ### 依赖安装失败
 

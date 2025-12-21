@@ -217,6 +217,24 @@ class ADBDevice:
         """Check if device is connected."""
         return self._connected
     
+    def is_app_installed(self, package_name: str) -> bool:
+        """Check if an app is installed on the device.
+        
+        Args:
+            package_name: Android package name (e.g., 'com.tdx.androidCCZQ')
+            
+        Returns:
+            True if app is installed, False otherwise
+        """
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "pm", "path", package_name],
+            capture_output=True, text=True
+        )
+        
+        # If the app is installed, pm path will return the package path
+        # If not installed, it will return empty
+        return result.returncode == 0 and result.stdout.strip() != ""
+    
     def get_device_info(self) -> Dict[str, Any]:
         """Get device information.
         

@@ -1,11 +1,11 @@
 package com.autodroid.trader.network
 
 /**
- * Data class representing device registration request
+ * Data class representing device create request
  */
-data class DeviceRegistrationRequest(
+data class DeviceCreateRequest(
     val udid: String,
-    val name: String? = null,
+    val name: String,
     val model: String? = null,
     val manufacturer: String? = null,
     val android_version: String? = null,
@@ -20,8 +20,8 @@ data class DeviceRegistrationRequest(
 ) {
     companion object {
         /**
-         * 创建空设备注册信息
+         * 创建空设备创建信息
          */
-        fun empty(): DeviceRegistrationRequest = DeviceRegistrationRequest("")
+        fun empty(): DeviceCreateRequest = DeviceCreateRequest("", "Unknown Device")
     }
 }

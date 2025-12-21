@@ -124,8 +124,8 @@ class ApiClient private constructor() {
     /**
      * Register a device with the server
      */
-    fun registerDevice(deviceInfo: DeviceRegistrationRequest): DeviceRegistrationResponse {
-        val url = buildApiUrl("/devices/register")
+    fun registerDevice(deviceInfo: DeviceCreateRequest): DeviceCreateResponse {
+        val url = buildApiUrl("/devices")
         val response = makePostRequest(url, deviceInfo)
         
         if (!response.isSuccessful) {
@@ -138,7 +138,7 @@ class ApiClient private constructor() {
         }
         
         try {
-            return gson.fromJson(responseBody, DeviceRegistrationResponse::class.java)
+            return gson.fromJson(responseBody, DeviceCreateResponse::class.java)
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing device registration response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
@@ -177,6 +177,37 @@ class ApiClient private constructor() {
     fun getServerInfo(): ServerInfoResponse? {
         // Build the complete URL by appending /server to the base API endpoint
         val url = buildApiUrl("/server")
+        
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from server info endpoint")
+        }
+        
+        try {
+            return gson.fromJson(responseBody, ServerInfoResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing server info response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse server info response", e)
+        }
+    }
+    
+    /**
+     * Get server information from a custom API endpoint
+     */
+    fun getServerInfo(customApiEndpoint: String): ServerInfoResponse {
+        // Build the complete URL by appending /server to the custom API endpoint
+        val url = if (customApiEndpoint.endsWith("/api")) {
+            "$customApiEndpoint/server"
+        } else {
+            "$customApiEndpoint/api/server"
+        }
         
         val response = makeGetRequest(url)
         

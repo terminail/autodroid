@@ -21,7 +21,7 @@ import com.autodroid.trader.config.ConfigManager
  */
 @Database(
     entities = [ServerEntity::class, DeviceEntity::class, TradePlanEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -60,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     databaseName
                 )
+                .addMigrations(MIGRATION_6_7)
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .build()
                 INSTANCE = instance
@@ -74,6 +75,18 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 由于使用了fallbackToDestructiveMigration，此迁移主要用于版本管理
                 // 实际的数据重建由Room自动处理
+            }
+        }
+        
+        /**
+         * 数据库迁移（从版本6到版本7，添加设备API级别和屏幕尺寸字段）
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 添加新字段到devices表
+                database.execSQL("ALTER TABLE devices ADD COLUMN apiLevel INTEGER")
+                database.execSQL("ALTER TABLE devices ADD COLUMN screenWidth INTEGER")
+                database.execSQL("ALTER TABLE devices ADD COLUMN screenHeight INTEGER")
             }
         }
     }

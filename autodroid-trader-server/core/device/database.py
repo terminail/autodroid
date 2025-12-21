@@ -58,8 +58,19 @@ class DeviceDatabase(BaseDatabase):
         device, created = Device.get_or_create(
             udid=udid,
             defaults={
-                'device_name': device_info.get('device_name', 'Unknown Device'),
+                'device_name': device_info.get('device_name', device_info.get('name', 'Unknown Device')),
+                'name': device_info.get('name'),
+                'model': device_info.get('model'),
+                'manufacturer': device_info.get('manufacturer'),
                 'android_version': device_info.get('android_version', 'Unknown'),
+                'api_level': device_info.get('api_level'),
+                'platform': device_info.get('platform', 'Android'),
+                'brand': device_info.get('brand'),
+                'device': device_info.get('device'),
+                'product': device_info.get('product'),
+                'ip': device_info.get('ip'),
+                'screen_width': device_info.get('screen_width'),
+                'screen_height': device_info.get('screen_height'),
                 'battery_level': device_info.get('battery_level', 50),
                 'is_online': True,
                 'connection_type': device_info.get('connection_type', 'network'),
@@ -69,8 +80,19 @@ class DeviceDatabase(BaseDatabase):
         
         # 如果不是新创建的，更新设备信息
         if not created:
-            device.device_name = device_info.get('device_name', device.device_name)
+            device.device_name = device_info.get('device_name', device_info.get('name', device.device_name))
+            device.name = device_info.get('name')
+            device.model = device_info.get('model')
+            device.manufacturer = device_info.get('manufacturer')
             device.android_version = device_info.get('android_version', device.android_version)
+            device.api_level = device_info.get('api_level')
+            device.platform = device_info.get('platform', device.platform)
+            device.brand = device_info.get('brand')
+            device.device = device_info.get('device')
+            device.product = device_info.get('product')
+            device.ip = device_info.get('ip')
+            device.screen_width = device_info.get('screen_width')
+            device.screen_height = device_info.get('screen_height')
             device.battery_level = device_info.get('battery_level', device.battery_level)
             device.is_online = True  # 注册时设置为在线
             device.connection_type = device_info.get('connection_type', device.connection_type)

@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from peewee import DoesNotExist
 
 from .database import DeviceDatabase
-from .models import DeviceInfo
+from .models import DeviceInfoResponse
 from ..apk.models import ApkInfo
 
 class DeviceManager:
@@ -16,34 +16,43 @@ class DeviceManager:
         """检查设备是否可用于自动化"""
         return self.db.is_device_available(udid)
     
-    def get_available_devices(self) -> List[DeviceInfo]:
+    def get_available_devices(self) -> List[DeviceInfoResponse]:
         """获取可用于自动化的设备列表"""
         devices = self.db.get_available_devices()
         return [
-            DeviceInfo(
+            DeviceInfoResponse(
                 udid=device.udid,
-                device_name=device.device_name,
+                name=device.device_name,
                 android_version=device.android_version,
-                battery_level=device.battery_level,
-                is_online=device.is_online,
-                connection_type=device.connection_type,
-                user_id=device.user.id if device.user else None
+                ip=device.ip_address if hasattr(device, 'ip_address') else None,
+                registered_at=getattr(device, 'registered_at', None),
+                last_seen=getattr(device, 'last_seen', None),
+                status="online" if device.is_online else "offline"
             ) for device in devices
         ]
     
-    def register_device(self, device_info: Dict[str, Any]) -> DeviceInfo:
+    def register_device(self, device_info: Dict[str, Any]) -> DeviceInfoResponse:
         """从应用报告注册设备"""
         device = self.db.register_device(device_info)
         
-        # 返回DeviceInfo对象
-        return DeviceInfo(
+        # 返回DeviceInfoResponse对象
+        return DeviceInfoResponse(
             udid=device.udid,
-            device_name=device.device_name,
-            android_version=device.android_version,
-            battery_level=device.battery_level,
-            is_online=device.is_online,
-            connection_type=device.connection_type,
-            user_id=device.user.id if device.user else None
+            name=device_info.get('name') or device.device_name,
+            model=device_info.get('model'),
+            manufacturer=device_info.get('manufacturer'),
+            android_version=device_info.get('android_version') or device.android_version,
+            api_level=device_info.get('api_level'),
+            platform=device_info.get('platform'),
+            brand=device_info.get('brand'),
+            device=device_info.get('device'),
+            product=device_info.get('product'),
+            ip=device_info.get('ip'),
+            screen_width=device_info.get('screen_width'),
+            screen_height=device_info.get('screen_height'),
+            registered_at=getattr(device, 'registered_at', None),
+            last_seen=getattr(device, 'last_seen', None),
+            status="online" if device.is_online else "offline"
         )
     
     def add_apk(self, udid: str, apk_info: Dict[str, Any]) -> ApkInfo:
@@ -109,18 +118,18 @@ class DeviceManager:
         """从设备删除APK"""
         return self.db.remove_apk_from_device(udid, package_name)
     
-    def get_devices_by_user(self, user_id: str) -> List[DeviceInfo]:
+    def get_devices_by_user(self, user_id: str) -> List[DeviceInfoResponse]:
         """根据用户ID获取设备列表"""
         devices = self.db.get_devices_by_user(user_id)
         return [
-            DeviceInfo(
+            DeviceInfoResponse(
                 udid=device.udid,
-                device_name=device.device_name,
+                name=device.device_name,
                 android_version=device.android_version,
-                battery_level=device.battery_level,
-                is_online=device.is_online,
-                connection_type=device.connection_type,
-                user_id=device.user.id if device.user else None
+                ip=device.ip_address if hasattr(device, 'ip_address') else None,
+                registered_at=getattr(device, 'registered_at', None),
+                last_seen=getattr(device, 'last_seen', None),
+                status="online" if device.is_online else "offline"
             ) for device in devices
         ]
     
@@ -132,18 +141,18 @@ class DeviceManager:
         """取消设备与用户的关联"""
         return self.db.unassign_device_from_user(udid)
     
-    def get_all_devices(self) -> List[DeviceInfo]:
+    def get_all_devices(self) -> List[DeviceInfoResponse]:
         """获取所有设备列表"""
         devices = self.db.get_all_devices()
         return [
-            DeviceInfo(
+            DeviceInfoResponse(
                 udid=device.udid,
-                device_name=device.device_name,
+                name=device.device_name,
                 android_version=device.android_version,
-                battery_level=device.battery_level,
-                is_online=device.is_online,
-                connection_type=device.connection_type,
-                user_id=device.user.id if device.user else None
+                ip=device.ip_address if hasattr(device, 'ip_address') else None,
+                registered_at=getattr(device, 'registered_at', None),
+                last_seen=getattr(device, 'last_seen', None),
+                status="online" if device.is_online else "offline"
             ) for device in devices
         ]
     

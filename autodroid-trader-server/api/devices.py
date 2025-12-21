@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 
 from core.device.service import DeviceManager
-from core.device.models import DeviceInfo, DeviceCreateRequest, DeviceUpdateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest
+from core.device.models import DeviceInfoResponse, DeviceCreateRequest, DeviceUpdateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest, DeviceCreateResponse, DeviceUpdateResponse, DeviceDeleteResponse, DeviceAssignmentResponse, DeviceStatusUpdateResponse
 from core.apk.models import ApkInfo, ApkCreateRequest
 
 # Initialize router
@@ -29,7 +29,7 @@ async def get_devices():
         online_count=online_count
     )
 
-@router.get("/{udid}", response_model=DeviceInfo)
+@router.get("/{udid}", response_model=DeviceInfoResponse)
 async def get_device(udid: str):
     """Get specific device information"""
     # Check if device is available
@@ -45,19 +45,55 @@ async def get_device(udid: str):
     
     return device
 
-@router.post("/")
+@router.post("/", response_model=DeviceCreateResponse)
 async def register_device(device_create_request: DeviceCreateRequest):
     """Register a device from app report"""
     try:
         device_info = device_create_request.dict()
         device = device_manager.register_device(device_info)
         
-        return {
-            "message": f"Device registered successfully",
-            "device": device
-        }
+        return DeviceCreateResponse(
+            success=True,
+            message=f"Device registered successfully",
+            device_id=device.udid,
+            udid=device.udid,
+            registered_at=device.registered_at,
+            device=DeviceInfoResponse.from_orm(device) if hasattr(device, '__dict__') else None
+        )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return DeviceCreateResponse(
+            success=False,
+            message=str(e),
+            device_id=None,
+            udid=None,
+            registered_at=None,
+            device=None
+        )
+
+@router.post("/register", response_model=DeviceCreateResponse)
+async def register_device_from_app(device_create_request: DeviceCreateRequest):
+    """Register a device from the mobile app"""
+    try:
+        device_info = device_create_request.dict()
+        device = device_manager.register_device(device_info)
+        
+        return DeviceCreateResponse(
+            success=True,
+            message=f"Device registered successfully",
+            device_id=device.udid,
+            udid=device.udid,
+            registered_at=device.registered_at,
+            device=DeviceInfoResponse.from_orm(device) if hasattr(device, '__dict__') else None
+        )
+    except Exception as e:
+        return DeviceCreateResponse(
+            success=False,
+            message=str(e),
+            device_id=None,
+            udid=None,
+            registered_at=None,
+            device=None
+        )
 
 @router.put("/{udid}")
 async def update_device(udid: str, device_update_request: DeviceUpdateRequest):
@@ -106,6 +142,37 @@ async def delete_device(udid: str):
     }
 
 # APK Management Endpoints
+@router.get("/{udid}/apks/check/{package_name}")
+async def check_app_installed(udid: str, package_name: str):
+    """Check if a specific app is installed on the device"""
+    # Check if device exists
+    if not device_manager.is_device_available(udid):
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    try:
+        # Import ADBDevice for direct checking
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'workscripts'))
+        from adb_device import ADBDevice
+        
+        # Connect to device and check if app is installed
+        adb_device = ADBDevice(udid)
+        if not adb_device.is_connected():
+            raise HTTPException(status_code=400, detail="Failed to connect to device")
+        
+        is_installed = adb_device.is_app_installed(package_name)
+        
+        return {
+            "device_id": udid,
+            "package_name": package_name,
+            "is_installed": is_installed,
+            "message": f"App {package_name} is {'installed' if is_installed else 'not installed'} on device {udid}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/{udid}/apks")
 async def get_device_apks(udid: str):
     """Get all APKs for a device"""
@@ -192,7 +259,7 @@ async def delete_device_apk(udid: str, package_name: str):
 
 
 
-@router.get("/users/{user_id}", response_model=List[DeviceInfo])
+@router.get("/users/{user_id}", response_model=List[DeviceInfoResponse])
 async def get_devices_by_user(user_id: str):
     """Get devices assigned to a specific user"""
     try:

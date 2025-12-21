@@ -383,6 +383,102 @@ async def health_check():
 ```
 
 
+
+## 8. 类型化设计原则
+
+### 类型化设计规范
+
+为了提升代码的可读性、可维护性和类型安全性，所有API、函数方法参数和返回值必须采用类型化类定义，禁止使用原始的字典和列表类型。
+
+#### 核心原则
+
+1. **禁止使用原始类型**：
+   - ❌ 禁止使用 `Dict[str, Any]`、`List[Dict[str, Any]]` 等原始类型
+   - ✅ 必须使用具体的Pydantic模型或dataclass定义
+
+2. **分层类型定义**：
+   - **数据库层**：使用Peewee ORM模型定义数据库表结构
+   - **业务层**：使用Pydantic模型定义API请求/响应格式
+   - **数据传输**：使用类型化的DTO（Data Transfer Object）
+
+3. **类型一致性**：
+   - 所有函数参数和返回值必须有明确的类型注解
+   - 避免使用 `Any` 类型，除非绝对必要
+   - 使用Python的类型提示系统（Type Hints）
+
+#### 适用范围
+
+**必须使用类型化模型的场景**：
+- **数据库操作**：所有数据库查询方法的返回值必须使用类型化模型
+- **API接口**：所有API的请求和响应参数必须使用类型化模型
+- **服务层**：所有服务方法的参数和返回值必须使用类型化模型
+- **数据传输**：模块间数据传输必须使用类型化DTO
+
+#### 具体实施要求
+
+**数据库操作层**：
+- 所有数据库查询方法必须返回具体的Pydantic模型，而不是原始字典
+- 数据库管理器类（如 `DatabaseManager`）的所有公共方法必须使用类型化返回值
+- 禁止在数据库层使用 `Dict[str, Any]` 作为返回值类型
+
+**API层**：
+- 所有FastAPI端点必须使用Pydantic模型定义请求和响应
+- 禁止在API层使用原始字典类型
+- 所有API响应必须使用类型化模型包装
+
+**服务层**：
+- 所有业务逻辑方法必须使用类型化参数和返回值
+- 服务层之间传递数据必须使用类型化DTO
+- 禁止在服务层使用原始字典进行数据传递
+
+#### 示例对比
+
+**❌ 错误示例 - 使用原始字典类型**
+```python
+def get_user_operations(self, apk_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+    # 返回原始字典，难以维护和理解
+    return [{'id': 1, 'action_type': 'click', ...}]
+
+def get_screenshots_by_apk(self, apk_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    # 违反类型化原则，使用原始字典
+    return [{'screenshot_id': '123', 'file_path': '/path/to/image.png', ...}]
+```
+
+**✅ 正确示例 - 使用类型化模型**
+```python
+from pydantic import BaseModel
+from typing import List
+
+class UserOperation(BaseModel):
+    id: str
+    action_type: str
+    timestamp: float
+    # ... 其他字段
+
+class ScreenshotInfo(BaseModel):
+    id: str
+    apk_id: str
+    timestamp: float
+    file_path: str
+    # ... 其他字段
+
+def get_user_operations(self, apk_id: str, limit: int = 100) -> List[UserOperation]:
+    # 返回类型化对象，清晰明确
+    return [UserOperation(id='1', action_type='click', ...)]
+
+def get_screenshots_by_apk(self, apk_id: str, limit: int = 50) -> List[ScreenshotInfo]:
+    # 遵循类型化原则，使用具体的模型类
+    return [ScreenshotInfo(id='123', apk_id=apk_id, ...)]
+```
+
+#### 实施要求
+
+1. **立即重构**：现有代码中所有使用原始字典类型的地方必须逐步重构为类型化模型
+2. **新开发**：所有新开发的模块必须遵循类型化原则
+3. **代码审查**：在代码审查中严格检查类型化规范的遵守情况
+4. **文档更新**：更新相关文档以反映类型化设计原则
+5. **模型统一**：所有类型化模型必须定义在共享的模型文件中（如 `core/database/models.py`），避免重复定义
+
 ## 10. 故障排除
 
 ### 10.1 常见问题

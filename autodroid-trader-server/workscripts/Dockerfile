@@ -1,10 +1,11 @@
-# 基于Ubuntu的安卓自动化测试容器
+# 基于Ubuntu的安卓自动化测试容器 - 使用Appium框架
 FROM ubuntu:22.04
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
+ENV APPIUM_HOME=/opt/appium
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -16,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     adb \
     openjdk-11-jdk \
     git \
+    curl \
+    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建Android SDK目录
@@ -33,10 +36,20 @@ RUN yes | sdkmanager --licenses
 # 安装必要的Android平台工具
 RUN sdkmanager "platform-tools" "platforms;android-33"
 
+# 安装Node.js (Appium需要)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# 安装Appium
+RUN npm install -g appium
+
+# 安装Appium驱动
+RUN appium driver install uiautomator2
+
 # 安装Python依赖
 RUN pip3 install --upgrade pip
 RUN pip3 install \
-    uiautomator2 \
+    Appium-Python-Client==2.11.1 \
     pytest \
     airtest \
     pocoui \
@@ -53,10 +66,7 @@ RUN mkdir -p /app/screenshots /app/templates /app/logs
 # 复制测试脚本和配置文件
 COPY test_script.py /app/
 COPY config.py /app/
-COPY requirements.txt /app/ 2>/dev/null || echo "uiautomator2==2.16.17" > /app/requirements.txt
-
-# 初始化uiautomator2
-RUN python3 -c "import uiautomator2 as u2; u2.init()"
+COPY requirements.txt /app/ 2>/dev/null || echo "Appium-Python-Client==2.11.1" > /app/requirements.txt
 
 # 设置脚本权限
 RUN chmod +x /app/test_script.py
@@ -66,6 +76,12 @@ RUN echo '#!/bin/bash\n\
 echo "开始安卓自动化测试..."\n\
 echo "手机IP: $PHONE_IP"\n\
 echo "APP包名: $APP_PACKAGE"\n\
+echo "Appium服务器地址: $APPIUM_SERVER"\n\
+\n\
+# 启动Appium服务器（后台运行）\n\
+appium --port 4723 --base-path /wd/hub &\n\
+echo "等待Appium服务器启动..."\n\
+sleep 10\n\
 \n\
 # 等待手机连接\n\
 adb connect ${PHONE_IP:-192.168.1.100}:5555\n\
@@ -77,8 +93,8 @@ python3 -m pytest test_script.py -v\n\
 echo "测试完成，查看截图: /app/screenshots"\n\
 ' > /app/start_test.sh && chmod +x /app/start_test.sh
 
-# 暴露ADB端口（可选）
-EXPOSE 5555
+# 暴露端口
+EXPOSE 5555 4723
 
 # 设置默认命令
 CMD ["/app/start_test.sh"]

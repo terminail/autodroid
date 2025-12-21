@@ -5,7 +5,7 @@ Peewee数据库模型定义
 import os
 from peewee import (
     CharField, IntegerField, DateTimeField, ForeignKeyField, 
-    TextField, DecimalField, CompositeKey, SqliteDatabase, Model
+    TextField, DecimalField, CompositeKey, SqliteDatabase, Model, BooleanField
 )
 from datetime import datetime
 
@@ -52,15 +52,27 @@ class Apk(BaseModel):
 
 class Device(BaseModel):
     """设备模型"""
-    id = CharField(primary_key=True)  # 对应设计文档中的id字段
+    udid = CharField(primary_key=True)  # 设备唯一标识符
     user = ForeignKeyField(User, backref='devices', null=True, on_delete='SET NULL')
-    name = CharField()
-    description = CharField(null=True)
-    platform = CharField()
-    model = CharField(null=True)
-    status = CharField(default='disconnected')  # 状态：CONNECTED、DISCONNECTED
-    connected_at = DateTimeField(null=True)
+    device_name = CharField(default='Unknown Device')  # 设备名称
+    name = CharField(null=True)  # 设备名称（新字段）
+    model = CharField(null=True)  # 设备型号
+    manufacturer = CharField(null=True)  # 设备制造商
+    android_version = CharField(default='Unknown')  # Android版本
+    api_level = IntegerField(null=True)  # API级别
+    platform = CharField(default='Android')  # 平台
+    brand = CharField(null=True)  # 品牌
+    device = CharField(null=True)  # 设备
+    product = CharField(null=True)  # 产品
+    ip = CharField(null=True)  # IP地址
+    screen_width = IntegerField(null=True)  # 屏幕宽度
+    screen_height = IntegerField(null=True)  # 屏幕高度
+    battery_level = IntegerField(default=50)  # 电池电量
+    is_online = BooleanField(default=False)  # 是否在线
+    connection_type = CharField(default='network')  # 连接类型
+    registered_at = DateTimeField(default=datetime.now)  # 注册时间
     created_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=datetime.now)
 
 class DeviceApk(BaseModel):
     """设备-APK关联模型（多对多关系）"""

@@ -19,9 +19,13 @@ from datetime import datetime, timedelta
 import qrcode
 
 from .models import WiFiList
+from core.server.service import ServerManager
 
 # Initialize router
 router = APIRouter(prefix="/api", tags=["server"])
+
+# Initialize server manager
+server_manager = ServerManager()
 
 # Load configuration
 def load_config():
@@ -54,30 +58,20 @@ async def health_check():
 @router.get("/server")
 async def get_server_info():
     """Get full server information"""
-    # 获取服务器IP地址
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
+    # 使用 server manager 获取服务器信息
+    server_info = server_manager.get_server_info()
     
-    # 从配置文件获取端口
-    server_config = config.get('server', {})
-    backend_config = server_config.get('backend', {})
-    fastapi_port = backend_config.get('port', 8004)
+    # 获取服务器状态
+    server_status = server_manager.get_server_status()
     
     return {
-        "name": "Autodroid Server",
-        "hostname": hostname,
-        "ipAddress": ip_address,
-        "platform": platform.platform(),
-        "apiEndpoint": f"http://{ip_address}:{fastapi_port}/api",
-        "services": {
-            "device_manager": "running",
-            "scheduler": "running"
-        },
-        "capabilities": {
-            "device_registration": True,
-            "test_scheduling": True,
-            "event_triggering": True
-        }
+        "ip": server_info.ip,
+        "port": server_info.port,
+        "name": server_info.name,
+        "platform": server_info.platform,
+        "services": server_info.services,
+        "capabilities": server_info.capabilities,
+        "statistics": server_status.get("statistics", {})
     }
 
 @router.get("/config")
@@ -259,66 +253,30 @@ async def get_server_wifis():
 async def generate_qr_code():
     """Generate a QR code containing server connection information"""
     try:
-        # Get server IP address
-        hostname = socket.gethostname()
-        ip_address = socket.gethostbyname(hostname)
+        # 使用 server manager 生成二维码
+        qr_response = server_manager.generate_qr_code()
         
-        # Get server configuration
-        server_config = config.get('server', {})
-        server_backend_config = server_config.get('backend', {})
-        port = server_backend_config.get('port', 8003)
-        use_https = server_backend_config.get('use_https', False)
+        if not qr_response.success:
+            raise HTTPException(status_code=500, detail=qr_response.message)
         
-        # Create connection data
-        protocol = 'https' if use_https else 'http'
-        api_endpoint = f"{protocol}://{ip_address}:{port}/api"
+        # 解码 base64 图像数据
+        if qr_response.qr_code_image and qr_response.qr_code_image.startswith("data:image/png;base64,"):
+            img_data = base64.b64decode(qr_response.qr_code_image.split(",")[1])
+        else:
+            raise HTTPException(status_code=500, detail="Invalid QR code image data")
         
-        # Generate expiry timestamp (24 hours from now)
-        expiry_time = (datetime.now() + timedelta(hours=24)).isoformat()
-        
-        # Create QR code data
-        qr_data = {
-            "server_name": "Autodroid Server",
-            "apiEndpoint": api_endpoint,
-            "ipAddress": ip_address,
-            "port": port,
-            "protocol": protocol,
-            "version": "1.0",
-            "timestamp": datetime.now().isoformat(),
-            "expiry": expiry_time
-        }
-        
-        # Convert to JSON string
-        qr_json = json.dumps(qr_data, separators=(',', ':'))
-        
-        # Generate QR code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(qr_json)
-        qr.make(fit=True)
-        
-        # Create an image from the QR Code instance
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Convert image to bytes
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        img_bytes = buffer.getvalue()
-        
-        # Return the image as a response
+        # 返回图像响应
         return Response(
-            content=img_bytes,
+            content=img_data,
             media_type="image/png",
             headers={
                 "Content-Disposition": "inline; filename=autodroid-qr.png",
-                "X-QR-Data": base64.b64encode(qr_json.encode()).decode()
+                "X-QR-Data": base64.b64encode(qr_response.qr_code_data.encode()).decode()
             }
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
 
@@ -326,39 +284,22 @@ async def generate_qr_code():
 async def get_qr_code_data():
     """Get the QR code data as JSON (for debugging or alternative display)"""
     try:
-        # Get server IP address
-        hostname = socket.gethostname()
-        ip_address = socket.gethostbyname(hostname)
+        # 使用 server manager 生成二维码
+        qr_response = server_manager.generate_qr_code()
         
-        # Get server configuration
-        server_config = config.get('server', {})
-        server_backend_config = server_config.get('backend', {})
-        port = server_backend_config.get('port', 8003)
-        use_https = server_backend_config.get('use_https', False)
+        if not qr_response.success:
+            raise HTTPException(status_code=500, detail=qr_response.message)
         
-        # Create connection data
-        protocol = 'https' if use_https else 'http'
-        api_endpoint = f"{protocol}://{ip_address}:{port}/api"
-        
-        # Generate expiry timestamp (24 hours from now)
-        expiry_time = (datetime.now() + timedelta(hours=24)).isoformat()
-        
-        # Create QR code data
-        qr_data = {
-            "server_name": "Autodroid Server",
-            "apiEndpoint": api_endpoint,
-            "ipAddress": ip_address,
-            "port": port,
-            "protocol": protocol,
-            "version": "1.0",
-            "timestamp": datetime.now().isoformat(),
-            "expiry": expiry_time
-        }
+        # 解析二维码数据
+        import json
+        qr_data = json.loads(qr_response.qr_code_data)
         
         return {
             "qr_data": qr_data,
-            "apiEndpoint": api_endpoint
+            "apiEndpoint": qr_data.get("protocol", "http") + "://" + qr_data.get("ip", "") + ":" + str(qr_data.get("port", 8003)) + "/api"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate QR code data: {str(e)}")

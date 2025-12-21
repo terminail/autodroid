@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.network.ServerInfoResponse
+import com.autodroid.trader.network.ApiClient
 import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.managers.ServerManager
@@ -286,12 +287,17 @@ class ItemServerManager(
     fun handleQrCodeScanResult(result: androidx.activity.result.ActivityResult) {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val data = result.data
+            Log.d(TAG, "QR code scan result received")
             val qrCodeContent = data?.getStringExtra("qr_code_content")
+            
+            Log.d(TAG, "Extracted qr_code_content: $qrCodeContent")
             
             if (!qrCodeContent.isNullOrEmpty()) {
                 // Process the QR code content
+                Log.d(TAG, "Processing QR code content: $qrCodeContent")
                 processQrCodeContent(qrCodeContent)
             } else {
+                Log.w(TAG, "QR code content is null or empty")
                 showErrorMessage("无效的二维码", "扫描的二维码内容为空")
             }
         } else {
@@ -305,19 +311,19 @@ class ItemServerManager(
      */
     private fun processQrCodeContent(content: String) {
         try {
-            // Parse QR code content as JSON
-            val jsonObject = com.google.gson.JsonParser.parseString(content).asJsonObject
+            // Parse QR code content as ServerInfoResponse type-safe model
+            val gson = com.google.gson.Gson()
+            val serverInfo: ServerInfoResponse = gson.fromJson(content, ServerInfoResponse::class.java)
             
-            // Extract server information
-            val apiEndpoint = jsonObject.get("api_endpoint")?.asString
-            val serverName = jsonObject.get("name")?.asString ?: "Autodroid Server"
-            val platform = jsonObject.get("platform")?.asString ?: "Unknown"
-            
-            if (!apiEndpoint.isNullOrEmpty()) {
+            // Validate required fields
+            if (serverInfo.ip.isNotEmpty() && serverInfo.port > 0) {
+                // Create API endpoint from IP and port
+                val apiEndpoint = "http://${serverInfo.ip}:${serverInfo.port}/api"
+                
                 // Save server information and connect
-                saveAndConnectToServer(apiEndpoint, serverName, platform)
+                saveAndConnectToServer(apiEndpoint, serverInfo.name, serverInfo.platform, serverInfo.ip, serverInfo.port)
             } else {
-                showErrorMessage("无效的二维码", "二维码中缺少API端点信息")
+                showErrorMessage("无效的二维码", "二维码中缺少IP地址或端口信息")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse QR code content: ${e.message}", e)
@@ -328,7 +334,7 @@ class ItemServerManager(
     /**
      * Save server information and connect to it
      */
-    private fun saveAndConnectToServer(apiEndpoint: String, serverName: String, platform: String) {
+    private fun saveAndConnectToServer(apiEndpoint: String, serverName: String, platform: String, ip: String, port: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // Show loading indicator
@@ -336,38 +342,35 @@ class ItemServerManager(
                     showLoadingIndicator("正在连接到服务器")
                 }
                 
-                // Extract IP and port from apiEndpoint
-                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
-                val ip = urlParts.getOrNull(0) ?: throw IllegalArgumentException("无效的API端点")
-                val port = urlParts.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("无效的端口号")
+                // First, get server information from the /api/server endpoint
+                val apiClient = ApiClient.getInstance()
+                val serverInfoResponse = apiClient.getServerInfo(apiEndpoint)
                 
-                // Create ServerEntity
+                // Create ServerEntity with full server information
                 val serverEntity = ServerEntity(
                     ip = ip,
                     port = port,
                     name = serverName,
                     platform = platform,
+                    services = serverInfoResponse.services,
+                    capabilities = serverInfoResponse.capabilities,
                     isConnected = true,
                     discoveryType = "QRCode"
                 )
                 
                 // Insert or update server in repository
-                serverRepository.insertOrUpdateServer(serverEntity.apiEndpoint(), serverName, platform)
-                
-                // Create ServerInfoResponse for AppViewModel
-                val serverInfo = ServerInfoResponse(
-                    ip = ip,
-                    port = port,
-                    name = serverName,
-                    platform = platform
+                val result = serverRepository.insertOrUpdateServer(
+                    serverEntity.apiEndpoint(), 
+                    serverEntity.name ?: "未知服务器", 
+                    serverEntity.platform ?: "未知"
                 )
                 
-                // Note: Server info is now automatically updated in the database
-                // and will be reflected in the AppViewModel's server LiveData
+                // Update connection status
+                serverRepository.updateConnectionStatus(serverEntity.apiEndpoint(), true)
                 
-                // Show success message
+                // Show success message with server details
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showSuccessMessage("服务器连接成功", "已连接到 $serverName")
+                    showSuccessMessage("服务器连接成功", "已连接到 ${serverInfoResponse.name} (${serverInfoResponse.ip})")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to save and connect to server: ${e.message}", e)
@@ -468,9 +471,9 @@ class ItemServerManager(
     }
     
     /**
-     * Handle manual input button click
+     * Handle manual set button click
      */
-    fun handleManualInputClick() {
+    fun handleManualSetButtonClick() {
         showAddServerDialog()
     }
     
@@ -478,20 +481,35 @@ class ItemServerManager(
      * Show add server dialog
      */
     private fun showAddServerDialog() {
-        val editText = android.widget.EditText(context)
-        editText.hint = "请输入服务器API端点URL"
+        // Create a layout for IP and port input
+        val layout = android.widget.LinearLayout(context)
+        layout.orientation = android.widget.LinearLayout.VERTICAL
+        layout.setPadding(50, 40, 50, 10)
+        
+        val ipInput = android.widget.EditText(context)
+        ipInput.hint = "服务器IP地址"
+        ipInput.inputType = android.text.InputType.TYPE_CLASS_PHONE
+        layout.addView(ipInput)
+        
+        val portInput = android.widget.EditText(context)
+        portInput.hint = "端口号 (默认: 8004)"
+        portInput.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        layout.addView(portInput)
         
         androidx.appcompat.app.AlertDialog.Builder(context)
             .setTitle("添加服务器")
-            .setMessage("请输入服务器的API端点URL:")
-            .setView(editText)
+            .setMessage("请输入服务器的IP地址和端口号:")
+            .setView(layout)
             .setPositiveButton("添加") { _, _ ->
-                val apiEndpoint = editText.text.toString().trim()
-                if (apiEndpoint.isNotEmpty()) {
+                val ip = ipInput.text.toString().trim()
+                val portStr = portInput.text.toString().trim()
+                val port = if (portStr.isNotEmpty()) portStr.toIntOrNull() else 8004
+                
+                if (ip.isNotEmpty() && port != null && port > 0 && port < 65536) {
                     // Validate and save server
-                    validateAndSaveServer(apiEndpoint)
+                    validateAndSaveServer(ip, port)
                 } else {
-                    showErrorMessage("无效输入", "请输入有效的API端点URL")
+                    showErrorMessage("无效输入", "请输入有效的IP地址和端口号")
                 }
             }
             .setNegativeButton("取消", null)
@@ -501,60 +519,60 @@ class ItemServerManager(
     /**
      * Validate and save server information
      */
-    private fun validateAndSaveServer(apiEndpoint: String) {
-        // Simple validation - check if it looks like a URL
-        if (apiEndpoint.startsWith("http://") || apiEndpoint.startsWith("https://")) {
-            // Save server information
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    // Show loading indicator
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        showLoadingIndicator("正在验证服务器")
-                    }
+    private fun validateAndSaveServer(ip: String, port: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Show loading indicator
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    showLoadingIndicator("正在验证服务器")
+                }
+                
+                // Create API endpoint from IP and port
+                val apiEndpoint = "http://${ip}:${port}/api"
+                
+                // Validate server by making a test request
+                val isValid = validateServerEndpoint(apiEndpoint)
+                
+                if (isValid) {
+                    // Get server information from the server
+                    val apiClient = ApiClient.getInstance()
+                    val serverInfoResponse = apiClient.getServerInfo(apiEndpoint)
                     
-                    // Validate server by making a test request
-                    val isValid = validateServerEndpoint(apiEndpoint)
+                    // Create server entity with full server information
+                    val serverEntity = ServerEntity(
+                        ip = serverInfoResponse.ip,
+                        port = serverInfoResponse.port,
+                        name = serverInfoResponse.name,
+                        platform = serverInfoResponse.platform,
+                        services = serverInfoResponse.services,
+                        capabilities = serverInfoResponse.capabilities,
+                        isConnected = true,
+                        lastConnectedTime = System.currentTimeMillis(),
+                        discoveryType = "manual"
+                    )
                     
-                    if (isValid) {
-                        // Create server entity
-                        val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
-                        val ip = urlParts.getOrNull(0) ?: throw IllegalArgumentException("无效的API端点")
-                        val port = urlParts.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("无效的端口号")
-                        
-                        val serverEntity = ServerEntity(
-                            ip = ip,
-                            port = port,
-                            name = "Manual Server",
-                            platform = "Unknown",
-                            isConnected = true,
-                            lastConnectedTime = System.currentTimeMillis(),
-                            discoveryType = "manual"
-                        )
-                        
-                        // Insert or update server in repository
-                        serverRepository.insertOrUpdateServer(serverEntity.apiEndpoint(), "Manual Server", "Unknown")
-                        
-                        // Note: Server info is now automatically updated in the database
-                        // and will be reflected in the AppViewModel's server LiveData
-                        
-                        // Show success message
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            showSuccessMessage("服务器添加成功", "已添加并连接到服务器")
-                        }
-                    } else {
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            showErrorMessage("服务器验证失败", "无法连接到指定的服务器端点")
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to validate and save server: ${e.message}", e)
+                    // Insert or update server in repository
+                    serverRepository.insertOrUpdateServer(
+                        serverEntity.apiEndpoint(), 
+                        serverEntity.name ?: "未知服务器", 
+                        serverEntity.platform ?: "未知"
+                    )
+                    
+                    // Show success message
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        showErrorMessage("服务器添加失败", e.message)
+                        showSuccessMessage("服务器添加成功", "已添加并连接到 ${serverEntity.name} (${serverEntity.ip})")
+                    }
+                } else {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        showErrorMessage("服务器验证失败", "无法连接到指定的服务器")
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to validate and save server: ${e.message}", e)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    showErrorMessage("服务器添加失败", e.message)
+                }
             }
-        } else {
-            showErrorMessage("无效URL", "请输入有效的HTTP或HTTPS URL")
         }
     }
     
@@ -563,18 +581,14 @@ class ItemServerManager(
      */
     private suspend fun validateServerEndpoint(apiEndpoint: String): Boolean {
         return try {
-            // Make a simple GET request to the server endpoint
-            val url = java.net.URL(apiEndpoint)
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 5000 // 5 seconds
-            connection.readTimeout = 5000 // 5 seconds
+            // 使用 ApiClient 验证服务器端点
+            val apiClient = ApiClient.getInstance()
             
-            val responseCode = connection.responseCode
-            connection.disconnect()
+            // 调用 getServerInfo() 获取服务器信息
+            val serverInfo = apiClient.getServerInfo(apiEndpoint)
             
-            // Consider successful if we get a 2xx response
-            responseCode in 200..299
+            // 如果能获取到服务器信息，说明端点有效
+            serverInfo != null
         } catch (e: Exception) {
             Log.e(TAG, "Failed to validate server endpoint: ${e.message}", e)
             false

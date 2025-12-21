@@ -132,7 +132,7 @@ class DashboardFragment : BaseFragment() {
             
             override fun onManualInputClick() {
                 // 委托给ServerItemManager处理手动输入
-                itemServerManager.handleManualInputClick()
+                itemServerManager.handleManualSetButtonClick()
             }
             
             override fun onRegisterDeviceClick() {
@@ -328,7 +328,7 @@ class DashboardFragment : BaseFragment() {
      * 处理手动输入按钮点击事件 - 委托给ServerItemManager
      */
     private fun onManualInputClick() {
-        itemServerManager.handleManualInputClick()
+        itemServerManager.handleManualSetButtonClick()
     }
 
     /**

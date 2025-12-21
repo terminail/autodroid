@@ -19,7 +19,7 @@ import asyncio
 import yaml
 
 from core.device.service import DeviceManager
-from core.device.models import DeviceInfo
+from core.device.models import DeviceInfoResponse
 from core.auth.models import UserCreate, UserLogin, UserResponse, Token
 from core.auth.service import AuthService
 

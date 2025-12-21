@@ -6,8 +6,8 @@ import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.database.DeviceProvider
 import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.network.ApiClient
-import com.autodroid.trader.network.DeviceRegistrationRequest
-import com.autodroid.trader.network.DeviceRegistrationResponse
+import com.autodroid.trader.network.DeviceCreateRequest
+import com.autodroid.trader.network.DeviceCreateResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -137,7 +137,7 @@ class DeviceRepository private constructor(application: Application) {
     /**
      * 向服务器注册设备
      */
-    suspend fun registerDevice(deviceEntity: DeviceEntity, apiEndpoint: String): DeviceRegistrationResponse {
+    suspend fun registerDevice(deviceEntity: DeviceEntity, apiEndpoint: String): DeviceCreateResponse {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("DeviceRepository", "registerDevice: 开始注册设备到服务器")
@@ -148,17 +148,20 @@ class DeviceRepository private constructor(application: Application) {
                 apiClient.setApiEndpoint(apiEndpoint)
                 
                 // 创建设备注册请求
-                val registrationRequest = DeviceRegistrationRequest(
+                val registrationRequest = DeviceCreateRequest(
                     udid = deviceEntity.id,
-                    name = deviceEntity.name,
+                    name = deviceEntity.name ?: "Unknown Device",
                     model = deviceEntity.model,
                     manufacturer = deviceEntity.manufacturer,
                     android_version = deviceEntity.androidVersion,
+                    api_level = deviceEntity.apiLevel,
                     platform = deviceEntity.platform ?: "Android",
                     brand = deviceEntity.brand,
                     device = deviceEntity.device,
                     product = deviceEntity.product,
-                    ip = deviceEntity.ip
+                    ip = deviceEntity.ip,
+                    screen_width = deviceEntity.screenWidth,
+                    screen_height = deviceEntity.screenHeight
                 )
                 
                 Log.d("DeviceRepository", "registerDevice: 设备注册请求已创建")

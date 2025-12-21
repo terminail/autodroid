@@ -20,9 +20,6 @@ dependencies = [
     "python-dotenv==1.0.0",
 
     # 数据库
-    "sqlalchemy==2.0.25",
-    "aiosqlite==0.19.0",
-    "alembic==1.13.1",
     "peewee==3.17.1",
 
     # 网络服务
@@ -42,17 +39,9 @@ dependencies = [
     "pytest==7.4.4",
     "pytest-asyncio==0.23.3",
 
-    # 安卓自动化测试
-    "uiautomator2==2.16.17",
+    # Appium 自动化测试
+    "appium-python-client==2.11.1",
 
-    # 图像识别（适配加固APP）
-    "airtest==1.2.6",
-    "pocoui==1.0.89",
-
-    # 图像处理
-    "Pillow==10.0.0",
-    "opencv-python==4.8.0.74",
-    "numpy==1.24.3",
 ]
 [project.scripts]
 autodroid-server = "api.main:main"

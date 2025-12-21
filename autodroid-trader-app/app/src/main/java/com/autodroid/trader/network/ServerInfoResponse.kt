@@ -3,17 +3,21 @@ package com.autodroid.trader.network
 /**
  * Data class representing server information response from FastAPI
  * This is the type-safe response model for getServerInfo() API call
+ * Designed to match ServerEntity structure with IP and port as server location identifiers
  */
 data class ServerInfoResponse(
+    // 服务器定位信息 - 使用IP和端口定位服务器
     val ip: String,
     val port: Int,
-    val name: String? = null,
-    val platform: String? = null,
+    
+    // 服务器基本信息
+    val name: String,
+    val platform: String,
+    
+    // 服务器服务和能力
     val services: Map<String, String> = emptyMap(),
     val capabilities: Map<String, Boolean> = emptyMap()
 ) {
-
-    
     /**
      * Check if device registration capability is enabled
      */
@@ -22,17 +26,10 @@ data class ServerInfoResponse(
     }
     
     /**
-     * Check if trade plan execution capability is enabled
+     * Check if test scheduling capability is enabled
      */
-    fun supportsTradePlanExecution(): Boolean {
-        return capabilities["tradeplan_execution"] ?: false
-    }
-    
-    /**
-     * Check if trade scheduling capability is enabled
-     */
-    fun supportsTradeScheduling(): Boolean {
-        return capabilities["trade_scheduling"] ?: false
+    fun supportsTestScheduling(): Boolean {
+        return capabilities["test_scheduling"] ?: false
     }
     
     /**
@@ -43,7 +40,8 @@ data class ServerInfoResponse(
     }
 
     override fun toString(): String {
-        return "ServerInfoResponse(name='$name', ip='$ip', " +
-                "port=$port, platform='$platform', services=$services, capabilities=$capabilities)"
+        return "ServerInfoResponse(ip='$ip', port=$port, name='$name', " +
+                "platform='$platform', " +
+                "services=$services, capabilities=$capabilities)"
     }
 }

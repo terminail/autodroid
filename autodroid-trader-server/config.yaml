@@ -7,8 +7,8 @@ database:
   echo: false
   max_overflow: 20
   pool_size: 10
-  sqlite_path: users.db
-  test_sqlite_path: test_users.db
+  sqlite_path: trader_server.db
+  test_sqlite_path: test_trader_server.db
 development:
   debug: true
   docs_url: /docs
