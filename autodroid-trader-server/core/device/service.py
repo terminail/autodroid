@@ -6,7 +6,7 @@ from peewee import DoesNotExist
 from .database import DeviceDatabase
 from .models import DeviceInfoResponse
 from ..apk.models import ApkInfo
-from ..workscripts.adb_device import ADBDevice
+from workscripts.adb_device import ADBDevice
 
 class DeviceManager:
     def __init__(self):
@@ -47,9 +47,9 @@ class DeviceManager:
             adb_device_info = adb_device.get_device_info()
             
             # 将ADB获取的信息合并到device_info中
-            # ADB获取的信息优先于客户端提供的信息
+            # 只在客户端未提供或值为空时才使用ADB获取的信息
             for key, value in adb_device_info.items():
-                if key not in device_info or device_info.get(key) is None:
+                if key not in device_info or device_info.get(key) is None or device_info.get(key) == "":
                     device_info[key] = value
         except Exception as e:
             # 如果ADB连接失败，继续使用客户端提供的信息
