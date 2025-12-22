@@ -297,6 +297,38 @@ class ADBDevice:
         if result.returncode == 0:
             info["model"] = result.stdout.strip()
         
+        # Get manufacturer
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "getprop", "ro.product.manufacturer"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            info["manufacturer"] = result.stdout.strip()
+        
+        # Get brand
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "getprop", "ro.product.brand"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            info["brand"] = result.stdout.strip()
+        
+        # Get device
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "getprop", "ro.product.device"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            info["device"] = result.stdout.strip()
+        
+        # Get product
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "getprop", "ro.product.name"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            info["product"] = result.stdout.strip()
+        
         # Get Android version
         result = subprocess.run(
             self._get_adb_prefix() + ["shell", "getprop", "ro.build.version.release"],
@@ -304,6 +336,51 @@ class ADBDevice:
         )
         if result.returncode == 0:
             info["android_version"] = result.stdout.strip()
+        
+        # Get API level
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "getprop", "ro.build.version.sdk"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            try:
+                info["api_level"] = int(result.stdout.strip())
+            except ValueError:
+                pass
+        
+        # Get screen dimensions
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "wm", "size"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            size_output = result.stdout.strip()
+            if "Physical size:" in size_output:
+                size = size_output.split(": ")[1]
+                try:
+                    width, height = size.split("x")
+                    info["screen_width"] = int(width)
+                    info["screen_height"] = int(height)
+                except (ValueError, IndexError):
+                    pass
+        
+        # Get IP address
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "ip", "addr", "show", "wlan0"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            for line in result.stdout.split("\n"):
+                if "inet " in line:
+                    parts = line.strip().split()
+                    for i, part in enumerate(parts):
+                        if part == "inet" and i + 1 < len(parts):
+                            ip_address = parts[i + 1].split("/")[0]
+                            info["ip"] = ip_address
+                            break
+        
+        # Set platform
+        info["platform"] = "Android"
         
         # Get device ID
         info["device_id"] = self.device_id
