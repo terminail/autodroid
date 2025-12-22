@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  */
 class DeviceRepository private constructor(app: MyApplication) {
 
-    private val apiClient = app.getApiClient()
+    private val context = app
     private val deviceProvider = DeviceProvider.getInstance(app)
     private val gson = Gson() // Gson实例用于JSON序列化/反序列化
 
@@ -37,7 +37,6 @@ class DeviceRepository private constructor(app: MyApplication) {
      * 根据"本地优先"设计理念，主动检查设备状态并更新本地数据库
      */
     private fun syncDevice(serialNo: String) {
-        if (apiClient == null) return
 
         CoroutineScope(Dispatchers.IO).launch {
             val device = DeviceEntity(serialNo = serialNo)
@@ -45,7 +44,8 @@ class DeviceRepository private constructor(app: MyApplication) {
             try {
                 Log.d("DeviceRepository", "准备调用API获取设备信息: $serialNo")
                 // 调用API获取设备信息
-                val deviceInfoResponse = apiClient.getDeviceInfo(serialNo)
+                val deviceInfoResponse = MyApplication.getInstance().getApiClient()?.getDeviceInfo(serialNo)
+                        ?: throw Exception("API客户端未初始化")
                 Log.d("DeviceRepository", "API调用成功，返回: $deviceInfoResponse")
 
                 // 根据服务器返回的信息更新本地数据库
@@ -61,11 +61,11 @@ class DeviceRepository private constructor(app: MyApplication) {
 
                 val updatedDevice = device.copy(
                     isOnline = true,
-                    usbDebugEnabled = deviceInfoResponse.usb_debug_enabled ?: false,
-                    wifiDebugEnabled = deviceInfoResponse.wifi_debug_enabled ?: false,
-                    checkStatus = deviceInfoResponse.check_status ?: "UNKNOWN",
-                    checkMessage = deviceInfoResponse.check_message,
-                    checkTime = deviceInfoResponse.check_time?.let {
+                    usbDebugEnabled = deviceInfoResponse.usbDebugEnabled ?: false,
+                    wifiDebugEnabled = deviceInfoResponse.wifiDebugEnabled ?: false,
+                    checkStatus = deviceInfoResponse.checkStatus ?: "UNKNOWN",
+                    checkMessage = deviceInfoResponse.checkMessage,
+                    checkTime = deviceInfoResponse.checkTime?.let {
                         java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
                             .parse(it)?.time
                     },
@@ -95,7 +95,7 @@ class DeviceRepository private constructor(app: MyApplication) {
      * @return 更新后的设备实体
      */
     suspend fun registerDevice(deviceEntity: DeviceEntity): DeviceEntity? {
-        if (apiClient == null) return null
+        if (MyApplication.getInstance().getApiClient() == null) return null
 
         return withContext(Dispatchers.IO) {
             try {
@@ -112,7 +112,8 @@ class DeviceRepository private constructor(app: MyApplication) {
                 Log.d("DeviceRepository", "registerDevice: 设备注册请求已创建")
                 
                 // 调用API注册设备
-                val deviceCreateResponse = apiClient.registerDevice(registrationRequest)
+                val deviceCreateResponse = MyApplication.getInstance().getApiClient()?.registerDevice(registrationRequest)
+                        ?: throw Exception("API客户端未初始化")
                 Log.d("DeviceRepository", "registerDevice: API调用完成，响应: $deviceCreateResponse")
                 
                 // 根据服务器响应更新本地设备信息
@@ -127,18 +128,19 @@ class DeviceRepository private constructor(app: MyApplication) {
                         val newDevice = deviceEntity.copy(
                             udid = deviceCreateResponse.serialNo ?: deviceEntity.udid,
                             userId = deviceCreateResponse.device?.let { "user_${it.serialNo}" } ?: deviceEntity.userId,
+                            deviceName = deviceCreateResponse.device?.name ?: deviceEntity.deviceName,
                             name = deviceCreateResponse.device?.name ?: deviceEntity.name,
                             model = deviceCreateResponse.device?.model ?: deviceEntity.model,
                             manufacturer = deviceCreateResponse.device?.manufacturer ?: deviceEntity.manufacturer,
-                            androidVersion = deviceCreateResponse.device?.android_version ?: deviceEntity.androidVersion,
-                            apiLevel = deviceCreateResponse.device?.api_level ?: deviceEntity.apiLevel,
+                            androidVersion = deviceCreateResponse.device?.androidVersion ?: deviceEntity.androidVersion,
+                            apiLevel = deviceCreateResponse.device?.apiLevel ?: deviceEntity.apiLevel,
                             platform = deviceCreateResponse.device?.platform ?: deviceEntity.platform,
                             brand = deviceCreateResponse.device?.brand ?: deviceEntity.brand,
                             device = deviceCreateResponse.device?.device ?: deviceEntity.device,
                             product = deviceCreateResponse.device?.product ?: deviceEntity.product,
                             ip = deviceCreateResponse.device?.ip ?: deviceEntity.ip,
-                            screenWidth = deviceCreateResponse.device?.screen_width ?: deviceEntity.screenWidth,
-                            screenHeight = deviceCreateResponse.device?.screen_height ?: deviceEntity.screenHeight,
+                            screenWidth = deviceCreateResponse.device?.screenWidth ?: deviceEntity.screenWidth,
+                            screenHeight = deviceCreateResponse.device?.screenHeight ?: deviceEntity.screenHeight,
                             isOnline = deviceCreateResponse.device?.isOnline() ?: true,
                             updatedAt = System.currentTimeMillis()
                         )
@@ -189,7 +191,6 @@ class DeviceRepository private constructor(app: MyApplication) {
      * @return 更新后的设备实体
      */
     suspend fun checkDeviceWithServer(deviceId: String): DeviceEntity? {
-        if (apiClient == null) return null
 
         return withContext(Dispatchers.IO) {
             try {
@@ -197,7 +198,8 @@ class DeviceRepository private constructor(app: MyApplication) {
                 Log.d("DeviceRepository", "checkDeviceWithServer: 设备序列号: $deviceId")
                 
                 // 调用API检查设备调试权限
-                val response = apiClient.checkDevice(deviceId)
+                val response = MyApplication.getInstance().getApiClient()?.checkDevice(deviceId)
+                        ?: throw Exception("API客户端未初始化")
                 Log.d("DeviceRepository", "checkDeviceWithServer: API调用完成，响应: $response")
                 
                 // 获取现有设备信息
@@ -209,11 +211,11 @@ class DeviceRepository private constructor(app: MyApplication) {
                 val updatedDevice = if (response.success) {
                     existingDevice.copy(
                         isOnline = true,
-                        usbDebugEnabled = response.usb_debug_enabled,
-                        wifiDebugEnabled = response.wifi_debug_enabled,
+                        usbDebugEnabled = response.usbDebugEnabled,
+                        wifiDebugEnabled = response.wifiDebugEnabled,
                         checkStatus = "SUCCESS",
                         checkMessage = response.message,
-                        checkTime = response.check_time?.let {
+                        checkTime = response.checkTime?.let {
                             java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
                                 .parse(it)?.time 
                         } ?: System.currentTimeMillis(),

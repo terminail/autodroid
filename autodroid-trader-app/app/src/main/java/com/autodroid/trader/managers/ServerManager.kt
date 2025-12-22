@@ -174,8 +174,7 @@ class ServerManager private constructor(private val context: Context) {
                         val serverInfo = checkServer(server.ip, server.port)
                         if (serverInfo != null) {
                             // 找到可用服务器，更新数据库
-                            val apiEndpoint = server.apiEndpoint()
-                            serverRepository.updateServer(apiEndpoint, serverInfo)
+                            serverRepository.updateServer(serverInfo)
                             _scanStatus.postValue("已连接到服务器: ${server.name}")
                             _scanProgress.postValue("服务器信息: ${server.name} (${server.apiEndpoint()})")
                             Log.i(TAG, "已连接到服务器: ${server.name} (${server.apiEndpoint()})")
@@ -499,4 +498,16 @@ class ServerManager private constructor(private val context: Context) {
         }
     }
     
+    /**
+     * 给定服务器ip和port，检查是否是有效服务器，如是则保存到数据库
+     */
+    fun verifyAndSyncServer(ip: String, port: Int) {
+        // 检查服务器是否有效
+        val apiClient = ApiClient.getInstance().setApiEndpoint("http://$ip:$port/api")
+        val serverInfo = apiClient.getServerInfo()
+        if (serverInfo != null) {
+            // 保存服务器到数据库
+            saveServerToDatabase(serverInfo, ip, port)
+        }
+    }
 }

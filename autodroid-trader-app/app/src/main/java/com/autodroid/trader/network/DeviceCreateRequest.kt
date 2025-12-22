@@ -1,10 +1,13 @@
 package com.autodroid.trader.network
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Data class representing device create request
  * Only contains essential fields that cannot be retrieved via ADB on server side
  */
 data class DeviceCreateRequest(
+    @SerializedName("serialno")
     val serialNo: String,
     val name: String
 ) {

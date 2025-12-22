@@ -1,7 +1,11 @@
 package com.autodroid.trader
 
 import android.app.Application
+import android.util.Log
+import androidx.lifecycle.LiveData
 import com.autodroid.trader.config.ConfigManager
+import com.autodroid.trader.data.dao.ServerEntity
+import com.autodroid.trader.data.repository.ServerRepository
 import com.autodroid.trader.network.ApiClient
 import com.google.android.gms.common.api.Api
 
@@ -25,6 +29,7 @@ class MyApplication : Application() {
         super.onCreate()
         // Load configuration when application starts
         ConfigManager.loadConfig(this)
+
     }
 
     // Helper method to get AppViewModel instance
@@ -37,10 +42,16 @@ class MyApplication : Application() {
         return appViewModel
     }
 
-    fun getApiClient(): ApiClient?{
-        if (!apiEndpoint.isNullOrEmpty())
-            return ApiClient.getInstance().setApiEndpoint(apiEndpoint!!)
-        else
-            return null
+    fun setApiEndpoint(apiEndpoint: String): ApiClient? {
+        Log.i("MyApplication", "Set apiEndpoint=${apiEndpoint}")
+        this.apiEndpoint = apiEndpoint
+        return getApiClient()
+    }
+
+    fun getApiClient(): ApiClient? {
+        return if (!apiEndpoint.isNullOrEmpty()) {
+            ApiClient.getInstance().setApiEndpoint(apiEndpoint!!)
+        } else
+            null
     }
 }

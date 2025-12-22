@@ -1,5 +1,7 @@
 package com.autodroid.trader.network
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Data class representing app information
  */
@@ -14,27 +16,39 @@ data class AppInfo(
  * This is the type-safe response model for device API calls
  */
 data class DeviceInfoResponse(
+    @SerializedName("serialno")
     val serialNo: String,
     val name: String? = null,
     val model: String? = null,
     val manufacturer: String? = null,
-    val android_version: String? = null,
-    val api_level: Int? = null,
+    @SerializedName("android_version")
+    val androidVersion: String? = null,
+    @SerializedName("api_level")
+    val apiLevel: Int? = null,
     val platform: String? = null,
     val brand: String? = null,
     val device: String? = null,
     val product: String? = null,
     val ip: String? = null,
-    val screen_width: Int? = null,
-    val screen_height: Int? = null,
-    val registered_at: String? = null,
-    val updated_at: String? = null,
+    @SerializedName("screen_width")
+    val screenWidth: Int? = null,
+    @SerializedName("screen_height")
+    val screenHeight: Int? = null,
+    @SerializedName("registered_at")
+    val registeredAt: String? = null,
+    @SerializedName("updated_at")
+    val updatedAt: String? = null,
     val status: String? = null,
-    val usb_debug_enabled: Boolean? = false,
-    val wifi_debug_enabled: Boolean? = false,
-    val check_status: String? = "UNKNOWN",
-    val check_message: String? = null,
-    val check_time: String? = null,
+    @SerializedName("usb_debug_enabled")
+    val usbDebugEnabled: Boolean? = false,
+    @SerializedName("wifi_debug_enabled")
+    val wifiDebugEnabled: Boolean? = false,
+    @SerializedName("check_status")
+    val checkStatus: String? = "UNKNOWN",
+    @SerializedName("check_message")
+    val checkMessage: String? = null,
+    @SerializedName("check_time")
+    val checkTime: String? = null,
     val apps: List<AppInfo>? = null
 ) {
     /**
@@ -48,7 +62,7 @@ data class DeviceInfoResponse(
      * Check if device is registered
      */
     fun isRegistered(): Boolean {
-        return registered_at != null
+        return registeredAt != null
     }
     
     /**
@@ -73,7 +87,7 @@ data class DeviceInfoResponse(
     override fun toString(): String {
         return "DeviceInfoResponse(serialNo='$serialNo', name='$name', " +
                 "model='$model', manufacturer='$manufacturer', " +
-                "android_version='$android_version', platform='$platform', " +
+                "androidVersion='$androidVersion', platform='$platform', " +
                 "ip='$ip', status='$status')"
     }
 }

@@ -210,16 +210,17 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     private fun getSerialNo(): String? = try {
         // 尝试多种方式获取设备序列号
         when {
-            // 1. 尝试使用 Build.getSerial() (需要 READ_PRIVILEGED_PHONE_STATE 权限)
-            Build.getSerial() != null &&
-                    Build.getSerial() != "unknown" -> {
-                Log.d(TAG, "使用 Build.getSerial() 获取设备序列号")
-                Build.getSerial()
-            }
-            // 2. 使用 adb devices 命令获取序列号 (通过系统属性)
+            // 1. 优先使用系统属性获取序列号 (不需要特殊权限)
             getSerialFromSystemProperty()?.isNotEmpty() == true -> {
                 Log.d(TAG, "通过系统属性获取设备序列号")
                 getSerialFromSystemProperty()
+            }
+            // 2. 尝试使用 Build.getSerial() (需要 READ_PRIVILEGED_PHONE_STATE 权限)
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && // 只在Android 10以下尝试
+                    Build.getSerial() != null &&
+                    Build.getSerial() != "unknown" -> {
+                Log.d(TAG, "使用 Build.getSerial() 获取设备序列号")
+                Build.getSerial()
             }
             // 3. 最后使用组合UDID作为序列号
             else -> {

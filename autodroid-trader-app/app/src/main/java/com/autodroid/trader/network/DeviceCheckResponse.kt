@@ -1,14 +1,19 @@
 package com.autodroid.trader.network
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * 设备调试权限、安装的apps等检查响应模型
  */
 data class DeviceCheckResponse(
     val success: Boolean,
     val message: String,
+    @SerializedName("serialno")
     val serialNo: String,
-    val usb_debug_enabled: Boolean,
-    val wifi_debug_enabled: Boolean,
-
-    val check_time: String? = null
+    @SerializedName("usb_debug_enabled")
+    val usbDebugEnabled: Boolean,
+    @SerializedName("wifi_debug_enabled")
+    val wifiDebugEnabled: Boolean,
+    @SerializedName("check_time")
+    val checkTime: String? = null
 )

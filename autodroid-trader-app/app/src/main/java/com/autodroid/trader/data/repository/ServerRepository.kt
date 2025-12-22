@@ -51,7 +51,15 @@ class ServerRepository private constructor(application: Application) {
     fun getAllServers(): LiveData<List<ServerEntity>> {
         return serverProvider.getAllServers()
     }
-    
+
+    /**
+     * 获取当前服务器
+     * 根据"本地优先"设计理念，主动检查服务器状态并更新本地数据库
+     */
+    fun getCurrentServer(): LiveData<ServerEntity?> {
+        return serverProvider.getCurrentServer()
+    }
+
     /**
      * 获取当前服务器
      * 根据"本地优先"设计理念，主动检查服务器状态并更新本地数据库
@@ -145,7 +153,7 @@ class ServerRepository private constructor(application: Application) {
                         // 根据服务器信息更新本地数据库
                         if (serverInfo != null) {
                             // 服务器可用，更新服务器信息
-                            updateServer(apiEndpoint, serverInfo)
+                            updateServer(serverInfo)
                             Log.d("ServerRepository", "服务器信息同步成功: ${apiEndpoint}")
                         } else {
                             // 服务器不可用，断开连接
@@ -169,20 +177,16 @@ class ServerRepository private constructor(application: Application) {
     /**
      * 更新服务器信息
      */
-    suspend fun updateServer(apiEndpoint: String, serverInfo: ServerInfoResponse) {
+    suspend fun updateServer(serverInfo: ServerInfoResponse) {
         withContext(Dispatchers.IO) {
             try {
-                // 从apiEndpoint中提取ip和port
-                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split(":")
-                val ip = urlParts.getOrNull(0) ?: return@withContext
-                val port = urlParts.getOrNull(1)?.toIntOrNull() ?: return@withContext
-                
-                val serverEntity = serverProvider.getServerByKey(ip, port)
+
+                val serverEntity = serverProvider.getServerByKey(serverInfo.ip, serverInfo.port)
                 if (serverEntity != null) {
                     // 使用服务器返回的完整信息更新本地数据库
                     val updatedServer = serverEntity.copy(
-                        name = serverInfo.name ?: serverEntity.name,
-                        platform = serverInfo.platform ?: serverEntity.platform,
+                        name = serverInfo.name,
+                        platform = serverInfo.platform,
                         isConnected = true,
                         lastConnectedTime = System.currentTimeMillis()
                     )
@@ -194,37 +198,8 @@ class ServerRepository private constructor(application: Application) {
             }
         }
     }
-    
-    /**
-     * 测试服务器连接
-     */
-    suspend fun testServerConnection(apiEndpoint: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                // 设置API端点
-                apiClient.setApiEndpoint(apiEndpoint)
-                
-                // 调用API获取服务器信息
-                val serverInfo = apiClient.getServerInfo()
-                
-                // 如果能获取到服务器信息，说明连接成功
-                if (serverInfo != null) {
-                    // 更新服务器信息
-                    updateServer(apiEndpoint, serverInfo)
-                    return@withContext true
-                }
-                return@withContext false
-            } catch (e: Exception) {
-                Log.e("ServerRepository", "测试服务器连接失败: ${e.message}")
-                return@withContext false
-            }
-        }
-    }
-    
 
-    
 
-    
     companion object {
         @Volatile
         private var INSTANCE: ServerRepository? = null

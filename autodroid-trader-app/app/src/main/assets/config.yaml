@@ -29,8 +29,8 @@ device:
     autoRefresh: true
     refreshInterval: 60
   
-  # UDID配置
-  udid:
+  # 序列号配置
+  serialNo:
     generationMethod: "android_id"  # android_id, serial, random
     cacheEnabled: true
 
