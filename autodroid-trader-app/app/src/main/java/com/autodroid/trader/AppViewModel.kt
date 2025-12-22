@@ -72,7 +72,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         android.util.Log.d("AppViewModel", "initialize: ServerRepository已初始化")
         
         // Initialize DeviceRepository and set it to DeviceManager
-        deviceRepository = DeviceRepository.getInstance(context.applicationContext as Application)
+        deviceRepository = DeviceRepository.getInstance(context.applicationContext as MyApplication)
         android.util.Log.d("AppViewModel", "initialize: DeviceRepository已初始化")
         
         deviceManager.setDeviceRepository(deviceRepository!!)
@@ -83,36 +83,42 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 android.util.Log.d("AppViewModel", "initialize: 开始自动初始化本地设备信息")
                 val localDevice = deviceManager.device
-                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，序列号: ${localDevice.serialNo}, 名称: ${localDevice.name}")
-                
-                // 保存设备信息到数据库
-                deviceRepository?.getAndSyncCurrentDevice()
-                android.util.Log.d("AppViewModel", "initialize: 本地设备信息已保存到数据库")
+                android.util.Log.d(
+                    "AppViewModel",
+                    "initialize: 获取到本地设备信息，序列号: ${localDevice.serialNo}, 名称: ${localDevice.name}"
+                )
+
+                // 直接监控 Room 数据库中最后更新的设备
+                deviceRepository?.getAndSyncDevice(localDevice.serialNo)?.let { liveData: LiveData<DeviceEntity?> ->
+                    android.util.Log.d("AppViewModel", "initialize: 开始监控设备数据变化")
+                    // 将数据库中的设备数据映射到 ViewModel 的 device LiveData
+                    device.addSource(liveData) { deviceEntity: DeviceEntity? ->
+                        android.util.Log.d(
+                            "AppViewModel",
+                            "initialize: 设备数据更新，设备序列号: ${deviceEntity?.serialNo}, 设备名称: ${deviceEntity?.name}"
+                        )
+                        device.value = deviceEntity
+                    }
+                }
+
+                // 直接监控 Room 数据库中最后更新的服务器
+                serverRepository?.getAndSyncServer()?.let { liveData: LiveData<ServerEntity?> ->
+                    android.util.Log.d("AppViewModel", "initialize: 开始监控服务器数据变化")
+                    // 将数据库中的服务器数据映射到 ViewModel 的 server LiveData
+                    server.addSource(liveData) { serverEntity: ServerEntity? ->
+                        android.util.Log.d(
+                            "AppViewModel",
+                            "initialize: 服务器数据更新，服务器: ${serverEntity?.ip}:${serverEntity?.port}"
+                        )
+                        server.value = serverEntity
+                    }
+                }
+
+
             } catch (e: Exception) {
                 android.util.Log.e("AppViewModel", "initialize: 自动初始化设备信息失败", e)
             }
         }
-        
-        // 直接监控 Room 数据库中最后更新的服务器
-        serverRepository?.getCurrentServer()?.let { liveData: LiveData<ServerEntity?> ->
-            android.util.Log.d("AppViewModel", "initialize: 开始监控服务器数据变化")
-            // 将数据库中的服务器数据映射到 ViewModel 的 server LiveData
-            server.addSource(liveData) { serverEntity: ServerEntity? ->
-                android.util.Log.d("AppViewModel", "initialize: 服务器数据更新，服务器: ${serverEntity?.ip}:${serverEntity?.port}")
-                server.value = serverEntity
-            }
-        }
-        
-        // 直接监控 Room 数据库中最后更新的设备
-        deviceRepository?.getAndSyncCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
-            android.util.Log.d("AppViewModel", "initialize: 开始监控设备数据变化")
-            // 将数据库中的设备数据映射到 ViewModel 的 device LiveData
-            device.addSource(liveData) { deviceEntity: DeviceEntity? ->
-                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备序列号: ${deviceEntity?.serialNo}, 设备名称: ${deviceEntity?.name}")
-                device.value = deviceEntity
-            }
-        }
-        
         android.util.Log.d("AppViewModel", "initialize: AppViewModel初始化完成")
     }
     
@@ -129,23 +135,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // User authentication setters
     fun setUser(userInfo: User) {
-        this.user.setValue(userInfo)
+        this.user.value = userInfo
     }
     
     fun setErrorMessage(message: String?) {
-        errorMessage.setValue(message)
+        errorMessage.value = message
     }
     
     fun setWifi(info: Wifi) {
-        wifi.setValue(info)
+        wifi.value = info
     }
-    
-    fun setNetwork(info: Network) {
-        network.setValue(info)
-    }
+
     
     fun setAvailableTradePlans(tradePlans: MutableList<TradePlan>) {
-        availableTradePlans.setValue(tradePlans)
+        availableTradePlans.value = tradePlans
     }
     
     // Authentication methods
@@ -156,58 +159,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun register(email: String?, password: String?, confirmPassword: String?) {
         authViewModel.register(email, password, confirmPassword)
     }
-    
-    fun logout() {
-        authViewModel.logout()
-    }
-    
-    fun loginWithBiometrics() {
-        authViewModel.loginWithBiometrics()
-    }
-    
-    // WiFi information helper methods
-    fun isWifiConnected(): Boolean {
-        return wifi.value?.isWifiConnected() ?: false
-    }
-    
-    fun getWifiSsid(): String? {
-        return wifi.value?.ssid
-    }
-    
-    fun getWifiIpAddress(): String? {
-        return wifi.value?.ipAddress
-    }
-    
-    // Network information helper methods
-    fun isNetworkAvailable(): Boolean {
-        return network.value?.isNetworkAvailable() ?: false
-    }
-    
-    fun getNetworkConnectionType(): Network.ConnectionType {
-        return network.value?.connectionType ?: Network.ConnectionType.NONE
-    }
-    
-    fun getNetworkIpAddress(): String? {
-        return network.value?.ipAddress
-    }
-    
-    // User authentication helper methods
-    fun isAuthenticated(): Boolean {
-        return user.value?.isAuthenticated ?: false
-    }
-    
-    fun getUserId(): String? {
-        return user.value?.userId
-    }
-    
-    fun getEmail(): String? {
-        return user.value?.email
-    }
-    
-    fun getToken(): String? {
-        return user.value?.token
-    }
-    
+
     fun getErrorMessage(): String? {
         return errorMessage.value
     }
@@ -217,33 +169,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         setUser(User.empty())
         setErrorMessage(null)
     }
-    
-    // Convenience methods for initializing encapsulated states
-    fun initializeDevice(serialNo: String, ip: String? = null, name: String? = null) {
-        val deviceEntity = DeviceEntity.empty().copy(serialNo = serialNo, ip = ip, name = name)
-        CoroutineScope(Dispatchers.IO).launch {
-            deviceRepository?.insertOrUpdateDevice(deviceEntity)
-        }
-    }
-    
-    fun initializeWifi(ssid: String? = null, ipAddress: String? = null) {
-        setWifi(Wifi.empty().copy(ssid = ssid, ipAddress = ipAddress))
-    }
-    
-    fun initializeNetwork(connectionType: Network.ConnectionType = Network.ConnectionType.NONE) {
-        setNetwork(Network.empty().copy(connectionType = connectionType))
-    }
-    
-    
-    fun setWifiConnected(ssid: String, ipAddress: String, signalStrength: Int? = null) {
-        setWifi(Wifi.connected(ssid, ipAddress, signalStrength))
-    }
-    
-    fun disconnectWifi() {
-        wifi.value?.let { currentInfo: Wifi ->
-            setWifi(currentInfo.disconnected())
-        }
-    }
-    
+
 
 }

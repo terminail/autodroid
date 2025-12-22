@@ -39,7 +39,7 @@ class TradePlanRepository private constructor(application: Application) {
             try {
                 // 获取所有已连接的服务器
                 val serverRepository = ServerRepository.getInstance(context as Application)
-                val connectedServer = serverRepository.getCurrentServer().value
+                val connectedServer = serverRepository.getAndSyncServer().value
                 
                 if (connectedServer != null) {
                     try {

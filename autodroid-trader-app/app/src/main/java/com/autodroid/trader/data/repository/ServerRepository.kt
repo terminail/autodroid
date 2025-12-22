@@ -56,7 +56,7 @@ class ServerRepository private constructor(application: Application) {
      * 获取当前服务器
      * 根据"本地优先"设计理念，主动检查服务器状态并更新本地数据库
      */
-    fun getCurrentServer(): LiveData<ServerEntity?> {
+    fun getAndSyncServer(): LiveData<ServerEntity?> {
         // 启动异步任务更新所有服务器信息
         updateAllServers()
         return serverProvider.getCurrentServer()

@@ -14,7 +14,7 @@ data class DeviceEntity(
     // 设备基本信息 - 与服务器端保持一致
     @PrimaryKey
     val serialNo: String, // 设备序列号，与adb devices和Appium保持一致，作为主键
-    val udid: String, // 备用设备标识符，用于向后兼容
+    val udid: String?=null, // 备用设备标识符，用于向后兼容
     val userId: String? = null, // 对应服务器端的user_id
     val deviceName: String = "Unknown Device", // 对应服务器端的device_name
     val name: String? = null, // 对应服务器端的name

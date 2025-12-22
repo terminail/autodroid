@@ -267,7 +267,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         
         // 使用DeviceRepository向远程服务器注册设备
         // registerDevice方法会处理API调用和本地数据库同步，并返回更新后的DeviceEntity
-        val updatedDevice = deviceRepository?.registerDevice(localDevice, currentServer.apiEndpoint())
+        val updatedDevice = deviceRepository?.registerDevice(localDevice)
             ?: throw Exception("设备仓库未初始化")
             
         Log.d(TAG, "registerLocalDeviceWithServer: 设备注册完成，设备信息已更新")
@@ -298,7 +298,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         
         try {
             // 调用DeviceRepository向服务器请求设备检查，Repository负责API调用和本地数据库同步
-            val updatedDevice = deviceRepository?.checkDeviceWithServer(localDevice.serialNo, currentServer.apiEndpoint())
+            val updatedDevice = deviceRepository?.checkDeviceWithServer(localDevice.serialNo)
                 ?: throw Exception("设备仓库未初始化")
             
             Log.d(TAG, "checkLocalDeviceWithServer: 服务器检查完成，设备状态已更新")

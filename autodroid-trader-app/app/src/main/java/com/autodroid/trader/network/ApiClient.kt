@@ -25,22 +25,17 @@ class ApiClient private constructor() {
         }
     }
     
-    private val client: OkHttpClient
-    private val gson: Gson
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS) // Longer timeout for bulk operations
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+    private val gson: Gson = Gson()
+
     // For Android emulator: use 10.0.2.2 to access host machine
     // For physical device: use actual host IP address (e.g., 192.168.1.59)
     private var apiEndpoint: String = "http://10.0.2.2:8004/api" // Default API endpoint for Android emulator
-    
-    init {
-        this.client = OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS) // Longer timeout for bulk operations
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
-        
-        this.gson = Gson()
-    }
-    
+
     /**
      * Set the API endpoint (for dynamic server discovery)
      */
@@ -70,45 +65,20 @@ class ApiClient private constructor() {
     private fun buildApiUrl(path: String): String {
         return "$apiEndpoint$path"
     }
-    
-    /**
-     * Register APKs for a device (supports both single APK and list of APKs)
-     */
-    fun registerApksForDevice(deviceUdid: String, apkData: Any): ApkRegistrationResponse {
-        val url = buildApiUrl("/devices/$deviceUdid/apks")
-        val response = makePostRequest(url, apkData)
-        
-        if (!response.isSuccessful) {
-            throw RuntimeException("Failed to register APKs: ${response.code} - ${response.message}")
-        }
-        
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
-            throw RuntimeException("Empty response body from APK registration endpoint")
-        }
-        
-        try {
-            return gson.fromJson(responseBody, ApkRegistrationResponse::class.java)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing APK registration response: ${e.message}")
-            Log.e(TAG, "Response body: $responseBody")
-            throw RuntimeException("Failed to parse APK registration response", e)
-        }
-    }
-    
+
     /**
      * Get device information
      */
-    fun getDeviceInfo(deviceUdid: String): DeviceInfoResponse {
-        val url = buildApiUrl("/devices/$deviceUdid")
+    fun getDeviceInfo(deviceSerialNo: String): DeviceInfoResponse {
+        val url = buildApiUrl("/devices/$deviceSerialNo")
         val response = makeGetRequest(url)
         
         if (!response.isSuccessful) {
             throw RuntimeException("Failed to get device info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from device info endpoint")
         }
         
@@ -132,8 +102,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to register device: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from device registration endpoint")
         }
         
@@ -143,31 +113,6 @@ class ApiClient private constructor() {
             Log.e(TAG, "Error parsing device registration response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
             throw RuntimeException("Failed to parse device registration response", e)
-        }
-    }
-    
-    /**
-     * Health check for the server
-     */
-    fun healthCheck(): HealthCheckResponse {
-        val url = buildApiUrl("/health")
-        val response = makeGetRequest(url)
-        
-        if (!response.isSuccessful) {
-            throw RuntimeException("Failed to perform health check: ${response.code} - ${response.message}")
-        }
-        
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
-            throw RuntimeException("Empty response body from health check endpoint")
-        }
-        
-        try {
-            return gson.fromJson(responseBody, HealthCheckResponse::class.java)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing health check response: ${e.message}")
-            Log.e(TAG, "Response body: $responseBody")
-            throw RuntimeException("Failed to parse health check response", e)
         }
     }
 
@@ -184,8 +129,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from server info endpoint")
         }
         
@@ -215,8 +160,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from server info endpoint")
         }
         
@@ -232,16 +177,16 @@ class ApiClient private constructor() {
     /**
      * As Server to Check device debug permissions & installed apps etc.
      */
-    fun checkDevice(deviceUdid: String): DeviceCheckResponse {
-        val url = buildApiUrl("/devices/$deviceUdid/check")
+    fun checkDevice(deviceSerialNo: String): DeviceCheckResponse {
+        val url = buildApiUrl("/devices/$deviceSerialNo/check")
         val response = makePostRequest(url, emptyMap<String, Any>())
         
         if (!response.isSuccessful) {
             throw RuntimeException("Failed to check device: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from check endpoint")
         }
         
@@ -265,8 +210,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch trade plans: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
+        val responseBody = response.body.string()
+        if (responseBody.isEmpty()) {
             throw RuntimeException("Empty response body from trade plans endpoint")
         }
         

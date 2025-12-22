@@ -22,16 +22,10 @@ interface DeviceDao {
     fun getAllDevices(): LiveData<List<DeviceEntity>>
 
     /**
-     * 获取当前设备信息
-     */
-    @Query("SELECT * FROM devices WHERE isOnline = 1 LIMIT 1")
-    fun getCurrentDevice(): LiveData<DeviceEntity?>
-
-    /**
      * 根据设备序列号获取设备
      */
     @Query("SELECT * FROM devices WHERE serialNo = :serialNo")
-    suspend fun getDeviceById(serialNo: String): DeviceEntity?
+    fun getDeviceById(serialNo: String): LiveData<DeviceEntity?>
     
     /**
      * 根据设备序列号获取设备（LiveData）
@@ -61,7 +55,7 @@ interface DeviceDao {
      * 根据设备序列号删除设备
      */
     @Query("DELETE FROM devices WHERE serialNo = :serialNo")
-    suspend fun deleteDeviceById(serialNo: String): DeviceEntity?
+    suspend fun deleteDeviceById(serialNo: String): Int
 
     /**
      * 更新设备连接状态

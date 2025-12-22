@@ -21,53 +21,15 @@ class DeviceProvider private constructor(context: Context) {
     fun getAllDevices(): LiveData<List<DeviceEntity>> {
         return deviceDao.getAllDevices()
     }
-    
-    /**
-     * 获取当前设备
-     */
-    fun getCurrentDevice(): LiveData<DeviceEntity?> {
-        return deviceDao.getCurrentDevice()
-    }
-    
+
     /**
      * 根据设备序列号获取设备
      */
-    suspend fun getDeviceById(id: String): DeviceEntity? {
-        return withContext(Dispatchers.IO) {
-            deviceDao.getDeviceById(id)
-        }
+    fun getDeviceById(id: String): LiveData<DeviceEntity?> {
+        return deviceDao.getDeviceById(id)
     }
-    
-    /**
-     * 根据设备序列号获取设备（LiveData）
-     */
-    fun getDeviceByIdLiveData(id: String): LiveData<DeviceEntity?> {
-        return deviceDao.getDeviceByIdLiveData(id)
-    }
-    
-    /**
-     * 插入或更新设备
-     */
-    suspend fun insertOrUpdateDevice(device: DeviceEntity): String {
-        return withContext(Dispatchers.IO) {
-            // 检查是否已存在相同序列号的设备
-            val existingDevice = deviceDao.getDeviceById(device.serialNo)
-            
-            val result: String = if (existingDevice != null) {
-                // 更新现有设备
-                val updatedDevice = device.copy(updatedAt = System.currentTimeMillis())
-                deviceDao.updateDevice(updatedDevice)
-                device.serialNo
-            } else {
-                // 插入新设备
-                deviceDao.insertOrUpdateDevice(device)
-                device.serialNo
-            }
-            
-            return@withContext result
-        }
-    }
-    
+
+
     /**
      * 更新设备信息
      */
@@ -77,15 +39,7 @@ class DeviceProvider private constructor(context: Context) {
             deviceDao.updateDevice(updatedDevice)
         }
     }
-    
-    /**
-     * 删除设备
-     */
-    suspend fun deleteDevice(device: DeviceEntity) {
-        withContext(Dispatchers.IO) {
-            deviceDao.deleteDevice(device)
-        }
-    }
+
     
     /**
      * 根据设备序列号删除设备
@@ -104,26 +58,8 @@ class DeviceProvider private constructor(context: Context) {
             deviceDao.updateConnectionStatus(serialNo, isOnline, updatedAt)
         }
     }
-    
-    /**
-     * 断开所有设备的连接
-     */
-    suspend fun disconnectAllDevices() {
-        withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
-            deviceDao.disconnectAllDevices(now)
-        }
-    }
-    
-    /**
-     * 获取设备数量
-     */
-    suspend fun getDeviceCount(): Int {
-        return withContext(Dispatchers.IO) {
-            deviceDao.getDeviceCount()
-        }
-    }
-    
+
+
     companion object {
         @Volatile
         private var INSTANCE: DeviceProvider? = null

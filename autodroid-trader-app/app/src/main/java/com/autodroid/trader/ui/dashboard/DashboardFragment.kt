@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import com.google.android.material.appbar.AppBarLayout
 
 class DashboardFragment : BaseFragment() {
@@ -93,8 +94,13 @@ class DashboardFragment : BaseFragment() {
         dashboardRecyclerView?.layoutManager = LinearLayoutManager(context)
         
         // Set up touch listener for pull-down detection
-        dashboardRecyclerView?.setOnTouchListener { _, event ->
-            handleTouchEvent(event)
+        dashboardRecyclerView?.setOnTouchListener { v, event ->
+            val result = handleTouchEvent(event)
+            // For accessibility, perform click if this was a simple tap
+            if (event.action == MotionEvent.ACTION_UP && !isPullingDown) {
+                v.performClick()
+            }
+            result
         }
         
         // Initialize item managers FIRST
@@ -135,12 +141,14 @@ class DashboardFragment : BaseFragment() {
                 itemServerManager.handleManualSetButtonClick()
             }
             
+            @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
             override fun onRegisterDeviceClick() {
                 handleRegisterDeviceClick()
             }
             
+            @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
             override fun onDebugCheckClick() {
-                handleDebugCheckClick()
+                handleCheckClick()
             }
         })
         
@@ -209,22 +217,12 @@ class DashboardFragment : BaseFragment() {
     /**
      * Handle device registration button click
      */
+    @androidx.annotation.RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
     private fun handleRegisterDeviceClick() {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch  {
             try {
                 // Use DeviceManager to register the device with the server
-                val response = appViewModel.deviceManager.registerLocalDeviceWithServer()
-                
-                withContext(Dispatchers.Main) {
-                    if (response.success) {
-                        Toast.makeText(requireContext(), "设备注册成功: ${response.message}", Toast.LENGTH_LONG).show()
-                        Log.d(TAG, "Device registered successfully: ${response.device_id}")
-                    } else {
-                        Toast.makeText(requireContext(), "设备注册失败: ${response.message}", Toast.LENGTH_LONG).show()
-                        Log.e(TAG, "Device registration failed: ${response.message}")
-                    }
-                }
-                
+                appViewModel.deviceManager.registerLocalDeviceWithServer()
             } catch (e: Exception) {
                 Log.e(TAG, "Error during device registration: ${e.message}", e)
                 withContext(Dispatchers.Main) {
@@ -235,82 +233,20 @@ class DashboardFragment : BaseFragment() {
     }
     
     /**
-     * Handle debug check button click
+     * Handle  check button click
      */
-    private fun handleDebugCheckClick() {
+    @androidx.annotation.RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+    private fun handleCheckClick() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 调用服务器API检查设备调试权限
-                val response = appViewModel.deviceManager.checkLocalDeviceWithServer()
-                
-                withContext(Dispatchers.Main) {
-                    if (response.success) {
-                        Log.d(TAG, "Debug permissions check successful")
-                        
-                        // 更新设备调试状态
-                        updateDeviceDebugStatus(response.usb_debug_enabled, response.wifi_debug_enabled, "SUCCESS", response.message)
-                    } else {
-                        Log.e(TAG, "Debug permissions check failed: ${response.message}")
-                        
-                        // 更新设备调试状态为失败
-                        updateDeviceDebugStatus(false, false, "FAILED", response.message)
-                    }
-                    
-                    // 刷新设备信息以获取最新的服务器状态
-                    appViewModel.deviceManager.getDeviceRepository()?.getAndSyncCurrentDevice()
-                }
-                
+                // 请服务器检查设备调试权限、安装app等情况
+               appViewModel.deviceManager.checkLocalDeviceWithServer()
             } catch (e: Exception) {
-                Log.e(TAG, "Error during debug permissions check: ${e.message}", e)
-                withContext(Dispatchers.Main) {
-                    // 更新设备调试状态为异常
-                    updateDeviceDebugStatus(false, false, "FAILED", "检查异常: ${e.message}")
-                    
-                    // 即使出错也尝试刷新设备信息
-                    appViewModel.deviceManager.getDeviceRepository()?.getAndSyncCurrentDevice()
-                }
+                Log.e(TAG, "Error during device check: ${e.message}", e)
             }
         }
     }
-    
-    /**
-     * 更新设备调试状态
-     */
-    private fun updateDeviceDebugStatus(usbEnabled: Boolean, wifiEnabled: Boolean, 
-                                       debugCheckStatus: String = "UNKNOWN", debugCheckMessage: String? = null) {
-        // 找到设备项目并更新调试状态
-        val deviceItemIndex = dashboardItems.indexOfFirst { it is DashboardItem.ItemDevice }
-        if (deviceItemIndex != -1) {
-            val deviceItem = dashboardItems[deviceItemIndex] as DashboardItem.ItemDevice
-            val currentTime = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                .format(java.util.Date())
-            
-            dashboardItems[deviceItemIndex] = deviceItem.copy(
-                usbDebugEnabled = usbEnabled,
-                wifiDebugEnabled = wifiEnabled,
-                debugCheckStatus = debugCheckStatus,
-                debugCheckMessage = debugCheckMessage,
-                updatedAt = currentTime
-            )
-            dashboardAdapter?.notifyItemChanged(deviceItemIndex)
-        }
-        
-        // 调用DeviceRepository.getOrUpdateCurrentDevice()同步服务端设备信息
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val deviceRepository = appViewModel.deviceManager.getDeviceRepository()
-                if (deviceRepository != null) {
-                    // 调用getOrUpdateCurrentDevice()会触发updateCurrentDevice()
-                    // 这会从服务端获取最新的设备信息并更新本地数据库
-                    val deviceLiveData = deviceRepository.getAndSyncCurrentDevice()
-                    Log.d(TAG, "已触发设备信息同步，等待服务端最新数据")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "同步设备信息失败: ${e.message}", e)
-            }
-        }
-    }
-    
+
     private fun updateUI() {
         // Clear existing items
         dashboardItems.clear()
