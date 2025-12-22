@@ -73,39 +73,16 @@ class ServerRepository private constructor(application: Application) {
     /**
      * 插入或更新服务器
      */
-    suspend fun insertOrUpdateServer(apiEndpoint: String, name: String, platform: String? = null): String {
+    suspend fun insertOrUpdateServer(se: ServerEntity): String {
         return withContext(Dispatchers.IO) {
             try {
-                // 从API端点中提取IP和端口
-                val urlParts = apiEndpoint.replace("http://", "").replace("https://", "").split("/")
-                val hostPort = urlParts.getOrNull(0) ?: return@withContext "无效的API端点"
-                val hostParts = hostPort.split(":")
-                val ip = hostParts.getOrNull(0) ?: return@withContext "无效的API端点"
-                val port = hostParts.getOrNull(1)?.toIntOrNull() ?: return@withContext "无效的API端点"
+                Log.d("ServerRepository", "开始插入或更新服务器: ${se.name} (${se.ip}:${se.port})")
                 
-                // 创建服务器实体
-                val serverEntity = ServerEntity(
-                    ip = ip,
-                    port = port,
-                    name = name,
-                    platform = platform,
-                    isConnected = false
-                )
-                
-                // 检查服务器是否已存在
-                val existingServer = serverProvider.getServerByKey(ip, port)
-                
-                if (existingServer != null) {
-                    // 更新现有服务器
-                    serverProvider.updateServer(serverEntity)
-                    Log.d("ServerRepository", "服务器已更新: ${serverEntity.name}")
-                    return@withContext "服务器已更新: ${serverEntity.name}"
-                } else {
-                    // 插入新服务器
-                    serverProvider.insertOrUpdateServer(serverEntity)
-                    Log.d("ServerRepository", "新服务器已添加: ${serverEntity.name}")
-                    return@withContext "新服务器已添加: ${serverEntity.name}"
-                }
+                // 始终使用 insertOrUpdateServer 方法，确保 updatedAt 字段正确更新
+                // 这样可以确保 LiveData 能够正确触发更新
+                val result = serverProvider.insertOrUpdateServer(se)
+                Log.d("ServerRepository", "服务器已更新: ${se.name}, 结果: $result")
+                return@withContext "服务器已更新: ${se.name}"
             } catch (e: Exception) {
                 Log.e("ServerRepository", "插入或更新服务器失败: ${e.message}", e)
                 throw e

@@ -60,25 +60,24 @@ class Device(BaseModel):
     serialno = CharField(primary_key=True)  # 设备序列号，与adb devices和Appium保持一致
     udid = CharField(null=True)  # 设备UDID，保留用于兼容性
     user = ForeignKeyField(User, backref='devices', null=True, on_delete='SET NULL')
-    device_name = CharField(default='Unknown Device')  # 设备名称
-    name = CharField(null=True)  # 设备名称（新字段）
+    name = CharField(default='Unknown Device',null=True)  # 设备名称
     model = CharField(null=True)  # 设备型号
     manufacturer = CharField(null=True)  # 设备制造商
-    android_version = CharField(default='Unknown')  # Android版本
+    android_version = CharField(null=True)  # Android版本
     api_level = IntegerField(null=True)  # API级别
-    platform = CharField(default='Android')  # 平台
+    platform = CharField(default='Android',null=True)  # 平台
     brand = CharField(null=True)  # 品牌
     device = CharField(null=True)  # 设备
     product = CharField(null=True)  # 产品
     ip = CharField(null=True)  # IP地址
     screen_width = IntegerField(null=True)  # 屏幕宽度
     screen_height = IntegerField(null=True)  # 屏幕高度
-    battery_level = IntegerField(default=50)  # 电池电量
+    battery_level = IntegerField(default=50,null=True)  # 电池电量
     is_online = BooleanField(default=False)  # 是否在线
-    connection_type = CharField(default='network')  # 连接类型
-    usb_debug_enabled = BooleanField(default=False)  # USB调试是否开启
-    wifi_debug_enabled = BooleanField(default=False)  # WiFi调试是否开启
-    check_status = CharField(default='UNKNOWN')  # 设备检查状态：UNKNOWN, SUCCESS, FAILED
+    connection_type = CharField(default='network',null=True)  # 连接类型
+    usb_debug_enabled = BooleanField(default=False,null=True)  # USB调试是否开启
+    wifi_debug_enabled = BooleanField(default=False,null=True)  # WiFi调试是否开启
+    check_status = CharField(default='UNKNOWN',null=True)  # 设备检查状态：UNKNOWN, SUCCESS, FAILED
     check_message = CharField(null=True)  # 设备检查消息
     check_time = DateTimeField(null=True)  # 设备检查时间
     apps = TextField(null=True)  # 已安装的支持应用列表，JSON格式存储

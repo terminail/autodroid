@@ -28,6 +28,12 @@ interface DeviceDao {
     fun getDeviceById(serialNo: String): LiveData<DeviceEntity?>
     
     /**
+     * 根据设备序列号同步获取设备
+     */
+    @Query("SELECT * FROM devices WHERE serialNo = :serialNo")
+    suspend fun getDeviceByIdSync(serialNo: String): DeviceEntity?
+    
+    /**
      * 根据设备序列号获取设备（LiveData）
      */
     @Query("SELECT * FROM devices WHERE serialNo = :serialNo")

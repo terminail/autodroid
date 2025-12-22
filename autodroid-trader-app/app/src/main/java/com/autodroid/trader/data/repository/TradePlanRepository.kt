@@ -285,7 +285,7 @@ class TradePlanRepository private constructor(application: Application) {
                     changePercent = "+2.34",
                     volume = "123456"
                 )
-                Log.d("TradePlanRepository", "获取到最新交易数据: $tradeData")
+                // Log.d("TradePlanRepository", "获取到最新交易数据: $tradeData")
                 return@withContext tradeData
             } catch (e: Exception) {
                 Log.e("TradePlanRepository", "获取最新交易数据失败: ${e.message}", e)

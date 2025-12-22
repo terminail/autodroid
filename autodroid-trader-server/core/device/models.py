@@ -71,7 +71,7 @@ class DeviceUpdateRequest(BaseModel):
     screen_width: Optional[int] = Field(None, description="屏幕宽度")
     screen_height: Optional[int] = Field(None, description="屏幕高度")
     # 保留原有字段以兼容其他可能的请求
-    device_name: Optional[str] = Field(None, description="设备名称")
+    name: Optional[str] = Field(None, description="设备名称")
     battery_level: Optional[int] = Field(None, description="电池电量")
     is_online: Optional[bool] = Field(None, description="是否在线")
     connection_type: Optional[str] = Field(None, description="连接类型")
@@ -86,7 +86,7 @@ class DeviceListResponse(BaseModel):
 
 class DeviceSearchRequest(BaseModel):
     """设备搜索请求模型"""
-    device_name: Optional[str] = Field(None, description="设备名称")
+    name: Optional[str] = Field(None, description="设备名称")
     android_version: Optional[str] = Field(None, description="Android版本")
     is_online: Optional[bool] = Field(None, description="是否在线")
     connection_type: Optional[str] = Field(None, description="连接类型")

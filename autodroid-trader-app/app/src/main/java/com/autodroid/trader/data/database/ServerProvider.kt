@@ -1,6 +1,7 @@
 package com.autodroid.trader.data.database
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.dao.ServerEntity
 import kotlinx.coroutines.Dispatchers
@@ -60,20 +61,26 @@ class ServerProvider private constructor(context: Context) {
      */
     suspend fun insertOrUpdateServer(server: ServerEntity): String {
         return withContext(Dispatchers.IO) {
+            Log.d("ServerProvider", "insertOrUpdateServer: 开始处理服务器 ${server.name} (${server.ip}:${server.port})")
+            
             // 检查是否已存在相同主键的服务器
             val existingServer = serverDao.getServerByKey(server.ip, server.port)
+            Log.d("ServerProvider", "insertOrUpdateServer: 现有服务器存在: ${existingServer != null}")
             
             val result: String = if (existingServer != null) {
                 // 更新现有服务器
                 val updatedServer = server.copy(updatedAt = System.currentTimeMillis())
+                Log.d("ServerProvider", "insertOrUpdateServer: 更新现有服务器，新的 updatedAt: ${updatedServer.updatedAt}")
                 serverDao.updateServer(updatedServer)
                 "${server.ip}:${server.port}"
             } else {
                 // 插入新服务器
+                Log.d("ServerProvider", "insertOrUpdateServer: 插入新服务器")
                 serverDao.insertServer(server)
                 "${server.ip}:${server.port}"
             }
             
+            Log.d("ServerProvider", "insertOrUpdateServer: 完成，结果: $result")
             return@withContext result
         }
     }

@@ -2,6 +2,7 @@
 package com.autodroid.trader.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +26,9 @@ abstract class BaseFragment : Fragment() {
      * 子类可以重写此方法来自定义ViewModel初始化逻辑
      */
     protected open fun initializeViewModel() {
+        Log.d("BaseFragment", "initializeViewModel: 开始初始化 AppViewModel")
         appViewModel = (requireActivity().application as MyApplication).getAppViewModel()
+        Log.d("BaseFragment", "initializeViewModel: AppViewModel 初始化完成")
     }
     
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

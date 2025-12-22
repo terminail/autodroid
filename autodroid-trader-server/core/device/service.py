@@ -29,7 +29,7 @@ class DeviceManager:
             DeviceInfoResponse(
                 serialno=device.serialno,
                 udid=device.udid,
-                name=device.device_name,
+                name=device.name,
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
@@ -61,7 +61,7 @@ class DeviceManager:
         return DeviceInfoResponse(
             serialno=device.serialno,
             udid=device.udid,
-            name=device_info.get('name') or device.device_name,
+            name=device_info.get('name') or device.name,
             model=device_info.get('model'),
             manufacturer=device_info.get('manufacturer'),
             android_version=device_info.get('android_version') or device.android_version,
@@ -141,18 +141,42 @@ class DeviceManager:
     def get_devices_by_user(self, user_id: str) -> List[DeviceInfoResponse]:
         """根据用户ID获取设备列表"""
         devices = self.db.get_devices_by_user(user_id)
-        return [
-            DeviceInfoResponse(
+        result = []
+        
+        for device in devices:
+            # 获取设备的应用列表
+            try:
+                device_apks = self.db.get_device_apks(device.serialno)
+                apps = [
+                    {
+                        "package_name": apk.package_name,
+                        "app_name": apk.app_name,
+                        "version": apk.version,
+                        "version_code": apk.version_code,
+                        "installed_time": apk.installed_time,
+                        "is_system": apk.is_system,
+                        "icon_path": apk.icon_path
+                    }
+                    for apk in device_apks
+                ]
+            except Exception as e:
+                import logging
+                logging.error(f"获取设备 {device.serialno} 的应用列表失败: {str(e)}")
+                apps = []
+            
+            device_info = DeviceInfoResponse(
                 serialno=device.serialno,
                 udid=device.udid,
-                name=device.device_name,
+                name=device.name,
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
                 status="online" if device.is_online else "offline",
-                apps=self._parse_device_apps(device.apps)
-            ) for device in devices
-        ]
+                apps=apps
+            )
+            result.append(device_info)
+        
+        return result
     
     def assign_device_to_user(self, serialno: str, user_id: str) -> bool:
         """将设备分配给用户"""
@@ -165,19 +189,43 @@ class DeviceManager:
     def get_all_devices(self) -> List[DeviceInfoResponse]:
         """获取所有设备列表"""
         devices = self.db.get_all_devices()
-        return [
-            DeviceInfoResponse(
+        result = []
+        
+        for device in devices:
+            # 获取设备的应用列表
+            try:
+                device_apks = self.db.get_device_apks(device.serialno)
+                apps = [
+                    {
+                        "package_name": apk.package_name,
+                        "app_name": apk.app_name,
+                        "version": apk.version,
+                        "version_code": apk.version_code,
+                        "installed_time": apk.installed_time,
+                        "is_system": apk.is_system,
+                        "icon_path": apk.icon_path
+                    }
+                    for apk in device_apks
+                ]
+            except Exception as e:
+                import logging
+                logging.error(f"获取设备 {device.serialno} 的应用列表失败: {str(e)}")
+                apps = []
+            
+            device_info = DeviceInfoResponse(
                 serialno=device.serialno,
                 udid=device.udid,
-                name=device.device_name,
+                name=device.name,
                 android_version=device.android_version,
                 ip=device.ip_address if hasattr(device, 'ip_address') else None,
                 registered_at=getattr(device, 'registered_at', None),
                 updated_at=getattr(device, 'updated_at', None),
                 status="online" if device.is_online else "offline",
-                apps=self._parse_device_apps(device.apps)
-            ) for device in devices
-        ]
+                apps=apps
+            )
+            result.append(device_info)
+        
+        return result
     
     def _parse_device_apps(self, apps_json: str) -> List[Dict[str, Any]]:
         """解析设备已安装应用的JSON字符串"""

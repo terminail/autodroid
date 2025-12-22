@@ -31,7 +31,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onAutoScanClick()
         fun onManualInputClick()
         fun onRegisterDeviceClick()
-        fun onDebugCheckClick()
+        fun onCheckDeviceClick()
     }
 
     private var listener: OnItemClickListener? = null
@@ -164,7 +164,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val deviceStatus: TextView = itemView.findViewById(R.id.device_status)
         private val deviceUpdatedAt: TextView = itemView.findViewById(R.id.device_updated_at)
         private val registerDeviceButton: Button = itemView.findViewById(R.id.btn_device_register)
-        private val debugCheckButton: Button = itemView.findViewById(R.id.btn_device_debug_check)
+        private val checkDeviceButton: Button = itemView.findViewById(R.id.btn_device_check)
         private val usbDebugStatus: TextView = itemView.findViewById(R.id.usb_debug_status)
         private val wifiDebugStatus: TextView = itemView.findViewById(R.id.wifi_debug_status)
         private val debugCheckResult: TextView = itemView.findViewById(R.id.debug_check_result)
@@ -210,8 +210,8 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 listener?.onRegisterDeviceClick()
             }
             
-            debugCheckButton.setOnClickListener {
-                listener?.onDebugCheckClick()
+            checkDeviceButton.setOnClickListener {
+                listener?.onCheckDeviceClick()
             }
         }
     }

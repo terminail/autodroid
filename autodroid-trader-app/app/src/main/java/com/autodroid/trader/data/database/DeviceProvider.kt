@@ -1,6 +1,7 @@
 package com.autodroid.trader.data.database
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.dao.DeviceEntity
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,15 @@ class DeviceProvider private constructor(context: Context) {
         return deviceDao.getDeviceById(id)
     }
 
+    /**
+     * 根据设备序列号同步获取设备
+     */
+    suspend fun getDeviceByIdSync(id: String): DeviceEntity? {
+        return withContext(Dispatchers.IO) {
+            deviceDao.getDeviceByIdSync(id)
+        }
+    }
+
 
     /**
      * 更新设备信息
@@ -36,7 +46,10 @@ class DeviceProvider private constructor(context: Context) {
     suspend fun updateDevice(device: DeviceEntity) {
         withContext(Dispatchers.IO) {
             val updatedDevice = device.copy(updatedAt = System.currentTimeMillis())
-            deviceDao.updateDevice(updatedDevice)
+            Log.d("DeviceProvider", "更新设备信息: 序列号=${updatedDevice.serialNo}, 名称=${updatedDevice.name}")
+            // 使用insertOrUpdateDevice确保设备存在或更新
+            deviceDao.insertOrUpdateDevice(updatedDevice)
+            Log.d("DeviceProvider", "设备信息更新完成: 序列号=${updatedDevice.serialNo}")
         }
     }
 

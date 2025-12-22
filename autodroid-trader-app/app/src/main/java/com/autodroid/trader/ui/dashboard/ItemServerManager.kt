@@ -5,8 +5,6 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.network.ServerInfoResponse
-import com.autodroid.trader.network.ApiClient
-import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.managers.ServerManager
 
@@ -60,8 +58,11 @@ class ItemServerManager(
      * Set up observers for server discovery status
      */
     private fun setupObservers() {
+        Log.d(TAG, "setupObservers: 开始设置观察者")
+        
         // Observe server info from AppViewModel (single source of truth)
         appViewModel.server.observe(lifecycleOwner) { serverEntity ->
+            Log.d(TAG, "AppViewModel server updated: ${serverEntity?.name}, connected: ${serverEntity?.isConnected}, platform: ${serverEntity?.platform}")
             serverEntity?.let {
                 val connected = it.isConnected
                 val hostname = it.ip
@@ -167,12 +168,12 @@ class ItemServerManager(
                     serverStatus = "CONNECTED",
                     apiEndpoint = "http://${it.ip}:${it.port}/api",
                     discoveryMethod = "自动扫描",
-                    serverName = it.serverInfo.name ?: "-",
+                    serverName = it.serverEntity.name ?: "-",
                     hostname = it.ip,
-                    platform = it.serverInfo.platform ?: "Unknown"
+                    platform = it.serverEntity.platform ?: "Unknown"
                 )
                 
-                showSuccessMessage("服务器连接成功", "已自动发现并连接到 ${it.serverInfo.name}")
+                showSuccessMessage("服务器连接成功", "已自动发现并连接到 ${it.serverEntity.name}")
             }
         }
     }
@@ -190,20 +191,7 @@ class ItemServerManager(
         
         Toast.makeText(context, message, duration).show()
     }
-    
-    /**
-     * Show loading indicator in the UI
-     */
-    private fun showLoadingIndicator(message: String) {
-        updateItem(
-            status = "$message...",
-            serverStatus = "LOADING"
-        )
-        
-        // Also show a brief toast for immediate feedback
-        showDetailedToast("正在处理", message, Toast.LENGTH_SHORT)
-    }
-    
+
     /**
      * Show error message with detailed information
      */
@@ -271,7 +259,7 @@ class ItemServerManager(
     /**
      * Handle camera permission result for QR code scanning
      */
-    fun handleCameraPermissionResult(isGranted: Boolean) {
+    fun processCameraPermissionResult(isGranted: Boolean) {
         if (isGranted) {
             // Permission granted, start QR code scanner
             startQRCodeScanner()
@@ -284,7 +272,7 @@ class ItemServerManager(
     /**
      * Handle QR code scan result
      */
-    fun handleQrCodeScanResult(result: androidx.activity.result.ActivityResult) {
+    fun processQrCodeScanResult(result: androidx.activity.result.ActivityResult) {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val data = result.data
             Log.d(TAG, "QR code scan result received")
@@ -321,7 +309,9 @@ class ItemServerManager(
                 val apiEndpoint = "http://${serverInfo.ip}:${serverInfo.port}/api"
                 
                 // Save server information and connect
-                saveAndConnectToServer(apiEndpoint, serverInfo.name, serverInfo.platform, serverInfo.ip, serverInfo.port)
+                CoroutineScope(Dispatchers.IO).launch {
+                    serverManager.verifyAndSyncServer(serverInfo.ip, port = serverInfo.port)
+                }
             } else {
                 showErrorMessage("无效的二维码", "二维码中缺少IP地址或端口信息")
             }
@@ -330,57 +320,7 @@ class ItemServerManager(
             showErrorMessage("二维码解析失败", "无法解析二维码内容，请确保二维码格式正确")
         }
     }
-    
-    /**
-     * Save server information and connect to it
-     */
-    private fun saveAndConnectToServer(apiEndpoint: String, serverName: String, platform: String, ip: String, port: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Show loading indicator
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showLoadingIndicator("正在连接到服务器")
-                }
-                
-                // First, get server information from the /api/server endpoint
-                val apiClient = ApiClient.getInstance()
-                val serverInfoResponse = apiClient.getServerInfo(apiEndpoint)
-                
-                // Create ServerEntity with full server information
-                val serverEntity = ServerEntity(
-                    ip = ip,
-                    port = port,
-                    name = serverName,
-                    platform = platform,
-                    services = serverInfoResponse.services,
-                    capabilities = serverInfoResponse.capabilities,
-                    isConnected = true,
-                    discoveryType = "QRCode"
-                )
-                
-                // Insert or update server in repository
-                val result = serverRepository.insertOrUpdateServer(
-                    serverEntity.apiEndpoint(), 
-                    serverEntity.name ?: "未知服务器", 
-                    serverEntity.platform ?: "未知"
-                )
-                
-                // Update connection status
-                serverRepository.updateConnectionStatus(serverEntity.apiEndpoint(), true)
-                
-                // Show success message with server details
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showSuccessMessage("服务器连接成功", "已连接到 ${serverInfoResponse.name} (${serverInfoResponse.ip})")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to save and connect to server: ${e.message}", e)
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showErrorMessage("服务器连接失败", e.message)
-                }
-            }
-        }
-    }
-    
+
     /**
      * Start QR code scanner activity
      */
@@ -474,13 +414,6 @@ class ItemServerManager(
      * Handle manual set button click
      */
     fun handleManualSetButtonClick() {
-        showAddServerDialog()
-    }
-    
-    /**
-     * Show add server dialog
-     */
-    private fun showAddServerDialog() {
         // Create a layout for IP and port input
         val layout = android.widget.LinearLayout(context)
         layout.orientation = android.widget.LinearLayout.VERTICAL
@@ -489,11 +422,13 @@ class ItemServerManager(
         val ipInput = android.widget.EditText(context)
         ipInput.hint = "服务器IP地址"
         ipInput.inputType = android.text.InputType.TYPE_CLASS_PHONE
+        ipInput.setText("192.168.1.59")
         layout.addView(ipInput)
         
         val portInput = android.widget.EditText(context)
         portInput.hint = "端口号 (默认: 8004)"
         portInput.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        portInput.setText("8004")
         layout.addView(portInput)
         
         androidx.appcompat.app.AlertDialog.Builder(context)
@@ -507,7 +442,9 @@ class ItemServerManager(
                 
                 if (ip.isNotEmpty() && port != null && port > 0 && port < 65536) {
                     // Validate and save server
-                    validateAndSaveServer(ip, port)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        serverManager.verifyAndSyncServer(ip, port)
+                    }
                 } else {
                     showErrorMessage("无效输入", "请输入有效的IP地址和端口号")
                 }
@@ -515,185 +452,7 @@ class ItemServerManager(
             .setNegativeButton("取消", null)
             .show()
     }
-    
-    /**
-     * Validate and save server information
-     */
-    private fun validateAndSaveServer(ip: String, port: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Show loading indicator
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showLoadingIndicator("正在验证服务器")
-                }
-                
-                // Create API endpoint from IP and port
-                val apiEndpoint = "http://${ip}:${port}/api"
-                
-                // Validate server by making a test request
-                val isValid = validateServerEndpoint(apiEndpoint)
-                
-                if (isValid) {
-                    // Get server information from the server
-                    val apiClient = ApiClient.getInstance()
-                    val serverInfoResponse = apiClient.getServerInfo(apiEndpoint)
-                    
-                    // Create server entity with full server information
-                    val serverEntity = ServerEntity(
-                        ip = serverInfoResponse.ip,
-                        port = serverInfoResponse.port,
-                        name = serverInfoResponse.name,
-                        platform = serverInfoResponse.platform,
-                        services = serverInfoResponse.services,
-                        capabilities = serverInfoResponse.capabilities,
-                        isConnected = true,
-                        lastConnectedTime = System.currentTimeMillis(),
-                        discoveryType = "manual"
-                    )
-                    
-                    // Insert or update server in repository
-                    serverRepository.insertOrUpdateServer(
-                        serverEntity.apiEndpoint(), 
-                        serverEntity.name ?: "未知服务器", 
-                        serverEntity.platform ?: "未知"
-                    )
-                    
-                    // Show success message
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        showSuccessMessage("服务器添加成功", "已添加并连接到 ${serverEntity.name} (${serverEntity.ip})")
-                    }
-                } else {
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        showErrorMessage("服务器验证失败", "无法连接到指定的服务器")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to validate and save server: ${e.message}", e)
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    showErrorMessage("服务器添加失败", e.message)
-                }
-            }
-        }
-    }
-    
-    /**
-     * Validate server endpoint by making a test request
-     */
-    private suspend fun validateServerEndpoint(apiEndpoint: String): Boolean {
-        return try {
-            // 使用 ApiClient 验证服务器端点
-            val apiClient = ApiClient.getInstance()
-            
-            // 调用 getServerInfo() 获取服务器信息
-            val serverInfo = apiClient.getServerInfo(apiEndpoint)
-            
-            // 如果能获取到服务器信息，说明端点有效
-            serverInfo != null
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to validate server endpoint: ${e.message}", e)
-            false
-        }
-    }
-    
-    /**
-     * Show server management dialog
-     */
-    private fun showServerManagementDialog() {
-        val options = arrayOf("添加新服务器", "刷新服务器列表")
-        
-        androidx.appcompat.app.AlertDialog.Builder(context)
-            .setTitle("服务器管理")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> showAddServerDialog()
-                    1 -> {
-                        // Note: Server refresh management has been moved to AppViewModel
-                        // appViewModel.refreshSavedServers()
-                        showDetailedToast("服务器列表已刷新", "", Toast.LENGTH_SHORT)
-                    }
-                }
-            }
-            .show()
-    }
-    
-    /**
-     * Disconnect from current server
-     */
-    fun disconnectFromServer() {
-        // Note: Server disconnection management is handled by updating connection status
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // 断开所有服务器的连接状态
-                // serverRepository.getAllServers().value?.forEach { serverEntity ->
-                    // Server info is automatically updated when getCurrentServer() is called
-                        // No need to manually update server info here
-                // }
-                showDetailedToast("已断开服务器连接", "", Toast.LENGTH_SHORT)
-            } catch (e: Exception) {
-                Log.e("ItemServerManager", "Error disconnecting from server: ${e.message}", e)
-            }
-        }
-    }
-    
-    /**
-     * Handle server management button click
-     */
-    fun onServerManagementButtonClick() {
-        showServerManagementDialog()
-    }
-    
-    /**
-     * Handle add server button click
-     */
-    fun onAddServerButtonClick() {
-        showAddServerDialog()
-    }
-    
-    /**
-     * Handle disconnect button click
-     */
-    fun onDisconnectButtonClick() {
-        if (isServerConnected()) {
-            disconnectFromServer()
-        }
-    }
-    
-    /**
-     * Get current server info
-     */
-    fun getCurrentServer(): ServerEntity? {
-        // Note: Server info management has been moved to AppViewModel
-        return appViewModel.server.value
-    }
-    
-    /**
-     * Update server status in UI
-     */
-    private fun updateServerStatusUI(server: ServerEntity, status: String) {
-        val apiEndpoint = "http://${server.ip}:${server.port}"
-        updateItem(
-            status = status,
-            serverStatus = if (server.isConnected) "CONNECTED" else "DISCONNECTED",
-            apiEndpoint = apiEndpoint,
-            discoveryMethod = server.discoveryType ?: "Unknown"
-        )
-    }
-    
-    /**
-     * Check if connected to server
-     */
-    fun isServerConnected(): Boolean {
-        // Note: Server info management has been moved to AppViewModel
-        return appViewModel.server.value?.isConnected == true
-    }
-    
-    /**
-     * Get current server connection method
-     */
-    fun getServerConnectionMethod(): String {
-        return serverConnectionMethod
-    }
-    
+
     /**
      * Refresh the server connection information
      */
@@ -716,47 +475,9 @@ class ItemServerManager(
         
         // Reinitialize the server connection item with current data
         initialize()
-        
-        // Force immediate UI update with current server state
-        forceUpdateWithCurrentState()
-    }
-    
-    /**
-     * Force immediate update with current server state
-     */
-    private fun forceUpdateWithCurrentState() {
-        // Note: Discovery status management has been moved to AppViewModel
-        // Get server information from AppViewModel (single source of truth)
-        val currentServer = appViewModel.server.value
-        
-        if (currentServer != null) {
-            val apiEndpoint = "http://${currentServer.ip}:${currentServer.port}"
-            // Server is connected or discovered, update UI immediately
-            updateItem(
-                status = when {
-                    currentServer.isConnected -> "Connected via ${currentServer.discoveryType}"
-                    currentServer.discoveryType == "qrcode" -> "QR Code Scanned"
-                    else -> "Server Found"
-                },
-                serverStatus = if (currentServer.isConnected) "CONNECTED" else "DISCOVERED",
-                apiEndpoint = apiEndpoint,
-                discoveryMethod = currentServer.discoveryType,
 
-                serverName = currentServer.name ?: "Autodroid Server",
-                hostname = currentServer.ip,
-                platform = currentServer.platform ?: "-"
-            )
-        } else {
-            // No server info available, show disconnected state
-            updateItem(
-                status = "No server connected",
-                serverStatus = "DISCONNECTED",
-                apiEndpoint = "-",
-                discoveryMethod = "None"
-            )
-        }
     }
-    
+
     /**
      * Handle server connection item update
      */

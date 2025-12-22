@@ -3,14 +3,12 @@ package com.autodroid.trader.managers
 
 import android.content.Context
 import android.os.Build
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.WindowManager
 import androidx.annotation.RequiresPermission
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.data.repository.DeviceRepository
-import com.autodroid.trader.utils.NetworkUtils
+import java.io.File
 
 class DeviceManager(private val context: Context?, private val appViewModel: AppViewModel) {
     private var deviceRepository: DeviceRepository? = null
@@ -21,14 +19,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     fun setDeviceRepository(repository: DeviceRepository) {
         this.deviceRepository = repository
     }
-    
-    /**
-     * 获取设备仓库
-     */
-    fun getDeviceRepository(): DeviceRepository? {
-        return this.deviceRepository
-    }
-    
+
     /**
      * 获取设备UDID (唯一标识符)
      * 注意：此方法现在主要作为备用标识符，主标识符为设备序列号
@@ -75,15 +66,35 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
             val serialProperties = listOf(
                 "ro.serialno",      // 最常见的序列号属性
                 "sys.serialnumber", // 备用序列号属性
-                "ro.boot.serialno"  // 启动时的序列号属性
+                "ro.boot.serialno",  // 启动时的序列号属性
+                "persist.sys.serialno", // 持久化序列号属性
+                "ro.product.serial", // 产品序列号属性
+                "gsm.device.id",    // GSM设备ID
+                "gsm.serial.id",    // GSM序列号
+                "ril.serialnumber"  // RIL序列号
             )
             
             for (prop in serialProperties) {
                 val serial = getSystemProperty(prop)
-                if (!serial.isNullOrEmpty() && serial != "unknown") {
+                if (!serial.isNullOrEmpty() && serial != "unknown" && serial.length > 5) {
                     Log.d(TAG, "通过系统属性 $prop 获取到序列号: $serial")
                     return serial
                 }
+            }
+            
+            // 如果系统属性无法获取序列号，尝试通过读取/proc/cmdline获取
+            try {
+                val cmdline = File("/proc/cmdline").readText()
+                val serialMatch = Regex("androidboot.serialno=([^\\s]+)").find(cmdline)
+                if (serialMatch != null) {
+                    val serial = serialMatch.groupValues[1]
+                    if (serial.isNotEmpty() && serial.length > 5) {
+                        Log.d(TAG, "通过/proc/cmdline获取到序列号: $serial")
+                        return serial
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "读取/proc/cmdline失败: ${e.message}")
             }
             
             Log.d(TAG, "无法通过系统属性获取序列号")
@@ -96,12 +107,30 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     
     /**
      * 获取系统属性
-     * 注意：此方法使用反射访问内部API，可能不适用于所有设备或Android版本
-     * 已包含多种错误处理和回退机制
+     * 优先使用 Runtime.getRuntime().exec() 执行 getprop 命令
+     * 如果失败，则使用反射访问内部API
      */
     private fun getSystemProperty(property: String): String? {
+        // 首先尝试通过执行 getprop 命令获取属性
+        try {
+            val process = Runtime.getRuntime().exec("getprop $property")
+            val inputStream = process.inputStream
+            val reader = inputStream.bufferedReader()
+            val value = reader.readLine()
+            reader.close()
+            inputStream.close()
+            process.waitFor()
+            
+            if (!value.isNullOrEmpty() && value != "unknown") {
+                Log.d(TAG, "通过getprop命令获取系统属性 $property: $value")
+                return value
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "通过getprop命令获取系统属性 $property 失败: ${e.message}")
+        }
+        
+        // 如果 getprop 命令失败，尝试使用反射
         return try {
-            // 尝试使用反射调用 SystemProperties.get
             val systemProperties = Class.forName("android.os.SystemProperties")
             val get = systemProperties.getMethod("get", String::class.java)
             val result = get.invoke(null, property) as? String
@@ -111,7 +140,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
                 Log.w(TAG, "系统属性 $property 返回空值或unknown")
                 null
             } else {
-                Log.d(TAG, "成功获取系统属性 $property: $result")
+                Log.d(TAG, "通过反射获取系统属性 $property: $result")
                 result
             }
         } catch (e: ClassNotFoundException) {
@@ -129,7 +158,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     /**
      * 获取本地设备信息
      */
-    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+    @RequiresPermission("android.permission.READ_PHONE_STATE")
     private fun getLocalDevice(): DeviceEntity {
         Log.d(TAG, "getLocalDevice: 开始获取本地设备信息")
         
@@ -139,58 +168,21 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         // 获取设备UDID作为备用标识符
         val udid = getUdid()
         
+        // 获取设备名称
+        val deviceName = getDeviceName()
+        
         Log.d(TAG, "getLocalDevice: 设备序列号 = $serialNo")
         Log.d(TAG, "getLocalDevice: 设备UDID = $udid")
-        
-        // 获取设备基本信息
-        val deviceName = Build.MODEL
-        val androidVersion = Build.VERSION.RELEASE
-        val apiLevel = Build.VERSION.SDK_INT
-        val localIp = NetworkUtils.getLocalIpAddress() ?: "Unknown"
-        
-        // 获取屏幕尺寸
-        val screenWidth: Int
-        val screenHeight: Int
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // 使用新的API (Android 11+)
-            val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
-            val bounds = windowManager?.currentWindowMetrics?.bounds
-            screenWidth = bounds?.width() ?: 0
-            screenHeight = bounds?.height() ?: 0
-        } else {
-            // 使用已弃用的API (Android 10及以下)
-            @Suppress("DEPRECATION")
-            val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
-            val displayMetrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-            screenWidth = displayMetrics.widthPixels
-            screenHeight = displayMetrics.heightPixels
-        }
-        
-        Log.d(TAG, "getLocalDevice: 设备名称 = $deviceName, Android版本 = $androidVersion, API级别 = $apiLevel, 本地IP = $localIp")
-        Log.d(TAG, "getLocalDevice: 屏幕尺寸 = ${screenWidth}x${screenHeight}")
-        
+        Log.d(TAG, "getLocalDevice: 设备名称 = $deviceName")
+
         // 创建设备信息对象
-        val device = DeviceEntity.detailed(
+        val device = DeviceEntity(
             serialNo = serialNo ?: "unknown_serial",
             udid = udid,
-            ip = localIp,
             name = deviceName,
-            model = Build.MODEL,
-            manufacturer = Build.MANUFACTURER,
-            androidVersion = androidVersion,
-            apiLevel = apiLevel,
-            platform = "Android",
-            brand = Build.BRAND,
-            device = Build.DEVICE,
-            product = Build.PRODUCT,
-            screenWidth = screenWidth,
-            screenHeight = screenHeight
         )
         
-        Log.d(TAG, "getLocalDevice: 设备信息创建完成，序列号 = ${device.serialNo}, UDID = ${device.udid}")
+        Log.d(TAG, "getLocalDevice: 设备信息创建完成，序列号 = ${device.serialNo}, UDID = ${device.udid}, 名称 = ${device.name}")
         return device
     }
 
@@ -205,44 +197,95 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         Log.e(TAG, "获取设备UDID时出错: ${e.message}", e)
         "unknown_udid"
     }
-
-    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
-    private fun getSerialNo(): String? = try {
-        // 尝试多种方式获取设备序列号
-        when {
-            // 1. 优先使用系统属性获取序列号 (不需要特殊权限)
-            getSerialFromSystemProperty()?.isNotEmpty() == true -> {
-                Log.d(TAG, "通过系统属性获取设备序列号")
-                getSerialFromSystemProperty()
-            }
-            // 2. 尝试使用 Build.getSerial() (需要 READ_PRIVILEGED_PHONE_STATE 权限)
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && // 只在Android 10以下尝试
-                    Build.getSerial() != null &&
-                    Build.getSerial() != "unknown" -> {
-                Log.d(TAG, "使用 Build.getSerial() 获取设备序列号")
-                Build.getSerial()
-            }
-            // 3. 最后使用组合UDID作为序列号
-            else -> {
-                Log.d(TAG, "使用组合UDID作为设备序列号")
-                if (context != null) {
-                    getDeviceUDID(context)
-                } else {
-                    "unknown_device_id"
+    
+    /**
+     * 获取设备名称
+     * 优先使用蓝牙名称，如果没有则使用设备型号
+     */
+    private fun getDeviceName(): String {
+        return try {
+            // 尝试获取蓝牙名称
+            if (context != null) {
+                val bluetoothAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+                if (bluetoothAdapter != null) {
+                    val name = bluetoothAdapter.name
+                    if (!name.isNullOrEmpty()) {
+                        Log.d(TAG, "使用蓝牙名称作为设备名称: $name")
+                        return name
+                    }
                 }
+                
+                // 如果没有蓝牙名称，使用设备型号
+                val model = "${Build.MANUFACTURER} ${Build.MODEL}"
+                Log.d(TAG, "使用设备型号作为设备名称: $model")
+                return model
+            } else {
+                "Unknown Device"
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "获取设备名称时出错: ${e.message}", e)
+            "Unknown Device"
         }
-    } catch (e: Exception) {
-        Log.e(TAG, "获取设备序列号时出错: ${e.message}", e)
-        if (context != null) {
-            getDeviceUDID(context)
-        } else {
+    }
+
+    @RequiresPermission("android.permission.READ_PHONE_STATE")
+    private fun getSerialNo(): String? {
+        return try {
+            // 1. 优先使用系统属性获取序列号 (不需要特殊权限)
+            val systemSerial = getSerialFromSystemProperty()
+            if (!systemSerial.isNullOrEmpty()) {
+                Log.d(TAG, "通过系统属性获取设备序列号: $systemSerial")
+                return systemSerial
+            }
+            
+            // 2. 尝试使用 Build.getSerial() (需要 READ_PHONE_STATE 权限)
+            try {
+                val serial = Build.getSerial()
+                if (serial != null && serial != "unknown") {
+                    Log.d(TAG, "使用 Build.getSerial() 获取设备序列号: $serial")
+                    return serial
+                }
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Build.getSerial() 需要READ_PHONE_STATE权限: ${e.message}")
+            } catch (e: Exception) {
+                Log.w(TAG, "Build.getSerial() 失败: ${e.message}")
+            }
+            
+            // 3. 尝试使用 ANDROID_ID 作为序列号
+            if (context != null) {
+                try {
+                    val androidId = android.provider.Settings.Secure.getString(
+                        context.contentResolver,
+                        android.provider.Settings.Secure.ANDROID_ID
+                    )
+                    if (!androidId.isNullOrEmpty() && androidId != "9774d56d682e549c") {
+                        Log.d(TAG, "使用 ANDROID_ID 作为设备序列号: $androidId")
+                        return androidId
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "获取 ANDROID_ID 失败: ${e.message}")
+                }
+                
+                // 4. 如果以上都失败，使用组合UDID作为序列号
+                val udid = getDeviceUDID(context)
+                Log.d(TAG, "使用组合UDID作为设备序列号: $udid")
+                return udid
+            }
+            
+            // 5. 最后的备选方案
             "unknown_device_id"
+        } catch (e: Exception) {
+            Log.e(TAG, "获取设备序列号时出错: ${e.message}", e)
+            if (context != null) {
+                getDeviceUDID(context)
+            } else {
+                "unknown_device_id"
+            }
         }
     }
 
     val device: DeviceEntity
-        @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+        @RequiresPermission("android.permission.READ_PHONE_STATE")
         get() = getLocalDevice()
 
     
@@ -250,7 +293,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
      * 向服务器注册设备
      * @return 注册后的设备实体信息
      */
-    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+    @RequiresPermission("android.permission.READ_PHONE_STATE")
     suspend fun registerLocalDeviceWithServer(): DeviceEntity {
         Log.d(TAG, "registerLocalDeviceWithServer: 开始注册本地设备到服务器")
         
@@ -268,8 +311,9 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         
         // 使用DeviceRepository向远程服务器注册设备
         // registerDevice方法会处理API调用和本地数据库同步，并返回更新后的DeviceEntity
-        val updatedDevice = deviceRepository?.registerDevice(localDevice)
-            ?: throw Exception("设备仓库未初始化")
+        Log.d("DeviceManager","deviceRepository=${deviceRepository}")
+        val updatedDevice = deviceRepository!!.registerDevice(localDevice)
+            ?: throw Exception("设备注册失败，无法获取注册后的设备信息")
             
         Log.d(TAG, "registerLocalDeviceWithServer: 设备注册完成，设备信息已更新")
         return updatedDevice
@@ -280,7 +324,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
      * 请求服务器检查设备调试权限、安装支持的应用等情况
      * @return 服务器检查后的设备实体信息
      */
-    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+    @RequiresPermission("android.permission.READ_PHONE_STATE")
     suspend fun checkLocalDeviceWithServer(): DeviceEntity {
         Log.d(TAG, "checkLocalDeviceWithServer: 开始请求服务器检查设备状态")
         

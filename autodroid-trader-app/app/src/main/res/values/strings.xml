@@ -99,6 +99,6 @@
     <string name="server_discovery_method">Discovery Method:</string>
     <string name="server_discovery_status">Server discovery progress information</string>
     <string name="text_device_register">Register Device</string>
-    <string name="text_device_debug_check">Check Debug</string>
+    <string name="text_device_check">Check Debug</string>
     <string name="text_device_info">Device Information</string>
 </resources>

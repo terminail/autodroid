@@ -27,17 +27,34 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("MyApplication", "onCreate: 应用程序启动")
         // Load configuration when application starts
         ConfigManager.loadConfig(this)
-
+        
+        // 确保AppViewModel在应用启动时就完全初始化
+        Log.d("MyApplication", "onCreate: 开始初始化 AppViewModel")
+        val appViewModel = getAppViewModel()
+        if (!appViewModel.isInitialized()) {
+            Log.d("MyApplication", "onCreate: AppViewModel 未初始化，开始初始化")
+            appViewModel.initialize(this)
+            Log.d("MyApplication", "onCreate: AppViewModel 初始化完成")
+        } else {
+            Log.d("MyApplication", "onCreate: AppViewModel 已初始化")
+        }
+        Log.d("MyApplication", "onCreate: 应用程序启动完成")
     }
 
     // Helper method to get AppViewModel instance
     fun getAppViewModel(): AppViewModel {
+        Log.d("MyApplication", "getAppViewModel: 获取 AppViewModel 实例")
         val appViewModel = AppViewModel.getInstance(this)
         // Ensure AppViewModel is properly initialized
         if (!appViewModel.isInitialized()) {
+            Log.d("MyApplication", "getAppViewModel: AppViewModel 未初始化，开始初始化")
             appViewModel.initialize(this)
+            Log.d("MyApplication", "getAppViewModel: AppViewModel 初始化完成")
+        } else {
+            Log.d("MyApplication", "getAppViewModel: AppViewModel 已初始化")
         }
         return appViewModel
     }
@@ -49,9 +66,11 @@ class MyApplication : Application() {
     }
 
     fun getApiClient(): ApiClient? {
-        return if (!apiEndpoint.isNullOrEmpty()) {
-            ApiClient.getInstance().setApiEndpoint(apiEndpoint!!)
-        } else
+        Log.i("MyApplication", "getApiClient apiEndpoint=${apiEndpoint}")
+        return if (apiEndpoint.isNullOrEmpty()) {
             null
+        } else{
+            ApiClient.getInstance().setApiEndpoint(apiEndpoint!!)
+        }
     }
 }

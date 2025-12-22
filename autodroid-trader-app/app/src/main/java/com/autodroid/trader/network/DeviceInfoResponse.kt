@@ -6,9 +6,19 @@ import com.google.gson.annotations.SerializedName
  * Data class representing app information
  */
 data class AppInfo(
-    val app_package: String,
-    val name: String,
-    val app_activity: String
+    @SerializedName("package_name")
+    val packageName: String,
+    @SerializedName("app_name")
+    val appName: String,
+    val version: String? = null,
+    @SerializedName("version_code")
+    val versionCode: Int? = null,
+    @SerializedName("installed_time")
+    val installedTime: Long? = null,
+    @SerializedName("is_system")
+    val isSystem: Boolean? = false,
+    @SerializedName("icon_path")
+    val iconPath: String? = null
 )
 
 /**

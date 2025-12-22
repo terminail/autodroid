@@ -308,12 +308,12 @@
                 android:visibility="visible" />
 
             <Button
-                android:id="@+id/btn_device_debug_check"
+                android:id="@+id/btn_device_check"
                 style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/text_device_debug_check"
+                android:text="@string/text_device_check"
                 android:background="@drawable/button_background"
                 android:textColor="@android:color/white"
                 android:layout_marginStart="4dp"

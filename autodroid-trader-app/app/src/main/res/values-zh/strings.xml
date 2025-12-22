@@ -97,7 +97,7 @@
     <string name="server_discovery_status">
         自动根据当前连接Wifi地址扫描局域网IP，从端口8000~8080访问API：http://ip:port/api/status</string>
     <string name="text_device_register">注册设备</string>
-    <string name="text_device_debug_check">检测设置</string>
+    <string name="text_device_check">检测设备</string>
     <string name="text_device_info">本机信息</string>
 
 </resources>

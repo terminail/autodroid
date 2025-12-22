@@ -16,8 +16,7 @@ data class DeviceEntity(
     val serialNo: String, // 设备序列号，与adb devices和Appium保持一致，作为主键
     val udid: String?=null, // 备用设备标识符，用于向后兼容
     val userId: String? = null, // 对应服务器端的user_id
-    val deviceName: String = "Unknown Device", // 对应服务器端的device_name
-    val name: String? = null, // 对应服务器端的name
+    val name: String = "Unknown Device", // 对应服务器端的name
     val model: String? = null, // 对应服务器端的model
     val manufacturer: String? = null, // 对应服务器端的manufacturer
     val androidVersion: String = "Unknown", // 对应服务器端的android_version
@@ -67,7 +66,7 @@ data class DeviceEntity(
             serialNo = serialNo,
             udid = udid,
             ip = ip,
-            name = name,
+            name = name ?: "Unknown Device",
             isOnline = true,
             updatedAt = System.currentTimeMillis()
         )
@@ -156,7 +155,7 @@ data class DeviceEntity(
         screenWidth: Int? = this.screenWidth,
         screenHeight: Int? = this.screenHeight
     ): DeviceEntity = this.copy(
-        name = name,
+        name = name ?: this.name,
         model = model,
         manufacturer = manufacturer,
         androidVersion = androidVersion,

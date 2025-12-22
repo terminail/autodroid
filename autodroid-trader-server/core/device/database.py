@@ -60,11 +60,10 @@ class DeviceDatabase(BaseDatabase):
             serialno=serialno,
             defaults={
                 'udid': device_info.get('udid'),
-                'device_name': device_info.get('device_name', device_info.get('name', 'Unknown Device')),
-                'name': device_info.get('name'),
+                'name': device_info.get('name', 'Unknown Device'),
                 'model': device_info.get('model'),
                 'manufacturer': device_info.get('manufacturer'),
-                'android_version': device_info.get('android_version', 'Unknown'),
+                'android_version': device_info.get('android_version'),
                 'api_level': device_info.get('api_level'),
                 'platform': device_info.get('platform', 'Android'),
                 'brand': device_info.get('brand'),
@@ -82,11 +81,10 @@ class DeviceDatabase(BaseDatabase):
         
         # 如果不是新创建的，更新设备信息
         if not created:
-            device.device_name = device_info.get('device_name', device_info.get('name', device.device_name))
-            device.name = device_info.get('name')
+            device.name = device_info.get('name', device.name)
             device.model = device_info.get('model')
             device.manufacturer = device_info.get('manufacturer')
-            device.android_version = device_info.get('android_version', device.android_version)
+            device.android_version = device_info.get('android_version')
             device.api_level = device_info.get('api_level')
             device.platform = device_info.get('platform', device.platform)
             device.brand = device_info.get('brand')
@@ -252,7 +250,7 @@ class DeviceDatabase(BaseDatabase):
         search_pattern = f"%{query}%"
         return list(Device.select().where(
             (Device.serialno.like(search_pattern)) | 
-            (Device.device_name.like(search_pattern))
+            (Device.name.like(search_pattern))
         ))
     
     def get_devices_by_user(self, user_id: str) -> List[Device]:

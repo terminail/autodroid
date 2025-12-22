@@ -215,7 +215,7 @@ class NetworkService : Service() {
 
                 // Create JSON message
                 val deviceInfoJson = String.format(
-                    "{\"type\":\"device_info\",\"data\":{\"device_name\":\"%s\",\"android_version\":\"%s\",\"device_id\":\"%s\",\"local_ip\":\"%s\"}}",
+                    "{\"type\":\"device_info\",\"data\":{\"name\":\"%s\",\"android_version\":\"%s\",\"device_id\":\"%s\",\"local_ip\":\"%s\"}}",
                     deviceName, androidVersion, deviceId, localIp
                 )
 

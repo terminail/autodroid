@@ -51,6 +51,7 @@ class ItemDeviceManager(
      * Update device item with device information
      */
     private fun updateItemDevice(deviceEntity: DeviceEntity) {
+        Log.d(TAG, "updateItemDevice: 开始更新设备项，序列号=${deviceEntity.serialNo}, 名称=${deviceEntity.name}")
             try {
                 // 格式化更新时间
                 val updatedAt = if ((deviceEntity.updatedAt ?: 0) > 0) {
@@ -70,7 +71,7 @@ class ItemDeviceManager(
                         
                         // 提取应用名称
                         appInfos.forEach { appInfo ->
-                            appInfo.name.let { name ->
+                            appInfo.appName.let { name ->
                                 if (name.isNotEmpty()) {
                                     appNames.add(name)
                                 }
@@ -97,7 +98,9 @@ class ItemDeviceManager(
                     apps = appNames
                 )
                 
+                Log.d(TAG, "updateItemDevice: 设备项创建完成，准备调用onItemUpdate")
                 onItemUpdate(itemDevice)
+                Log.d(TAG, "updateItemDevice: onItemUpdate调用完成")
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating device item: ${e.message}")

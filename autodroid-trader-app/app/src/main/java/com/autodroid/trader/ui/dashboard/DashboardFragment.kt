@@ -66,13 +66,13 @@ class DashboardFragment : BaseFragment() {
         requestCameraPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
-            itemServerManager.handleCameraPermissionResult(isGranted)
+            itemServerManager.processCameraPermissionResult(isGranted)
         }
         
         startQRCodeScannerLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            itemServerManager.handleQrCodeScanResult(result)
+            itemServerManager.processQrCodeScanResult(result)
         }
 
         // NetworkService is now auto-started in MyApplication
@@ -81,6 +81,7 @@ class DashboardFragment : BaseFragment() {
     override fun getLayoutId(): Int = R.layout.fragment_dashboard
 
     override fun initViews(view: View) {
+        Log.d(TAG, "initViews: 开始初始化视图")
         // Initialize RecyclerView for hybrid dashboard items
         dashboardRecyclerView = view.findViewById(R.id.dashboard_recycler_view)
         
@@ -104,12 +105,14 @@ class DashboardFragment : BaseFragment() {
         }
         
         // Initialize item managers FIRST
+        Log.d(TAG, "开始初始化 itemServerManager")
         itemServerManager = ItemServerManager(
             requireContext(),
             viewLifecycleOwner,
             appViewModel,
             ::onItemServerUpdate
         )
+        Log.d(TAG, "itemServerManager 初始化完成")
         
         itemDeviceManager = ItemDeviceManager(
             requireContext(),
@@ -141,14 +144,14 @@ class DashboardFragment : BaseFragment() {
                 itemServerManager.handleManualSetButtonClick()
             }
             
-            @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+            @RequiresPermission("android.permission.READ_PHONE_STATE")
             override fun onRegisterDeviceClick() {
                 handleRegisterDeviceClick()
             }
             
-            @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
-            override fun onDebugCheckClick() {
-                handleCheckClick()
+            @RequiresPermission("android.permission.READ_PHONE_STATE")
+            override fun onCheckDeviceClick() {
+                handleCheckDeviceClick()
             }
         })
         
@@ -158,7 +161,9 @@ class DashboardFragment : BaseFragment() {
          itemServerManager.initializeQRCodeScanning(requestCameraPermissionLauncher, startQRCodeScannerLauncher)
          
          // Start item managers
-        itemServerManager.initialize()
+         Log.d(TAG, "调用 itemServerManager.initialize()")
+         itemServerManager.initialize()
+         Log.d(TAG, "itemServerManager.initialize() 调用完成")
         itemDeviceManager.initialize()
         wifiItemManager.initialize()
 
@@ -217,11 +222,11 @@ class DashboardFragment : BaseFragment() {
     /**
      * Handle device registration button click
      */
-    @androidx.annotation.RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+    @androidx.annotation.RequiresPermission("android.permission.READ_PHONE_STATE")
     private fun handleRegisterDeviceClick() {
         CoroutineScope(Dispatchers.IO).launch  {
             try {
-                // Use DeviceManager to register the device with the server
+                // AppViewModel会在应用启动时初始化，直接使用DeviceManager注册设备到服务器
                 appViewModel.deviceManager.registerLocalDeviceWithServer()
             } catch (e: Exception) {
                 Log.e(TAG, "Error during device registration: ${e.message}", e)
@@ -235,8 +240,8 @@ class DashboardFragment : BaseFragment() {
     /**
      * Handle  check button click
      */
-    @androidx.annotation.RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
-    private fun handleCheckClick() {
+    @androidx.annotation.RequiresPermission("android.permission.READ_PHONE_STATE")
+    private fun handleCheckDeviceClick() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // 请服务器检查设备调试权限、安装app等情况

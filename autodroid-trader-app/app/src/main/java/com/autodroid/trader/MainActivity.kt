@@ -110,6 +110,11 @@ class MainActivity : AppCompatActivity() {
             permissionsNeeded.add(Manifest.permission.ACCESS_WIFI_STATE)
         }
         
+        // Check phone state permission (needed for device serial number)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.READ_PHONE_STATE)
+        }
+        
         if (permissionsNeeded.isNotEmpty()) {
             requestPermissionsLauncher.launch(permissionsNeeded.toTypedArray())
             return false
