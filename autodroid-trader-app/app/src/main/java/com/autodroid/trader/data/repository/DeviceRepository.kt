@@ -117,20 +117,10 @@ class DeviceRepository private constructor(application: Application) {
                 apiClient.setApiEndpoint(apiEndpoint)
                 
                 // 创建设备注册请求
+                // 只包含必要的字段，其他属性将由服务器通过ADB获取
                 val registrationRequest = DeviceCreateRequest(
                     serialNo = deviceEntity.serialNo, // 使用序列号作为主键发送到服务器
-                    name = deviceEntity.name ?: "Unknown Device",
-                    model = deviceEntity.model,
-                    manufacturer = deviceEntity.manufacturer,
-                    android_version = deviceEntity.androidVersion,
-                    api_level = deviceEntity.apiLevel,
-                    platform = deviceEntity.platform ?: "Android",
-                    brand = deviceEntity.brand,
-                    device = deviceEntity.device,
-                    product = deviceEntity.product,
-                    ip = deviceEntity.ip,
-                    screen_width = deviceEntity.screenWidth,
-                    screen_height = deviceEntity.screenHeight
+                    name = deviceEntity.name ?: "Unknown Device"
                 )
                 
                 Log.d("DeviceRepository", "registerDevice: 设备注册请求已创建")

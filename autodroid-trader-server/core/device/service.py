@@ -6,6 +6,7 @@ from peewee import DoesNotExist
 from .database import DeviceDatabase
 from .models import DeviceInfoResponse
 from ..apk.models import ApkInfo
+from ..workscripts.adb_device import ADBDevice
 
 class DeviceManager:
     def __init__(self):
@@ -38,6 +39,22 @@ class DeviceManager:
     
     def register_device(self, device_info: Dict[str, Any]) -> DeviceInfoResponse:
         """从应用报告注册设备"""
+        serialno = device_info.get('serialno')
+        
+        # 使用ADB获取设备详细信息
+        try:
+            adb_device = ADBDevice(serialno)
+            adb_device_info = adb_device.get_device_info()
+            
+            # 将ADB获取的信息合并到device_info中
+            # ADB获取的信息优先于客户端提供的信息
+            for key, value in adb_device_info.items():
+                if key not in device_info or device_info.get(key) is None:
+                    device_info[key] = value
+        except Exception as e:
+            # 如果ADB连接失败，继续使用客户端提供的信息
+            print(f"Warning: Failed to get device info via ADB for {serialno}: {e}")
+        
         device = self.db.register_device(device_info)
         
         # 返回DeviceInfoResponse对象
