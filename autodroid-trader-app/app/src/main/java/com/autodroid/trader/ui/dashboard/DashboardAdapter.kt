@@ -156,7 +156,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class DeviceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val deviceUdid: TextView = itemView.findViewById(R.id.device_udid)
+        private val deviceSerialNo: TextView = itemView.findViewById(R.id.device_udid)
         private val userId: TextView = itemView.findViewById(R.id.user_id)
         private val deviceName: TextView = itemView.findViewById(R.id.device_name)
         private val platform: TextView = itemView.findViewById(R.id.platform)
@@ -172,7 +172,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val installedAppsText: TextView = itemView.findViewById(R.id.text_installed_apps)
 
         fun bind(item: DashboardItem.ItemDevice) {
-            deviceUdid.text = item.serialNo
+            deviceSerialNo.text = item.serialNo
             userId.text = item.userId
             deviceName.text = item.name
             platform.text = item.platform

@@ -38,7 +38,7 @@ data class WiFiConfig(
 
 data class DeviceConfig(
     val info: DeviceInfoConfig = DeviceInfoConfig(),
-    val udid: UDIDConfig = UDIDConfig()
+    val serialNo: SerialNoConfig = SerialNoConfig()
 )
 
 data class DeviceInfoConfig(
@@ -46,7 +46,7 @@ data class DeviceInfoConfig(
     val refreshInterval: Int = 60
 )
 
-data class UDIDConfig(
+data class SerialNoConfig(
     val generationMethod: String = "android_id",
     val cacheEnabled: Boolean = true
 )

@@ -4,7 +4,7 @@ package com.autodroid.trader.network
  * Data class representing device create request
  */
 data class DeviceCreateRequest(
-    val udid: String,
+    val serialNo: String,
     val name: String,
     val model: String? = null,
     val manufacturer: String? = null,

@@ -6,7 +6,7 @@ package com.autodroid.trader.network
 data class DeviceCheckResponse(
     val success: Boolean,
     val message: String,
-    val udid: String,
+    val serialNo: String,
     val usb_debug_enabled: Boolean,
     val wifi_debug_enabled: Boolean,
 

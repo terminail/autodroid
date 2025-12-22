@@ -118,7 +118,7 @@ class DeviceRepository private constructor(application: Application) {
                 
                 // 创建设备注册请求
                 val registrationRequest = DeviceCreateRequest(
-                    udid = deviceEntity.serialNo, // 使用序列号作为UDID发送到服务器
+                    serialNo = deviceEntity.serialNo, // 使用序列号作为主键发送到服务器
                     name = deviceEntity.name ?: "Unknown Device",
                     model = deviceEntity.model,
                     manufacturer = deviceEntity.manufacturer,
@@ -149,8 +149,8 @@ class DeviceRepository private constructor(application: Application) {
                     try {
                         // 尝试从响应中获取设备ID等信息更新本地设备
                         val newDevice = deviceEntity.copy(
-                            udid = response.udid ?: deviceEntity.udid,
-                            userId = response.device?.let { "user_${it.udid}" } ?: deviceEntity.userId,
+                            udid = response.serialNo ?: deviceEntity.udid,
+                            userId = response.device?.let { "user_${it.serialNo}" } ?: deviceEntity.userId,
                             name = response.device?.name ?: deviceEntity.name,
                             model = response.device?.model ?: deviceEntity.model,
                             manufacturer = response.device?.manufacturer ?: deviceEntity.manufacturer,

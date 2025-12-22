@@ -219,8 +219,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // Convenience methods for initializing encapsulated states
-    fun initializeDevice(udid: String, ip: String? = null, name: String? = null) {
-        val deviceEntity = DeviceEntity.empty().copy(udid = udid, ip = ip, name = name)
+    fun initializeDevice(serialNo: String, ip: String? = null, name: String? = null) {
+        val deviceEntity = DeviceEntity.empty().copy(serialNo = serialNo, ip = ip, name = name)
         CoroutineScope(Dispatchers.IO).launch {
             deviceRepository?.insertOrUpdateDevice(deviceEntity)
         }

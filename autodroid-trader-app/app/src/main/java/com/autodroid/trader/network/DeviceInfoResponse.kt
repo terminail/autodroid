@@ -14,7 +14,7 @@ data class AppInfo(
  * This is the type-safe response model for device API calls
  */
 data class DeviceInfoResponse(
-    val udid: String,
+    val serialNo: String,
     val name: String? = null,
     val model: String? = null,
     val manufacturer: String? = null,
@@ -71,7 +71,7 @@ data class DeviceInfoResponse(
     }
 
     override fun toString(): String {
-        return "DeviceInfoResponse(udid='$udid', name='$name', " +
+        return "DeviceInfoResponse(serialNo='$serialNo', name='$name', " +
                 "model='$model', manufacturer='$manufacturer', " +
                 "android_version='$android_version', platform='$platform', " +
                 "ip='$ip', status='$status')"
