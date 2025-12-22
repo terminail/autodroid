@@ -11,12 +11,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from workscripts.device_connection import ADBDeviceController
 
-def debug_ui_capture(device_udid):
+def debug_ui_capture(serialno):
     """调试UI捕获"""
-    print(f"连接到设备: {device_udid}")
+    print(f"连接到设备: {serialno}")
     
     # 创建设备控制器
-    device = ADBDeviceController(device_udid)
+    device = ADBDeviceController(serialno)
     
     # 连接设备
     if not device.connect():
@@ -102,5 +102,5 @@ def debug_ui_capture(device_udid):
         print(f"获取UI dump失败: {e}")
 
 if __name__ == "__main__":
-    device_udid = sys.argv[1] if len(sys.argv) > 1 else "emulator-5554"
-    debug_ui_capture(device_udid)
+    serialno = sys.argv[1] if len(sys.argv) > 1 else "emulator-5554"
+    debug_ui_capture(serialno)

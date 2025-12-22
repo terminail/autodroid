@@ -45,7 +45,7 @@ class login_test(BaseWorkScript):
     - 更简单的架构
     """
     
-    def __init__(self, workplan: Dict[str, Any] = None, device_udid: str = None, 
+    def __init__(self, workplan: Dict[str, Any] = None, serialno: str = None, 
                  test_username="15317227@qq.com", test_password="123456", 
                  use_fingerprint=False, app_package="com.autodroid.manager", 
                  app_activity="com.autodroid.manager.auth.activity.LoginActivity"):
@@ -53,7 +53,7 @@ class login_test(BaseWorkScript):
         
         Args:
             workplan: 工作计划数据
-            device_udid: 设备唯一标识符
+            serialno: 设备序列号
             test_username: 测试用户名
             test_password: 测试密码
             use_fingerprint: 是否尝试使用指纹登录
@@ -76,7 +76,7 @@ class login_test(BaseWorkScript):
                 }
             }
         
-        super().__init__(workplan, device_udid)
+        super().__init__(workplan, serialno)
         
         # 从workplan获取参数，如果没有则使用默认值
         self.test_username = self.get_workplan_param('username', test_username)
@@ -976,7 +976,7 @@ class login_test(BaseWorkScript):
             'username': self.test_username,
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'result': 'PASS' if login_success else 'FAIL',
-            'device_udid': self.device_udid,
+            'serialno': self.serialno,
             'workplan_id': self.workplan.get('id'),
             'execution_time': time.time() - self.start_time if self.start_time else 0
         }
@@ -1107,8 +1107,8 @@ class login_test(BaseWorkScript):
                         {self.app_package}
                     </div>
                     <div class="info-item">
-                        <strong>设备UDID</strong>
-                        {self.device_udid or '未指定'}
+                        <strong>设备序列号</strong>
+                        {self.serialno or '未指定'}
                     </div>
                     <div class="info-item">
                         <strong>工作计划ID</strong>

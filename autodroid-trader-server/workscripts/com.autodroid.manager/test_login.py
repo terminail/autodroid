@@ -14,7 +14,7 @@ container_path = os.path.join(os.path.dirname(__file__), '../../../autodroid-tra
 if container_path not in sys.path:
     sys.path.insert(0, container_path)
 
-def test_login_script(device_udid=None):
+def test_login_script(serialno=None):
     """测试登录脚本"""
     print("=== AutoDroid Manager 登录测试 ===")
     print(f"测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -29,7 +29,7 @@ def test_login_script(device_udid=None):
         # 创建登录测试实例
         login_tester = login_test(
             workplan=None,  # 使用默认workplan
-            device_udid=device_udid,  # 使用指定的设备UDID
+            serialno=serialno,  # 使用指定的设备序列号
             test_username="15317227@qq.com",
             test_password="123456",
             use_fingerprint=False,  # 不使用指纹登录
@@ -82,7 +82,7 @@ def test_login_script(device_udid=None):
         traceback.print_exc()
         return False
 
-def test_with_fingerprint(device_udid=None):
+def test_with_fingerprint(serialno=None):
     """测试指纹登录功能"""
     print("\n=== 指纹登录测试 ===")
     
@@ -92,7 +92,7 @@ def test_with_fingerprint(device_udid=None):
         # 创建启用指纹登录的测试实例
         login_tester = login_test(
             workplan=None,
-            device_udid=device_udid,
+            serialno=serialno,
             test_username="15317227@qq.com", 
             test_password="123456",
             use_fingerprint=True,  # 启用指纹登录
@@ -115,19 +115,19 @@ def test_with_fingerprint(device_udid=None):
 def main():
     """主函数"""
     # 检查命令行参数
-    device_udid = None
+    serialno = None
     if len(sys.argv) > 1:
-        device_udid = sys.argv[1]
-        print(f"使用设备: {device_udid}")
+        serialno = sys.argv[1]
+        print(f"使用设备: {serialno}")
     
     print("AutoDroid Manager 登录测试验证程序")
     print("=" * 60)
     
     # 测试基本登录功能
-    basic_success = test_login_script(device_udid)
+    basic_success = test_login_script(serialno)
     
     # 测试指纹登录功能
-    fingerprint_success = test_with_fingerprint(device_udid)
+    fingerprint_success = test_with_fingerprint(serialno)
     
     # 总结结果
     print("\n" + "=" * 60)

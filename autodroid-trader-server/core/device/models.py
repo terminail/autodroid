@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field
 
 class DeviceInfoResponse(BaseModel):
     """设备信息响应模型"""
-    udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
+    udid: Optional[str] = Field(None, description="设备UDID")
     name: Optional[str] = Field(None, description="设备名称")
     model: Optional[str] = Field(None, description="设备型号")
     manufacturer: Optional[str] = Field(None, description="设备制造商")
@@ -28,9 +29,9 @@ class DeviceInfoResponse(BaseModel):
     status: Optional[str] = Field(None, description="设备状态")
     usb_debug_enabled: Optional[bool] = Field(False, description="USB调试是否开启")
     wifi_debug_enabled: Optional[bool] = Field(False, description="WiFi调试是否开启")
-    debug_check_status: Optional[str] = Field("UNKNOWN", description="调试权限检查状态")
-    debug_check_message: Optional[str] = Field(None, description="调试权限检查消息")
-    debug_check_time: Optional[datetime] = Field(None, description="调试权限检查时间")
+    check_status: Optional[str] = Field("UNKNOWN", description="设备检查状态")
+    check_message: Optional[str] = Field(None, description="设备检查消息")
+    check_time: Optional[datetime] = Field(None, description="设备检查时间")
     apps: Optional[List[Dict[str, Any]]] = Field(None, description="已安装的支持应用列表")
     
     class Config:
@@ -39,7 +40,8 @@ class DeviceInfoResponse(BaseModel):
 
 class DeviceCreateRequest(BaseModel):
     """设备创建请求模型"""
-    udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
+    udid: Optional[str] = Field(None, description="设备UDID")
     name: str = Field(..., description="设备名称")
     model: Optional[str] = Field(None, description="设备型号")
     manufacturer: Optional[str] = Field(None, description="设备制造商")
@@ -95,7 +97,7 @@ class DeviceSearchRequest(BaseModel):
 
 class DeviceAssignmentRequest(BaseModel):
     """设备分配请求模型"""
-    udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
     user_id: str = Field(..., description="用户ID")
 
 
@@ -110,6 +112,7 @@ class DeviceCreateResponse(BaseModel):
     success: bool = Field(..., description="操作是否成功")
     message: str = Field(..., description="响应消息")
     device_id: Optional[str] = Field(None, description="设备ID")
+    serialno: Optional[str] = Field(None, description="设备序列号")
     udid: Optional[str] = Field(None, description="设备UDID")
     registered_at: Optional[datetime] = Field(None, description="注册时间")
     device: Optional[DeviceInfoResponse] = Field(None, description="设备信息")
@@ -154,7 +157,8 @@ class DeviceCheckResponse(BaseModel):
     """设备检查响应模型"""
     success: bool = Field(..., description="操作是否成功")
     message: str = Field(..., description="响应消息")
-    udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
+    udid: Optional[str] = Field(None, description="设备UDID")
     usb_debug_enabled: bool = Field(False, description="USB调试是否开启")
     wifi_debug_enabled: bool = Field(False, description="WiFi调试是否开启")
     installed_apps: List[Dict[str, Any]] = Field(default_factory=list, description="已安装的支持应用列表")

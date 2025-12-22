@@ -7,11 +7,13 @@ import androidx.room.PrimaryKey
  * 设备信息实体类
  * 用于Room数据库持久化存储设备信息
  * 镜像服务器端Device模型 (core/database/models.py)
+ * 使用设备序列号作为主键，与adb devices和Appium保持一致
  */
 @Entity(tableName = "devices")
 data class DeviceEntity(
     // 设备基本信息 - 与服务器端保持一致
     @PrimaryKey
+    val serialNo: String, // 设备序列号，与adb devices和Appium保持一致，作为主键
     val udid: String, // 对应服务器端的udid，设备唯一标识符
     val userId: String? = null, // 对应服务器端的user_id
     val deviceName: String = "Unknown Device", // 对应服务器端的device_name
@@ -40,9 +42,9 @@ data class DeviceEntity(
     // 调试状态
     val usbDebugEnabled: Boolean = false, // 对应服务器端的usb_debug_enabled
     val wifiDebugEnabled: Boolean = false, // 对应服务器端的wifi_debug_enabled
-    val debugCheckStatus: String = "UNKNOWN", // 对应服务器端的debug_check_status: UNKNOWN, SUCCESS, FAILED
-    val debugCheckMessage: String? = null, // 对应服务器端的debug_check_message
-    val debugCheckTime: Long? = null, // 对应服务器端的debug_check_time
+    val checkStatus: String = "UNKNOWN", // 对应服务器端的check_status: UNKNOWN, SUCCESS, FAILED
+    val checkMessage: String? = null, // 对应服务器端的check_message
+    val checkTime: Long? = null, // 对应服务器端的check_time
     
     // 已安装应用
     val apps: String? = null, // 对应服务器端的apps，JSON格式存储已安装的应用列表
@@ -56,12 +58,13 @@ data class DeviceEntity(
         /**
          * 创建空设备信息
          */
-        fun empty(): DeviceEntity = DeviceEntity(udid = "")
+        fun empty(): DeviceEntity = DeviceEntity(serialNo = "", udid = "")
         
         /**
          * 创建连接状态的设备信息
          */
-        fun connected(udid: String, ip: String, name: String? = null): DeviceEntity = DeviceEntity(
+        fun connected(serialNo: String, udid: String, ip: String, name: String? = null): DeviceEntity = DeviceEntity(
+            serialNo = serialNo,
             udid = udid,
             ip = ip,
             name = name,
@@ -73,6 +76,7 @@ data class DeviceEntity(
          * 创建详细设备信息
          */
         fun detailed(
+            serialNo: String,
             udid: String,
             ip: String,
             name: String,
@@ -87,6 +91,7 @@ data class DeviceEntity(
             screenWidth: Int? = null,
             screenHeight: Int? = null
         ): DeviceEntity = DeviceEntity(
+            serialNo = serialNo,
             udid = udid,
             ip = ip,
             name = name,
@@ -111,17 +116,17 @@ data class DeviceEntity(
     fun isAvailable(): Boolean = ip != null && isOnline
     
     /**
-     * 更新设备调试权限检查状态
+     * 更新设备检查状态
      */
-    fun updateDebugCheckStatus(
+    fun updateCheckStatus(
         status: String,
         message: String? = null,
         usbDebugEnabled: Boolean? = null,
         wifiDebugEnabled: Boolean? = null
     ): DeviceEntity = this.copy(
-        debugCheckStatus = status,
-        debugCheckMessage = message,
-        debugCheckTime = System.currentTimeMillis(),
+        checkStatus = status,
+        checkMessage = message,
+        checkTime = System.currentTimeMillis(),
         usbDebugEnabled = usbDebugEnabled ?: this.usbDebugEnabled,
         wifiDebugEnabled = wifiDebugEnabled ?: this.wifiDebugEnabled,
         updatedAt = System.currentTimeMillis()

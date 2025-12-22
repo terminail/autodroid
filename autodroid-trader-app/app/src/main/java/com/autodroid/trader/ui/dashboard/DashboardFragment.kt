@@ -241,7 +241,7 @@ class DashboardFragment : BaseFragment() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // 调用服务器API检查设备调试权限
-                val response = appViewModel.deviceManager.checkDeviceDebugPermissions()
+                val response = appViewModel.deviceManager.checkLocalDeviceWithServer()
                 
                 withContext(Dispatchers.Main) {
                     if (response.success) {
@@ -257,7 +257,7 @@ class DashboardFragment : BaseFragment() {
                     }
                     
                     // 刷新设备信息以获取最新的服务器状态
-                    appViewModel.deviceManager.getDeviceRepository()?.getOrUpdateCurrentDevice()
+                    appViewModel.deviceManager.getDeviceRepository()?.getAndSyncCurrentDevice()
                 }
                 
             } catch (e: Exception) {
@@ -267,7 +267,7 @@ class DashboardFragment : BaseFragment() {
                     updateDeviceDebugStatus(false, false, "FAILED", "检查异常: ${e.message}")
                     
                     // 即使出错也尝试刷新设备信息
-                    appViewModel.deviceManager.getDeviceRepository()?.getOrUpdateCurrentDevice()
+                    appViewModel.deviceManager.getDeviceRepository()?.getAndSyncCurrentDevice()
                 }
             }
         }
@@ -302,7 +302,7 @@ class DashboardFragment : BaseFragment() {
                 if (deviceRepository != null) {
                     // 调用getOrUpdateCurrentDevice()会触发updateCurrentDevice()
                     // 这会从服务端获取最新的设备信息并更新本地数据库
-                    val deviceLiveData = deviceRepository.getOrUpdateCurrentDevice()
+                    val deviceLiveData = deviceRepository.getAndSyncCurrentDevice()
                     Log.d(TAG, "已触发设备信息同步，等待服务端最新数据")
                 }
             } catch (e: Exception) {
@@ -332,7 +332,7 @@ class DashboardFragment : BaseFragment() {
         
         // 4. Device Information
         dashboardItems.add(DashboardItem.ItemDevice(
-            udid = "Unknown",
+            serialNo = "Unknown",
             userId = "user001",
             name = "Unknown",
             platform = "Android",

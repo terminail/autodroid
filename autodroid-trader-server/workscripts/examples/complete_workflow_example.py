@@ -72,7 +72,7 @@ def main():
             'timeout': 30,
             'retry_count': 3
         },
-        'device_udid': 'emulator-5554',  # 模拟器设备ID
+        'serialno': 'emulator-5554',  # 模拟器设备ID
         'priority': 'high',
         'tags': ['login', 'authentication', 'critical'],
         'created_at': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -81,14 +81,14 @@ def main():
     
     print(f"工作计划ID: {workplan['id']}")
     print(f"目标脚本: {workplan['workscript']}")
-    print(f"目标设备: {workplan['device_udid']}")
+    print(f"目标设备: {workplan['serialno']}")
     
     # 5. 执行脚本
     print("\n⚡ 执行登录测试脚本...")
     print("-" * 30)
     
     try:
-        result = engine.execute_script(workplan, device_udid=workplan['device_udid'])
+        result = engine.execute_script(workplan, serialno=workplan['serialno'])
         
         print(f"执行状态: {result['status']}")
         print(f"消息: {result.get('message', '无消息')}")
@@ -203,7 +203,7 @@ def test_multiple_scripts():
                 'password': f'password_{i}',
                 'timeout': 30
             },
-            'device_udid': f'emulator-555{i+4}'  # 不同的设备
+            'serialno': f'emulator-555{i+4}'  # 不同的设备
         }
         for i in range(3)
     ]

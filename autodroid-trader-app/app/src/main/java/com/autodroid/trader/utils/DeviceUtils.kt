@@ -17,14 +17,11 @@ object DeviceUtils {
      */
     fun getDeviceUDID(context: android.content.Context): String {
         return try {
-            // Try to get Android ID as UDID
-            val androidId = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ANDROID_ID
-            ) ?: "Unknown-UDID"
+            // 使用设备属性组合创建唯一标识符，避免ANDROID_ID隐私问题
+            val deviceId = "${Build.MANUFACTURER}_${Build.MODEL}_${Build.VERSION.RELEASE}_${Build.ID}"
             
             // Ensure the UDID is URL-safe by removing problematic characters
-            makeUdidUrlSafe(androidId)
+            makeSerialNoUrlSafe(deviceId)
         } catch (e: Exception) {
             Log.e(TAG, "Error getting device UDID", e)
             "Unknown-UDID"
@@ -32,11 +29,11 @@ object DeviceUtils {
     }
     
     /**
-     * Make UDID URL-safe by removing problematic characters
+     * Make serial number URL-safe by removing problematic characters
      */
-    private fun makeUdidUrlSafe(udid: String): String {
+    private fun makeSerialNoUrlSafe(serialNo: String): String {
         // Remove characters that can cause issues in URLs
-        return udid.replace(":", "")
+        return serialNo.replace(":", "")
                   .replace("/", "")
                   .replace("\\", "")
                   .replace("?", "")

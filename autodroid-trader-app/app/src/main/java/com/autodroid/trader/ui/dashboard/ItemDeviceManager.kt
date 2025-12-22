@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import com.autodroid.trader.AppViewModel
 import com.autodroid.trader.data.dao.DeviceEntity
+import com.autodroid.trader.network.AppInfo
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 /**
  * Manager class for handling Device dashboard item functionality
@@ -21,6 +24,8 @@ class ItemDeviceManager(
     companion object {
         private const val TAG = "ItemDeviceManager"
     }
+    
+    private val gson = Gson()
     
     /**
      * Initialize the ItemDeviceManager
@@ -59,13 +64,16 @@ class ItemDeviceManager(
                 val appNames = mutableListOf<String>()
                 deviceEntity.apps?.let { appsJson ->
                     try {
-                        // 使用JSON解析器解析应用列表
-                        val jsonArray = org.json.JSONArray(appsJson)
-                        for (i in 0 until jsonArray.length()) {
-                            val appObject = jsonArray.getJSONObject(i)
-                            val appName = appObject.optString("name", "")
-                            if (appName.isNotEmpty()) {
-                                appNames.add(appName)
+                        // 使用Gson和类型安全的AppInfo类解析应用列表
+                        val appInfoType = object : TypeToken<List<AppInfo>>() {}.type
+                        val appInfos: List<AppInfo> = gson.fromJson(appsJson, appInfoType)
+                        
+                        // 提取应用名称
+                        appInfos.forEach { appInfo ->
+                            appInfo.name.let { name ->
+                                if (name.isNotEmpty()) {
+                                    appNames.add(name)
+                                }
                             }
                         }
                     } catch (e: Exception) {
@@ -74,7 +82,7 @@ class ItemDeviceManager(
                 }
                 
                 val itemDevice = DashboardItem.ItemDevice(
-                    udid = deviceEntity.udid,
+                    serialNo = deviceEntity.serialNo,
                     userId = "user001",
                     name = deviceEntity.name ?: Build.MODEL,
                     platform = deviceEntity.platform ?: "Android",
@@ -84,8 +92,8 @@ class ItemDeviceManager(
                     updatedAt = updatedAt,
                     usbDebugEnabled = deviceEntity.usbDebugEnabled,
                     wifiDebugEnabled = deviceEntity.wifiDebugEnabled,
-                    debugCheckStatus = deviceEntity.debugCheckStatus,
-                    debugCheckMessage = deviceEntity.debugCheckMessage,
+                    debugCheckStatus = deviceEntity.checkStatus,
+                    debugCheckMessage = deviceEntity.checkMessage,
                     apps = appNames
                 )
                 

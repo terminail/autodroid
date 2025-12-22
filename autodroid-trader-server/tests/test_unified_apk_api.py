@@ -9,11 +9,11 @@ import json
 # Server configuration
 # Use the actual server IP address (from server logs)
 BASE_URL = "http://192.168.1.59:8004"
-DEVICE_UDID = "test-device-123"
+DEVICE_SERIALNO = "test-device-123"
 
 def test_single_apk_registration():
     """Test registering a single APK using the unified list endpoint"""
-    url = f"{BASE_URL}/api/devices/{DEVICE_UDID}/apks"
+    url = f"{BASE_URL}/api/devices/{DEVICE_SERIALNO}/apks"
     
     # Single APK as a list with one item
     apk_data = [{
@@ -46,7 +46,7 @@ def test_single_apk_registration():
 
 def test_multiple_apk_registration():
     """Test registering multiple APKs using the unified list endpoint"""
-    url = f"{BASE_URL}/api/devices/{DEVICE_UDID}/apks"
+    url = f"{BASE_URL}/api/devices/{DEVICE_SERIALNO}/apks"
     
     # Multiple APKs as a list
     apk_data = [
@@ -91,7 +91,7 @@ def test_multiple_apk_registration():
 
 def test_empty_list():
     """Test registering an empty list (edge case)"""
-    url = f"{BASE_URL}/api/devices/{DEVICE_UDID}/apks"
+    url = f"{BASE_URL}/api/devices/{DEVICE_SERIALNO}/apks"
     
     # Empty list
     apk_data = []
@@ -115,7 +115,7 @@ def test_empty_list():
 
 def test_get_device_apks():
     """Test getting all APKs for a device after registration"""
-    url = f"{BASE_URL}/api/devices/{DEVICE_UDID}/apks"
+    url = f"{BASE_URL}/api/devices/{DEVICE_SERIALNO}/apks"
     
     print(f"\nTesting GET all APKs for device...")
     print(f"URL: {url}")
@@ -129,7 +129,7 @@ def test_get_device_apks():
             print(f"Response: {json.dumps(result, indent=2)}")
             
             apk_count = len(result.get('apks', []))
-            print(f"✅ Found {apk_count} APKs for device {DEVICE_UDID}")
+            print(f"✅ Found {apk_count} APKs for device {DEVICE_SERIALNO}")
             
             # Verify the APKs we registered are present
             if apk_count > 0:
@@ -163,7 +163,7 @@ def test_comprehensive_apk_workflow():
     # Step 1: Register a test device first
     device_reg_url = f"{BASE_URL}/api/devices/register"
     device_data = {
-        "udid": DEVICE_UDID,
+        "serialno": DEVICE_SERIALNO,
         "device_name": "Test Device",
         "model": "Pixel 6 Pro",
         "android_version": "13",
@@ -181,7 +181,7 @@ def test_comprehensive_apk_workflow():
         print(f"⚠️  Device registration error: {e}")
     
     # Step 2: Register multiple APKs
-    apk_url = f"{BASE_URL}/api/devices/{DEVICE_UDID}/apks"
+    apk_url = f"{BASE_URL}/api/devices/{DEVICE_SERIALNO}/apks"
     apk_data = [
         {
             "apkid": "com.example.workflow1",

@@ -57,10 +57,10 @@ def test_with_real_device():
                     'app_activity': 'com.autodroid.manager.auth.activity.LoginActivity',
                     'timeout': 30,
                     'success_rate': 0.9,
-                    'device_udid': 'emulator-5554'
+                    'serialno': 'emulator-5554'
                 }
             },
-            device_udid='emulator-5554',
+            serialno='emulator-5554',
             test_username='15317227@qq.com',
             test_password='123456',
             use_fingerprint=False,
@@ -70,7 +70,7 @@ def test_with_real_device():
         
         print("✓ 成功创建登录测试实例")
         print(f"  - 测试用户: {login_tester.test_username}")
-        print(f"  - 设备UDID: {login_tester.device_udid}")
+        print(f"  - 设备序列号: {login_tester.serialno}")
         print(f"  - 应用包名: {login_tester.app_package}")
         print(f"  - 登录活动: {login_tester.app_activity}")
         print(f"  - 指纹登录: {login_tester.use_fingerprint}")

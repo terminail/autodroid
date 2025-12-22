@@ -30,7 +30,7 @@ class DeviceProvider private constructor(context: Context) {
     }
     
     /**
-     * 根据设备ID获取设备
+     * 根据设备序列号获取设备
      */
     suspend fun getDeviceById(id: String): DeviceEntity? {
         return withContext(Dispatchers.IO) {
@@ -39,22 +39,29 @@ class DeviceProvider private constructor(context: Context) {
     }
     
     /**
+     * 根据设备序列号获取设备（LiveData）
+     */
+    fun getDeviceByIdLiveData(id: String): LiveData<DeviceEntity?> {
+        return deviceDao.getDeviceByIdLiveData(id)
+    }
+    
+    /**
      * 插入或更新设备
      */
     suspend fun insertOrUpdateDevice(device: DeviceEntity): String {
         return withContext(Dispatchers.IO) {
-            // 检查是否已存在相同ID的设备
-            val existingDevice = deviceDao.getDeviceById(device.udid)
+            // 检查是否已存在相同序列号的设备
+            val existingDevice = deviceDao.getDeviceById(device.serialNo)
             
             val result: String = if (existingDevice != null) {
                 // 更新现有设备
                 val updatedDevice = device.copy(updatedAt = System.currentTimeMillis())
                 deviceDao.updateDevice(updatedDevice)
-                device.udid
+                device.serialNo
             } else {
                 // 插入新设备
                 deviceDao.insertOrUpdateDevice(device)
-                device.udid
+                device.serialNo
             }
             
             return@withContext result
@@ -81,7 +88,7 @@ class DeviceProvider private constructor(context: Context) {
     }
     
     /**
-     * 根据设备ID删除设备
+     * 根据设备序列号删除设备
      */
     suspend fun deleteDeviceById(id: String) {
         withContext(Dispatchers.IO) {
@@ -92,9 +99,9 @@ class DeviceProvider private constructor(context: Context) {
     /**
      * 更新设备连接状态
      */
-    suspend fun updateConnectionStatus(udid: String, isOnline: Boolean, updatedAt: Long) {
+    suspend fun updateConnectionStatus(serialNo: String, isOnline: Boolean, updatedAt: Long) {
         withContext(Dispatchers.IO) {
-            deviceDao.updateConnectionStatus(udid, isOnline, updatedAt)
+            deviceDao.updateConnectionStatus(serialNo, isOnline, updatedAt)
         }
     }
     

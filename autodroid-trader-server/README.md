@@ -159,7 +159,6 @@ curl http://localhost:8004/api/server
   "api_endpoints": {
     "health": "/api/health",
     "devices": "/api/devices",
-    "device_register": "/api/devices/register",
     "test_plans": "/api/plans"
   }
 }
@@ -168,7 +167,7 @@ curl http://localhost:8004/api/server
 ### 3. 注册设备
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8004/api/devices/register
+curl -X POST -H "Content-Type: application/json" -d '{"serialno": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8004/api/devices
 ```
 
 响应示例：
@@ -176,7 +175,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"udid": "emulator-5554", "
 {
   "message": "Device registered successfully",
   "device": {
-    "udid": "emulator-5554",
+    "serialno": "emulator-5554",
     "device_name": "Pixel 6 Pro",
     "android_version": "13",
     "battery_level": 80,
@@ -196,7 +195,7 @@ curl http://localhost:8004/api/devices
 ```json
 [
   {
-    "udid": "emulator-5554",
+    "serialno": "emulator-5554",
     "device_name": "Pixel 6 Pro",
     "android_version": "13",
     "battery_level": 80,
@@ -213,7 +212,7 @@ curl http://localhost:8004/api/devices
 | `/api/health` | GET | 健康检查 |
 | `/api/server` | GET | 获取服务器信息 |
 | `/api/devices` | GET | 获取所有注册设备 |
-| `/api/devices/{udid}` | GET | 获取特定设备信息 |
+| `/api/devices/{serialno}` | GET | 获取特定设备信息 |
 | `/api/devices/register` | POST | 注册设备 |
 | `/api/plans` | GET | 获取所有测试计划 |
 | `/api/plans` | POST | 创建新测试计划 |

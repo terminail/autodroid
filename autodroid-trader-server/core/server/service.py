@@ -41,7 +41,7 @@ class ServerManager:
             platform = "unknown"
             
             if os.path.exists(config_path):
-                with open(config_path, 'r') as f:
+                with open(config_path, 'r', encoding='utf-8') as f:
                     config = yaml.safe_load(f)
                     server_config = config.get('server', {})
                     server_backend_config = server_config.get('backend', {})

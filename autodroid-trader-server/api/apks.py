@@ -40,7 +40,7 @@ async def register_apk(apk_create_request: ApkCreateRequest):
     try:
         # 创建APK注册请求
         apk_register_request = ApkRegisterRequest(
-            device_udid="",  # 空设备UDID，表示仅注册APK不关联设备
+            device_serialno="",  # 空设备序列号，表示仅注册APK不关联设备
             apk_info=apk_create_request
         )
         
@@ -136,8 +136,8 @@ async def search_apks(apk_search_request: ApkSearchRequest):
         "result": search_result
     }
 
-@router.post("/{package_name}/devices/{device_udid}")
-async def associate_apk_with_device(package_name: str, device_udid: str):
+@router.post("/{package_name}/devices/{serialno}")
+async def associate_apk_with_device(package_name: str, serialno: str):
     """Associate an APK with a device"""
     # Check if APK exists
     apk = apk_manager.get_apk(package_name)
@@ -147,7 +147,7 @@ async def associate_apk_with_device(package_name: str, device_udid: str):
     try:
         # 创建APK注册请求
         apk_register_request = ApkRegisterRequest(
-            device_udid=device_udid,
+            device_serialno=serialno,
             apk_info=ApkCreateRequest(
                 package_name=apk.package_name,
                 app_name=apk.app_name,
@@ -162,14 +162,14 @@ async def associate_apk_with_device(package_name: str, device_udid: str):
         apk_info = apk_manager.register_apk_to_device(apk_register_request)
         
         return {
-            "message": f"APK {package_name} associated with device {device_udid} successfully",
+            "message": f"APK {package_name} associated with device {serialno} successfully",
             "apk": apk_info
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/{package_name}/devices/{device_udid}")
-async def dissociate_apk_from_device(package_name: str, device_udid: str):
+@router.delete("/{package_name}/devices/{serialno}")
+async def dissociate_apk_from_device(package_name: str, serialno: str):
     """Dissociate an APK from a device"""
     # Check if APK exists
     apk = apk_manager.get_apk(package_name)
@@ -177,22 +177,22 @@ async def dissociate_apk_from_device(package_name: str, device_udid: str):
         raise HTTPException(status_code=404, detail="APK not found")
     
     # Dissociate APK from device
-    success = apk_manager.dissociate_apk_from_device(package_name, device_udid)
+    success = apk_manager.dissociate_apk_from_device(package_name, serialno)
     
     if not success:
         raise HTTPException(status_code=400, detail="Failed to dissociate APK from device")
     
     return {
-        "message": f"APK {package_name} dissociated from device {device_udid} successfully"
+        "message": f"APK {package_name} dissociated from device {serialno} successfully"
     }
 
-@router.get("/devices/{device_udid}")
-async def get_apks_for_device(device_udid: str):
+@router.get("/devices/{serialno}")
+async def get_apks_for_device(serialno: str):
     """Get all APKs installed on a specific device"""
     # Get APKs for device from database
-    apks = apk_manager.get_apks_for_device(device_udid)
+    apks = apk_manager.get_apks_for_device(serialno)
     
     return {
-        "message": f"Found {len(apks)} APKs on device {device_udid}",
+        "message": f"Found {len(apks)} APKs on device {serialno}",
         "apks": apks
     }

@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 from peewee import DoesNotExist
 
@@ -13,18 +14,18 @@ class DeviceDatabase(BaseDatabase):
         """初始化设备数据库"""
         super().__init__()
     
-    def is_device_available(self, udid: str) -> bool:
+    def is_device_available(self, serialno: str) -> bool:
         """检查设备是否可用于自动化"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             return device.is_online and device.battery_level > 20
         except DoesNotExist:
             return False
     
-    def get_device(self, udid: str) -> Optional[Device]:
-        """根据UDID获取设备"""
+    def get_device(self, serialno: str) -> Optional[Device]:
+        """根据序列号获取设备"""
         try:
-            return Device.get(Device.udid == udid)
+            return Device.get(Device.serialno == serialno)
         except DoesNotExist:
             return None
     
@@ -40,9 +41,9 @@ class DeviceDatabase(BaseDatabase):
     
     def register_device(self, device_info: Dict[str, Any]) -> Device:
         """从应用报告注册设备"""
-        udid = device_info.get('udid')
-        if not udid:
-            raise ValueError("设备UDID是必需的")
+        serialno = device_info.get('serialno')
+        if not serialno:
+            raise ValueError("设备序列号是必需的")
         
         # 获取或创建用户（如果提供了user_id）
         user_id = device_info.get('user_id')
@@ -56,8 +57,9 @@ class DeviceDatabase(BaseDatabase):
         
         # 创建或更新设备记录
         device, created = Device.get_or_create(
-            udid=udid,
+            serialno=serialno,
             defaults={
+                'udid': device_info.get('udid'),
                 'device_name': device_info.get('device_name', device_info.get('name', 'Unknown Device')),
                 'name': device_info.get('name'),
                 'model': device_info.get('model'),
@@ -102,22 +104,22 @@ class DeviceDatabase(BaseDatabase):
         
         return device
     
-    def update_device_status(self, udid: str, is_online: bool, battery_level: int) -> bool:
+    def update_device_status(self, serialno: str, is_online: bool, battery_level: int) -> bool:
         """更新设备状态"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             device.is_online = is_online
             device.battery_level = battery_level
-            device.updated_at = time.time()
+            device.last_seen = datetime.datetime.now()
             device.save()
             return True
         except DoesNotExist:
             return False
     
-    def delete_device(self, udid: str) -> bool:
+    def delete_device(self, serialno: str) -> bool:
         """删除设备"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             # 删除关联的APK记录
             DeviceApk.delete().where(DeviceApk.device == device).execute()
             # 删除设备
@@ -126,12 +128,12 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return False
     
-    def add_apk_to_device(self, udid: str, apk_info: Dict[str, Any]) -> Apk:
+    def add_apk_to_device(self, serialno: str, apk_info: Dict[str, Any]) -> Apk:
         """将APK添加到设备"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
         except DoesNotExist:
-            raise ValueError(f"未找到UDID为 {udid} 的设备")
+            raise ValueError(f"未找到序列号为 {serialno} 的设备")
         
         package_name = apk_info.get('package_name')
         if not package_name:
@@ -170,12 +172,12 @@ class DeviceDatabase(BaseDatabase):
         
         return apk
     
-    def get_device_apks(self, udid: str) -> List[Apk]:
+    def get_device_apks(self, serialno: str) -> List[Apk]:
         """获取设备的所有APK"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
         except DoesNotExist:
-            raise ValueError(f"未找到UDID为 {udid} 的设备")
+            raise ValueError(f"未找到序列号为 {serialno} 的设备")
         
         # 查询设备关联的所有APK
         return list(Apk
@@ -184,10 +186,10 @@ class DeviceDatabase(BaseDatabase):
                     .where(DeviceApk.device == device)
                     .order_by(Apk.app_name))
     
-    def get_device_apk(self, udid: str, package_name: str) -> Optional[Apk]:
+    def get_device_apk(self, serialno: str, package_name: str) -> Optional[Apk]:
         """获取设备的特定APK"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             return (Apk
                     .select()
                     .join(DeviceApk)
@@ -196,10 +198,10 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return None
     
-    def update_device_apk(self, udid: str, package_name: str, apk_info: Dict[str, Any]) -> Apk:
+    def update_device_apk(self, serialno: str, package_name: str, apk_info: Dict[str, Any]) -> Apk:
         """更新设备的APK信息"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             apk = Apk.get(Apk.package_name == package_name)
             
             # 检查设备是否关联该APK
@@ -207,7 +209,7 @@ class DeviceDatabase(BaseDatabase):
                 (DeviceApk.device == device) & (DeviceApk.apk == apk)
             )
             if not device_apk:
-                raise ValueError(f"设备 {udid} 未安装APK {package_name}")
+                raise ValueError(f"设备 {serialno} 未安装APK {package_name}")
             
             # 更新APK信息
             if 'app_name' in apk_info:
@@ -228,12 +230,12 @@ class DeviceDatabase(BaseDatabase):
             
             return apk
         except DoesNotExist:
-            raise ValueError(f"未找到设备 {udid} 或APK {package_name}")
+            raise ValueError(f"未找到设备 {serialno} 或APK {package_name}")
     
-    def remove_apk_from_device(self, udid: str, package_name: str) -> bool:
+    def remove_apk_from_device(self, serialno: str, package_name: str) -> bool:
         """从设备移除APK"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             apk = Apk.get(Apk.package_name == package_name)
             
             # 删除关联关系
@@ -249,7 +251,7 @@ class DeviceDatabase(BaseDatabase):
         """搜索设备"""
         search_pattern = f"%{query}%"
         return list(Device.select().where(
-            (Device.udid.like(search_pattern)) | 
+            (Device.serialno.like(search_pattern)) | 
             (Device.device_name.like(search_pattern))
         ))
     
@@ -261,10 +263,10 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return []
     
-    def assign_device_to_user(self, udid: str, user_id: str) -> bool:
+    def assign_device_to_user(self, serialno: str, user_id: str) -> bool:
         """将设备分配给用户"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             user = User.get(User.id == user_id)
             device.user = user
             device.updated_at = time.time()
@@ -273,10 +275,10 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return False
     
-    def unassign_device_from_user(self, udid: str) -> bool:
+    def unassign_device_from_user(self, serialno: str) -> bool:
         """取消设备与用户的关联"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             device.user = None
             device.updated_at = time.time()
             device.save()
@@ -292,44 +294,72 @@ class DeviceDatabase(BaseDatabase):
         """获取在线设备数量"""
         return Device.select().where(Device.is_online == True).count()
     
-    def update_device_debug_status(self, udid: str, usb_debug_enabled: bool, wifi_debug_enabled: bool, 
-                                  debug_check_status: str = "SUCCESS", debug_check_message: str = None) -> bool:
+    def update_device_debug_status(self, serialno: str, usb_debug_enabled: bool, wifi_debug_enabled: bool, 
+                                  check_status: str = "SUCCESS", check_message: str = None) -> bool:
         """更新设备调试权限状态"""
         try:
-            device = Device.get(Device.udid == udid)
+            device = Device.get(Device.serialno == serialno)
             device.usb_debug_enabled = usb_debug_enabled
             device.wifi_debug_enabled = wifi_debug_enabled
-            device.debug_check_status = debug_check_status
-            device.debug_check_message = debug_check_message
-            device.debug_check_time = time.time()
+            device.check_status = check_status
+            device.check_message = check_message
+            device.check_time = time.time()
             device.updated_at = time.time()
             device.save()
             return True
         except DoesNotExist:
             return False
     
-    def update_device_debug_check_failed(self, udid: str, error_message: str) -> bool:
-        """更新设备调试权限检查失败状态"""
+    def update_device_check_failed(self, serialno: str, error_message: str) -> bool:
+        """更新设备检查失败状态"""
         try:
-            device = Device.get(Device.udid == udid)
-            device.debug_check_status = "FAILED"
-            device.debug_check_message = error_message
-            device.debug_check_time = time.time()
+            device = Device.get(Device.serialno == serialno)
+            device.check_status = "FAILED"
+            device.check_message = error_message
+            device.check_time = time.time()
             device.updated_at = time.time()
             device.save()
             return True
         except DoesNotExist:
             return False
     
-    def update_device_apps(self, udid: str, installed_apps: list) -> bool:
+    def update_device_apps(self, serialno: str, installed_apps: list) -> bool:
         """更新设备已安装的应用列表"""
-        import json
         try:
-            device = Device.get(Device.udid == udid)
-            # 将应用列表转换为JSON字符串存储
-            device.apps = json.dumps(installed_apps)
-            device.updated_at = time.time()
-            device.save()
+            device = Device.get(Device.serialno == serialno)
+            # 删除现有的应用记录
+            DeviceApk.delete().where(DeviceApk.device == device).execute()
+            
+            # 添加新的应用记录
+            for app in installed_apps:
+                package_name = app.get('package_name', '')
+                if not package_name:
+                    continue
+                    
+                # 获取或创建APK记录
+                try:
+                    apk = Apk.get(Apk.package_name == package_name)
+                except DoesNotExist:
+                    # 如果APK不存在，创建一个新的记录
+                    apk = Apk.create(
+                        id=package_name,  # 使用包名作为ID
+                        package_name=package_name,
+                        app_name=app.get('app_name', ''),
+                        name=app.get('app_name', ''),
+                        version=app.get('version', ''),
+                        version_code=app.get('version_code', 0),
+                        installed_time=app.get('installed_time', 0),
+                        is_system=app.get('is_system', False),
+                        icon_path=app.get('icon_path', '')
+                    )
+                
+                # 创建设备-APK关联
+                DeviceApk.create(
+                    device=device,
+                    apk=apk,
+                    installed_time=datetime.now() if app.get('installed_time') is None else app.get('installed_time')
+                )
+            
             return True
         except DoesNotExist:
             return False

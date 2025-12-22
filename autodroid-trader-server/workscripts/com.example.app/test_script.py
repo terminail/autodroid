@@ -34,7 +34,7 @@ DESIRED_CAPS = {
     'platformName': 'Android',
     'platformVersion': '10',  # 根据实际设备版本调整
     'deviceName': 'Android Device',
-    'udid': f'{PHONE_IP}:{PHONE_PORT}',
+    'serialno': f'{PHONE_IP}:{PHONE_PORT}',
     'appPackage': APP_PACKAGE,
     'appActivity': APP_ACTIVITY,
     'noReset': True,

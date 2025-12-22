@@ -2,8 +2,6 @@ package com.autodroid.trader
 
 import android.app.Application
 import android.content.Context
-import android.os.Build
-import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.MediatorLiveData
@@ -15,14 +13,12 @@ import com.autodroid.trader.data.repository.ServerRepository
 import com.autodroid.trader.data.repository.DeviceRepository
 import com.autodroid.trader.data.dao.ServerEntity
 import com.autodroid.trader.data.dao.DeviceEntity
-import com.autodroid.trader.data.database.AppDatabase
 import com.autodroid.trader.managers.DeviceManager
 import com.autodroid.trader.model.User
 import com.autodroid.trader.model.Network
 import com.autodroid.trader.model.Wifi
 import com.autodroid.trader.model.TradePlan
 import com.autodroid.trader.auth.viewmodel.AuthViewModel
-import com.autodroid.trader.utils.NetworkUtils
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -87,10 +83,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 android.util.Log.d("AppViewModel", "initialize: 开始自动初始化本地设备信息")
                 val localDevice = deviceManager.device
-                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，ID: ${localDevice.udid}, 名称: ${localDevice.name}")
+                android.util.Log.d("AppViewModel", "initialize: 获取到本地设备信息，序列号: ${localDevice.serialNo}, 名称: ${localDevice.name}")
                 
                 // 保存设备信息到数据库
-                deviceRepository?.insertOrUpdateDevice(localDevice)
+                deviceRepository?.getAndSyncCurrentDevice()
                 android.util.Log.d("AppViewModel", "initialize: 本地设备信息已保存到数据库")
             } catch (e: Exception) {
                 android.util.Log.e("AppViewModel", "initialize: 自动初始化设备信息失败", e)
@@ -108,11 +104,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         
         // 直接监控 Room 数据库中最后更新的设备
-        deviceRepository?.getOrUpdateCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
+        deviceRepository?.getAndSyncCurrentDevice()?.let { liveData: LiveData<DeviceEntity?> ->
             android.util.Log.d("AppViewModel", "initialize: 开始监控设备数据变化")
             // 将数据库中的设备数据映射到 ViewModel 的 device LiveData
             device.addSource(liveData) { deviceEntity: DeviceEntity? ->
-                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备ID: ${deviceEntity?.udid}, 设备名称: ${deviceEntity?.name}")
+                android.util.Log.d("AppViewModel", "initialize: 设备数据更新，设备序列号: ${deviceEntity?.serialNo}, 设备名称: ${deviceEntity?.name}")
                 device.value = deviceEntity
             }
         }

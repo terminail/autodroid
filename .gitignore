@@ -37,3 +37,4 @@ node_modules/
 # Python testing cache
 .pytest_cache/
 Open-AutoGLM/
+autodroid_database.db

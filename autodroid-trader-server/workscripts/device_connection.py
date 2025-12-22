@@ -21,14 +21,14 @@ class ADBDeviceController:
     完全基于ADB命令和UIAutomator，移除所有Appium依赖
     """
     
-    def __init__(self, device_udid: str = None):
+    def __init__(self, serialno: str = None):
         """
         初始化设备连接
         
         Args:
-            device_udid: 设备UDID（可选）
+            serialno: 设备序列号（可选）
         """
-        self.device_udid = device_udid
+        self.serialno = serialno
         self.adb_device = None
         self._is_connected = False
         
@@ -46,7 +46,7 @@ class ADBDeviceController:
         """
         try:
             # 初始化ADB设备连接
-            self.adb_device = quick_connect(self.device_udid)
+            self.adb_device = quick_connect(self.serialno)
             self._is_connected = self.adb_device.is_connected()
             
             if self._is_connected:
@@ -69,7 +69,7 @@ class ADBDeviceController:
                 return False
                 
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 连接失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 连接失败：{str(e)}")
             self._is_connected = False
             return False
     
@@ -78,9 +78,9 @@ class ADBDeviceController:
         try:
             if self.adb_device:
                 self.adb_device.disconnect()
-                logger.info(f"设备 {self.device_udid} 连接已断开")
+                logger.info(f"设备 {self.serialno} 连接已断开")
         except Exception as e:
-            logger.error(f"断开设备 {self.device_udid} 连接时出错：{str(e)}")
+            logger.error(f"断开设备 {self.serialno} 连接时出错：{str(e)}")
         finally:
             self.adb_device = None
             self._is_connected = False
@@ -101,28 +101,28 @@ class ADBDeviceController:
             启动成功返回True
         """
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法启动应用")
+            logger.error(f"设备 {self.serialno} 未连接，无法启动应用")
             return False
             
         try:
             if activity_name:
                 # 使用ADB启动指定Activity
                 result = self.adb_device.launch_app(package_name, activity_name)
-                logger.info(f"设备 {self.device_udid} 启动Activity: {package_name}/{activity_name}")
+                logger.info(f"设备 {self.serialno} 启动Activity: {package_name}/{activity_name}")
             else:
                 # 使用ADB启动应用
                 result = self.adb_device.launch_app(package_name)
-                logger.info(f"设备 {self.device_udid} 启动应用: {package_name}")
+                logger.info(f"设备 {self.serialno} 启动应用: {package_name}")
                 
             if result:
                 time.sleep(2)  # 等待应用启动
                 return True
             else:
-                logger.error(f"设备 {self.device_udid} 启动应用失败")
+                logger.error(f"设备 {self.serialno} 启动应用失败")
                 return False
                 
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 启动应用失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 启动应用失败：{str(e)}")
             return False
     
     def find_element_by_id(self, element_id: str, timeout: int = 10):
@@ -138,7 +138,7 @@ class ADBDeviceController:
             直接通过ADB命令获取UI层级结构，比Appium更快
         """
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法查找元素")
+            logger.error(f"设备 {self.serialno} 未连接，无法查找元素")
             return None
             
         try:
@@ -182,7 +182,7 @@ class ADBDeviceController:
                                         center_x = (x1 + x2) // 2
                                         center_y = (y1 + y2) // 2
                                         
-                                        logger.info(f"设备 {self.device_udid} 找到元素: {element_id}, 坐标: ({center_x}, {center_y})")
+                                        logger.info(f"设备 {self.serialno} 找到元素: {element_id}, 坐标: ({center_x}, {center_y})")
                                         return {
                                             "element_id": element_id,
                                             "bounds": bounds,
@@ -205,11 +205,11 @@ class ADBDeviceController:
                 
                 time.sleep(1)  # 等待1秒后重试
             
-            logger.error(f"设备 {self.device_udid} 在{timeout}秒内未找到元素: {element_id}")
+            logger.error(f"设备 {self.serialno} 在{timeout}秒内未找到元素: {element_id}")
             return None
             
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 查找元素 {element_id} 失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 查找元素 {element_id} 失败：{str(e)}")
             return None
     
     def click(self, element_id: str = None, x: int = None, y: int = None, timeout: int = 10) -> bool:
@@ -226,7 +226,7 @@ class ADBDeviceController:
             直接ADB tap命令，比Appium更快速可靠
         """
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法点击")
+            logger.error(f"设备 {self.serialno} 未连接，无法点击")
             return False
             
         try:
@@ -234,7 +234,7 @@ class ADBDeviceController:
             if x is not None and y is not None:
                 # 通过坐标点击（优先处理坐标点击）
                 self.adb_device.tap(x, y)
-                logger.info(f"设备 {self.device_udid} 点击坐标: ({x}, {y})")
+                logger.info(f"设备 {self.serialno} 点击坐标: ({x}, {y})")
                 return True
             elif element_id:
                 # 通过元素ID点击
@@ -242,7 +242,7 @@ class ADBDeviceController:
                 if element:
                     # 使用ADB点击元素中心坐标
                     self.adb_device.tap(element["center_x"], element["center_y"])
-                    logger.info(f"设备 {self.device_udid} 点击元素: {element_id} 坐标: ({element['center_x']}, {element['center_y']})")
+                    logger.info(f"设备 {self.serialno} 点击元素: {element_id} 坐标: ({element['center_x']}, {element['center_y']})")
                     return True
                 else:
                     return False
@@ -251,7 +251,7 @@ class ADBDeviceController:
                 return False
                 
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 点击失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 点击失败：{str(e)}")
             return False
     
     def send_keys(self, element_id: str, text: str, timeout: int = 10) -> bool:
@@ -268,7 +268,7 @@ class ADBDeviceController:
             使用ADB input text命令，比Appium更稳定
         """
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法输入文本")
+            logger.error(f"设备 {self.serialno} 未连接，无法输入文本")
             return False
             
         try:
@@ -284,72 +284,72 @@ class ADBDeviceController:
                 )
                 
                 if result.returncode == 0:
-                    logger.info(f"设备 {self.device_udid} 向元素 {element_id} 输入文本: {text}")
+                    logger.info(f"设备 {self.serialno} 向元素 {element_id} 输入文本: {text}")
                     return True
                 else:
-                    logger.error(f"设备 {self.device_udid} ADB输入文本失败: {result.stderr}")
+                    logger.error(f"设备 {self.serialno} ADB输入文本失败: {result.stderr}")
                     return False
             else:
                 return False
                 
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 输入文本失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 输入文本失败：{str(e)}")
             return False
     
     def get_current_activity(self) -> str:
         """获取当前Activity名称"""
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法获取当前Activity")
+            logger.error(f"设备 {self.serialno} 未连接，无法获取当前Activity")
             return ""
             
         try:
             activity = self.adb_device.get_current_app()
-            logger.info(f"设备 {self.device_udid} 当前Activity: {activity}")
+            logger.info(f"设备 {self.serialno} 当前Activity: {activity}")
             return activity
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 获取当前Activity失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 获取当前Activity失败：{str(e)}")
             return ""
     
     def get_current_package(self) -> str:
         """获取当前包名"""
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法获取当前包名")
+            logger.error(f"设备 {self.serialno} 未连接，无法获取当前包名")
             return ""
             
         try:
             package = self.adb_device.get_current_package()
-            logger.info(f"设备 {self.device_udid} 当前包名: {package}")
+            logger.info(f"设备 {self.serialno} 当前包名: {package}")
             return package
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 获取当前包名失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 获取当前包名失败：{str(e)}")
             return ""
     
     def back(self) -> bool:
         """返回键"""
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法执行返回操作")
+            logger.error(f"设备 {self.serialno} 未连接，无法执行返回操作")
             return False
             
         try:
             self.adb_device.back()
-            logger.info(f"设备 {self.device_udid} 执行返回操作")
+            logger.info(f"设备 {self.serialno} 执行返回操作")
             return True
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 执行返回操作失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 执行返回操作失败：{str(e)}")
             return False
     
     def home(self) -> bool:
         """Home键"""
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法执行Home操作")
+            logger.error(f"设备 {self.serialno} 未连接，无法执行Home操作")
             return False
             
         try:
             self.adb_device.home()
-            logger.info(f"设备 {self.device_udid} 执行Home操作")
+            logger.info(f"设备 {self.serialno} 执行Home操作")
             return True
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 执行Home操作失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 执行Home操作失败：{str(e)}")
             return False
     
     def wait_for_element(self, element_id: str, timeout: int = 10):
@@ -364,16 +364,16 @@ class ADBDeviceController:
             找到的元素对象
         """
         if not self.is_connected():
-            logger.error(f"设备 {self.device_udid} 未连接，无法等待元素")
+            logger.error(f"设备 {self.serialno} 未连接，无法等待元素")
             return None
             
         try:
             element = self.adb_device.wait_for_element(element_id, timeout)
-            logger.info(f"设备 {self.device_udid} 等待并找到元素: {element_id}")
+            logger.info(f"设备 {self.serialno} 等待并找到元素: {element_id}")
             return element
             
         except Exception as e:
-            logger.error(f"设备 {self.device_udid} 等待元素 {element_id} 失败：{str(e)}")
+            logger.error(f"设备 {self.serialno} 等待元素 {element_id} 失败：{str(e)}")
             return None
 
 
@@ -387,28 +387,28 @@ class DeviceConnectionPool:
         self.max_connections = max_connections
         self.connections: Dict[str, ADBDeviceController] = {}
         
-    def get_device(self, device_udid: str) -> ADBDeviceController:
+    def get_device(self, serialno: str) -> ADBDeviceController:
         """
         获取设备连接 - 纯ADB实现
         
         Args:
-            device_udid: 设备UDID
+            serialno: 设备序列号
             
         Returns:
             ADBDeviceController对象 - 基于ADB，无需Appium服务器
         """
         # 如果已存在连接，直接返回
-        if device_udid in self.connections:
-            device = self.connections[device_udid]
+        if serialno in self.connections:
+            device = self.connections[serialno]
             if device.is_connected():
                 return device
             else:
                 # 连接已断开，移除旧连接
-                del self.connections[device_udid]
+                del self.connections[serialno]
         
         # 创建新连接
-        device = ADBDeviceController(device_udid)
-        self.connections[device_udid] = device
+        device = ADBDeviceController(serialno)
+        self.connections[serialno] = device
         
         return device
         
@@ -419,12 +419,12 @@ class DeviceConnectionPool:
         self.connections.clear()
         logger.info("所有ADB设备连接已关闭")
     
-    def remove_device(self, device_udid: str):
+    def remove_device(self, serialno: str):
         """移除设备连接"""
-        if device_udid in self.connections:
-            device = self.connections[device_udid]
+        if serialno in self.connections:
+            device = self.connections[serialno]
             device.disconnect()
-            del self.connections[device_udid]
+            del self.connections[serialno]
     
     def disconnect_all(self):
         """断开所有设备连接"""
@@ -434,4 +434,4 @@ class DeviceConnectionPool:
     
     def get_connected_devices(self) -> list:
         """获取已连接的设备列表"""
-        return [udid for udid, device in self.connections.items() if device.is_connected()]
+        return [serialno for serialno, device in self.connections.items() if device.is_connected()]

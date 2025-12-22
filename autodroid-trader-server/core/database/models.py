@@ -15,7 +15,7 @@ def get_db_path():
     config_path = os.path.join(os.path.dirname(__file__), "..", "..", "config.yaml")
     if os.path.exists(config_path):
         import yaml
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
         return config.get('database', {}).get('sqlite_path', 'users.db')
     return 'users.db'
@@ -44,15 +44,21 @@ class User(BaseModel):
 class Apk(BaseModel):
     """APK模型"""
     id = CharField(primary_key=True)  # 对应设计文档中的id字段
-    name = CharField()
+    package_name = CharField()  # 包名
+    app_name = CharField()  # 应用名称
+    name = CharField()  # 保留原有字段
     description = CharField(null=True)
     version = CharField()
     version_code = IntegerField()
+    installed_time = IntegerField(null=True)  # 安装时间戳
+    is_system = BooleanField(default=False)  # 是否为系统应用
+    icon_path = CharField(null=True)  # 图标路径
     created_at = DateTimeField(default=datetime.now)
 
 class Device(BaseModel):
     """设备模型"""
-    udid = CharField(primary_key=True)  # 设备唯一标识符
+    serialno = CharField(primary_key=True)  # 设备序列号，与adb devices和Appium保持一致
+    udid = CharField(null=True)  # 设备UDID，保留用于兼容性
     user = ForeignKeyField(User, backref='devices', null=True, on_delete='SET NULL')
     device_name = CharField(default='Unknown Device')  # 设备名称
     name = CharField(null=True)  # 设备名称（新字段）
@@ -72,9 +78,9 @@ class Device(BaseModel):
     connection_type = CharField(default='network')  # 连接类型
     usb_debug_enabled = BooleanField(default=False)  # USB调试是否开启
     wifi_debug_enabled = BooleanField(default=False)  # WiFi调试是否开启
-    debug_check_status = CharField(default='UNKNOWN')  # 调试权限检查状态：UNKNOWN, SUCCESS, FAILED
-    debug_check_message = CharField(null=True)  # 调试权限检查消息
-    debug_check_time = DateTimeField(null=True)  # 调试权限检查时间
+    check_status = CharField(default='UNKNOWN')  # 设备检查状态：UNKNOWN, SUCCESS, FAILED
+    check_message = CharField(null=True)  # 设备检查消息
+    check_time = DateTimeField(null=True)  # 设备检查时间
     apps = TextField(null=True)  # 已安装的支持应用列表，JSON格式存储
     registered_at = DateTimeField(default=datetime.now)  # 注册时间
     created_at = DateTimeField(default=datetime.now)

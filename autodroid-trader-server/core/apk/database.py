@@ -13,7 +13,7 @@ class ApkDatabase(BaseDatabase):
         """初始化APK数据库"""
         super().__init__()
     
-    def register_apk_to_device(self, apk_data: Dict[str, Any], device_udid: str) -> Optional[Apk]:
+    def register_apk_to_device(self, apk_data: Dict[str, Any], serialno: str) -> Optional[Apk]:
         """将APK注册到设备（多对多关系）"""
         try:
             with Apk._meta.database.atomic():
@@ -31,9 +31,11 @@ class ApkDatabase(BaseDatabase):
                 )
                 
                 # 2. 创建设备-APK关联关系
+                # 获取设备对象
+                device = Device.get(Device.serialno == serialno)
                 DeviceApk.get_or_create(
-                    device_udid=device_udid,
-                    package_name=apk.package_name,
+                    device=device,
+                    apk=apk,
                     defaults={'installed_time': apk_data.get('installed_time')}
                 )
                 
@@ -56,13 +58,14 @@ class ApkDatabase(BaseDatabase):
         except Exception:
             return []
     
-    def get_device_apks(self, device_udid: str) -> List[Apk]:
+    def get_device_apks(self, serialno: str) -> List[Apk]:
         """获取特定设备的所有APK信息"""
         try:
             return list(
                 Apk.select()
                 .join(DeviceApk)
-                .where(DeviceApk.device_udid == device_udid)
+                .join(Device)
+                .where(Device.serialno == serialno)
                 .order_by(Apk.app_name)
             )
         except Exception:
@@ -112,23 +115,31 @@ class ApkDatabase(BaseDatabase):
         except Exception:
             return []
     
-    def associate_apk_with_device(self, package_name: str, device_udid: str) -> bool:
+    def associate_apk_with_device(self, package_name: str, serialno: str) -> bool:
         """将APK与设备关联"""
         try:
+            # 获取设备和APK对象
+            device = Device.get(Device.serialno == serialno)
+            apk = Apk.get(Apk.package_name == package_name)
+            
             DeviceApk.get_or_create(
-                device_udid=device_udid,
-                package_name=package_name
+                device=device,
+                apk=apk
             )
             return True
         except Exception:
             return False
     
-    def dissociate_apk_from_device(self, package_name: str, device_udid: str) -> bool:
+    def dissociate_apk_from_device(self, package_name: str, serialno: str) -> bool:
         """取消APK与设备的关联"""
         try:
+            # 获取设备和APK对象
+            device = Device.get(Device.serialno == serialno)
+            apk = Apk.get(Apk.package_name == package_name)
+            
             deleted_count = DeviceApk.delete().where(
-                (DeviceApk.package_name == package_name) & 
-                (DeviceApk.device_udid == device_udid)
+                (DeviceApk.device == device) & 
+                (DeviceApk.apk == apk)
             ).execute()
             return deleted_count > 0
         except Exception:
@@ -137,20 +148,22 @@ class ApkDatabase(BaseDatabase):
     def get_devices_for_apk(self, package_name: str) -> List[str]:
         """获取安装了特定APK的设备列表"""
         try:
-            device_apks = DeviceApk.select(DeviceApk.device_udid).where(
-                DeviceApk.package_name == package_name
+            apk = Apk.get(Apk.package_name == package_name)
+            device_apks = DeviceApk.select(DeviceApk.device).where(
+                DeviceApk.apk == apk
             )
-            return [da.device_udid for da in device_apks]
+            return [da.device.serialno for da in device_apks]
         except Exception:
             return []
     
-    def get_apks_for_device(self, device_udid: str) -> List[Apk]:
+    def get_apks_for_device(self, serialno: str) -> List[Apk]:
         """获取设备上安装的所有APK"""
         try:
+            device = Device.get(Device.serialno == serialno)
             return list(
                 Apk.select()
                 .join(DeviceApk)
-                .where(DeviceApk.device_udid == device_udid)
+                .where(DeviceApk.device == device)
                 .order_by(Apk.app_name)
             )
         except Exception:
@@ -163,12 +176,13 @@ class ApkDatabase(BaseDatabase):
         except Exception:
             return 0
     
-    def get_device_apk_count(self, device_udid: str) -> int:
+    def get_device_apk_count(self, serialno: str) -> int:
         """获取设备的APK数量"""
         try:
+            device = Device.get(Device.serialno == serialno)
             return (
                 DeviceApk.select()
-                .where(DeviceApk.device_udid == device_udid)
+                .where(DeviceApk.device == device)
                 .count()
             )
         except Exception:

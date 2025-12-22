@@ -23,7 +23,7 @@ sealed class DashboardItem(val type: Int) {
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_WIFI)
 
     data class ItemDevice(
-        val udid: String = "KNT-AL10-1234567890",
+        val serialNo: String = "KNT-AL10-1234567890",
         val userId: String = "user001",
         val name: String = "KNT-AL10",
         val platform: String = "Android",

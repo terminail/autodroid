@@ -172,7 +172,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val installedAppsText: TextView = itemView.findViewById(R.id.text_installed_apps)
 
         fun bind(item: DashboardItem.ItemDevice) {
-            deviceUdid.text = item.udid
+            deviceUdid.text = item.serialNo
             userId.text = item.userId
             deviceName.text = item.name
             platform.text = item.platform

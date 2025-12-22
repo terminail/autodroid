@@ -9,7 +9,7 @@
     "timeout": 30,
     "success_rate": 0.95
   },
-  "device_udid": "device_12345",
+  "serialno": "device_12345",
   "priority": 1,
   "status": "pending",
   "created_at": "2024-01-15T10:00:00Z",

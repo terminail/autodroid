@@ -45,15 +45,15 @@ class YourScriptName(BaseWorkScript):
     详细描述脚本类的功能和使用方法
     """
     
-    def __init__(self, workplan: Dict[str, Any], device_udid: str = None):
+    def __init__(self, workplan: Dict[str, Any], serialno: str = None):
         """
         初始化脚本
         
         Args:
             workplan: 工作计划数据，包含执行所需的所有参数
-            device_udid: 设备唯一标识符（可选）
+            serialno: 设备序列号（可选）
         """
-        super().__init__(workplan, device_udid)
+        super().__init__(workplan, serialno)
         
         # 从workplan获取参数
         self.param1 = self.get_workplan_param('param1', 'default_value')
@@ -143,7 +143,7 @@ return {
 
 ### 继承的属性
 - `self.workplan`: 工作计划数据
-- `self.device_udid`: 设备UDID
+- `self.serialno`: 设备序列号
 - `self.logger`: 日志记录器
 - `self.report_dir`: 报告输出目录
 - `self.start_time`: 开始执行时间
@@ -216,7 +216,7 @@ def _generate_report(self, success: bool) -> str:
         'test_name': self.__class__.__name__,
         'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
         'result': 'PASS' if success else 'FAIL',
-        'device_udid': self.device_udid,
+        'serialno': self.serialno,
         'workplan_id': self.workplan.get('id')
     }
     json_path = self.save_report('test_result.json', json.dumps(json_data, indent=2))
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     }
     
     # 创建脚本实例
-    script = YourScriptName(test_workplan, device_udid='test_device')
+    script = YourScriptName(test_workplan, serialno='test_device')
     
     # 执行脚本
     result = script.execute()
@@ -258,7 +258,7 @@ from core.workscript.engine import WorkScriptEngine
 engine = WorkScriptEngine()
 
 # 执行脚本
-result = engine.execute_script(workplan, device_udid='test_device')
+result = engine.execute_script(workplan, serialno='test_device')
 
 # 验证结果
 assert result['status'] in ['success', 'failed', 'error']

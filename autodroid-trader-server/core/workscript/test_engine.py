@@ -72,7 +72,7 @@ def test_engine():
     # 执行脚本
     print(f"\n⚡ 执行工作脚本...")
     try:
-        result = engine.execute_script(test_workplan, device_udid='test_device_001')
+        result = engine.execute_script(test_workplan, device_serialno='test_device_001')
         
         print(f"\n📊 执行结果:")
         print(f"  状态: {result['status']}")

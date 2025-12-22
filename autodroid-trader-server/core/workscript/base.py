@@ -24,16 +24,16 @@ except ImportError as e:
 class BaseWorkScript(ABC):
     """工作脚本抽象基类"""
     
-    def __init__(self, workplan: Dict[str, Any], device_udid: Optional[str] = None):
+    def __init__(self, workplan: Dict[str, Any], device_serialno: Optional[str] = None):
         """
         初始化工作脚本
         
         Args:
             workplan: 工作计划数据，包含脚本执行所需的所有参数
-            device_udid: 设备唯一标识符
+            device_serialno: 设备序列号
         """
         self.workplan = workplan
-        self.device_udid = device_udid
+        self.device_serialno = device_serialno
         self.logger = logging.getLogger(self.__class__.__name__)
         self.start_time = None
         self.end_time = None
@@ -47,7 +47,7 @@ class BaseWorkScript(ABC):
         
         self.logger.info(f"初始化工作脚本: {self.__class__.__name__}")
         self.logger.info(f"工作计划ID: {workplan.get('id', 'unknown')}")
-        self.logger.info(f"设备UDID: {device_udid}")
+        self.logger.info(f"设备序列号: {device_serialno}")
         if self.device:
             self.logger.info(f"设备连接状态: {'已连接' if self.device.is_connected() else '未连接'}")
         else:
@@ -114,7 +114,7 @@ class BaseWorkScript(ABC):
             # 添加执行时间和设备信息
             result.update({
                 'execution_time': execution_time,
-                'device_udid': self.device_udid,
+                'device_serialno': self.device_serialno,
                 'workplan_id': self.workplan.get('id'),
                 'script_name': self.__class__.__name__,
                 'report_directory': self.report_dir
@@ -134,7 +134,7 @@ class BaseWorkScript(ABC):
                 'message': str(e),
                 'error_type': type(e).__name__,
                 'execution_time': execution_time,
-                'device_udid': self.device_udid,
+                'device_serialno': self.device_serialno,
                 'workplan_id': self.workplan.get('id'),
                 'script_name': self.__class__.__name__,
                 'report_directory': self.report_dir
@@ -212,8 +212,8 @@ class BaseWorkScript(ABC):
         Returns:
             设备对象或None
         """
-        if not self.device_udid:
-            self.logger.warning("未提供设备UDID，无法初始化设备对象")
+        if not self.device_serialno:
+            self.logger.warning("未提供设备序列号，无法初始化设备对象")
             return None
         
         if not DEVICE_CONNECTION_AVAILABLE:
@@ -225,14 +225,14 @@ class BaseWorkScript(ABC):
             device_pool = DeviceConnectionPool()
             
             # 获取设备对象
-            device = device_pool.get_device(self.device_udid)
+            device = device_pool.get_device(self.device_serialno)
             
             # 连接设备
             if device.connect():
-                self.logger.info(f"设备 {self.device_udid} 初始化成功")
+                self.logger.info(f"设备 {self.device_serialno} 初始化成功")
                 return device
             else:
-                self.logger.error(f"设备 {self.device_udid} 连接失败")
+                self.logger.error(f"设备 {self.device_serialno} 连接失败")
                 return None
                 
         except Exception as e:

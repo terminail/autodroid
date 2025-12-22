@@ -95,7 +95,7 @@ def main():
     # 执行脚本
     print(f"\n⚡ 执行工作脚本...")
     try:
-        result = engine.execute_script(workplan, device_udid='example_device_001')
+        result = engine.execute_script(workplan, serialno='example_device_001')
         
         print(f"\n📈 执行结果:")
         print(f"  状态: {result['status']}")

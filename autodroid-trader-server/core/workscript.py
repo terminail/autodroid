@@ -91,11 +91,11 @@ class CoordinateConverter:
 class EnhancedBaseWorkScript(BaseWorkScript):
     """增强版基础工作脚本类"""
     
-    def __init__(self, workplan: Dict[str, Any] = None, device_udid: str = None):
-        super().__init__(workplan or {}, device_udid)
+    def __init__(self, workplan: Dict[str, Any] = None, serialno: str = None):
+        super().__init__(workplan or {}, serialno)
         self.coordinate_converter = CoordinateConverter()
         self.screen_info = None
-        self.device_id = device_udid
+        self.device_id = serialno
         self.logger = logging.getLogger(self.__class__.__name__)
         
     def initialize_enhanced_features(self, device_id: str = None):

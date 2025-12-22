@@ -128,13 +128,13 @@ class WorkScriptEngine:
             self.logger.error(traceback.format_exc())
             raise ImportError(f"脚本加载失败: {script_name} - {e}")
     
-    def execute_script(self, workplan: Dict[str, Any], device_udid: str = None) -> Dict[str, Any]:
+    def execute_script(self, workplan: Dict[str, Any], device_serialno: str = None) -> Dict[str, Any]:
         """
         执行工作脚本
         
         Args:
             workplan: 工作计划数据
-            device_udid: 设备UDID
+            device_serialno: 设备序列号
             
         Returns:
             执行结果
@@ -148,13 +148,13 @@ class WorkScriptEngine:
             script_name = workplan['workscript']
             self.logger.info(f"开始执行工作脚本: {script_name}")
             self.logger.info(f"工作计划ID: {workplan.get('id', 'unknown')}")
-            self.logger.info(f"设备UDID: {device_udid}")
+            self.logger.info(f"设备序列号: {device_serialno}")
             
             # 加载脚本类
             script_class = self.load_script(script_name)
             
             # 创建脚本实例
-            script_instance = script_class(workplan, device_udid)
+            script_instance = script_class(workplan, device_serialno)
             
             # 执行脚本
             result = script_instance.execute()
@@ -182,7 +182,7 @@ class WorkScriptEngine:
                 'engine_version': '1.0.0',
                 'workplan_id': workplan.get('id') if isinstance(workplan, dict) else None,
                 'script_name': workplan.get('workscript') if isinstance(workplan, dict) else None,
-                'device_udid': device_udid
+                'device_serialno': device_serialno
             }
             
             return error_result

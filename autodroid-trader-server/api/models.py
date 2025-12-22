@@ -18,7 +18,7 @@ class EventTrigger(BaseModel):
 
 class DeviceRegistration(BaseModel):
     """Model for device registration"""
-    udid: str
+    serialno: str
     name: str
     platform: str
     model: str

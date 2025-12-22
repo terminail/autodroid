@@ -18,7 +18,7 @@ class ApkManager:
     
     def register_apk_to_device(self, request: ApkRegisterRequest) -> ApkInfo:
         """将APK注册到设备"""
-        apk = self.db.register_apk_to_device(request.device_udid, request.apk_info.dict())
+        apk = self.db.register_apk_to_device(request.serialno, request.apk_info.dict())
         
         # 返回ApkInfo对象
         return ApkInfo(
@@ -116,17 +116,17 @@ class ApkManager:
         """删除APK"""
         return self.db.delete_apk(package_name)
     
-    def dissociate_apk_from_device(self, package_name: str, device_udid: str) -> bool:
+    def dissociate_apk_from_device(self, package_name: str, serialno: str) -> bool:
         """将APK与设备解关联"""
-        return self.db.dissociate_apk_from_device(package_name, device_udid)
+        return self.db.dissociate_apk_from_device(package_name, serialno)
     
     def get_devices_for_apk(self, package_name: str) -> List[str]:
         """获取安装该APK的设备列表"""
         return self.db.get_devices_for_apk(package_name)
     
-    def get_apks_for_device(self, device_udid: str) -> List[ApkInfo]:
+    def get_apks_for_device(self, serialno: str) -> List[ApkInfo]:
         """获取设备的所有APK"""
-        apks = self.db.get_apks_for_device(device_udid)
+        apks = self.db.get_apks_for_device(serialno)
         return [
             ApkInfo(
                 package_name=apk.package_name,
@@ -143,9 +143,9 @@ class ApkManager:
         """获取APK总数"""
         return self.db.get_apk_count()
     
-    def get_device_apk_count(self, device_udid: str) -> int:
+    def get_device_apk_count(self, serialno: str) -> int:
         """获取设备的APK数量"""
-        return self.db.get_device_apk_count(device_udid)
+        return self.db.get_device_apk_count(serialno)
 
 
 if __name__ == "__main__":

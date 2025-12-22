@@ -32,9 +32,9 @@ data class DeviceInfoResponse(
     val status: String? = null,
     val usb_debug_enabled: Boolean? = false,
     val wifi_debug_enabled: Boolean? = false,
-    val debug_check_status: String? = "UNKNOWN",
-    val debug_check_message: String? = null,
-    val debug_check_time: String? = null,
+    val check_status: String? = "UNKNOWN",
+    val check_message: String? = null,
+    val check_time: String? = null,
     val apps: List<AppInfo>? = null
 ) {
     /**

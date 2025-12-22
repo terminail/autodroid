@@ -230,27 +230,27 @@ class ApiClient private constructor() {
     }
     
     /**
-     * Check device debug permissions
+     * As Server to Check device debug permissions & installed apps etc.
      */
-    fun checkDeviceDebugPermissions(deviceUdid: String): DeviceDebugCheckResponse {
-        val url = buildApiUrl("/devices/$deviceUdid/debug/check")
+    fun checkDevice(deviceUdid: String): DeviceCheckResponse {
+        val url = buildApiUrl("/devices/$deviceUdid/check")
         val response = makePostRequest(url, emptyMap<String, Any>())
         
         if (!response.isSuccessful) {
-            throw RuntimeException("Failed to check device debug permissions: ${response.code} - ${response.message}")
+            throw RuntimeException("Failed to check device: ${response.code} - ${response.message}")
         }
         
         val responseBody = response.body?.string()
         if (responseBody.isNullOrEmpty()) {
-            throw RuntimeException("Empty response body from debug check endpoint")
+            throw RuntimeException("Empty response body from check endpoint")
         }
         
         try {
-            return gson.fromJson(responseBody, DeviceDebugCheckResponse::class.java)
+            return gson.fromJson(responseBody, DeviceCheckResponse::class.java)
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing debug check response: ${e.message}")
+            Log.e(TAG, "Error parsing check response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
-            throw RuntimeException("Failed to parse debug check response", e)
+            throw RuntimeException("Failed to parse check response", e)
         }
     }
     

@@ -52,7 +52,7 @@ class ApkListResponse(BaseModel):
 class DeviceApkInfo(BaseModel):
     """设备APK关联信息模型"""
     package_name: str = Field(..., description="包名")
-    device_udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
     installed_time: Optional[datetime] = Field(None, description="安装时间")
 
     class Config:
@@ -63,7 +63,7 @@ class DeviceApkInfo(BaseModel):
 
 class ApkRegisterRequest(BaseModel):
     """APK注册到设备请求模型"""
-    device_udid: str = Field(..., description="设备UDID")
+    serialno: str = Field(..., description="设备序列号")
     apk_info: ApkCreateRequest = Field(..., description="APK信息")
 
 

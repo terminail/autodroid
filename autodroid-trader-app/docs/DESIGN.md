@@ -43,6 +43,118 @@ sequenceDiagram
     D-->>U: 自动通知更新
 ```
 
+#### Repository层职责
+
+根据"本地优先设计理念"，Repository层应该负责：
+
+1. **异步调用API同步服务器数据到本地数据库**
+   - Repository层负责所有网络操作和数据同步
+   - 处理API响应并将数据转换为本地Entity对象
+   - 管理网络错误和重试逻辑
+
+2. **立即从本地数据库返回信息**
+   - Repository层优先从本地数据库返回数据，确保UI响应性
+   - 使用LiveData提供响应式数据流
+   - 在后台异步同步最新数据，不影响UI体验
+
+3. **提供数据订阅接口**
+   - Repository层提供getXXX方法（如getDeviceByIdLiveData、getAllDevices等）返回LiveData
+   - 其他模块（UI层、Manager层）通过这些getXXX方法订阅数据变化
+   - 业务逻辑方法（如registerDevice、checkDeviceWithServer）返回单个Entity对象，不返回LiveData
+
+#### 架构优势
+
+这样的设计完全遵循了"本地优先设计理念"和"数据模型抽象原则"：
+
+- **Repository层负责所有网络操作和数据同步**
+- **Manager层只负责业务逻辑协调**
+- **UI层始终只与Entity对象交互，不直接处理Response对象**
+
+这种架构的优势是：
+
+1. **职责分离清晰**：Repository负责数据操作，Manager负责业务协调
+2. **易于维护**：网络API变更不会影响Manager和UI层
+3. **一致性**：UI层始终使用统一的数据模型
+4. **离线优先**：本地Entity对象可以独立于网络状态存在
+5. **灵活的数据访问**：通过getXXX方法提供LiveData订阅，业务逻辑方法返回单个Entity，满足不同场景需求
+6. **响应式更新**：数据变化自动通知所有订阅者，无需手动刷新UI
+
+### 数据模型抽象原则
+
+**核心原则**：服务端返回的Response对象应该对UI层完全屏蔽，UI层只与Entity对象交互。
+
+#### 设计理念
+
+1. **Response对象隔离**：所有网络API返回的Response对象（如`DeviceCreateResponse`、`DeviceResponse`等）应该限制在Repository层内部，不应传递到UI层。
+
+2. **Entity对象统一**：UI层、ViewModel层和Manager层应该只使用Entity对象（如`DeviceEntity`、`ServerEntity`等）进行数据交互。
+
+3. **数据转换封装**：Repository层负责将Response对象转换为对应的Entity对象，并处理本地数据库的同步更新。
+
+#### 实现规范
+
+```mermaid
+sequenceDiagram
+    participant UI as UI Layer
+    participant VM as ViewModel/Manager
+    participant Repo as Repository
+    participant API as Network API
+    participant DB as Local Database
+    
+    UI->>VM: 请求数据操作
+    VM->>Repo: 调用业务方法(返回Entity)
+    Repo->>API: 发起网络请求
+    API-->>Repo: 返回Response对象
+    Repo->>Repo: 转换Response为Entity
+    Repo->>DB: 更新本地数据库
+    DB-->>Repo: 返回Entity对象
+    Repo-->>VM: 返回Entity对象
+    VM-->>UI: 返回Entity对象
+    
+    Note over UI,DB: UI层始终只与Entity对象交互
+```
+
+#### 代码示例
+
+**❌ 错误示例 - Response对象传递到UI层**
+```kotlin
+// Manager/ViewModel层
+suspend fun registerDevice(): DeviceCreateResponse {
+    return deviceRepository.registerDevice(device)
+}
+
+// UI层
+val response = deviceManager.registerDevice()
+// UI层需要处理Response对象，违反了抽象原则
+```
+
+**✅ 正确示例 - Entity对象封装**
+```kotlin
+// Manager/ViewModel层
+suspend fun registerDevice(): DeviceEntity {
+    // 业务逻辑方法返回单个Entity对象
+    return deviceRepository.registerDevice(device)
+}
+
+// UI层 - 执行业务操作
+val deviceEntity = deviceManager.registerDevice()
+// UI层只与Entity对象交互，保持架构清晰
+
+// UI层 - 订阅数据变化
+deviceRepository.getDeviceByIdLiveData(deviceId).observe(viewLifecycleOwner) { device ->
+    // 当设备数据变化时自动更新UI
+    updateUI(device)
+}
+```
+
+#### 优势
+
+1. **架构清晰**：UI层不需要了解网络API的具体实现细节
+2. **易于维护**：网络API变更不会影响UI层代码
+3. **类型安全**：Entity对象提供类型安全的数据访问
+4. **一致性**：UI层始终使用统一的数据模型
+5. **离线优先**：本地Entity对象可以独立于网络状态存在
+
 ## 各层职责
 
 ### 架构层次结构
@@ -435,21 +547,23 @@ erDiagram
 
 ### 数据访问操作
 
+Repository层提供两种类型的数据访问方法：
+
+1. **数据订阅方法（getXXX）**：返回LiveData，用于UI层观察数据变化
+2. **业务逻辑方法（如registerDevice）**：返回单个Entity对象，用于执行特定操作
+
 ```mermaid
 flowchart TD
-    A[数据操作请求] --> B{操作类型}
-    B -->|查询| C[SELECT 查询]
-    B -->|插入/更新| D[INSERT/UPDATE]
-    B -->|删除| E[DELETE]
+    A[数据访问请求] --> B{方法类型}
+    B -->|数据订阅 getXXX| C[返回 LiveData]
+    B -->|业务逻辑操作| D[执行操作并返回 Entity]
     
-    C --> F[返回 LiveData]
-    D --> G[更新数据库]
-    E --> H[删除记录]
+    C --> E[UI观察LiveData]
+    D --> F[更新本地数据库]
     
-    G --> I[LiveData 自动通知]
-    H --> I
-    F --> J[UI 自动更新]
-    I --> J
+    F --> G[LiveData自动通知订阅者]
+    E --> H[UI自动更新]
+    G --> H
 ```
 
 ### 响应式数据流
