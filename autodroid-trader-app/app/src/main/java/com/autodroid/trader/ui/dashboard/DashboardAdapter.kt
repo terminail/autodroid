@@ -21,6 +21,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_WIFI = 1
         const val TYPE_DEVICE = 2
         const val TYPE_PORT_RANGE = 3
+        const val TYPE_TRADE_PLAN = 4
     }
 
     private val items = mutableListOf<DashboardItem>()
@@ -69,6 +70,10 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.item_server_ip_port_range, parent, false)
                 PortRangeViewHolder(view)
             }
+            TYPE_TRADE_PLAN -> {
+                val view = inflater.inflate(R.layout.item_trade_plan_summary, parent, false)
+                TradePlanViewHolder(view)
+            }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -80,6 +85,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is WiFiViewHolder -> holder.bind(item as DashboardItem.ItemWiFi)
             is DeviceViewHolder -> holder.bind(item as DashboardItem.ItemDevice)
             is PortRangeViewHolder -> holder.bind(item as DashboardItem.ItemPortRange)
+            is TradePlanViewHolder -> holder.bind(item as DashboardItem.ItemTradePlan)
         }
     }
 
@@ -332,6 +338,15 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     .putInt("port_end", portEnd)
                     .apply()
             }
+        }
+    }
+
+    inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val statusSummaryText: TextView = itemView.findViewById(R.id.status_summary)
+        private val executeApprovedButton: Button = itemView.findViewById(R.id.btn_execute_approved)
+
+        fun bind(item: DashboardItem.ItemTradePlan) {
+            statusSummaryText.text = "待批准: ${item.pendingCount} | 已批准: ${item.approvedCount} | 已否决: ${item.rejectedCount} | 执行成功: ${item.executedSuccessCount} | 执行失败: ${item.executedFailedCount}"
         }
     }
 }

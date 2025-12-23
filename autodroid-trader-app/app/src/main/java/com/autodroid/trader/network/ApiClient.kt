@@ -77,8 +77,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to get device info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from device info endpoint")
         }
         
@@ -102,8 +102,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to register device: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from device registration endpoint")
         }
         
@@ -129,8 +129,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from server info endpoint")
         }
         
@@ -160,8 +160,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch server info: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from server info endpoint")
         }
         
@@ -185,8 +185,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to check device: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from check endpoint")
         }
         
@@ -210,8 +210,8 @@ class ApiClient private constructor() {
             throw RuntimeException("Failed to fetch trade plans: ${response.code} - ${response.message}")
         }
         
-        val responseBody = response.body.string()
-        if (responseBody.isEmpty()) {
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
             throw RuntimeException("Empty response body from trade plans endpoint")
         }
         
@@ -222,6 +222,116 @@ class ApiClient private constructor() {
             Log.e(TAG, "Error parsing trade plans response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
             throw RuntimeException("Failed to parse trade plans response", e)
+        }
+    }
+    
+    /**
+     * Update trade plan status on server
+     */
+    fun updateTradePlanStatus(id: String, status: String): String {
+        val url = buildApiUrl("/tradeplans/$id/status")
+        val requestData = mapOf("status" to status)
+        val response = makePostRequest(url, requestData)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to update trade plan status: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from trade plan status update endpoint")
+        }
+        
+        try {
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            return jsonResponse["message"]?.toString() ?: "Status updated successfully"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing trade plan status update response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse trade plan status update response", e)
+        }
+    }
+    
+    /**
+     * Execute trade plan on server
+     */
+    fun executeTradePlan(id: String): String {
+        val url = buildApiUrl("/tradeplans/$id/execute")
+        val response = makePostRequest(url, emptyMap<String, Any>())
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to execute trade plan: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from trade plan execute endpoint")
+        }
+        
+        try {
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            return jsonResponse["message"]?.toString() ?: "Trade plan execution started"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing trade plan execute response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse trade plan execute response", e)
+        }
+    }
+    
+    /**
+     * Get all trade plans from server
+     */
+    fun getAllTradePlans(): List<TradePlan> {
+        val url = buildApiUrl("/tradeplans")
+        val response = makeGetRequest(url)
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to fetch all trade plans: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from all trade plans endpoint")
+        }
+        
+        try {
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val tradeplansJson = jsonResponse["tradeplans"]
+            if (tradeplansJson != null) {
+                val tradePlanType = object : TypeToken<List<TradePlan>>() {}.type
+                return gson.fromJson(gson.toJson(tradeplansJson), tradePlanType)
+            }
+            return emptyList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing all trade plans response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse all trade plans response", e)
+        }
+    }
+    
+    /**
+     * Execute all approved trade plans on server
+     */
+    fun executeApprovedPlans(): String {
+        val url = buildApiUrl("/tradeplans/execute-approved")
+        val response = makePostRequest(url, emptyMap<String, Any>())
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to execute approved plans: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from execute approved plans endpoint")
+        }
+        
+        try {
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            return jsonResponse["message"]?.toString() ?: "Approved plans execution started"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing execute approved plans response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse execute approved plans response", e)
         }
     }
     

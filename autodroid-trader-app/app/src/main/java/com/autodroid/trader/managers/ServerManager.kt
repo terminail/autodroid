@@ -550,13 +550,14 @@ class ServerManager private constructor(private val context: Context) {
             // 等待剩余任务完成
             jobs.joinAll()
 
-            if (foundServerResult != null) {
-                _scanProgress.postValue("服务器检查完成，已找到服务器: ${foundServerResult.serverEntity.name}")
+            val result = foundServerResult
+            if (result != null) {
+                _scanProgress.postValue("服务器检查完成，已找到服务器: ${result.serverEntity.name}")
             } else {
                 _scanProgress.postValue("服务器检查完成，未找到任何服务器")
             }
 
-            return@withContext foundServerResult
+            return@withContext result
         }
 
     /**

@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.Update
 import androidx.room.Delete
 import androidx.room.OnConflictStrategy
+import com.autodroid.trader.model.TradePlanStatus
 
 /**
  * 交易计划数据访问对象
@@ -104,4 +105,28 @@ interface TradePlanDao {
      */
     @Query("SELECT COUNT(*) FROM trade_plans WHERE isActive = 1")
     fun getActiveTradePlanCount(): Int
+
+    /**
+     * 更新交易计划状态（待批准/已批准）
+     */
+    @Query("UPDATE trade_plans SET status = :status, updatedAt = :updatedAt WHERE id = :id")
+    fun updateTradePlanStatus(id: String, status: String, updatedAt: Long)
+
+    /**
+     * 根据状态获取交易计划
+     */
+    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
+    fun getTradePlansByStatus(status: String): LiveData<List<TradePlanEntity>>
+
+    /**
+     * 获取所有待批准的交易计划
+     */
+    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
+    fun getPendingTradePlans(status: String): LiveData<List<TradePlanEntity>>
+
+    /**
+     * 获取所有已批准的交易计划
+     */
+    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
+    fun getApprovedTradePlans(status: String): LiveData<List<TradePlanEntity>>
 }

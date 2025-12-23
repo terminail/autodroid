@@ -1,5 +1,5 @@
 // TradeOrdersFragment.kt
-package com.autodroid.trader.ui.tradeorder
+package com.autodroid.trader.ui.tradeorders
 
 import android.os.Bundle
 import android.view.View

@@ -44,4 +44,14 @@ sealed class DashboardItem(val type: Int) {
         val portStart: Int = 8000,
         val portEnd: Int = 8080
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_PORT_RANGE)
+
+    data class ItemTradePlan(
+        val status: String = "Loading trade plans...",
+        val executionStatus: String = "IDLE",
+        val pendingCount: Int = 0,
+        val approvedCount: Int = 0,
+        val rejectedCount: Int = 0,
+        val executedSuccessCount: Int = 0,
+        val executedFailedCount: Int = 0
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_TRADE_PLAN)
 }

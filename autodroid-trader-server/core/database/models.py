@@ -94,10 +94,10 @@ class DeviceApk(BaseModel):
     class Meta:
         primary_key = CompositeKey('device', 'apk')
 
-class WorkScript(BaseModel):
-    """工作脚本模型"""
+class TradeScript(BaseModel):
+    """交易脚本模型"""
     id = CharField(primary_key=True)
-    apk = ForeignKeyField(Apk, backref='workscripts', on_delete='CASCADE')
+    apk = ForeignKeyField(Apk, backref='tradescripts', on_delete='CASCADE')
     name = CharField()
     description = CharField(null=True)
     metadata = TextField()  # JSON格式存储
@@ -105,30 +105,25 @@ class WorkScript(BaseModel):
     status = CharField(default='NEW')  # 状态：NEW、INPROGRESS、FAILED、OK
     created_at = DateTimeField(default=datetime.now)
 
-class WorkPlan(BaseModel):
-    """工作脚本计划模型"""
+class TradePlan(BaseModel):
+    """交易计划模型"""
     id = CharField(primary_key=True)
-    script = ForeignKeyField(WorkScript, backref='workplans', on_delete='CASCADE')
-    user = ForeignKeyField(User, backref='workplans', null=True, on_delete='SET NULL')
+    script = ForeignKeyField(TradeScript, backref='tradeplans', on_delete='CASCADE')
+    user = ForeignKeyField(User, backref='tradeplans', null=True, on_delete='SET NULL')
     name = CharField()
     description = CharField(null=True)
-    data = TextField()  # JSON格式存储，工作计划数据符合WorkScript的metadata要求
-    status = CharField(default='NEW')  # 状态：NEW、INPROGRESS、FAILED、OK
+    exchange = CharField(null=True)  # 交易所
+    symbol = CharField(null=True)  # 股票代码
+    symbol_name = CharField(null=True)  # 股票名称
+    ohlcv = TextField(null=True)  # OHLCV数据（JSON格式）
+    change_percent = DecimalField(null=True)  # 涨跌幅
+    data = TextField(null=True)  # JSON格式存储，交易计划数据符合TradeScript的metadata要求
+    status = CharField(default='PENDING')  # 状态：PENDING、APPROVED、REJECTED、EXECUTING、COMPLETED、FAILED
     created_at = DateTimeField(default=datetime.now)
     started_at = DateTimeField(null=True)
     ended_at = DateTimeField(null=True)
-
-class WorkReport(BaseModel):
-    """工作脚本执行报告模型"""
-    id = CharField(primary_key=True)
-    user = ForeignKeyField(User, backref='workreports', on_delete='CASCADE')
-    plan = ForeignKeyField(WorkPlan, backref='workreports', on_delete='CASCADE')
-    name = CharField()
-    description = CharField(null=True)
-    execution_log = TextField()  # JSON格式存储
-    result_data = TextField()  # JSON格式存储
-    error_message = CharField(null=True)
-    created_at = DateTimeField(default=datetime.now)
+    execution_result = TextField(null=True)  # 执行结果（JSON格式）
+    execution_message = TextField(null=True)  # 执行消息或错误信息
 
 class Contract(BaseModel):
     """合约模型"""
@@ -141,10 +136,10 @@ class Contract(BaseModel):
     price = DecimalField()  # 当前价格
     created_at = DateTimeField(default=datetime.now)
 
-class Order(BaseModel):
+class TradeOrder(BaseModel):
     """订单模型"""
     id = CharField(primary_key=True)
-    plan = ForeignKeyField(WorkPlan, backref='orders', null=True, on_delete='SET NULL')
+    plan = ForeignKeyField(TradePlan, backref='orders', null=True, on_delete='SET NULL')
     contract = ForeignKeyField(Contract, backref='orders', null=True, on_delete='SET NULL')
     name = CharField()
     description = CharField(null=True)
@@ -161,7 +156,7 @@ def create_tables():
     with db:
         db.create_tables([
             User, Device, Apk, DeviceApk, 
-            WorkScript, WorkPlan, WorkReport, Contract, Order
+            TradeScript, TradePlan, Contract, TradeOrder
         ])
 
 # 初始化数据库

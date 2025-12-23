@@ -1,4 +1,4 @@
-package com.autodroid.trader.ui.tradeorder
+package com.autodroid.trader.ui.tradeorders
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

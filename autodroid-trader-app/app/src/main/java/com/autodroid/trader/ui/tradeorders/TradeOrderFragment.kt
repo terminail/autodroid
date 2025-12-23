@@ -1,4 +1,4 @@
-package com.autodroid.trader.ui.tradeorder
+package com.autodroid.trader.ui.tradeorders
 
 import android.util.Log
 import android.view.View

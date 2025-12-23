@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="14dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/trade_plan_icon"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_gravity="center_vertical"
+        android:src="@android:drawable/ic_menu_info_details"
+        android:scaleType="fitCenter" />
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="14dp"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/trade_plan_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/trade_plan_time"
+            android:text="MACD趋势策略 - 快手"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/trade_plan_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:text="10:30"
+            android:textSize="13sp"
+            android:textColor="#999999" />
+
+        <TextView
+            android:id="@+id/trade_plan_info_line1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/trade_plan_name"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="6dp"
+            android:text="01024.HK | 快手 | 收盘价: 59.30"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/trade_plan_info_line2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/trade_plan_info_line1"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/trade_plan_status"
+            android:layout_marginTop="4dp"
+            android:text="涨跌幅: +1.37% | 成交量: 125.6M"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/trade_plan_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/trade_plan_info_line1"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="4dp"
+            android:text="PENDING"
+            android:textSize="13sp"
+            android:textColor="#FF9800"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+</LinearLayout>

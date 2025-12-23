@@ -1,5 +1,5 @@
 // TradePlansViewModel.kt
-package com.autodroid.trader.ui.tradeplan
+package com.autodroid.trader.ui.tradeplans
 
 import androidx.lifecycle.ViewModel
 

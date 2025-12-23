@@ -27,6 +27,8 @@ data class TradePlanEntity(
     val isActive: Boolean = false,
     val lastExecutedTime: Long = 0,
     val executionCount: Int = 0,
+    val executionStatus: String? = null, // 执行状态：SUCCESS, FAILED, RUNNING
+    val lastExecutionResult: String? = null, // 最后执行结果
     
     // 来源信息
     val sourceServerIp: String? = null,
@@ -80,6 +82,8 @@ data class TradePlanEntity(
             isActive: Boolean = false,
             lastExecutedTime: Long = 0,
             executionCount: Int = 0,
+            executionStatus: String? = null,
+            lastExecutionResult: String? = null,
             sourceServerIp: String? = null,
             sourceServerPort: Int? = null
         ): TradePlanEntity {
@@ -95,6 +99,8 @@ data class TradePlanEntity(
                 isActive = isActive,
                 lastExecutedTime = lastExecutedTime,
                 executionCount = executionCount,
+                executionStatus = executionStatus,
+                lastExecutionResult = lastExecutionResult,
                 sourceServerIp = sourceServerIp,
                 sourceServerPort = sourceServerPort
             )

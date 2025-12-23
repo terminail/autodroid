@@ -11,7 +11,8 @@ from .auth import router as auth_router
 from .devices import router as devices_router
 from .server import router as server_router
 from .apks import router as apks_router
-from .workscripts import router as workscripts_router
+from .tradeplans import router as tradeplans_router
+from .tradescripts import router as tradescripts_router
 from .mdns import MDNSService, register_mdns_from_config
 
 import os
@@ -184,7 +185,8 @@ app.include_router(auth_router)
 app.include_router(devices_router)
 app.include_router(server_router)
 app.include_router(apks_router)
-app.include_router(workscripts_router)
+app.include_router(tradeplans_router)
+app.include_router(tradescripts_router)
 
 # Add API root endpoint
 @app.get("/api")
@@ -199,7 +201,8 @@ async def api_root():
             "devices": "/api/devices",
             "server": "/api/server",
             "apks": "/api/apks",
-            "workscripts": "/api/{app_package}/workscripts",
+            "tradeplans": "/api/tradeplans",
+            "tradescripts": "/api/tradescripts",
             "config": "/api/config",
             "health": "/api/health"
         },

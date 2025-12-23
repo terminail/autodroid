@@ -59,7 +59,7 @@ class DashboardFragment : BaseFragment() {
         super.onCreate(savedInstanceState)
 
         // Initialize managers
-        tradePlanManager = TradePlanManager(requireContext(), appViewModel)
+        tradePlanManager = TradePlanManager.getInstance(requireContext(), appViewModel)
         // apkScannerManager = ApkScannerManager(requireContext())
 
         // Initialize Activity Result API launchers

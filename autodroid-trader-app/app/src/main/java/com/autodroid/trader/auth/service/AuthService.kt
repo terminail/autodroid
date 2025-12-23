@@ -55,12 +55,12 @@ class AuthService {
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val responseBody = response.body.string()
+                    val responseBody = response.body?.string()
                     val jsonResponse =
                         gson.fromJson<JsonObject?>(responseBody, JsonObject::class.java)
                     callback.onSuccess(jsonResponse)
                 } else {
-                    val errorBody = response.body.string()
+                    val errorBody = response.body?.string()
                     Log.e(TAG, "Login failed with code " + response.code + ": " + errorBody)
                     callback.onError("Login failed: " + response.message)
                 }
@@ -90,12 +90,12 @@ class AuthService {
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val responseBody = response.body.string()
+                    val responseBody = response.body?.string()
                     val jsonResponse =
                         gson.fromJson<JsonObject?>(responseBody, JsonObject::class.java)
                     callback.onSuccess(jsonResponse)
                 } else {
-                    val errorBody = response.body.string()
+                    val errorBody = response.body?.string()
                     Log.e(TAG, "Registration failed with code " + response.code + ": " + errorBody)
                     callback.onError("Registration failed: " + response.message)
                 }
@@ -121,12 +121,12 @@ class AuthService {
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val responseBody = response.body.string()
+                    val responseBody = response.body?.string()
                     val jsonResponse =
                         gson.fromJson<JsonObject?>(responseBody, JsonObject::class.java)
                     callback.onSuccess(jsonResponse)
                 } else {
-                    val errorBody = response.body.string()
+                    val errorBody = response.body?.string()
                     Log.e(TAG, "Get user failed with code " + response.code + ": " + errorBody)
                     callback.onError("Failed to get user info: " + response.message)
                 }

@@ -1,81 +1,73 @@
-// TradePlanAdapter.kt
 package com.autodroid.trader.ui.tradeplan
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
 import com.autodroid.trader.model.TradePlan
-import com.autodroid.trader.ui.tradeplan.TradePlanAdapter.TradePlanViewHolder
 
 class TradePlanAdapter(
-    private var tradeplans: MutableList<TradePlan>?,
-    private val listener: OnTradePlanClickListener?
-) : RecyclerView.Adapter<TradePlanViewHolder?>() {
-    interface OnTradePlanClickListener {
-        fun onTradePlanClick(tradePlan: TradePlan?)
+    private var items: MutableList<TradePlan>?,
+    private val listener: OnItemClickListener?
+) : RecyclerView.Adapter<TradePlanAdapter.ViewHolder>() {
+    
+    interface OnItemClickListener {
+        fun onItemClick(item: TradePlan?)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TradePlanViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.getContext())
-            .inflate(R.layout.item_tradeplan, parent, false)
-        return TradePlanViewHolder(view)
+            .inflate(R.layout.item_trade_plan, parent, false)
+        return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: TradePlanViewHolder, position: Int) {
-        val tradePlan = tradeplans!!.get(position)
-        holder.bind(tradePlan)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = items!![position]
+        holder.bind(item)
     }
 
     override fun getItemCount(): Int {
-        return if (tradeplans != null) tradeplans!!.size else 0
+        return if (items != null) items!!.size else 0
     }
 
-    fun updateTradePlans(newTradePlans: MutableList<TradePlan>?) {
-        this.tradeplans = newTradePlans
+    fun updateItems(newItems: MutableList<TradePlan>?) {
+        this.items = newItems
         notifyDataSetChanged()
     }
 
-    inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val nameTextView: TextView
-        private val descriptionTextView: TextView
-        private val packageTextView: TextView
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val iconView: ImageView
+        private val nameView: TextView
+        private val timeView: TextView
+        private val infoLine1View: TextView
+        private val infoLine2View: TextView
+        private val statusView: TextView
 
         init {
-            nameTextView = itemView.findViewById<TextView>(R.id.tradeplan_item_name)
-            descriptionTextView = itemView.findViewById<TextView>(R.id.tradeplan_item_description)
-            packageTextView = itemView.findViewById<TextView>(R.id.tradeplan_item_package)
+            iconView = itemView.findViewById(R.id.trade_plan_icon)
+            nameView = itemView.findViewById(R.id.trade_plan_name)
+            timeView = itemView.findViewById(R.id.trade_plan_time)
+            infoLine1View = itemView.findViewById(R.id.trade_plan_info_line1)
+            infoLine2View = itemView.findViewById(R.id.trade_plan_info_line2)
+            statusView = itemView.findViewById(R.id.trade_plan_status)
+
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    listener?.onItemClick(items!![position])
+                }
+            }
         }
 
-        fun bind(tradePlan: TradePlan) {
-            // Use title if available, otherwise use name
-            val displayName = tradePlan.title ?: tradePlan.name ?: "Unknown Trade Plan"
-            nameTextView.setText(displayName)
-
-            // Use subtitle if available, otherwise use description
-            val displayDescription = tradePlan.subtitle ?: tradePlan.description ?: ""
-            if (displayDescription.isEmpty()) {
-                descriptionTextView.setVisibility(View.GONE)
-            } else {
-                descriptionTextView.setVisibility(View.VISIBLE)
-                descriptionTextView.setText(displayDescription)
-            }
-
-            // Show status if available
-            if (!tradePlan.status.isNullOrEmpty()) {
-                packageTextView.setText(tradePlan.status)
-                packageTextView.setVisibility(View.VISIBLE)
-            } else {
-                packageTextView.setVisibility(View.GONE)
-            }
-
-            itemView.setOnClickListener(View.OnClickListener { v: View? ->
-                if (listener != null) {
-                    listener.onTradePlanClick(tradePlan)
-                }
-            })
+        fun bind(item: TradePlan) {
+            nameView.text = item.name ?: item.title ?: ""
+            timeView.text = item.getDisplayTime()
+            infoLine1View.text = item.getDisplayInfoLine1()
+            infoLine2View.text = item.getDisplayInfoLine2()
+            statusView.text = item.status ?: "PENDING"
         }
     }
 }

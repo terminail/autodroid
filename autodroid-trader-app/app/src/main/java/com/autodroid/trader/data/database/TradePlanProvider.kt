@@ -3,6 +3,7 @@ package com.autodroid.trader.data.database
 import android.content.Context
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.dao.TradePlanEntity
+import com.autodroid.trader.model.TradePlanStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -157,6 +158,54 @@ class TradePlanProvider private constructor(context: Context) {
     suspend fun getActiveTradePlanCount(): Int {
         return withContext(Dispatchers.IO) {
             tradePlanDao.getActiveTradePlanCount()
+        }
+    }
+    
+    /**
+     * 更新交易计划状态（待批准/已批准）
+     */
+    suspend fun updateTradePlanStatus(id: String, status: String) {
+        withContext(Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            tradePlanDao.updateTradePlanStatus(id, status, now)
+        }
+    }
+    
+    /**
+     * 根据状态获取交易计划
+     */
+    fun getTradePlansByStatus(status: String): LiveData<List<TradePlanEntity>> {
+        return tradePlanDao.getTradePlansByStatus(status)
+    }
+    
+    /**
+     * 获取所有待批准的交易计划
+     */
+    fun getPendingTradePlans(): LiveData<List<TradePlanEntity>> {
+        return tradePlanDao.getPendingTradePlans(TradePlanStatus.PENDING.value)
+    }
+    
+    /**
+     * 获取所有已批准的交易计划
+     */
+    fun getApprovedTradePlans(): LiveData<List<TradePlanEntity>> {
+        return tradePlanDao.getApprovedTradePlans(TradePlanStatus.APPROVED.value)
+    }
+    
+    /**
+     * 更新交易计划执行结果
+     */
+    suspend fun updateExecutionResult(id: String, executionStatus: String, executionResult: String) {
+        withContext(Dispatchers.IO) {
+            val existingTradePlan = tradePlanDao.getTradePlanById(id)
+            if (existingTradePlan != null) {
+                val updatedTradePlan = existingTradePlan.copy(
+                    executionStatus = executionStatus,
+                    lastExecutionResult = executionResult,
+                    updatedAt = System.currentTimeMillis()
+                )
+                tradePlanDao.updateTradePlan(updatedTradePlan)
+            }
         }
     }
     

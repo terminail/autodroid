@@ -71,6 +71,9 @@ class FloatWindowService : Service() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to hide float window: ${e.message}")
                 }
+                else -> {
+                    Log.d(TAG, "Unknown action: ${it.action}")
+                }
             }
         }
 

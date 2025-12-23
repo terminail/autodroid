@@ -41,3 +41,27 @@
 ## 从服务器获取Device信息
     1. 当用户打开Dashboard界面， ServerManager 会订阅device livedata。
     2. 服务器会返回一个成功的响应DeviceInfoResponse， ServerManager 会显示Device信息给用户。
+
+
+## 交易计划管理
+
+- 调用服务端交易计划查询接口，获取所有交易计划列表缓存本地数据库
+- 交易计划状态包括：待批准(PENDING)、已批准(APPROVED)、已否决(REJECTED)、执行中(EXECUTING)、已完成(COMPLETED)、已失败(FAILED)
+- 支持交易计划状态管理（如批准、否决），采用类似微信多选消息的交互模式：
+  - 长按交易计划项目进入多选模式
+  - 多选模式下所有项目显示radio按钮，支持打勾批准或留空否决
+  - 每次点击立即同步服务器及本地数据库
+  - Fragment左上角提供"完成"按钮，确认批准/否决操作
+  - Fragment底部显示浮动提示，汇总批准计划数量、否决数量、待批准数量、执行成功/失败数量
+- 支持单个交易计划执行：
+  - 在交易计划列表中，对已批准的计划提供执行按钮
+  - 点击执行按钮调用POST /api/tradeplans/{tradeplan_id}/execute接口执行指定的交易计划
+  - 执行采用异步方式，立即返回执行状态，交易计划在后台执行
+  - 执行过程中状态实时更新为EXECUTING，执行完成后更新为COMPLETED或FAILED
+  - 浮动窗口(float_window_normal.xml)实时显示每个计划的执行状态和进度
+- 支持停止正在执行的计划：
+  - 对执行中的计划提供停止按钮
+  - 点击停止按钮调用POST /api/tradeplans/{tradeplan_id}/stop接口停止正在执行的计划
+  - 停止后状态更新为FAILED，并记录停止原因
+- 确保服务端与本地数据库状态一致，支持单个状态管理及实时同步
+

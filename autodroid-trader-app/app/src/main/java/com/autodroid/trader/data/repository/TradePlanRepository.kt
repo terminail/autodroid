@@ -3,9 +3,11 @@ package com.autodroid.trader.data.repository
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.LiveData
+import com.autodroid.trader.MyApplication
 import com.autodroid.trader.data.database.TradePlanProvider
 import com.autodroid.trader.data.dao.TradePlanEntity
 import com.autodroid.trader.model.TradePlan
+import com.autodroid.trader.model.TradePlanStatus
 import com.autodroid.trader.model.TradeData
 import com.autodroid.trader.network.ApiClient
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +23,14 @@ class TradePlanRepository private constructor(application: Application) {
     
     private val tradePlanProvider = TradePlanProvider.getInstance(application)
     private val context = application.applicationContext
-    private val apiClient = ApiClient.getInstance()
+    
+    /**
+     * 获取ApiClient实例
+     * 通过MyApplication获取已配置的ApiClient，不直接创建实例
+     */
+    private fun getApiClient(): ApiClient? {
+        return (context as? MyApplication)?.getApiClient()
+    }
     
     /**
      * 更新交易计划信息
@@ -244,11 +253,14 @@ class TradePlanRepository private constructor(application: Application) {
             try {
                 Log.d("TradePlanRepository", "从服务器获取交易计划: $apiEndpoint")
                 
-                // 设置API端点
-                apiClient.setApiEndpoint(apiEndpoint)
+                val client = getApiClient()
+                if (client == null) {
+                    Log.e("TradePlanRepository", "ApiClient未初始化，无法获取交易计划")
+                    return@withContext emptyList()
+                }
                 
                 // 调用API获取交易计划列表
-                val tradePlans = apiClient.getTradePlans()
+                val tradePlans = client.getTradePlans()
                 Log.d("TradePlanRepository", "从服务器获取到 ${tradePlans.size} 个交易计划")
                 
                 // 从API端点中提取IP和端口
@@ -292,6 +304,191 @@ class TradePlanRepository private constructor(application: Application) {
                 throw e
             }
         }
+    }
+    
+    /**
+     * 更新交易计划状态（待批准/已批准）并同步到服务器
+     */
+    suspend fun updateTradePlanStatus(id: String, status: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 先更新本地数据库
+                tradePlanProvider.updateTradePlanStatus(id, status)
+                Log.d("TradePlanRepository", "本地交易计划状态已更新: $id -> $status")
+                
+                // 获取已连接的服务器
+                val serverRepository = ServerRepository.getInstance(context as Application)
+                val connectedServer = serverRepository.getAndSyncServer().value
+                
+                if (connectedServer != null) {
+                    try {
+                        val client = getApiClient()
+                        if (client == null) {
+                            Log.e("TradePlanRepository", "ApiClient未初始化，无法同步交易计划状态")
+                            return@withContext "本地状态已更新，但ApiClient未初始化"
+                        }
+                        
+                        // 调用API更新服务器上的交易计划状态
+                        val response = client.updateTradePlanStatus(id, status)
+                        Log.d("TradePlanRepository", "服务器交易计划状态已更新: $response")
+                        return@withContext "交易计划状态已更新并同步到服务器: $id -> $status"
+                    } catch (e: Exception) {
+                        Log.e("TradePlanRepository", "同步交易计划状态到服务器失败: ${e.message}")
+                        return@withContext "本地状态已更新，但同步到服务器失败: ${e.message}"
+                    }
+                } else {
+                    Log.w("TradePlanRepository", "未连接到服务器，仅更新本地状态")
+                    return@withContext "本地状态已更新，但未连接到服务器"
+                }
+            } catch (e: Exception) {
+                Log.e("TradePlanRepository", "更新交易计划状态失败: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * 执行交易计划
+     */
+    suspend fun executeTradePlan(id: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 获取已连接的服务器
+                val serverRepository = ServerRepository.getInstance(context as Application)
+                val connectedServer = serverRepository.getAndSyncServer().value
+                
+                if (connectedServer == null) {
+                    throw Exception("未连接到服务器，无法执行交易计划")
+                }
+                
+                try {
+                    val client = getApiClient()
+                    if (client == null) {
+                        throw Exception("ApiClient未初始化，无法执行交易计划")
+                    }
+                    
+                    // 调用API执行交易计划
+                    val response = client.executeTradePlan(id)
+                    Log.d("TradePlanRepository", "交易计划执行请求已发送: $id")
+                    
+                    // 更新本地执行信息
+                    updateExecutionInfo(id)
+                    
+                    // 更新执行结果
+                    tradePlanProvider.updateExecutionResult(id, TradePlanStatus.EXECUTING.value, "交易计划执行请求已发送")
+                    
+                    return@withContext "交易计划执行请求已发送: $id"
+                } catch (e: Exception) {
+                    Log.e("TradePlanRepository", "执行交易计划失败: ${e.message}")
+                    
+                    // 更新执行结果
+                    tradePlanProvider.updateExecutionResult(id, TradePlanStatus.FAILED.value, "执行失败: ${e.message}")
+                    
+                    throw e
+                }
+            } catch (e: Exception) {
+                Log.e("TradePlanRepository", "执行交易计划失败: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * 获取所有交易计划（从服务器）
+     */
+    suspend fun getAllTradePlansFromServer(): List<TradePlan> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val client = getApiClient()
+                if (client == null) {
+                    Log.e("TradePlanRepository", "ApiClient未初始化，无法获取交易计划")
+                    throw Exception("ApiClient未初始化，无法获取交易计划")
+                }
+                
+                // 调用API获取所有交易计划
+                val tradePlans = client.getAllTradePlans()
+                Log.d("TradePlanRepository", "从服务器获取到 ${tradePlans.size} 个交易计划")
+                
+                // 获取已连接的服务器信息
+                val serverRepository = ServerRepository.getInstance(context as Application)
+                val connectedServer = serverRepository.getAndSyncServer().value
+                
+                if (connectedServer != null) {
+                    // 从API端点中提取IP和端口
+                    val urlParts = connectedServer.apiEndpoint().replace("http://", "").replace("https://", "").split("/")
+                    val hostPort = urlParts.getOrNull(0) ?: return@withContext tradePlans
+                    val hostParts = hostPort.split(":")
+                    val serverIp = hostParts.getOrNull(0) ?: return@withContext tradePlans
+                    val serverPort = hostParts.getOrNull(1)?.toIntOrNull() ?: return@withContext tradePlans
+                    
+                    // 将获取的交易计划保存到本地数据库
+                    tradePlans.forEach { tradePlan ->
+                        val tradePlanEntity = TradePlanEntity.fromTradePlan(tradePlan, serverIp, serverPort)
+                        insertOrUpdateTradePlan(tradePlanEntity)
+                    }
+                }
+                
+                return@withContext tradePlans
+            } catch (e: Exception) {
+                Log.e("TradePlanRepository", "获取所有交易计划失败: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * 执行所有已批准的交易计划
+     */
+    suspend fun executeApprovedPlans(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val client = getApiClient()
+                if (client == null) {
+                    throw Exception("ApiClient未初始化，无法执行交易计划")
+                }
+                
+                // 调用API执行所有已批准的交易计划
+                val response = client.executeApprovedPlans()
+                Log.d("TradePlanRepository", "已批准的交易计划执行请求已发送")
+                
+                // 更新所有已批准交易计划的执行信息
+                val approvedPlans = getApprovedTradePlans()
+                approvedPlans.value?.forEach { tradePlan ->
+                    updateExecutionInfo(tradePlan.id)
+                    tradePlanProvider.updateExecutionResult(tradePlan.id, TradePlanStatus.EXECUTING.value, "交易计划执行请求已发送")
+                }
+                
+                return@withContext "已批准的交易计划执行请求已发送"
+            } catch (e: Exception) {
+                Log.e("TradePlanRepository", "执行已批准的交易计划失败: ${e.message}")
+                
+                // 更新所有已批准交易计划的执行结果
+                val approvedPlans = getApprovedTradePlans()
+                approvedPlans.value?.forEach { tradePlan ->
+                    tradePlanProvider.updateExecutionResult(tradePlan.id, TradePlanStatus.FAILED.value, "执行失败: ${e.message}")
+                }
+                
+                throw e
+            }
+        }
+    }
+    
+    /**
+     * 获取待批准的交易计划
+     */
+    fun getPendingTradePlans(): LiveData<List<TradePlanEntity>> {
+        // 启动异步任务更新交易计划信息
+        updateTradePlansFromServers()
+        return tradePlanProvider.getPendingTradePlans()
+    }
+    
+    /**
+     * 获取已批准的交易计划
+     */
+    fun getApprovedTradePlans(): LiveData<List<TradePlanEntity>> {
+        // 启动异步任务更新交易计划信息
+        updateTradePlansFromServers()
+        return tradePlanProvider.getApprovedTradePlans()
     }
     
     companion object {

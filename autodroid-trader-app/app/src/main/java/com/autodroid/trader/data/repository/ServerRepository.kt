@@ -197,6 +197,8 @@ class ServerRepository private constructor(application: Application) {
                     )
                     serverProvider.updateServer(updatedServer)
                     Log.d("ServerRepository", "服务器信息更新成功: ${serverInfo.name}")
+                } else {
+                    Log.w("ServerRepository", "服务器不存在: ${serverInfo.ip}:${serverInfo.port}")
                 }
             } catch (e: Exception) {
                 Log.e("ServerRepository", "更新服务器信息失败: ${e.message}")
