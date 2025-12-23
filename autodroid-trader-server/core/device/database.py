@@ -33,6 +33,13 @@ class DeviceDatabase(BaseDatabase):
         """获取所有设备"""
         return list(Device.select())
     
+    def get_device_by_serialno(self, serialno: str) -> Device:
+        """根据序列号获取特定设备"""
+        try:
+            return Device.get(Device.serialno == serialno)
+        except DoesNotExist:
+            return None
+    
     def get_available_devices(self) -> List[Device]:
         """获取可用于自动化的设备列表"""
         return list(Device.select().where(
@@ -81,7 +88,10 @@ class DeviceDatabase(BaseDatabase):
         
         # 如果不是新创建的，更新设备信息
         if not created:
-            device.name = device_info.get('name', device.name)
+            # 优先使用ADB获取的设备名称，如果客户端提供了名称则使用客户端名称
+            if device_info.get('name'):
+                device.name = device_info.get('name')
+            # 其他字段更新
             device.model = device_info.get('model')
             device.manufacturer = device_info.get('manufacturer')
             device.android_version = device_info.get('android_version')

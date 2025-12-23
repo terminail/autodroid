@@ -41,40 +41,9 @@ class DeviceInfoResponse(BaseModel):
 class DeviceCreateRequest(BaseModel):
     """设备创建请求模型"""
     serialno: str = Field(..., description="设备序列号")
-    udid: Optional[str] = Field(None, description="设备UDID")
-    name: str = Field(..., description="设备名称")
-    model: Optional[str] = Field(None, description="设备型号")
-    manufacturer: Optional[str] = Field(None, description="设备制造商")
-    android_version: Optional[str] = Field(None, description="Android版本")
-    api_level: Optional[int] = Field(None, description="API级别")
-    platform: Optional[str] = Field(None, description="平台")
-    brand: Optional[str] = Field(None, description="品牌")
-    device: Optional[str] = Field(None, description="设备")
-    product: Optional[str] = Field(None, description="产品")
-    ip: Optional[str] = Field(None, description="IP地址")
-    screen_width: Optional[int] = Field(None, description="屏幕宽度")
-    screen_height: Optional[int] = Field(None, description="屏幕高度")
 
 
-class DeviceUpdateRequest(BaseModel):
-    """设备更新请求模型"""
-    name: Optional[str] = Field(None, description="设备名称")
-    model: Optional[str] = Field(None, description="设备型号")
-    manufacturer: Optional[str] = Field(None, description="设备制造商")
-    android_version: Optional[str] = Field(None, description="Android版本")
-    api_level: Optional[int] = Field(None, description="API级别")
-    platform: Optional[str] = Field(None, description="平台")
-    brand: Optional[str] = Field(None, description="品牌")
-    device: Optional[str] = Field(None, description="设备")
-    product: Optional[str] = Field(None, description="产品")
-    ip: Optional[str] = Field(None, description="IP地址")
-    screen_width: Optional[int] = Field(None, description="屏幕宽度")
-    screen_height: Optional[int] = Field(None, description="屏幕高度")
-    # 保留原有字段以兼容其他可能的请求
-    name: Optional[str] = Field(None, description="设备名称")
-    battery_level: Optional[int] = Field(None, description="电池电量")
-    is_online: Optional[bool] = Field(None, description="是否在线")
-    connection_type: Optional[str] = Field(None, description="连接类型")
+
 
 
 class DeviceListResponse(BaseModel):
@@ -118,11 +87,7 @@ class DeviceCreateResponse(BaseModel):
     device: Optional[DeviceInfoResponse] = Field(None, description="设备信息")
 
 
-class DeviceUpdateResponse(BaseModel):
-    """设备更新响应模型"""
-    success: bool = Field(..., description="操作是否成功")
-    message: str = Field(..., description="响应消息")
-    device: Optional[DeviceInfoResponse] = Field(None, description="设备信息")
+
 
 
 class DeviceDeleteResponse(BaseModel):
@@ -137,10 +102,7 @@ class DeviceAssignmentResponse(BaseModel):
     message: str = Field(..., description="响应消息")
 
 
-class DeviceStatusUpdateResponse(BaseModel):
-    """设备状态更新响应模型"""
-    success: bool = Field(..., description="操作是否成功")
-    message: str = Field(..., description="响应消息")
+
 
 
 # 从apk模块导入ApkInfo模型，避免循环导入
@@ -163,3 +125,4 @@ class DeviceCheckResponse(BaseModel):
     wifi_debug_enabled: bool = Field(False, description="WiFi调试是否开启")
     installed_apps: List[Dict[str, Any]] = Field(default_factory=list, description="已安装的支持应用列表")
     check_time: Optional[datetime] = Field(None, description="检查时间")
+    device_info: Optional[DeviceInfoResponse] = Field(None, description="设备详细信息")

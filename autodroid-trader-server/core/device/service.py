@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from peewee import DoesNotExist
 
 from .database import DeviceDatabase
-from .models import DeviceInfoResponse
+from .models import DeviceInfoResponse, DeviceCreateRequest
 from ..apk.models import ApkInfo
 from workscripts.adb_device import ADBDevice
 
@@ -30,16 +30,31 @@ class DeviceManager:
                 serialno=device.serialno,
                 udid=device.udid,
                 name=device.name,
+                model=device.model,
+                manufacturer=device.manufacturer,
                 android_version=device.android_version,
-                ip=device.ip_address if hasattr(device, 'ip_address') else None,
-                registered_at=getattr(device, 'registered_at', None),
-                status="online" if device.is_online else "offline"
+                api_level=device.api_level,
+                platform=device.platform,
+                brand=device.brand,
+                device=device.device,
+                product=device.product,
+                ip=device.ip,
+                screen_width=device.screen_width,
+                screen_height=device.screen_height,
+                registered_at=device.registered_at,
+                updated_at=device.updated_at,
+                status="online" if device.is_online else "offline",
+                usb_debug_enabled=device.usb_debug_enabled,
+                wifi_debug_enabled=device.wifi_debug_enabled,
+                check_status=device.check_status,
+                check_message=device.check_message,
+                check_time=device.check_time
             ) for device in devices
         ]
     
-    def register_device(self, device_info: Dict[str, Any]) -> DeviceInfoResponse:
+    def register_device(self, device_create_request: DeviceCreateRequest) -> DeviceInfoResponse:
         """从应用报告注册设备"""
-        serialno = device_info.get('serialno')
+        serialno = device_create_request.serialno
         
         # 使用ADB获取设备详细信息
         try:
@@ -47,13 +62,18 @@ class DeviceManager:
             adb_device_info = adb_device.get_device_info()
             
             # 将ADB获取的信息合并到device_info中
-            # 只在客户端未提供或值为空时才使用ADB获取的信息
+            # 对于设备名称，优先使用ADB获取的信息
+            device_info = device_create_request.dict()
             for key, value in adb_device_info.items():
-                if key not in device_info or device_info.get(key) is None or device_info.get(key) == "":
+                if key == 'name':
+                    # 设备名称优先使用ADB获取的信息
+                    device_info[key] = value
+                elif key not in device_info or device_info.get(key) is None or device_info.get(key) == "":
                     device_info[key] = value
         except Exception as e:
             # 如果ADB连接失败，继续使用客户端提供的信息
             print(f"Warning: Failed to get device info via ADB for {serialno}: {e}")
+            device_info = device_create_request.dict()
         
         device = self.db.register_device(device_info)
         
@@ -61,7 +81,7 @@ class DeviceManager:
         return DeviceInfoResponse(
             serialno=device.serialno,
             udid=device.udid,
-            name=device_info.get('name') or device.name,
+            name=device.name,  # 直接使用数据库中的名称，确保客户端提供的名称被保留
             model=device_info.get('model'),
             manufacturer=device_info.get('manufacturer'),
             android_version=device_info.get('android_version') or device.android_version,
@@ -73,8 +93,14 @@ class DeviceManager:
             ip=device_info.get('ip'),
             screen_width=device_info.get('screen_width'),
             screen_height=device_info.get('screen_height'),
-            registered_at=getattr(device, 'registered_at', None),
-            status="online" if device.is_online else "offline"
+            registered_at=device.registered_at,
+            updated_at=device.updated_at,
+            status="online" if device.is_online else "offline",
+            usb_debug_enabled=device.usb_debug_enabled,
+            wifi_debug_enabled=device.wifi_debug_enabled,
+            check_status=device.check_status,
+            check_message=device.check_message,
+            check_time=device.check_time
         )
     
     def add_apk(self, serialno: str, apk_info: Dict[str, Any]) -> ApkInfo:
@@ -168,10 +194,25 @@ class DeviceManager:
                 serialno=device.serialno,
                 udid=device.udid,
                 name=device.name,
+                model=device.model,
+                manufacturer=device.manufacturer,
                 android_version=device.android_version,
-                ip=device.ip_address if hasattr(device, 'ip_address') else None,
-                registered_at=getattr(device, 'registered_at', None),
+                api_level=device.api_level,
+                platform=device.platform,
+                brand=device.brand,
+                device=device.device,
+                product=device.product,
+                ip=device.ip,
+                screen_width=device.screen_width,
+                screen_height=device.screen_height,
+                registered_at=device.registered_at,
+                updated_at=device.updated_at,
                 status="online" if device.is_online else "offline",
+                usb_debug_enabled=device.usb_debug_enabled,
+                wifi_debug_enabled=device.wifi_debug_enabled,
+                check_status=device.check_status,
+                check_message=device.check_message,
+                check_time=device.check_time,
                 apps=apps
             )
             result.append(device_info)
@@ -216,16 +257,84 @@ class DeviceManager:
                 serialno=device.serialno,
                 udid=device.udid,
                 name=device.name,
+                model=device.model,
+                manufacturer=device.manufacturer,
                 android_version=device.android_version,
-                ip=device.ip_address if hasattr(device, 'ip_address') else None,
-                registered_at=getattr(device, 'registered_at', None),
-                updated_at=getattr(device, 'updated_at', None),
+                api_level=device.api_level,
+                platform=device.platform,
+                brand=device.brand,
+                device=device.device,
+                product=device.product,
+                ip=device.ip,
+                screen_width=device.screen_width,
+                screen_height=device.screen_height,
+                registered_at=device.registered_at,
+                updated_at=device.updated_at,
                 status="online" if device.is_online else "offline",
+                usb_debug_enabled=device.usb_debug_enabled,
+                wifi_debug_enabled=device.wifi_debug_enabled,
+                check_status=device.check_status,
+                check_message=device.check_message,
+                check_time=device.check_time,
                 apps=apps
             )
             result.append(device_info)
         
         return result
+    
+    def get_device_by_serialno(self, serialno: str) -> DeviceInfoResponse:
+        """根据序列号获取特定设备信息"""
+        device = self.db.get_device_by_serialno(serialno)
+        if not device:
+            return None
+            
+        # 获取设备的应用列表
+        try:
+            device_apks = self.db.get_device_apks(device.serialno)
+            apps = [
+                {
+                    "package_name": apk.package_name,
+                    "app_name": apk.app_name,
+                    "version": apk.version,
+                    "version_code": apk.version_code,
+                    "installed_time": apk.installed_time,
+                    "is_system": apk.is_system,
+                    "icon_path": apk.icon_path
+                }
+                for apk in device_apks
+            ]
+        except Exception as e:
+            import logging
+            logging.error(f"获取设备 {device.serialno} 的应用列表失败: {str(e)}")
+            apps = []
+        
+        device_info = DeviceInfoResponse(
+            serialno=device.serialno,
+            udid=device.udid,
+            name=device.name,
+            model=device.model,
+            manufacturer=device.manufacturer,
+            android_version=device.android_version,
+            api_level=device.api_level,
+            platform=device.platform,
+            brand=device.brand,
+            device=device.device,
+            product=device.product,
+            ip=device.ip,
+            screen_width=device.screen_width,
+            screen_height=device.screen_height,
+            registered_at=device.registered_at,
+            updated_at=device.updated_at,
+            status="online" if device.is_online else "offline",
+            usb_debug_enabled=device.usb_debug_enabled,
+            wifi_debug_enabled=device.wifi_debug_enabled,
+            check_status=device.check_status,
+            check_message=device.check_message,
+            check_time=device.check_time,
+            apps=apps
+        )
+        
+        return device_info
     
     def _parse_device_apps(self, apps_json: str) -> List[Dict[str, Any]]:
         """解析设备已安装应用的JSON字符串"""

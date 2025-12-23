@@ -1,10 +1,12 @@
 package com.autodroid.trader.data.repository
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.MyApplication
 import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.data.database.DeviceProvider
+import com.autodroid.trader.managers.DeviceManager
 import com.autodroid.trader.network.DeviceCreateRequest
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -54,17 +56,20 @@ class DeviceRepository private constructor(app: MyApplication) {
             myApplication.getApiClient() ?: throw Exception("API客户端未初始化")
 
         CoroutineScope(Dispatchers.IO).launch {
-            val device = DeviceEntity(
-                serialNo = serialNo,
-                updatedAt = System.currentTimeMillis()
-            )
-
             try {
                 Log.d("DeviceRepository", "准备调用API获取设备信息: $serialNo")
                 // 调用API获取设备信息
                 val deviceInfoResponse =
                     apiClient.getDeviceInfo(serialNo)
                 Log.d("DeviceRepository", "API调用成功，返回: $deviceInfoResponse")
+
+                // 首先获取现有设备信息
+                val existingDevice = try {
+                    deviceProvider.getDeviceByIdSync(serialNo)
+                } catch (e: Exception) {
+                    Log.e("DeviceRepository", "获取现有设备信息失败: ${e.message}")
+                    null
+                }
 
                 // 根据服务器返回的信息更新本地数据库
                 // 使用Gson将应用列表转换为JSON字符串
@@ -73,38 +78,101 @@ class DeviceRepository private constructor(app: MyApplication) {
                         gson.toJson(apps)
                     } catch (e: Exception) {
                         Log.e("DeviceRepository", "Error converting apps to JSON: ${e.message}")
+                        existingDevice?.apps
+                    }
+                } ?: existingDevice?.apps
+
+                // 如果存在现有设备，只更新服务器返回的字段，保留其他现有信息
+                val updatedDevice = if (existingDevice != null) {
+                    existingDevice.copy(
+                        udid = deviceInfoResponse.udid ?: existingDevice.udid,
+                        name = deviceInfoResponse.name ?: existingDevice.name, // 更新设备名称，优先使用服务器返回的名称
+                        model = deviceInfoResponse.model ?: existingDevice.model,
+                        manufacturer = deviceInfoResponse.manufacturer ?: existingDevice.manufacturer,
+                        androidVersion = deviceInfoResponse.androidVersion ?: existingDevice.androidVersion,
+                        apiLevel = deviceInfoResponse.apiLevel ?: existingDevice.apiLevel,
+                        platform = deviceInfoResponse.platform ?: existingDevice.platform,
+                        brand = deviceInfoResponse.brand ?: existingDevice.brand,
+                        device = deviceInfoResponse.device ?: existingDevice.device,
+                        product = deviceInfoResponse.product ?: existingDevice.product,
+                        ip = deviceInfoResponse.ip ?: existingDevice.ip,
+                        screenWidth = deviceInfoResponse.screenWidth ?: existingDevice.screenWidth,
+                        screenHeight = deviceInfoResponse.screenHeight ?: existingDevice.screenHeight,
+                        isOnline = true,
+                        usbDebugEnabled = deviceInfoResponse.usbDebugEnabled ?: existingDevice.usbDebugEnabled,
+                        wifiDebugEnabled = deviceInfoResponse.wifiDebugEnabled ?: existingDevice.wifiDebugEnabled,
+                        checkStatus = deviceInfoResponse.checkStatus ?: existingDevice.checkStatus,
+                        checkMessage = deviceInfoResponse.checkMessage ?: existingDevice.checkMessage,
+                        checkTime = deviceInfoResponse.checkTime?.let {
+                            java.text.SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm:ss",
+                                java.util.Locale.getDefault()
+                            )
+                                .parse(it)?.time
+                        } ?: existingDevice.checkTime,
+                        apps = appsJson,
+                        updatedAt = System.currentTimeMillis()
+                    )
+                } else {
+                    // 如果没有现有设备，创建新设备
+                    // 尝试从本地设备管理器获取设备名称，如果没有则使用服务器返回的名称
+                    val localDeviceName = try {
+                        val appViewModel = myApplication.getAppViewModel()
+                        val deviceManager = DeviceManager.getInstance(context, appViewModel)
+                        deviceManager.localDevice.name
+                    } catch (e: Exception) {
+                        Log.e("DeviceRepository", "获取本地设备名称失败: ${e.message}")
                         null
                     }
+                    
+                    DeviceEntity(
+                        serialNo = serialNo,
+                        udid = deviceInfoResponse.udid,
+                        name = localDeviceName ?: deviceInfoResponse.name ?: "Unknown Device",
+                        model = deviceInfoResponse.model,
+                        manufacturer = deviceInfoResponse.manufacturer,
+                        androidVersion = deviceInfoResponse.androidVersion ?: "Unknown",
+                        apiLevel = deviceInfoResponse.apiLevel,
+                        platform = deviceInfoResponse.platform ?: "Android",
+                        brand = deviceInfoResponse.brand,
+                        device = deviceInfoResponse.device,
+                        product = deviceInfoResponse.product,
+                        ip = deviceInfoResponse.ip,
+                        screenWidth = deviceInfoResponse.screenWidth,
+                        screenHeight = deviceInfoResponse.screenHeight,
+                        isOnline = true,
+                        usbDebugEnabled = deviceInfoResponse.usbDebugEnabled ?: false,
+                        wifiDebugEnabled = deviceInfoResponse.wifiDebugEnabled ?: false,
+                        checkStatus = deviceInfoResponse.checkStatus ?: "UNKNOWN",
+                        checkMessage = deviceInfoResponse.checkMessage,
+                        checkTime = deviceInfoResponse.checkTime?.let {
+                            java.text.SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm:ss",
+                                java.util.Locale.getDefault()
+                            )
+                                .parse(it)?.time
+                        },
+                        apps = appsJson,
+                        updatedAt = System.currentTimeMillis()
+                    )
                 }
-
-                val updatedDevice = device.copy(
-                    name = deviceInfoResponse.name ?: "Unknown Device",
-                    model = deviceInfoResponse.model,
-                    manufacturer = deviceInfoResponse.manufacturer,
-                    androidVersion = deviceInfoResponse.androidVersion ?: "Unknown",
-                    platform = deviceInfoResponse.platform ?: "Android",
-                    ip = deviceInfoResponse.ip,
-                    isOnline = true,
-                    usbDebugEnabled = deviceInfoResponse.usbDebugEnabled ?: false,
-                    wifiDebugEnabled = deviceInfoResponse.wifiDebugEnabled ?: false,
-                    checkStatus = deviceInfoResponse.checkStatus ?: "UNKNOWN",
-                    checkMessage = deviceInfoResponse.checkMessage,
-                    checkTime = deviceInfoResponse.checkTime?.let {
-                        java.text.SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm:ss",
-                            java.util.Locale.getDefault()
-                        )
-                            .parse(it)?.time
-                    },
-                    apps = appsJson,
-                    updatedAt = System.currentTimeMillis()
-                )
                 deviceProvider.updateDevice(updatedDevice)
-                Log.d("DeviceRepository", "设备信息同步成功: ${device.serialNo}")
+                Log.d("DeviceRepository", "设备信息同步成功: $serialNo")
             } catch (e: Exception) {
-                Log.e("DeviceRepository", "检查设备${device.serialNo}状态时出错: ${e.message}")
-                // 检查失败时断开连接
-                deviceProvider.updateDevice(device)
+                Log.e("DeviceRepository", "检查设备$serialNo 状态时出错: ${e.message}")
+                // 检查失败时断开连接，更新设备状态为离线
+                try {
+                    val existingDevice = deviceProvider.getDeviceByIdSync(serialNo)
+                    if (existingDevice != null) {
+                        val offlineDevice = existingDevice.copy(
+                            isOnline = false,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        deviceProvider.updateDevice(offlineDevice)
+                    }
+                } catch (ex: Exception) {
+                    Log.e("DeviceRepository", "更新设备离线状态失败: ${ex.message}")
+                }
 
             }
         }
@@ -135,10 +203,9 @@ class DeviceRepository private constructor(app: MyApplication) {
                 )
 
                 // 创建设备注册请求
-                // 只包含必要的字段，其他属性将由服务器通过ADB获取
+                // 只包含序列号，其他属性将由服务器通过ADB获取
                 val registrationRequest = DeviceCreateRequest(
-                    serialNo = deviceEntity.serialNo, // 使用序列号作为主键发送到服务器
-                    name = deviceEntity.name ?: "Unknown Device"
+                    serialNo = deviceEntity.serialNo // 使用序列号作为主键发送到服务器
                 )
 
                 Log.d("DeviceRepository", "registerDevice: 设备注册请求已创建")
@@ -262,47 +329,137 @@ class DeviceRepository private constructor(app: MyApplication) {
                 // 获取现有设备信息
                 val existingDevice = try {
                     // 使用同步方法从数据库获取设备信息
-                    deviceProvider.getDeviceByIdSync(deviceId) ?: DeviceEntity(
-                        serialNo = deviceId,
-                        name = "Unknown Device",
-                        updatedAt = System.currentTimeMillis()
-                    )
+                    deviceProvider.getDeviceByIdSync(deviceId) ?: run {
+                        // 如果数据库中没有设备信息，尝试从本地设备管理器获取
+                        Log.d("DeviceRepository", "checkDeviceWithServer: 数据库中没有设备信息，尝试从本地设备管理器获取")
+                        try {
+                            val appViewModel = myApplication.getAppViewModel()
+                            val deviceManager = DeviceManager.getInstance(context, appViewModel)
+                            deviceManager.localDevice
+                        } catch (e: Exception) {
+                            Log.e("DeviceRepository", "checkDeviceWithServer: 从本地设备管理器获取设备信息失败: ${e.message}")
+                            // 最后的备用方案，创建一个基本的设备对象
+                            DeviceEntity(
+                                serialNo = deviceId,
+                                name = "Unknown Device",
+                                updatedAt = System.currentTimeMillis()
+                            )
+                        }
+                    }
                 } catch (e: Exception) {
                     Log.e("DeviceRepository", "checkDeviceWithServer: 获取设备信息失败: ${e.message}")
-                    // 如果获取失败，创建一个基本的设备对象
-                    DeviceEntity(
-                        serialNo = deviceId,
-                        name = "Unknown Device",
-                        updatedAt = System.currentTimeMillis()
-                    )
+                    // 如果获取失败，尝试从本地设备管理器获取
+                    try {
+                        val appViewModel = myApplication.getAppViewModel()
+                        val deviceManager = DeviceManager.getInstance(context, appViewModel)
+                        deviceManager.localDevice
+                    } catch (ex: Exception) {
+                        Log.e("DeviceRepository", "checkDeviceWithServer: 从本地设备管理器获取设备信息也失败: ${ex.message}")
+                        // 最后的备用方案，创建一个基本的设备对象
+                        DeviceEntity(
+                            serialNo = deviceId,
+                            name = "Unknown Device",
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    }
                 }
 
                 // 根据服务器响应更新本地设备信息
                 val updatedDevice = if (response.success) {
-                    existingDevice.copy(
-                        isOnline = true,
-                        usbDebugEnabled = response.usbDebugEnabled,
-                        wifiDebugEnabled = response.wifiDebugEnabled,
-                        checkStatus = "SUCCESS",
-                        checkMessage = response.message,
-                        checkTime = response.checkTime?.let {
-                            java.text.SimpleDateFormat(
-                                "yyyy-MM-dd HH:mm:ss",
-                                java.util.Locale.getDefault()
-                            )
-                                .parse(it)?.time
+                    // 将服务器返回的已安装应用列表转换为JSON字符串
+                    val appsJson = response.installedApps?.let { apps ->
+                        try {
+                            gson.toJson(apps)
+                        } catch (e: Exception) {
+                            Log.e("DeviceRepository", "Error converting installed apps to JSON: ${e.message}")
+                            existingDevice.apps
+                        }
+                    } ?: existingDevice.apps
+                    
+                    // 如果服务器返回了设备详细信息，使用这些信息更新本地设备
+                    if (response.deviceInfo != null) {
+                        val deviceInfo = response.deviceInfo
+                        existingDevice.copy(
+                            udid = deviceInfo.udid ?: existingDevice.udid,
+                            name = deviceInfo.name ?: existingDevice.name,
+                            model = deviceInfo.model ?: existingDevice.model,
+                            manufacturer = deviceInfo.manufacturer ?: existingDevice.manufacturer,
+                            androidVersion = deviceInfo.androidVersion ?: existingDevice.androidVersion,
+                            apiLevel = deviceInfo.apiLevel ?: existingDevice.apiLevel,
+                            platform = deviceInfo.platform ?: existingDevice.platform,
+                            brand = deviceInfo.brand ?: existingDevice.brand,
+                            device = deviceInfo.device ?: existingDevice.device,
+                            product = deviceInfo.product ?: existingDevice.product,
+                            ip = deviceInfo.ip ?: existingDevice.ip,
+                            screenWidth = deviceInfo.screenWidth ?: existingDevice.screenWidth,
+                            screenHeight = deviceInfo.screenHeight ?: existingDevice.screenHeight,
+                            isOnline = true,
+                            usbDebugEnabled = response.usbDebugEnabled,
+                            wifiDebugEnabled = response.wifiDebugEnabled,
+                            checkStatus = "SUCCESS",
+                            checkMessage = response.message,
+                            checkTime = response.checkTime?.let {
+                            try {
+                                // 使用更灵活的解析方式，处理ISO格式日期
+                                // 先移除末尾的Z，然后解析
+                                val dateWithoutZ = it.removeSuffix("Z")
+                                val formats = arrayOf(
+                                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+                                    "yyyy-MM-dd'T'HH:mm:ss.SSSSS",
+                                    "yyyy-MM-dd'T'HH:mm:ss.SSSS",
+                                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                                    "yyyy-MM-dd'T'HH:mm:ss.SS",
+                                    "yyyy-MM-dd'T'HH:mm:ss.S",
+                                    "yyyy-MM-dd'T'HH:mm:ss"
+                                )
+                                
+                                for (format in formats) {
+                                    try {
+                                        return@let java.text.SimpleDateFormat(
+                                            format,
+                                            java.util.Locale.getDefault()
+                                        ).parse(dateWithoutZ)?.time
+                                    } catch (e: Exception) {
+                                        // 继续尝试下一个格式
+                                    }
+                                }
+                                
+                                // 如果所有格式都失败，返回当前时间
+                                System.currentTimeMillis()
+                            } catch (e: Exception) {
+                                System.currentTimeMillis()
+                            }
                         } ?: System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis(),
-                        apps = existingDevice.apps  // 保留已有的应用信息
-                    )
+                            apps = appsJson,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    } else {
+                        // 如果没有设备详细信息，只更新检查状态
+                        existingDevice.copy(
+                            isOnline = true,
+                            usbDebugEnabled = response.usbDebugEnabled,
+                            wifiDebugEnabled = response.wifiDebugEnabled,
+                            checkStatus = "SUCCESS",
+                            checkMessage = response.message,
+                            checkTime = response.checkTime?.let {
+                                java.text.SimpleDateFormat(
+                                    "yyyy-MM-dd HH:mm:ss",
+                                    java.util.Locale.getDefault()
+                                )
+                                    .parse(it)?.time
+                            } ?: System.currentTimeMillis(),
+                            apps = appsJson,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    }
                 } else {
                     existingDevice.copy(
                         isOnline = false,
                         checkStatus = "FAILED",
                         checkMessage = response.message,
                         checkTime = System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis(),
-                        apps = existingDevice.apps  // 保留已有的应用信息
+                        apps = existingDevice.apps,
+                        updatedAt = System.currentTimeMillis()
                     )
                 }
 

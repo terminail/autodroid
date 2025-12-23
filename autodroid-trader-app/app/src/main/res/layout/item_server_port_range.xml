@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="服务器扫描端口范围设置"
+            android:text="自动扫描服务器范围设置"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />

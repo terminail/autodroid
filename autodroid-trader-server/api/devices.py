@@ -5,9 +5,10 @@ Handles device registration, APK management, and device information retrieval.
 
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
+from datetime import datetime
 
 from core.device.service import DeviceManager
-from core.device.models import DeviceInfoResponse, DeviceCreateRequest, DeviceUpdateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest, DeviceCreateResponse, DeviceUpdateResponse, DeviceDeleteResponse, DeviceAssignmentResponse, DeviceStatusUpdateResponse, DeviceCheckResponse
+from core.device.models import DeviceInfoResponse, DeviceCreateRequest, DeviceListResponse, DeviceAssignmentRequest, DeviceStatusUpdateRequest, DeviceCreateResponse, DeviceDeleteResponse, DeviceAssignmentResponse, DeviceCheckResponse
 from core.apk.models import ApkInfo, ApkCreateRequest
 
 # Initialize router
@@ -36,9 +37,8 @@ async def get_device(serialno: str):
     if not device_manager.device_exists(serialno):
         raise HTTPException(status_code=404, detail="Device not found")
     
-    # Get device from database
-    devices = device_manager.get_all_devices()
-    device = next((d for d in devices if d.serialno == serialno), None)
+    # Get device directly from database
+    device = device_manager.get_device_by_serialno(serialno)
     
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
@@ -49,8 +49,7 @@ async def get_device(serialno: str):
 async def register_device(device_create_request: DeviceCreateRequest):
     """Register a device from app report"""
     try:
-        device_info = device_create_request.dict()
-        device = device_manager.register_device(device_info)
+        device = device_manager.register_device(device_create_request)
         
         return DeviceCreateResponse(
             success=True,
@@ -95,6 +94,12 @@ async def check_device(serialno: str):
         # 调用设备管理器检查设备状态
         device_info = device_manager.check_device(serialno)
         
+        # 获取设备详细信息
+        device_detail = device_manager.get_device_by_serialno(serialno)
+        device_detail_response = None
+        if device_detail:
+            device_detail_response = DeviceInfoResponse.from_orm(device_detail)
+        
         return DeviceCheckResponse(
             success=device_info["success"],
             message=device_info["message"],
@@ -102,7 +107,9 @@ async def check_device(serialno: str):
             udid=device_info.get("udid"),
             usb_debug_enabled=device_info.get("usb_debug_enabled", False),
             wifi_debug_enabled=device_info.get("wifi_debug_enabled", False),
-            installed_apps=device_info.get("installed_apps", [])
+            installed_apps=device_info.get("installed_apps", []),
+            check_time=datetime.now(),
+            device_info=device_detail_response
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -65,7 +65,7 @@ class ItemDeviceManager(
                 val appNames = mutableListOf<String>()
                 deviceEntity.apps?.let { appsJson ->
                     try {
-                        // 使用Gson和类型安全的AppInfo类解析应用列表
+                        // 使用AppInfo类解析应用列表
                         val appInfoType = object : TypeToken<List<AppInfo>>() {}.type
                         val appInfos: List<AppInfo> = gson.fromJson(appsJson, appInfoType)
                         
@@ -78,7 +78,7 @@ class ItemDeviceManager(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error parsing apps JSON: ${e.message}")
+                        Log.e(TAG, "Error parsing apps: ${e.message}")
                     }
                 }
                 

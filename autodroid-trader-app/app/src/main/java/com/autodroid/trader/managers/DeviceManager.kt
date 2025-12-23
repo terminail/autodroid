@@ -10,8 +10,20 @@ import com.autodroid.trader.data.dao.DeviceEntity
 import com.autodroid.trader.data.repository.DeviceRepository
 import java.io.File
 
-class DeviceManager(private val context: Context?, private val appViewModel: AppViewModel) {
+class DeviceManager private constructor(private val context: Context?, private val appViewModel: AppViewModel) {
     private var deviceRepository: DeviceRepository? = null
+    
+    companion object {
+        private const val TAG = "DeviceManager"
+        @Volatile
+        private var INSTANCE: DeviceManager? = null
+        
+        fun getInstance(context: Context?, appViewModel: AppViewModel): DeviceManager {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: DeviceManager(context, appViewModel).also { INSTANCE = it }
+            }
+        }
+    }
     
     /**
      * 设置设备仓库
@@ -159,7 +171,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
      * 获取本地设备信息
      */
     @RequiresPermission("android.permission.READ_PHONE_STATE")
-    private fun getLocalDevice(): DeviceEntity {
+    private fun createLocalDevice(): DeviceEntity {
         Log.d(TAG, "getLocalDevice: 开始获取本地设备信息")
         
         // 获取设备序列号作为主键
@@ -286,7 +298,11 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
 
     val device: DeviceEntity
         @RequiresPermission("android.permission.READ_PHONE_STATE")
-        get() = getLocalDevice()
+        get() = createLocalDevice()
+
+    val localDevice: DeviceEntity
+        @RequiresPermission("android.permission.READ_PHONE_STATE")
+        get() = createLocalDevice()
 
     
     /**
@@ -297,7 +313,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
     suspend fun registerLocalDeviceWithServer(): DeviceEntity {
         Log.d(TAG, "registerLocalDeviceWithServer: 开始注册本地设备到服务器")
         
-        val localDevice = getLocalDevice()
+        val localDevice = createLocalDevice()
         Log.d(TAG, "registerLocalDeviceWithServer: 获取到本地设备信息，序列号 = ${localDevice.serialNo}, UDID = ${localDevice.udid}")
         
         val currentServer = appViewModel.server.value
@@ -329,7 +345,7 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         Log.d(TAG, "checkLocalDeviceWithServer: 开始请求服务器检查设备状态")
         
         // 获取本地设备信息
-        val localDevice = getLocalDevice()
+        val localDevice = createLocalDevice()
         Log.d(TAG, "checkLocalDeviceWithServer: 获取到本地设备信息，序列号 = ${localDevice.serialNo}")
         
         val currentServer = appViewModel.server.value
@@ -355,7 +371,4 @@ class DeviceManager(private val context: Context?, private val appViewModel: App
         }
     }
 
-    companion object {
-        private const val TAG = "DeviceManager"
-    }
 }

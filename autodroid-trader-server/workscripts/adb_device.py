@@ -385,6 +385,25 @@ class ADBDevice:
         # Get device ID
         info["device_id"] = self.device_id
         
+        # Get device name (try Bluetooth name first, then device name)
+        result = subprocess.run(
+            self._get_adb_prefix() + ["shell", "settings", "get", "secure", "bluetooth_name"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            info["name"] = result.stdout.strip()
+        else:
+            # Fallback to device name
+            result = subprocess.run(
+                self._get_adb_prefix() + ["shell", "settings", "get", "global", "device_name"],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                info["name"] = result.stdout.strip()
+            else:
+                # Final fallback to model
+                info["name"] = info.get("model", "Unknown Device")
+        
         return info
 
 

@@ -41,7 +41,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private var deviceRepository: DeviceRepository? = null
 
     // Managers
-    val deviceManager = DeviceManager(application, this)
+    val deviceManager = DeviceManager.getInstance(application, this)
 
     // Authentication ViewModel
     private val authViewModel = AuthViewModel()

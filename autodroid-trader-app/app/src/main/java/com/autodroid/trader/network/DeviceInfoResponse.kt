@@ -28,6 +28,8 @@ data class AppInfo(
 data class DeviceInfoResponse(
     @SerializedName("serialno")
     val serialNo: String,
+    @SerializedName("udid")
+    val udid: String? = null,
     val name: String? = null,
     val model: String? = null,
     val manufacturer: String? = null,
