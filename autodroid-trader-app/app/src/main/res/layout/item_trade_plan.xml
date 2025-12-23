@@ -6,6 +6,13 @@
     android:padding="14dp"
     android:background="?android:attr/selectableItemBackground">
 
+    <RadioButton
+        android:id="@+id/trade_plan_radio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/trade_plan_icon"
         android:layout_width="52dp"

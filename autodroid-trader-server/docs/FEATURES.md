@@ -89,6 +89,8 @@ sequenceDiagram
 - 提供交易计划查询接口
 - 支持交易计划状态管理（如批准、否决），提供单个状态更新接口：
   - 单个交易计划状态更新接口：只需提供交易计划ID和新状态
+  - 只有状态为 PENDING、APPROVED、REJECTED 的交易计划可以切换批准/否决状态
+  - EXECUTING、COMPLETED、FAILED 状态的交易计划不允许更改批准/否决状态
 - 提供交易计划执行接口，用于触发交易操作执行：
   - 执行单个交易计划：通过POST /api/tradeplans/{tradeplan_id}/execute接口执行指定的交易计划
   - 执行采用异步方式，立即返回执行状态，交易计划在后台执行

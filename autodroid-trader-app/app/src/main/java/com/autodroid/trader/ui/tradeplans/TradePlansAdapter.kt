@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.RadioButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
@@ -181,6 +182,7 @@ class TradePlansAdapter(
     }
 
     inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val radioView: RadioButton
         private val iconView: ImageView
         private val nameView: TextView
         private val timeView: TextView
@@ -189,6 +191,7 @@ class TradePlansAdapter(
         private val statusView: TextView
 
         init {
+            radioView = itemView.findViewById(R.id.trade_plan_radio)
             iconView = itemView.findViewById(R.id.trade_plan_icon)
             nameView = itemView.findViewById(R.id.trade_plan_name)
             timeView = itemView.findViewById(R.id.trade_plan_time)
@@ -216,12 +219,25 @@ class TradePlansAdapter(
                 else -> statusView.setTextColor(itemView.context.getColor(android.R.color.holo_orange_dark))
             }
             
-            if (isSelectionMode) {
+            val canToggleStatus = status.lowercase() in listOf("pending", "approved", "rejected")
+            
+            if (isSelectionMode && canToggleStatus) {
+                radioView.visibility = View.VISIBLE
+                radioView.isChecked = isSelected
+                iconView.visibility = View.GONE
+                
+                radioView.setOnClickListener {
+                    toggleSelection(tradePlan.id ?: return@setOnClickListener)
+                }
+                
                 itemView.setOnClickListener {
                     toggleSelection(tradePlan.id ?: return@setOnClickListener)
                 }
                 itemView.setOnLongClickListener(null)
             } else {
+                radioView.visibility = View.GONE
+                iconView.visibility = View.VISIBLE
+                
                 itemView.setOnClickListener {
                     listener?.onTradePlanClick(tradePlan)
                 }

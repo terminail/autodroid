@@ -5,7 +5,6 @@ import android.view.View
 import android.view.View.VISIBLE
 import android.view.MotionEvent
 import android.view.ViewConfiguration
-import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,7 +22,6 @@ import android.util.Log
 class TradePlansFragment : BaseFragment() {
     private val TAG = "TradePlansFragment"
     
-    private var tradePlansTitleTextView: TextView? = null
     private var tradePlansRecyclerView: RecyclerView? = null
     private var adapter: TradePlansAdapter? = null
     private var tradePlanItems: MutableList<TradePlan>? = null
@@ -59,7 +57,6 @@ class TradePlansFragment : BaseFragment() {
     }
 
     override fun initViews(view: View) {
-        tradePlansTitleTextView = view?.findViewById<TextView?>(R.id.tradeplans_title)
         tradePlansRecyclerView = view?.findViewById<RecyclerView>(R.id.tradeplans_recycler_view)
         
         // Find AppBarLayout
@@ -118,6 +115,10 @@ class TradePlansFragment : BaseFragment() {
                     selectedTradePlans.clear()
                     selectedTradePlans.addAll(selectedIds)
                     updateCommandSection()
+                    
+                    if (isSelectionMode) {
+                        syncTradePlanStatuses()
+                    }
                 }
                 
                 override fun onExecuteApprovedPlans() {
@@ -244,31 +245,37 @@ class TradePlansFragment : BaseFragment() {
      * 退出多选模式
      */
     private fun exitSelectionMode() {
-        if (selectedTradePlans.isNotEmpty()) {
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    showMessage("正在更新 ${selectedTradePlans.size} 个交易计划的状态...")
-                    
-                    selectedTradePlans.forEach { id ->
-                        try {
-                            itemTradePlanManager.updateTradePlanStatus(id, "approved")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "更新交易计划 $id 状态失败: ${e.message}")
-                        }
-                    }
-                    
-                    refreshTradePlans()
-                    
-                } catch (e: Exception) {
-                    showMessage("更新交易计划状态失败: ${e.message}")
-                }
-            }
-        }
-        
         isSelectionMode = false
         adapter?.setSelectionMode(false)
         selectedTradePlans.clear()
         updateCommandSection()
+    }
+    
+    /**
+     * 同步交易计划状态（每次点击立即同步）
+     */
+    private fun syncTradePlanStatuses() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                tradePlanItems?.forEach { tradePlan ->
+                    val id = tradePlan.id ?: return@forEach
+                    val newStatus = if (selectedTradePlans.contains(id)) "approved" else "rejected"
+                    
+                    try {
+                        itemTradePlanManager.updateTradePlanStatus(id, newStatus)
+                        Log.d(TAG, "交易计划 $id 状态已同步: $newStatus")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "同步交易计划 $id 状态失败: ${e.message}")
+                    }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    refreshTradePlans()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "同步交易计划状态失败: ${e.message}")
+            }
+        }
     }
     
     /**
