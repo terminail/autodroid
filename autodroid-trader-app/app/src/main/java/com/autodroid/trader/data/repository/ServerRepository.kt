@@ -53,6 +53,20 @@ class ServerRepository private constructor(application: Application) {
     }
 
     /**
+     * 获取所有服务器（同步方式，用于协程中）
+     */
+    suspend fun getAllServersSync(): List<ServerEntity> {
+        return withContext(Dispatchers.IO) {
+            try {
+                return@withContext serverProvider.getAllServersSync()
+            } catch (e: Exception) {
+                Log.e("ServerRepository", "获取服务器列表失败: ${e.message}", e)
+                return@withContext emptyList()
+            }
+        }
+    }
+
+    /**
      * 获取当前服务器
      * 根据"本地优先"设计理念，主动检查服务器状态并更新本地数据库
      */
@@ -68,6 +82,20 @@ class ServerRepository private constructor(application: Application) {
         // 启动异步任务更新所有服务器信息
         updateAllServers()
         return serverProvider.getCurrentServer()
+    }
+    
+    /**
+     * 根据IP和端口获取服务器
+     */
+    suspend fun getServerByKey(ip: String, port: Int): ServerEntity? {
+        return withContext(Dispatchers.IO) {
+            try {
+                return@withContext serverProvider.getServerByKey(ip, port)
+            } catch (e: Exception) {
+                Log.e("ServerRepository", "获取服务器失败: ${e.message}", e)
+                return@withContext null
+            }
+        }
     }
     
     /**

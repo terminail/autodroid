@@ -66,7 +66,7 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 DeviceViewHolder(view)
             }
             TYPE_PORT_RANGE -> {
-                val view = inflater.inflate(R.layout.item_server_port_range, parent, false)
+                val view = inflater.inflate(R.layout.item_server_ip_port_range, parent, false)
                 PortRangeViewHolder(view)
             }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
@@ -217,24 +217,69 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class PortRangeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val ipPrefixText: TextView = itemView.findViewById(R.id.ip_prefix_text)
+        private val ipStartEdit: EditText = itemView.findViewById(R.id.ip_start_edit)
+        private val ipEndEdit: EditText = itemView.findViewById(R.id.ip_end_edit)
         private val portStartEdit: EditText = itemView.findViewById(R.id.port_start_edit)
         private val portEndEdit: EditText = itemView.findViewById(R.id.port_end_edit)
 
         fun bind(item: DashboardItem.ItemPortRange) {
-            // 从SharedPreferences读取端口范围
+            // 获取当前WiFi的IP前缀
+            val wifiPrefix = getWifiIpPrefix()
+            ipPrefixText.text = "IP范围 ($wifiPrefix.x)："
+            
+            // 从SharedPreferences读取IP和端口范围
             val prefs = itemView.context.getSharedPreferences("server_scan_settings", 0)
+            val ipStart = prefs.getInt("ip_start_last", 20)
+            val ipEnd = prefs.getInt("ip_end_last", 159)
             val portStart = prefs.getInt("port_start", item.portStart)
             val portEnd = prefs.getInt("port_end", item.portEnd)
             
+            ipStartEdit.setText(ipStart.toString())
+            ipEndEdit.setText(ipEnd.toString())
             portStartEdit.setText(portStart.toString())
             portEndEdit.setText(portEnd.toString())
 
-            // 监听文本变化，实时保存到SharedPreferences
+            // 监听IP范围文本变化，实时保存到SharedPreferences
+            ipStartEdit.doAfterTextChanged { text ->
+                text?.toString()?.let { value ->
+                    val ipNum = value.toIntOrNull()
+                    if (ipNum != null && ipNum >= 0 && ipNum <= 255) {
+                        saveIpPortRangeToPreferences(
+                            ipNum, 
+                            ipEndEdit.text.toString().toIntOrNull() ?: ipEnd,
+                            portStartEdit.text.toString().toIntOrNull() ?: item.portStart,
+                            portEndEdit.text.toString().toIntOrNull() ?: item.portEnd
+                        )
+                    }
+                }
+            }
+
+            ipEndEdit.doAfterTextChanged { text ->
+                text?.toString()?.let { value ->
+                    val ipNum = value.toIntOrNull()
+                    if (ipNum != null && ipNum >= 0 && ipNum <= 255) {
+                        saveIpPortRangeToPreferences(
+                            ipStartEdit.text.toString().toIntOrNull() ?: ipStart,
+                            ipNum,
+                            portStartEdit.text.toString().toIntOrNull() ?: item.portStart,
+                            portEndEdit.text.toString().toIntOrNull() ?: item.portEnd
+                        )
+                    }
+                }
+            }
+
+            // 监听端口范围文本变化，实时保存到SharedPreferences
             portStartEdit.doAfterTextChanged { text ->
                 text?.toString()?.let { value ->
                     val port = value.toIntOrNull()
                     if (port != null && port > 0 && port <= 65535) {
-                        savePortRangeToPreferences(port, portEndEdit.text.toString().toIntOrNull() ?: item.portEnd)
+                        saveIpPortRangeToPreferences(
+                            ipStartEdit.text.toString().toIntOrNull() ?: ipStart,
+                            ipEndEdit.text.toString().toIntOrNull() ?: ipEnd,
+                            port, 
+                            portEndEdit.text.toString().toIntOrNull() ?: item.portEnd
+                        )
                     }
                 }
             }
@@ -243,16 +288,46 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 text?.toString()?.let { value ->
                     val port = value.toIntOrNull()
                     if (port != null && port > 0 && port <= 65535) {
-                        savePortRangeToPreferences(portStartEdit.text.toString().toIntOrNull() ?: item.portStart, port)
+                        saveIpPortRangeToPreferences(
+                            ipStartEdit.text.toString().toIntOrNull() ?: ipStart,
+                            ipEndEdit.text.toString().toIntOrNull() ?: ipEnd,
+                            portStartEdit.text.toString().toIntOrNull() ?: item.portStart, 
+                            port
+                        )
                     }
                 }
             }
         }
 
-        private fun savePortRangeToPreferences(portStart: Int, portEnd: Int) {
+        private fun getWifiIpPrefix(): String {
+            return try {
+                // 获取当前WiFi的IP地址
+                val wifiInfo = com.autodroid.trader.utils.NetworkUtils.getCurrentWiFiInfo(itemView.context)
+                if (wifiInfo != null && wifiInfo.isWifiConnected()) {
+                    val ipAddress = wifiInfo.ipAddress
+                    if (!ipAddress.isNullOrEmpty()) {
+                        // 提取IP前缀（前三个部分）
+                        val ipParts = ipAddress.split(".")
+                        if (ipParts.size == 4) {
+                            return "${ipParts[0]}.${ipParts[1]}.${ipParts[2]}"
+                        }
+                    }
+                }
+                
+                // 如果无法获取WiFi信息，使用默认值
+                "192.168.1"
+            } catch (e: Exception) {
+                // 出错时使用默认值
+                "192.168.1"
+            }
+        }
+
+        private fun saveIpPortRangeToPreferences(ipStart: Int, ipEnd: Int, portStart: Int, portEnd: Int) {
             CoroutineScope(Dispatchers.IO).launch {
                 val prefs = itemView.context.getSharedPreferences("server_scan_settings", 0)
                 prefs.edit()
+                    .putInt("ip_start_last", ipStart)
+                    .putInt("ip_end_last", ipEnd)
                     .putInt("port_start", portStart)
                     .putInt("port_end", portEnd)
                     .apply()

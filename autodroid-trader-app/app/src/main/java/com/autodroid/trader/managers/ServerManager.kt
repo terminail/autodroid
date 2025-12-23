@@ -113,6 +113,84 @@ class ServerManager private constructor(private val context: Context) {
     }
 
     /**
+     * 获取扫描IP范围
+     */
+    private fun getIpRange(): Pair<String, String> {
+        // 获取当前WiFi的IP前缀
+        val localIp = getLocalIpAddress()
+        if (localIp == null) {
+            Log.e(TAG, "无法获取本地IP地址，使用默认IP前缀")
+            return Pair("192.168.1.1", "192.168.1.255")
+        }
+        
+        // 提取IP前缀（前三个部分）
+        val ipParts = localIp.split(".")
+        if (ipParts.size != 4) {
+            Log.e(TAG, "本地IP地址格式不正确: $localIp，使用默认IP前缀")
+            return Pair("192.168.1.1", "192.168.1.255")
+        }
+        
+        val ipPrefix = "${ipParts[0]}.${ipParts[1]}.${ipParts[2]}"
+        
+        // 从SharedPreferences获取IP范围末尾值
+        val prefs = context.getSharedPreferences("server_scan_settings", 0)
+        val ipStartLast = prefs.getInt("ip_start_last", 20)
+        val ipEndLast = prefs.getInt("ip_end_last", 159)
+        
+        // 验证IP范围末尾值
+        val startLast = if (ipStartLast in 0..255) ipStartLast else 20
+        val endLast = if (ipEndLast in 0..255) ipEndLast else 159
+        
+        // 确保起始值不大于结束值
+        val actualStart = minOf(startLast, endLast)
+        val actualEnd = maxOf(startLast, endLast)
+        
+        return Pair("$ipPrefix.$actualStart", "$ipPrefix.$actualEnd")
+    }
+
+    /**
+     * 生成IP范围内的所有IP地址
+     */
+    private fun generateIpRange(ipStart: String, ipEnd: String): List<String> {
+        val result = mutableListOf<String>()
+        
+        try {
+            val startParts = ipStart.split(".").map { it.toInt() }
+            val endParts = ipEnd.split(".").map { it.toInt() }
+            
+            // 验证IP地址格式
+            if (startParts.size != 4 || endParts.size != 4) {
+                Log.e(TAG, "IP地址格式不正确: $ipStart, $ipEnd")
+                return emptyList()
+            }
+            
+            // 生成IP范围
+            for (i in startParts[0]..endParts[0]) {
+                val jStart = if (i == startParts[0]) startParts[1] else 0
+                val jEnd = if (i == endParts[0]) endParts[1] else 255
+                for (j in jStart..jEnd) {
+                    val kStart = if (i == startParts[0] && j == startParts[1]) startParts[2] else 0
+                    val kEnd = if (i == endParts[0] && j == endParts[1]) endParts[2] else 255
+                    for (k in kStart..kEnd) {
+                        val lStart = if (i == startParts[0] && j == startParts[1] && k == startParts[2]) startParts[3] else 0
+                        val lEnd = if (i == endParts[0] && j == endParts[1] && k == endParts[2]) endParts[3] else 255
+                        for (l in lStart..lEnd) {
+                            val ip = "$i.$j.$k.$l"
+                            if (isValidIpAddress(ip)) {
+                                result.add(ip)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "生成IP范围时发生错误: ${e.message}")
+        }
+        
+        return result
+    }
+
+    /**
      * 开始或恢复扫描局域网内的服务器
      */
     fun startServerScan() {
@@ -179,7 +257,7 @@ class ServerManager private constructor(private val context: Context) {
 
         _scanProgress.postValue("已连接到WiFi: ${wifiInfo.ssid}")
 
-        // 获取本地IP地址和网络前缀
+        // 获取本地IP地址
         val localIp = getLocalIpAddress()
         if (localIp == null) {
             _scanStatus.postValue("无法获取本地IP地址")
@@ -188,12 +266,21 @@ class ServerManager private constructor(private val context: Context) {
 
         _scanProgress.postValue("本地IP地址: $localIp")
 
-        // 计算网络前缀
-        val networkPrefix = NetworkUtils.getSubnet(localIp) ?: "192.168.1"
-        _scanProgress.postValue("正在扫描网络段: $networkPrefix.x")
+        // 获取用户设置的IP范围
+        val (ipStart, ipEnd) = getIpRange()
+        _scanProgress.postValue("正在扫描IP范围: $ipStart ~ $ipEnd")
 
-        // 扫描局域网内的IP地址
-        val reachableIps = scanNetworkWithPing(networkPrefix)
+        // 生成IP范围内的所有IP地址
+        val ipRange = generateIpRange(ipStart, ipEnd)
+        if (ipRange.isEmpty()) {
+            _scanStatus.postValue("IP范围无效或为空")
+            return true
+        }
+
+        _scanProgress.postValue("IP范围内共有 ${ipRange.size} 个地址，开始扫描...")
+
+        // 扫描IP范围内的地址
+        val reachableIps = scanIpRangeWithPing(ipRange)
 
         if (reachableIps.isEmpty()) {
             _scanStatus.postValue("未发现任何可用的设备")
@@ -216,7 +303,7 @@ class ServerManager private constructor(private val context: Context) {
     }
 
     private suspend fun scanServerWithDatabase(): Boolean {
-        val existingServers = serverRepository.getAllServers().value ?: emptyList()
+        val existingServers = serverRepository.getAllServersSync()
         if (existingServers.isNotEmpty()) {
             _scanProgress.postValue("找到 ${existingServers.size} 个已保存的服务器，正在检查连接状态...")
 
@@ -238,9 +325,17 @@ class ServerManager private constructor(private val context: Context) {
                 val serverInfo = checkServer(server.ip, server.port)
                 if (serverInfo != null) {
                     // 找到可用服务器，更新数据库
-                    _scanStatus.postValue("已连接到服务器: ${server.name}")
-                    _scanProgress.postValue("服务器信息: ${server.name} (${server.apiEndpoint()})")
-                    Log.i(TAG, "已连接到服务器: ${server.name} (${server.apiEndpoint()})")
+                    _scanStatus.postValue("已连接到服务器: ${serverInfo.name}")
+                    _scanProgress.postValue("服务器信息: ${serverInfo.name} (${serverInfo.apiEndpoint()})")
+                    Log.i(TAG, "已连接到服务器: ${serverInfo.name} (${serverInfo.apiEndpoint()})")
+                    
+                    // 创建ServerScanResult并设置发现的服务器
+                    val serverScanResult = ServerScanResult(
+                        serverEntity = serverInfo,
+                        ip = serverInfo.ip,
+                        port = serverInfo.port
+                    )
+                    _discoveredServer.postValue(serverScanResult)
 
                     // 停止扫描
                     stopServerScan()
@@ -311,27 +406,17 @@ class ServerManager private constructor(private val context: Context) {
     }
 
     /**
-     * 扫描网络段内的IP地址
+     * 扫描IP范围内的地址
      */
-    private suspend fun scanNetworkWithPing(networkPrefix: String): List<String> =
+    private suspend fun scanIpRangeWithPing(ipRange: List<String>): List<String> =
         withContext(Dispatchers.IO) {
             val reachableIps = mutableListOf<String>()
             val jobs = mutableListOf<Job>()
 
-            _scanProgress.postValue("开始ping扫描网络段: $networkPrefix.x (1-254)")
+            _scanProgress.postValue("开始ping扫描IP范围，共 ${ipRange.size} 个地址")
 
-            // 验证网络前缀是否有效
-            if (!isValidNetworkPrefix(networkPrefix)) {
-                Log.e(TAG, "无效的网络前缀: $networkPrefix")
-                _scanProgress.postValue("无效的网络前缀: $networkPrefix")
-                return@withContext emptyList()
-            }
-
-            // 扫描1-254的IP地址
-            for (i in 1..254) {
-                val ip = "$networkPrefix.$i"
-                
-                // 验证生成的IP地址是否有效
+            for (ip in ipRange) {
+                // 验证IP地址是否有效
                 if (!isValidIpAddress(ip)) {
                     Log.w(TAG, "跳过无效的IP地址: $ip")
                     continue
@@ -360,10 +445,24 @@ class ServerManager private constructor(private val context: Context) {
             // 等待剩余任务完成
             jobs.joinAll()
 
-            _scanProgress.postValue("网络扫描完成，发现 ${reachableIps.size} 个设备")
+            _scanProgress.postValue("IP范围扫描完成，发现 ${reachableIps.size} 个设备")
 
             return@withContext reachableIps
         }
+
+    /**
+     * 扫描网络段内的IP地址（已弃用，改用scanIpRangeWithPing）
+     */
+    private suspend fun scanNetworkWithPing(networkPrefix: String): List<String> {
+        // 获取用户设置的IP范围
+        val (ipStart, ipEnd) = getIpRange()
+        
+        // 生成IP范围内的所有IP地址
+        val ipRange = generateIpRange(ipStart, ipEnd)
+        
+        // 使用新的IP范围扫描方法
+        return scanIpRangeWithPing(ipRange)
+    }
 
     /**
      * 检查IP地址是否是服务器
@@ -531,18 +630,34 @@ class ServerManager private constructor(private val context: Context) {
                     "服务器返回的IP或端口与请求不匹配: 请求($ip:$port), 返回(${serverInfo.ip}:${serverInfo.port})"
                 )
             }
-            val se = ServerEntity(
-                ip = serverInfo.ip,
-                port = serverInfo.port,
-                name = serverInfo.name,
-                platform = serverInfo.platform,
-                services = serverInfo.services,
-                capabilities = serverInfo.capabilities,
-                isConnected = false,
-                discoveryType = "manual",
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
+            
+            // 检查数据库中是否已存在该服务器
+            val existingServer = serverRepository.getServerByKey(ip, port)
+            
+            val se = if (existingServer != null) {
+                // 更新现有服务器，保留原有的discoveryType和createdAt
+                existingServer.copy(
+                    name = serverInfo.name,
+                    platform = serverInfo.platform,
+                    services = serverInfo.services,
+                    capabilities = serverInfo.capabilities,
+                    updatedAt = System.currentTimeMillis()
+                )
+            } else {
+                // 创建新服务器
+                ServerEntity(
+                    ip = serverInfo.ip,
+                    port = serverInfo.port,
+                    name = serverInfo.name,
+                    platform = serverInfo.platform,
+                    services = serverInfo.services,
+                    capabilities = serverInfo.capabilities,
+                    isConnected = false,
+                    discoveryType = "manual",
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+            }
             // 保存服务器到数据库
             try {
                 // 使用协程作用域调用suspend函数

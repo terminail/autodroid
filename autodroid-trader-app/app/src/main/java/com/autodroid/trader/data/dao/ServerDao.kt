@@ -22,6 +22,12 @@ interface ServerDao {
     fun getAllServers(): LiveData<List<ServerEntity>>
 
     /**
+     * 获取所有服务器列表（同步方式，用于协程中）
+     */
+    @Query("SELECT * FROM servers ORDER BY updatedAt DESC")
+    suspend fun getAllServersSync(): List<ServerEntity>
+
+    /**
      * 获取已连接的服务器，如果没有连接的服务器则返回最近连接过的（时间戳最新的）
      */
     @Query("SELECT * FROM servers WHERE isConnected = 1 ORDER BY lastConnectedTime DESC LIMIT 1")

@@ -39,6 +39,8 @@ sealed class DashboardItem(val type: Int) {
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
 
     data class ItemPortRange(
+        val ipStart: String = "192.168.1.1",
+        val ipEnd: String = "192.168.1.255",
         val portStart: Int = 8000,
         val portEnd: Int = 8080
     ) : DashboardItem(DashboardAdapter.Companion.TYPE_PORT_RANGE)

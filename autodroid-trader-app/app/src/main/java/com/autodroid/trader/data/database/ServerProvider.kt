@@ -24,6 +24,15 @@ class ServerProvider private constructor(context: Context) {
     }
     
     /**
+     * 获取所有服务器列表（同步方式，用于协程中）
+     */
+    suspend fun getAllServersSync(): List<ServerEntity> {
+        return withContext(Dispatchers.IO) {
+            serverDao.getAllServersSync()
+        }
+    }
+    
+    /**
      * 获取已连接的服务器
      */
     fun getConnectedServer(): LiveData<ServerEntity?> {
