@@ -39,6 +39,23 @@ node_modules/
 Open-AutoGLM/
 autodroid_database.db
 
+<<<<<<< HEAD
+=======
+# SSH keys
+gitee
+gitee.pub
+*.pem
+*.key
+
+# APK files
+*.apk
+
+# Built executables
+**/dist/*.exe
+**/dist/*.exe
+**/autodroid-analyzer/dist/
+
+>>>>>>> 105a6d8 (Update .gitignore to exclude SSH keys, APK files and executables)
 # Push scripts (local use only)
 push-to-all.sh
 push-to-all.bat
