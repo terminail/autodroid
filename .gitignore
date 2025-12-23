@@ -38,3 +38,7 @@ node_modules/
 .pytest_cache/
 Open-AutoGLM/
 autodroid_database.db
+
+# Push scripts (local use only)
+push-to-all.sh
+push-to-all.bat
