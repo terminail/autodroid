@@ -4,6 +4,19 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.CandleStickChart
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.CandleData
+import com.github.mikephil.charting.data.CandleDataSet
+import com.github.mikephil.charting.data.CandleEntry
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 
 
 sealed class StockDetailViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -28,7 +41,7 @@ sealed class StockDetailViewHolder(view: View) : RecyclerView.ViewHolder(view) {
                 if (item.changePercent >= 0) android.R.color.holo_red_dark else android.R.color.holo_green_dark
             ))
             
-            val changeAmountText = if (item.changeAmount >= 0) "+${String.format("%.2f", item.changeAmount)}" else "${String.format("%.2f", item.changeAmount)}"
+            val changeAmountText = if (item.changeAmount >= 0) "+${String.format("%.2f", item.changeAmount)}" else String.format("%.2f", item.changeAmount)
             changeAmountView.text = changeAmountText
             changeAmountView.setTextColor(itemView.context.getColor(
                 if (item.changeAmount >= 0) android.R.color.holo_red_dark else android.R.color.holo_green_dark
