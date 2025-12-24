@@ -3,52 +3,88 @@ package com.autodroid.trader.ui.tradeplan
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.trader.R
 import com.autodroid.trader.ui.BaseFragment
+import kotlinx.coroutines.launch
 
 class TradePlanFragment : BaseFragment() {
     companion object {
         private const val ARG_TRADEPLAN_ID = "tradeplan_id"
+        private const val ARG_TRADEPLAN_TITLE = "tradeplan_title"
 
-        fun newInstance(tradePlanId: String): TradePlanFragment {
+        fun newInstance(tradePlanId: String, tradePlanTitle: String? = null): TradePlanFragment {
             val fragment = TradePlanFragment()
             val args = Bundle()
             args.putString(ARG_TRADEPLAN_ID, tradePlanId)
+            args.putString(ARG_TRADEPLAN_TITLE, tradePlanTitle)
             fragment.arguments = args
             return fragment
         }
     }
 
-    private lateinit var tradePlanName: TextView
-    private lateinit var tradePlanDescription: TextView
+    private lateinit var tradePlanTitle: TextView
+    private lateinit var stockDetailAdapter: StockDetailAdapter
+
+    private val stockDetailViewModel: StockDetailViewModel by activityViewModels()
 
     override fun getLayoutId(): Int {
         return R.layout.fragment_trade_plan
     }
 
-    override fun initViews(view: View) {
-        tradePlanName = view.findViewById(R.id.tradeplan_detail_name)
-        tradePlanDescription = view.findViewById(R.id.tradeplan_detail_description)
+    override fun onCreateView(inflater: android.view.LayoutInflater, container: android.view.ViewGroup?, savedInstanceState: Bundle?): android.view.View? {
+        val view = super.onCreateView(inflater, container, savedInstanceState)
+        
+        val toolbar = (activity as? AppCompatActivity)?.findViewById<Toolbar>(R.id.toolbar)
+        toolbar?.visibility = View.GONE
+        
+        return view
+    }
 
-        // Get trade plan ID from arguments
+    override fun initViews(view: View) {
+        tradePlanTitle = view.findViewById(R.id.tradeplan_detail_title)
+
         val args = arguments
         if (args != null) {
-            val tradePlanId = args.getString(ARG_TRADEPLAN_ID)
-            if (tradePlanId != null) {
-                tradePlanName.text = "Trade Plan ID: $tradePlanId"
-                tradePlanDescription.text = "This is a detailed view of trade plan #$tradePlanId."
+            val title = args.getString(ARG_TRADEPLAN_TITLE)
+            if (title != null) {
+                tradePlanTitle.text = title
             }
         }
 
-        // Set up back button
         val backButton = view.findViewById<TextView>(R.id.tradeplan_detail_back_button)
         backButton.setOnClickListener {
             findNavController().navigateUp()
         }
+
+        val stockDetailRecyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.stock_detail_recycler_view)
+        stockDetailAdapter = StockDetailAdapter(
+            items = emptyList(),
+            onTimeframeChanged = { timeframe ->
+                stockDetailViewModel.changeTimeframe(timeframe)
+            }
+        )
+        stockDetailRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        stockDetailRecyclerView.adapter = stockDetailAdapter
     }
 
     override fun setupObservers() {
-        // No observers needed for this simple implementation
+        viewLifecycleOwner.lifecycleScope.launch {
+            stockDetailViewModel.stockDetailItems.collect { items ->
+                stockDetailAdapter.updateItems(items)
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        
+        val toolbar = (activity as? AppCompatActivity)?.findViewById<Toolbar>(R.id.toolbar)
+        toolbar?.visibility = View.VISIBLE
     }
 }

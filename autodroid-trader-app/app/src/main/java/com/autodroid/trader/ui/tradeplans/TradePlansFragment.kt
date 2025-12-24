@@ -326,9 +326,13 @@ class TradePlansFragment : BaseFragment() {
 
     private fun openTradePlanDetail(tradePlanEntity: TradePlanEntity?) {
         val tradePlanId = tradePlanEntity?.id
+        val tradePlanTitle = tradePlanEntity?.getDisplayName()
         
         if (tradePlanId != null) {
-            val action = TradePlansFragmentDirections.actionNavTradeplansToTradeplanDetailFragment(tradePlanId)
+            val action = TradePlansFragmentDirections.actionNavTradeplansToTradeplanDetailFragment(
+                tradePlanId,
+                tradePlanTitle
+            )
             findNavController().navigate(action)
         }
     }
