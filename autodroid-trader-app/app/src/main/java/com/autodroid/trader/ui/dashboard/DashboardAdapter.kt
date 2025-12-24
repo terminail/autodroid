@@ -342,11 +342,22 @@ class DashboardAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val statusSummaryText: TextView = itemView.findViewById(R.id.status_summary)
+        private val textAllCount: TextView = itemView.findViewById(R.id.text_all_count)
+        private val textPendingCount: TextView = itemView.findViewById(R.id.text_pending_count)
+        private val textApprovedCount: TextView = itemView.findViewById(R.id.text_approved_count)
+        private val textRejectedCount: TextView = itemView.findViewById(R.id.text_rejected_count)
+        private val textCompletedCount: TextView = itemView.findViewById(R.id.text_completed_count)
+        private val textFailedCount: TextView = itemView.findViewById(R.id.text_failed_count)
         private val executeApprovedButton: Button = itemView.findViewById(R.id.btn_execute_approved)
 
         fun bind(item: DashboardItem.ItemTradePlan) {
-            statusSummaryText.text = "待批准: ${item.pendingCount} | 已批准: ${item.approvedCount} | 已否决: ${item.rejectedCount} | 执行成功: ${item.executedSuccessCount} | 执行失败: ${item.executedFailedCount}"
+            val totalCount = item.pendingCount + item.approvedCount + item.rejectedCount + item.executedSuccessCount + item.executedFailedCount
+            textAllCount.text = totalCount.toString()
+            textPendingCount.text = item.pendingCount.toString()
+            textApprovedCount.text = item.approvedCount.toString()
+            textRejectedCount.text = item.rejectedCount.toString()
+            textCompletedCount.text = item.executedSuccessCount.toString()
+            textFailedCount.text = item.executedFailedCount.toString()
         }
     }
 }

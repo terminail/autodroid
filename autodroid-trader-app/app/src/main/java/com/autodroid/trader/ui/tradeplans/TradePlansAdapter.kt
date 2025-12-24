@@ -4,12 +4,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
-import com.autodroid.trader.network.TradePlanResponse
+import com.autodroid.trader.data.dao.TradePlanEntity
 
 class TradePlansAdapter(
     private var items: MutableList<Any>?,
@@ -27,11 +28,12 @@ class TradePlansAdapter(
     private val selectedTradePlans = mutableSetOf<String>()
     
     interface OnTradePlanClickListener {
-        fun onTradePlanClick(tradePlanResponse: TradePlanResponse?)
-        fun onTradePlanLongClick(tradePlanResponse: TradePlanResponse?)
+        fun onTradePlanClick(tradePlanEntity: TradePlanEntity?)
+        fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?)
         fun onSelectionChanged(selectedIds: Set<String>)
         fun onExecuteApprovedPlans()
         fun onCompleteSelection()
+        fun onStatusFilterChanged(status: String, isChecked: Boolean)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -57,16 +59,16 @@ class TradePlansAdapter(
                 summaryHolder.bind(getCurrentSummary())
             }
             TYPE_TRADE_PLAN -> {
-                val tradePlanResponse = items!![position] as TradePlanResponse
+                val tradePlanEntity = items!![position] as TradePlanEntity
                 val tradePlanHolder = holder as TradePlanViewHolder
-                tradePlanHolder.bind(tradePlanResponse, isSelectionMode, selectedTradePlans.contains(tradePlanResponse.id))
+                tradePlanHolder.bind(tradePlanEntity, isSelectionMode, selectedTradePlans.contains(tradePlanEntity.id))
             }
         }
     }
     
     override fun getItemViewType(position: Int): Int {
         return when (items!![position]) {
-            is TradePlanResponse -> TYPE_TRADE_PLAN
+            is TradePlanEntity -> TYPE_TRADE_PLAN
             else -> TYPE_SUMMARY
         }
     }
@@ -75,10 +77,10 @@ class TradePlansAdapter(
         return if (items != null) items!!.size else 0
     }
 
-    fun updateTradePlans(newTradePlanResponses: MutableList<TradePlanResponse>?) {
+    fun updateTradePlans(newTradePlanEntities: MutableList<TradePlanEntity>?) {
         val newItems = mutableListOf<Any>()
         newItems.add(SummaryItem())
-        newTradePlanResponses?.let { plans ->
+        newTradePlanEntities?.let { plans ->
             newItems.addAll(plans)
         }
         this.items = newItems
@@ -109,15 +111,15 @@ class TradePlansAdapter(
         var executedFailedCount = 0
         
         items?.forEach { item ->
-            if (item is TradePlanResponse) {
-                when (item.status?.lowercase()) {
-                    "pending" -> pendingCount++
-                    "approved" -> approvedCount++
-                    "rejected" -> rejectedCount++
+            if (item is TradePlanEntity) {
+                when (item.status?.uppercase()) {
+                    "PENDING" -> pendingCount++
+                    "APPROVED" -> approvedCount++
+                    "REJECTED" -> rejectedCount++
                 }
                 
                 if (!item.executionResult.isNullOrEmpty()) {
-                    if (item.executionResult?.lowercase() == "success") {
+                    if (item.executionResult?.uppercase() == "SUCCESS") {
                         executedSuccessCount++
                     } else {
                         executedFailedCount++
@@ -155,7 +157,7 @@ class TradePlansAdapter(
         listener?.onSelectionChanged(selectedTradePlans)
         
         items?.forEachIndexed { index, item ->
-            if (item is TradePlanResponse && item.id == tradePlanId) {
+            if (item is TradePlanEntity && item.id == tradePlanId) {
                 notifyItemChanged(index)
                 return@forEachIndexed
             }
@@ -172,7 +174,7 @@ class TradePlansAdapter(
             selectedTradePlans.clear()
             
             items?.forEachIndexed { index, item ->
-                if (item is TradePlanResponse && previouslySelected.contains(item.id)) {
+                if (item is TradePlanEntity && previouslySelected.contains(item.id)) {
                     notifyItemChanged(index)
                 }
             }
@@ -184,6 +186,7 @@ class TradePlansAdapter(
     inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val radioView: RadioButton
         private val iconView: ImageView
+        private val timestampView: TextView
         private val nameView: TextView
         private val timeView: TextView
         private val infoLine1View: TextView
@@ -193,6 +196,7 @@ class TradePlansAdapter(
         init {
             radioView = itemView.findViewById(R.id.trade_plan_radio)
             iconView = itemView.findViewById(R.id.trade_plan_icon)
+            timestampView = itemView.findViewById(R.id.trade_plan_timestamp)
             nameView = itemView.findViewById(R.id.trade_plan_name)
             timeView = itemView.findViewById(R.id.trade_plan_time)
             infoLine1View = itemView.findViewById(R.id.trade_plan_info_line1)
@@ -200,13 +204,16 @@ class TradePlansAdapter(
             statusView = itemView.findViewById(R.id.trade_plan_status)
         }
 
-        fun bind(tradePlanResponse: TradePlanResponse, isSelectionMode: Boolean, isSelected: Boolean) {
-            nameView.text = tradePlanResponse.name ?: tradePlanResponse.title ?: "Unknown Trade Plan"
-            timeView.text = tradePlanResponse.getDisplayTime()
-            infoLine1View.text = tradePlanResponse.getDisplayInfoLine1()
-            infoLine2View.text = tradePlanResponse.getDisplayInfoLine2()
+        fun bind(tradePlanEntity: TradePlanEntity, isSelectionMode: Boolean, isSelected: Boolean) {
+            val displayTime = tradePlanEntity.getDisplayTime()
+            android.util.Log.d(TAG, "bind: id=${tradePlanEntity.id}, createdAt=${tradePlanEntity.createdAt}, displayTime='$displayTime'")
+            timestampView.text = displayTime
+            nameView.text = tradePlanEntity.getDisplayName()
+            timeView.text = displayTime
+            infoLine1View.text = tradePlanEntity.getDisplayInfoLine1()
+            infoLine2View.text = tradePlanEntity.getDisplayInfoLine2()
             
-            val status = tradePlanResponse.status ?: "PENDING"
+            val status = tradePlanEntity.status ?: "PENDING"
             statusView.text = status
             
             when (status.lowercase()) {
@@ -227,11 +234,11 @@ class TradePlansAdapter(
                 iconView.visibility = View.GONE
                 
                 radioView.setOnClickListener {
-                    toggleSelection(tradePlanResponse.id ?: return@setOnClickListener)
+                    toggleSelection(tradePlanEntity.id ?: return@setOnClickListener)
                 }
                 
                 itemView.setOnClickListener {
-                    toggleSelection(tradePlanResponse.id ?: return@setOnClickListener)
+                    toggleSelection(tradePlanEntity.id ?: return@setOnClickListener)
                 }
                 itemView.setOnLongClickListener(null)
             } else {
@@ -239,10 +246,10 @@ class TradePlansAdapter(
                 iconView.visibility = View.VISIBLE
                 
                 itemView.setOnClickListener {
-                    listener?.onTradePlanClick(tradePlanResponse)
+                    listener?.onTradePlanClick(tradePlanEntity)
                 }
                 itemView.setOnLongClickListener {
-                    listener?.onTradePlanLongClick(tradePlanResponse)
+                    listener?.onTradePlanLongClick(tradePlanEntity)
                     true
                 }
             }
@@ -250,14 +257,78 @@ class TradePlansAdapter(
     }
     
     inner class SummaryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val statusSummaryTextView: TextView
+        private val checkboxAll: CheckBox
+        private val textAllCount: TextView
+        private val checkboxPending: CheckBox
+        private val textPendingCount: TextView
+        private val checkboxApproved: CheckBox
+        private val textApprovedCount: TextView
+        private val checkboxRejected: CheckBox
+        private val textRejectedCount: TextView
+        private val checkboxCompleted: CheckBox
+        private val textCompletedCount: TextView
+        private val checkboxFailed: CheckBox
+        private val textFailedCount: TextView
         private val executeApprovedButton: Button
         private val completeButton: Button
 
         init {
-            statusSummaryTextView = itemView.findViewById(R.id.status_summary)
+            checkboxAll = itemView.findViewById(R.id.checkbox_all)
+            textAllCount = itemView.findViewById(R.id.text_all_count)
+            checkboxPending = itemView.findViewById(R.id.checkbox_pending)
+            textPendingCount = itemView.findViewById(R.id.text_pending_count)
+            checkboxApproved = itemView.findViewById(R.id.checkbox_approved)
+            textApprovedCount = itemView.findViewById(R.id.text_approved_count)
+            checkboxRejected = itemView.findViewById(R.id.checkbox_rejected)
+            textRejectedCount = itemView.findViewById(R.id.text_rejected_count)
+            checkboxCompleted = itemView.findViewById(R.id.checkbox_completed)
+            textCompletedCount = itemView.findViewById(R.id.text_completed_count)
+            checkboxFailed = itemView.findViewById(R.id.checkbox_failed)
+            textFailedCount = itemView.findViewById(R.id.text_failed_count)
             executeApprovedButton = itemView.findViewById(R.id.btn_execute_approved)
             completeButton = itemView.findViewById(R.id.btn_complete)
+            
+            checkboxAll.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    checkboxPending.isChecked = true
+                    checkboxApproved.isChecked = true
+                    checkboxRejected.isChecked = true
+                    checkboxCompleted.isChecked = true
+                    checkboxFailed.isChecked = true
+                } else {
+                    checkboxPending.isChecked = false
+                    checkboxApproved.isChecked = false
+                    checkboxRejected.isChecked = false
+                    checkboxCompleted.isChecked = false
+                    checkboxFailed.isChecked = false
+                }
+                listener?.onStatusFilterChanged("ALL", isChecked)
+            }
+            
+            checkboxPending.setOnCheckedChangeListener { _, isChecked ->
+                updateAllCheckboxState()
+                listener?.onStatusFilterChanged("PENDING", isChecked)
+            }
+            
+            checkboxApproved.setOnCheckedChangeListener { _, isChecked ->
+                updateAllCheckboxState()
+                listener?.onStatusFilterChanged("APPROVED", isChecked)
+            }
+            
+            checkboxRejected.setOnCheckedChangeListener { _, isChecked ->
+                updateAllCheckboxState()
+                listener?.onStatusFilterChanged("REJECTED", isChecked)
+            }
+            
+            checkboxCompleted.setOnCheckedChangeListener { _, isChecked ->
+                updateAllCheckboxState()
+                listener?.onStatusFilterChanged("COMPLETED", isChecked)
+            }
+            
+            checkboxFailed.setOnCheckedChangeListener { _, isChecked ->
+                updateAllCheckboxState()
+                listener?.onStatusFilterChanged("FAILED", isChecked)
+            }
             
             executeApprovedButton.setOnClickListener {
                 listener?.onExecuteApprovedPlans()
@@ -267,12 +338,26 @@ class TradePlansAdapter(
                 listener?.onCompleteSelection()
             }
         }
+        
+        private fun updateAllCheckboxState() {
+            val allChecked = checkboxPending.isChecked && checkboxApproved.isChecked && 
+                           checkboxRejected.isChecked && checkboxCompleted.isChecked && 
+                           checkboxFailed.isChecked
+            checkboxAll.isChecked = allChecked
+        }
 
         fun bind(summary: TradePlanSummary) {
             val summaryToUse = currentSummary ?: summary
-            statusSummaryTextView.text = "待批准: ${summaryToUse.pendingCount} | 已批准: ${summaryToUse.approvedCount} | " +
-                    "已否决: ${summaryToUse.rejectedCount} | 执行成功: ${summaryToUse.executedSuccessCount} | " +
-                    "执行失败: ${summaryToUse.executedFailedCount}"
+            val totalCount = summaryToUse.pendingCount + summaryToUse.approvedCount + 
+                           summaryToUse.rejectedCount + summaryToUse.executedSuccessCount + 
+                           summaryToUse.executedFailedCount
+            
+            textAllCount.text = totalCount.toString()
+            textPendingCount.text = summaryToUse.pendingCount.toString()
+            textApprovedCount.text = summaryToUse.approvedCount.toString()
+            textRejectedCount.text = summaryToUse.rejectedCount.toString()
+            textCompletedCount.text = summaryToUse.executedSuccessCount.toString()
+            textFailedCount.text = summaryToUse.executedFailedCount.toString()
             
             executeApprovedButton.isEnabled = summaryToUse.approvedCount > 0
             completeButton.visibility = if (selectedTradePlans.isNotEmpty()) View.VISIBLE else View.GONE

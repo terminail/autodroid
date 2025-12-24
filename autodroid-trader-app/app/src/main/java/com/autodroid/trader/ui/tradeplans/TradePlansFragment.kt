@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.fragment.app.viewModels
 import com.autodroid.trader.R
 import com.autodroid.trader.ui.BaseFragment
-import com.autodroid.trader.network.TradePlanResponse
+import com.autodroid.trader.data.dao.TradePlanEntity
 import com.autodroid.trader.managers.TradePlanManager
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +25,6 @@ class TradePlansFragment : BaseFragment() {
     
     private var tradePlansRecyclerView: RecyclerView? = null
     private var adapter: TradePlansAdapter? = null
-    private var tradePlanResponseItems: MutableList<TradePlanResponse>? = null
     
     // Trade plan manager
     private lateinit var tradePlanManager: TradePlanManager
@@ -43,16 +42,18 @@ class TradePlansFragment : BaseFragment() {
     private var isSelectionMode = false
     private val selectedTradePlans = mutableSetOf<String>()
     
+    // Status filter state
+    private val selectedStatusFilters = mutableSetOf<String>()
+    
     // Item managers for modular architecture
     private lateinit var itemTradePlanManager: ItemTradePlanManager
     private lateinit var itemTradePlanSummaryManager: ItemTradePlanSummaryManager
     
     // Trade plan items list
-    private val tradePlansItemsList = mutableListOf<TradePlansItem>()
+    private val tradePlansItemsList = mutableListOf<Any>()
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        tradePlanResponseItems = ArrayList<TradePlanResponse>()
         tradePlanManager = TradePlanManager.getInstance(requireContext())
     }
 
@@ -103,16 +104,16 @@ class TradePlansFragment : BaseFragment() {
         adapter = TradePlansAdapter(
             null,
             object : TradePlansAdapter.OnTradePlanClickListener {
-                override fun onTradePlanClick(tradePlanResponse: TradePlanResponse?) {
+                override fun onTradePlanClick(tradePlanEntity: TradePlanEntity?) {
                     if (!isSelectionMode) {
-                        openTradePlanDetail(tradePlanResponse)
+                        openTradePlanDetail(tradePlanEntity)
                     }
                 }
                 
-                override fun onTradePlanLongClick(tradePlanResponse: TradePlanResponse?) {
+                override fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?) {
                     if (!isSelectionMode) {
                         enterSelectionMode()
-                        tradePlanResponse?.id?.let { id ->
+                        tradePlanEntity?.id?.let { id ->
                             adapter?.toggleSelection(id)
                             selectedTradePlans.add(id)
                         }
@@ -136,6 +137,23 @@ class TradePlansFragment : BaseFragment() {
                 override fun onCompleteSelection() {
                     exitSelectionMode()
                 }
+                
+                override fun onStatusFilterChanged(status: String, isChecked: Boolean) {
+                    if (status == "ALL") {
+                        if (isChecked) {
+                            selectedStatusFilters.addAll(listOf("PENDING", "APPROVED", "REJECTED", "COMPLETED", "FAILED"))
+                        } else {
+                            selectedStatusFilters.clear()
+                        }
+                    } else {
+                        if (isChecked) {
+                            selectedStatusFilters.add(status)
+                        } else {
+                            selectedStatusFilters.remove(status)
+                        }
+                    }
+                    applyStatusFilter()
+                }
             }
         )
         tradePlansRecyclerView!!.setAdapter(adapter)
@@ -155,63 +173,59 @@ class TradePlansFragment : BaseFragment() {
         tradePlansViewModel.availableTradePlans.observe(viewLifecycleOwner) { tradePlanEntities ->
             Log.d(TAG, "收到交易计划数据更新: ${tradePlanEntities.size} 个交易计划")
             
-            tradePlanResponseItems?.clear()
-            
             val sortedEntities = tradePlanEntities.sortedByDescending { it.createdAt }
-            
-            val updatedTradePlanResponses = sortedEntities.map { entity ->
-                TradePlanResponse(
-                    id = entity.id,
-                    script_id = entity.script_id,
-                    name = entity.name,
-                    title = entity.title,
-                    subtitle = entity.subtitle,
-                    description = entity.description,
-                    exchange = entity.exchange,
-                    symbol = entity.symbol,
-                    symbol_name = entity.symbol_name,
-                    ohlcv = entity.ohlcv,
-                    change_percent = entity.change_percent,
-                    data = entity.data,
-                    status = entity.status,
-                    executionStatus = entity.executionStatus,
-                    executionResult = entity.executionResult,
-                    startTime = entity.startTime,
-                    endTime = entity.endTime,
-                    createdAt = entity.createdAt,
-                    updatedAt = entity.updatedAt
-                )
-            }
-            
-            tradePlanResponseItems?.addAll(updatedTradePlanResponses)
             
             tradePlansItemsList.clear()
             
-            val summaryItem = itemTradePlanSummaryManager.getCurrentItem()
-            tradePlansItemsList.add(summaryItem)
+            tradePlansItemsList.add(TradePlansAdapter.SummaryItem())
             
-            updatedTradePlanResponses.forEach { tradePlanResponse: TradePlanResponse ->
-                val itemTradePlan = TradePlansItem.ItemTradePlans(
-                    status = tradePlanResponse.status ?: "PENDING",
-                    executionStatus = tradePlanResponse.executionResult ?: "IDLE",
-                    pendingCount = 0,
-                    approvedCount = 0,
-                    rejectedCount = 0,
-                    executedSuccessCount = 0,
-                    executedFailedCount = 0
-                )
-                tradePlansItemsList.add(itemTradePlan)
+            sortedEntities.forEach { entity ->
+                tradePlansItemsList.add(entity)
             }
             
-            val adapterItems = mutableListOf<Any>()
-            adapterItems.add(TradePlansAdapter.SummaryItem())
-            tradePlanResponseItems?.let { adapterItems.addAll(it) }
-            adapter?.updateTradePlans(tradePlanResponseItems)
-            
-            updateSummarySection(summaryItem)
-            Log.d(TAG, "UI 已更新: ${updatedTradePlanResponses.size} 个交易计划")
+            applyStatusFilter()
+            updateSummarySection()
+            Log.d(TAG, "UI 已更新: ${sortedEntities.size} 个交易计划")
         }
         Log.d(TAG, "setupObservers: 观察者设置完成")
+    }
+    
+    /**
+     * Apply status filter to trade plans
+     */
+    private fun applyStatusFilter() {
+        val allItems = tradePlansItemsList.filterIsInstance<TradePlanEntity>()
+        
+        val filteredItems = if (selectedStatusFilters.isEmpty()) {
+            allItems
+        } else {
+            allItems.filter { entity ->
+                val status = entity.status?.uppercase() ?: ""
+                val executionResult = entity.executionResult?.uppercase() ?: ""
+                
+                when (status) {
+                    "PENDING" -> selectedStatusFilters.contains("PENDING")
+                    "APPROVED" -> selectedStatusFilters.contains("APPROVED")
+                    "REJECTED" -> selectedStatusFilters.contains("REJECTED")
+                    "COMPLETED" -> selectedStatusFilters.contains("COMPLETED")
+                    "FAILED" -> selectedStatusFilters.contains("FAILED")
+                    else -> {
+                        if (executionResult == "SUCCESS") {
+                            selectedStatusFilters.contains("COMPLETED")
+                        } else if (executionResult == "FAILED") {
+                            selectedStatusFilters.contains("FAILED")
+                        } else {
+                            selectedStatusFilters.contains("PENDING")
+                        }
+                    }
+                }
+            }
+        }
+        
+        val adapterItems = mutableListOf<Any>()
+        adapterItems.add(TradePlansAdapter.SummaryItem())
+        adapterItems.addAll(filteredItems)
+        adapter?.updateItems(adapterItems)
     }
     
     /**
@@ -233,15 +247,39 @@ class TradePlansFragment : BaseFragment() {
     }
     
     /**
-     * Update summary section with data from ItemTradePlanSummaryManager
+     * Update summary section with current data
      */
-    private fun updateSummarySection(summaryItem: TradePlansItem.ItemTradePlansSummary) {
+    private fun updateSummarySection() {
+        var pendingCount = 0
+        var approvedCount = 0
+        var rejectedCount = 0
+        var executedSuccessCount = 0
+        var executedFailedCount = 0
+        
+        tradePlansItemsList.forEach { item ->
+            if (item is TradePlanEntity) {
+                when (item.status?.uppercase()) {
+                    "PENDING" -> pendingCount++
+                    "APPROVED" -> approvedCount++
+                    "REJECTED" -> rejectedCount++
+                }
+                
+                if (!item.executionResult.isNullOrEmpty()) {
+                    if (item.executionResult?.uppercase() == "SUCCESS") {
+                        executedSuccessCount++
+                    } else {
+                        executedFailedCount++
+                    }
+                }
+            }
+        }
+        
         val summary = TradePlansAdapter.TradePlanSummary(
-            pendingCount = summaryItem.pendingCount,
-            approvedCount = summaryItem.approvedCount,
-            rejectedCount = summaryItem.rejectedCount,
-            executedSuccessCount = summaryItem.executedSuccessCount,
-            executedFailedCount = summaryItem.executedFailedCount
+            pendingCount = pendingCount,
+            approvedCount = approvedCount,
+            rejectedCount = rejectedCount,
+            executedSuccessCount = executedSuccessCount,
+            executedFailedCount = executedFailedCount
         )
         
         adapter?.updateSummary(summary)
@@ -295,7 +333,7 @@ class TradePlansFragment : BaseFragment() {
      */
     private fun updateCommandSection() {
         adapter?.notifyItemChanged(0)
-        updateSummarySection(itemTradePlanSummaryManager.getCurrentItem())
+        updateSummarySection()
     }
     
     /**
@@ -312,11 +350,9 @@ class TradePlansFragment : BaseFragment() {
         android.util.Log.d(TAG, message)
     }
 
-    private fun openTradePlanDetail(tradePlanResponse: TradePlanResponse?) {
-        // Get trade plan ID
-        val tradePlanId = tradePlanResponse?.id
+    private fun openTradePlanDetail(tradePlanEntity: TradePlanEntity?) {
+        val tradePlanId = tradePlanEntity?.id
         
-        // Navigate to TradePlanFragment using Navigation Component
         if (tradePlanId != null) {
             val action = TradePlansFragmentDirections.actionNavTradeplansToTradeplanDetailFragment(tradePlanId)
             findNavController().navigate(action)

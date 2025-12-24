@@ -62,6 +62,57 @@ data class TradePlanEntity(
     
     fun getDisplayDescription(): String = subtitle ?: description ?: ""
     
+    fun getDisplayTime(): String {
+        return try {
+            createdAt?.let { formatTime(it) } ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+    
+    private fun formatTime(isoTime: String): String {
+        return try {
+            val datePart = isoTime.substring(0, 10)
+            val timePart = isoTime.substring(11, 16)
+            
+            val year = datePart.substring(0, 4).toInt()
+            val month = datePart.substring(5, 7).toInt() - 1
+            val day = datePart.substring(8, 10).toInt()
+            val hour = timePart.substring(0, 2).toInt()
+            
+            val calendar = java.util.Calendar.getInstance()
+            calendar.set(year, month, day, 0, 0, 0)
+            calendar.set(java.util.Calendar.MILLISECOND, 0)
+            
+            val today = java.util.Calendar.getInstance()
+            today.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            today.set(java.util.Calendar.MINUTE, 0)
+            today.set(java.util.Calendar.SECOND, 0)
+            today.set(java.util.Calendar.MILLISECOND, 0)
+            
+            val diffDays = ((today.timeInMillis - calendar.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
+            
+            return when {
+                diffDays == 0 -> {
+                    val period = if (hour < 12) "上午" else "下午"
+                    val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                    val displayTime = String.format("%d:%s", displayHour, timePart.substring(3))
+                    "$period$displayTime"
+                }
+                diffDays == 1 -> "昨天"
+                diffDays == 2 -> "前天"
+                diffDays in 3..5 -> {
+                    val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+                    val weekdays = arrayOf("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六")
+                    weekdays[dayOfWeek - 1]
+                }
+                else -> "${month + 1}月${day}日"
+            }
+        } catch (e: Exception) {
+            isoTime
+        }
+    }
+    
     fun getDisplayInfoLine1(): String {
         val parts = mutableListOf<String>()
         symbol?.let { parts.add(it) }

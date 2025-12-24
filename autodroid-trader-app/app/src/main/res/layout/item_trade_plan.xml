@@ -3,23 +3,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="14dp"
+    android:padding="2dp"
     android:background="?android:attr/selectableItemBackground">
 
-    <RadioButton
-        android:id="@+id/trade_plan_radio"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:visibility="gone" />
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <ImageView
-        android:id="@+id/trade_plan_icon"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:layout_gravity="center_vertical"
-        android:src="@android:drawable/ic_menu_info_details"
-        android:scaleType="fitCenter" />
+        <TextView
+            android:id="@+id/trade_plan_timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上午9:31"
+            android:textSize="11sp"
+            android:textColor="#999999"
+            android:layout_marginBottom="4dp" />
+
+        <RadioButton
+            android:id="@+id/trade_plan_radio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/trade_plan_icon"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@android:drawable/ic_menu_info_details"
+            android:scaleType="fitCenter" />
+
+    </LinearLayout>
 
     <RelativeLayout
         android:layout_width="0dp"

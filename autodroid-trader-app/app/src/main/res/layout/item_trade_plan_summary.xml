@@ -8,24 +8,177 @@
     android:padding="16dp"
     android:elevation="8dp">
 
-    <!-- Status Summary -->
-    <LinearLayout
+    <!-- Status Selection with Statistics -->
+    <GridLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="12dp"
+        android:columnCount="3"
+        android:rowCount="2">
 
-        <TextView
-            android:id="@+id/status_summary"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="待批准: 0 | 已批准: 0 | 已否决: 0 | 执行成功: 0 | 执行失败: 0"
-            android:textSize="12sp"
-            android:textColor="@android:color/white"
-            android:gravity="center" />
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
 
-    </LinearLayout>
+            <CheckBox
+                android:id="@+id/checkbox_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="全部"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_all_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <CheckBox
+                android:id="@+id/checkbox_pending"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="待批准"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_pending_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <CheckBox
+                android:id="@+id/checkbox_approved"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已批准"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_approved_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <CheckBox
+                android:id="@+id/checkbox_rejected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已否决"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_rejected_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <CheckBox
+                android:id="@+id/checkbox_completed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="执行成功"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_completed_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <CheckBox
+                android:id="@+id/checkbox_failed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="执行失败"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:buttonTint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/text_failed_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+    </GridLayout>
 
     <!-- Action Buttons -->
     <LinearLayout

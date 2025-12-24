@@ -2,6 +2,7 @@ package com.autodroid.trader.network
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 
 
 
@@ -10,6 +11,7 @@ import com.google.gson.JsonObject
  */
 data class TradePlanResponse(
     val id: String? = null,
+    @SerializedName("script_id")
     val script_id: String? = null,
     val name: String? = null,
     val title: String? = null,
@@ -17,16 +19,24 @@ data class TradePlanResponse(
     val description: String? = null,
     val exchange: String? = null,
     val symbol: String? = null,
+    @SerializedName("symbol_name")
     val symbol_name: String? = null,
     val ohlcv: Ohlcv? = null,
+    @SerializedName("change_percent")
     val change_percent: Double? = null,
     val data: JsonObject? = null,
     val status: String? = null,
+    @SerializedName("executionStatus")
     val executionStatus: String? = null,
+    @SerializedName("execution_result")
     val executionResult: String? = null,
+    @SerializedName("started_at")
     val startTime: String? = null,
+    @SerializedName("ended_at")
     val endTime: String? = null,
+    @SerializedName("created_at")
     val createdAt: String? = null,
+    @SerializedName("updated_at")
     val updatedAt: String? = null
 ) {
     companion object {
@@ -65,8 +75,13 @@ data class TradePlanResponse(
 
     private fun formatTime(isoTime: String): String {
         return try {
+            val datePart = isoTime.substring(0, 10)
             val timePart = isoTime.substring(11, 16)
-            timePart
+            val hour = timePart.substring(0, 2).toInt()
+            val period = if (hour < 12) "上午" else "下午"
+            val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+            val displayTime = String.format("%d:%s", displayHour, timePart.substring(3))
+            "$period$displayTime"
         } catch (e: Exception) {
             isoTime
         }
