@@ -15,9 +15,6 @@ import com.autodroid.trader.data.dao.TradePlanEntity
 import com.autodroid.trader.managers.TradePlanManager
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import android.util.Log
 
 class TradePlansFragment : BaseFragment() {
@@ -113,9 +110,13 @@ class TradePlansFragment : BaseFragment() {
                 override fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?) {
                     if (!isSelectionMode) {
                         enterSelectionMode()
+                    }
+                }
+                
+                override fun onTradePlanStatusToggle(tradePlanEntity: TradePlanEntity?) {
+                    if (isSelectionMode) {
                         tradePlanEntity?.id?.let { id ->
-                            adapter?.toggleSelection(id)
-                            selectedTradePlans.add(id)
+                            tradePlansViewModel.toggleTradePlanStatus(id, tradePlanEntity.status)
                         }
                     }
                 }
@@ -124,13 +125,10 @@ class TradePlansFragment : BaseFragment() {
                     selectedTradePlans.clear()
                     selectedTradePlans.addAll(selectedIds)
                     updateCommandSection()
-                    
-                    if (isSelectionMode) {
-                        syncTradePlanStatuses()
-                    }
                 }
                 
                 override fun onExecuteApprovedPlans() {
+                    android.util.Log.d(TAG, "onExecuteApprovedPlans called!")
                     itemTradePlanManager.executeApprovedPlans()
                 }
                 
@@ -302,30 +300,6 @@ class TradePlansFragment : BaseFragment() {
         adapter?.setSelectionMode(false)
         selectedTradePlans.clear()
         updateCommandSection()
-    }
-    
-    /**
-     * 同步交易计划状态（每次点击立即同步）
-     */
-    private fun syncTradePlanStatuses() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                selectedTradePlans.forEach { id ->
-                    try {
-                        itemTradePlanManager.updateTradePlanStatus(id, "approved")
-                        Log.d(TAG, "交易计划 $id 状态已同步: approved")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "同步交易计划 $id 状态失败: ${e.message}")
-                    }
-                }
-                
-                withContext(Dispatchers.Main) {
-                    refreshTradePlans()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "同步交易计划状态失败: ${e.message}")
-            }
-        }
     }
     
     /**

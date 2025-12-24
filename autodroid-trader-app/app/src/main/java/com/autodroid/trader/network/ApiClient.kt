@@ -239,10 +239,10 @@ class ApiClient private constructor() {
     /**
      * Update trade plan status on server
      */
-    fun updateTradePlanStatus(id: String, status: String): String {
+    fun updateTradePlanStatus(id: String, status: String): TradePlanStatusUpdateResponse {
         val url = buildApiUrl("/tradeplans/$id/status")
-        val requestData = mapOf("status" to status)
-        val response = makePostRequest(url, requestData)
+        val requestData = TradePlanStatusUpdateRequest(status)
+        val response = makePatchRequest(url, requestData)
         
         if (!response.isSuccessful) {
             throw RuntimeException("Failed to update trade plan status: ${response.code} - ${response.message}")
@@ -254,8 +254,7 @@ class ApiClient private constructor() {
         }
         
         try {
-            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
-            return jsonResponse["message"]?.toString() ?: "Status updated successfully"
+            return gson.fromJson(responseBody, TradePlanStatusUpdateResponse::class.java)
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing trade plan status update response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
@@ -364,6 +363,28 @@ class ApiClient private constructor() {
             
         } catch (e: Exception) {
             Log.e(TAG, "Error making POST request to $url: ${e.message}")
+            throw RuntimeException("Network request failed", e)
+        }
+    }
+    
+    private fun makePatchRequest(url: String, data: Any): Response {
+        try {
+            val json = gson.toJson(data)
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val requestBody = json.toRequestBody(mediaType)
+            
+            val request = Request.Builder()
+                .url(url)
+                .patch(requestBody)
+                .build()
+            
+            Log.d(TAG, "Making PATCH request to: $url")
+            Log.d(TAG, "Request data: $json")
+            
+            return client.newCall(request).execute()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error making PATCH request to $url: ${e.message}")
             throw RuntimeException("Network request failed", e)
         }
     }

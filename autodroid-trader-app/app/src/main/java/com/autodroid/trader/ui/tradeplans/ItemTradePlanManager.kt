@@ -113,33 +113,6 @@ class ItemTradePlanManager(
     }
     
     /**
-     * Update trade plan status
-     */
-    fun updateTradePlanStatus(tradePlanId: String, newStatus: String) {
-        Log.d(TAG, "Updating trade plan $tradePlanId status to $newStatus")
-        
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val result = tradePlanManager.updateTradePlanStatus(tradePlanId, newStatus)
-                
-                if (result.contains("successfully", ignoreCase = true)) {
-                    Log.d(TAG, "Successfully updated trade plan status")
-                } else {
-                    Log.e(TAG, "Failed to update trade plan status")
-                    updateItem(
-                        status = "Failed to update trade plan status"
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating trade plan status: ${e.message}", e)
-                updateItem(
-                    status = "Error updating trade plan status: ${e.message}"
-                )
-            }
-        }
-    }
-    
-    /**
      * Refresh the trade plan data
      */
     fun refresh() {

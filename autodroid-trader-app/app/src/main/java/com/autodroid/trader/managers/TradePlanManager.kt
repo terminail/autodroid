@@ -10,9 +10,6 @@ import com.autodroid.trader.MyApplication
 import com.autodroid.trader.data.repository.TradePlanRepository
 import com.autodroid.trader.data.dao.TradePlanEntity
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class TradePlanManager private constructor(private val context: Context?, private val appViewModel: AppViewModel) {
     private val gson: Gson
@@ -53,26 +50,30 @@ class TradePlanManager private constructor(private val context: Context?, privat
     }
 
     /**
-     * 更新交易计划状态（待批准/已批准）
+     * 更新交易计划状态并同步（先更新本地，再同步到服务器）
+     * 用于需要立即反映本地状态的场景
      * @param id 交易计划ID
-     * @param status 新状态（TradePlanStatus.PENDING/TradePlanStatus.APPROVED）
-     * @return 更新结果消息
+     * @param status 新状态
+     * @return 更新后的TradePlanEntity，如果更新失败返回null
      */
-    suspend fun updateTradePlanStatus(id: String, status: String): String {
+    suspend fun updateAndSyncTradePlan(id: String, status: String): TradePlanEntity? {
         return try {
             if (tradePlanRepository == null) {
                 throw Exception("交易计划仓库未初始化")
             }
             
-            Log.d(TAG, "updateTradePlanStatus: 开始更新交易计划状态 - ID: $id, 状态: $status")
+            Log.d(TAG, "updateAndSyncTradePlan: 开始更新交易计划状态 - ID: $id, 状态: $status")
             
-            // 调用Repository更新状态并同步到服务器
-            val result = tradePlanRepository!!.updateTradePlanStatus(id, status)
+            val result = tradePlanRepository!!.updateTradePlanStatusAndSync(id, status)
             
-            Log.d(TAG, "updateTradePlanStatus: 交易计划状态更新完成 - $result")
+            if (result != null) {
+                Log.d(TAG, "updateAndSyncTradePlan: 交易计划状态更新成功 - ID: ${result.id}, 状态: ${result.status}")
+            } else {
+                Log.e(TAG, "updateAndSyncTradePlan: 交易计划状态更新失败")
+            }
             return result
         } catch (e: Exception) {
-            Log.e(TAG, "updateTradePlanStatus: 更新交易计划状态失败 - ${e.message}", e)
+            Log.e(TAG, "updateAndSyncTradePlan: 更新交易计划状态失败 - ${e.message}", e)
             throw e
         }
     }

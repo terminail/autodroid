@@ -174,21 +174,24 @@ class TradePlanService:
             
             if not success:
                 return TradePlanStatusUpdateResponse(
+                    success=False,
                     message="交易计划不存在或状态更新失败",
-                    tradeplan=None
+                    trade_plan_response=None
                 )
             
             tradeplan = self.get_tradeplan_by_id(tradeplan_id)
             return TradePlanStatusUpdateResponse(
+                success=True,
                 message="交易计划状态更新成功",
-                tradeplan=tradeplan
+                trade_plan_response=tradeplan
             )
             
         except Exception as e:
             logger.error(f"更新交易计划状态失败: {e}")
             return TradePlanStatusUpdateResponse(
+                success=False,
                 message=f"更新交易计划状态失败: {str(e)}",
-                tradeplan=None
+                trade_plan_response=None
             )
     
     def execute_tradeplan(

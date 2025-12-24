@@ -47,10 +47,6 @@ class TradePlanStatusUpdateRequest(BaseModel):
     status: TradePlanStatus = Field(..., description=f"新状态：{', '.join([s.value for s in TradePlanStatus])}")
 
 
-class TradePlanExecuteRequest(BaseModel):
-    """执行交易计划请求模型（已废弃，使用TradePlanStartExecuteRequest）"""
-    device_udid: Optional[str] = None
-
 
 class TradePlanStartExecuteRequest(BaseModel):
     """开始执行交易计划请求模型"""
@@ -96,33 +92,28 @@ class TradePlanListResponse(BaseModel):
 
 class TradePlanCreateResponse(BaseModel):
     """创建交易计划响应模型"""
+    success: bool = True
     message: str
-    tradeplan: Optional[TradePlanResponse] = None
+    trade_plan_response: Optional[TradePlanResponse] = None
 
 
 class TradePlanUpdateResponse(BaseModel):
     """更新交易计划响应模型"""
+    success: bool = True
     message: str
-    tradeplan: Optional[TradePlanResponse] = None
+    trade_plan_response: Optional[TradePlanResponse] = None
 
 
 class TradePlanStatusUpdateResponse(BaseModel):
     """更新交易计划状态响应模型"""
+    success: bool = True
     message: str
-    tradeplan: Optional[TradePlanResponse] = None
-
-
-class TradePlanExecuteResponse(BaseModel):
-    """交易计划执行响应模型（已废弃，使用TradePlanStartExecuteResponse）"""
-    message: str
-    tradeplan_id: str
-    status: TradePlanStatus
-    execution_result: Optional[str] = None
-    execution_message: Optional[str] = None
+    trade_plan_response: Optional[TradePlanResponse] = None
 
 
 class TradePlanStartExecuteResponse(BaseModel):
     """开始执行交易计划响应模型"""
+    success: bool = True
     message: str
     tradeplan_id: str
     status: TradePlanStatus
@@ -132,6 +123,7 @@ class TradePlanStartExecuteResponse(BaseModel):
 
 class TradePlanStopExecuteResponse(BaseModel):
     """停止执行交易计划响应模型"""
+    success: bool = True
     message: str
     tradeplan_id: str
     status: TradePlanStatus

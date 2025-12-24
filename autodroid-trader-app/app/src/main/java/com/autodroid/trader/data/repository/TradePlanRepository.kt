@@ -5,8 +5,6 @@ import androidx.lifecycle.LiveData
 import com.autodroid.trader.MyApplication
 import com.autodroid.trader.data.database.TradePlanProvider
 import com.autodroid.trader.data.dao.TradePlanEntity
-import com.autodroid.trader.network.TradePlanResponse
-import com.autodroid.trader.network.TradePlanStatus
 import com.autodroid.trader.model.TradeData
 import com.autodroid.trader.network.ApiClient
 import kotlinx.coroutines.CoroutineScope
@@ -121,24 +119,26 @@ class TradePlanRepository private constructor(application: MyApplication) {
     }
     
     /**
-     * 更新交易计划状态（待批准/已批准）并同步到服务器
+     * 更新交易计划状态并同步（先更新本地，再同步到服务器）
+     * 用于需要立即反映本地状态的场景
+     * @return 更新后的TradePlanEntity，如果更新失败返回null
      */
-    suspend fun updateTradePlanStatus(id: String, status: String): String {
+    suspend fun updateTradePlanStatusAndSync(id: String, status: String): TradePlanEntity? {
         return withContext(Dispatchers.IO) {
             try {
-                // 先更新本地数据库
-                tradePlanProvider.updateTradePlanStatus(id, status)
-                Log.d("TradePlanRepository", "本地交易计划状态已更新: $id -> $status")
+                val client = getApiClient()
                 
-                try {
-                    val client = getApiClient()
-                    // 调用API更新服务器上的交易计划状态
-                    val response = client.updateTradePlanStatus(id, status)
-                    Log.d("TradePlanRepository", "服务器交易计划状态已更新: $response")
-                    return@withContext "交易计划状态已更新并同步到服务器: $id -> $status"
-                } catch (e: Exception) {
-                    Log.e("TradePlanRepository", "同步交易计划状态到服务器失败: ${e.message}")
-                    return@withContext "本地状态已更新，但同步到服务器失败: ${e.message}"
+                val response = client.updateTradePlanStatus(id, status)
+                Log.d("TradePlanRepository", "服务器交易计划状态已更新: $response")
+                
+                if (response.tradePlanResponse!=null) {
+                    val tradePlanEntity = TradePlanEntity.fromTradePlan(response.tradePlanResponse)
+                    insertOrUpdateTradePlan(tradePlanEntity)
+                    
+                    return@withContext tradePlanEntity
+                } else {
+                    Log.e("TradePlanRepository", "服务器返回失败: ${response.message}")
+                    return@withContext null
                 }
             } catch (e: Exception) {
                 Log.e("TradePlanRepository", "更新交易计划状态失败: ${e.message}", e)

@@ -21,8 +21,8 @@
             android:textColor="#999999"
             android:layout_marginBottom="4dp" />
 
-        <RadioButton
-            android:id="@+id/trade_plan_radio"
+        <CheckBox
+            android:id="@+id/trade_plan_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone" />

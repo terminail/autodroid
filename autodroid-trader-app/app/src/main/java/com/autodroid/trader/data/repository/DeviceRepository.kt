@@ -104,11 +104,11 @@ class DeviceRepository private constructor(app: MyApplication) {
                         checkStatus = deviceInfoResponse.checkStatus ?: existingDevice.checkStatus,
                         checkMessage = deviceInfoResponse.checkMessage ?: existingDevice.checkMessage,
                         checkTime = deviceInfoResponse.checkTime?.let {
-                            java.text.SimpleDateFormat(
-                                "yyyy-MM-dd HH:mm:ss",
-                                java.util.Locale.getDefault()
-                            )
-                                .parse(it)?.time
+                            try {
+                                java.time.Instant.parse(it).toEpochMilli()
+                            } catch (e: Exception) {
+                                null
+                            }
                         } ?: existingDevice.checkTime,
                         apps = appsJson,
                         updatedAt = System.currentTimeMillis()
@@ -146,11 +146,11 @@ class DeviceRepository private constructor(app: MyApplication) {
                         checkStatus = deviceInfoResponse.checkStatus ?: "UNKNOWN",
                         checkMessage = deviceInfoResponse.checkMessage,
                         checkTime = deviceInfoResponse.checkTime?.let {
-                            java.text.SimpleDateFormat(
-                                "yyyy-MM-dd HH:mm:ss",
-                                java.util.Locale.getDefault()
-                            )
-                                .parse(it)?.time
+                            try {
+                                java.time.Instant.parse(it).toEpochMilli()
+                            } catch (e: Exception) {
+                                null
+                            }
                         },
                         apps = appsJson,
                         updatedAt = System.currentTimeMillis()
@@ -399,37 +399,12 @@ class DeviceRepository private constructor(app: MyApplication) {
                             checkStatus = "SUCCESS",
                             checkMessage = response.message,
                             checkTime = response.checkTime?.let {
-                            try {
-                                // 使用更灵活的解析方式，处理ISO格式日期
-                                // 先移除末尾的Z，然后解析
-                                val dateWithoutZ = it.removeSuffix("Z")
-                                val formats = arrayOf(
-                                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-                                    "yyyy-MM-dd'T'HH:mm:ss.SSSSS",
-                                    "yyyy-MM-dd'T'HH:mm:ss.SSSS",
-                                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                                    "yyyy-MM-dd'T'HH:mm:ss.SS",
-                                    "yyyy-MM-dd'T'HH:mm:ss.S",
-                                    "yyyy-MM-dd'T'HH:mm:ss"
-                                )
-                                
-                                for (format in formats) {
-                                    try {
-                                        return@let java.text.SimpleDateFormat(
-                                            format,
-                                            java.util.Locale.getDefault()
-                                        ).parse(dateWithoutZ)?.time
-                                    } catch (e: Exception) {
-                                        // 继续尝试下一个格式
-                                    }
+                                try {
+                                    java.time.Instant.parse(it).toEpochMilli()
+                                } catch (e: Exception) {
+                                    System.currentTimeMillis()
                                 }
-                                
-                                // 如果所有格式都失败，返回当前时间
-                                System.currentTimeMillis()
-                            } catch (e: Exception) {
-                                System.currentTimeMillis()
-                            }
-                        } ?: System.currentTimeMillis(),
+                            } ?: System.currentTimeMillis(),
                             apps = appsJson,
                             updatedAt = System.currentTimeMillis()
                         )
@@ -442,11 +417,11 @@ class DeviceRepository private constructor(app: MyApplication) {
                             checkStatus = "SUCCESS",
                             checkMessage = response.message,
                             checkTime = response.checkTime?.let {
-                                java.text.SimpleDateFormat(
-                                    "yyyy-MM-dd HH:mm:ss",
-                                    java.util.Locale.getDefault()
-                                )
-                                    .parse(it)?.time
+                                try {
+                                    java.time.Instant.parse(it).toEpochMilli()
+                                } catch (e: Exception) {
+                                    System.currentTimeMillis()
+                                }
                             } ?: System.currentTimeMillis(),
                             apps = appsJson,
                             updatedAt = System.currentTimeMillis()

@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.ImageView
-import android.widget.RadioButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
@@ -30,6 +29,7 @@ class TradePlansAdapter(
     interface OnTradePlanClickListener {
         fun onTradePlanClick(tradePlanEntity: TradePlanEntity?)
         fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?)
+        fun onTradePlanStatusToggle(tradePlanEntity: TradePlanEntity?)
         fun onSelectionChanged(selectedIds: Set<String>)
         fun onExecuteApprovedPlans()
         fun onCompleteSelection()
@@ -147,44 +147,12 @@ class TradePlansAdapter(
         }
     }
     
-    fun toggleSelection(tradePlanId: String) {
-        if (selectedTradePlans.contains(tradePlanId)) {
-            selectedTradePlans.remove(tradePlanId)
-        } else {
-            selectedTradePlans.add(tradePlanId)
-        }
-        
-        listener?.onSelectionChanged(selectedTradePlans)
-        
-        items?.forEachIndexed { index, item ->
-            if (item is TradePlanEntity && item.id == tradePlanId) {
-                notifyItemChanged(index)
-                return@forEachIndexed
-            }
-        }
-    }
-    
     fun getSelectedTradePlans(): Set<String> {
         return selectedTradePlans.toSet()
     }
-    
-    fun clearSelection() {
-        if (selectedTradePlans.isNotEmpty()) {
-            val previouslySelected = selectedTradePlans.toSet()
-            selectedTradePlans.clear()
-            
-            items?.forEachIndexed { index, item ->
-                if (item is TradePlanEntity && previouslySelected.contains(item.id)) {
-                    notifyItemChanged(index)
-                }
-            }
-            
-            listener?.onSelectionChanged(selectedTradePlans)
-        }
-    }
 
     inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val radioView: RadioButton
+        private val checkboxView: CheckBox
         private val iconView: ImageView
         private val timestampView: TextView
         private val nameView: TextView
@@ -194,7 +162,7 @@ class TradePlansAdapter(
         private val statusView: TextView
 
         init {
-            radioView = itemView.findViewById(R.id.trade_plan_radio)
+            checkboxView = itemView.findViewById(R.id.trade_plan_checkbox)
             iconView = itemView.findViewById(R.id.trade_plan_icon)
             timestampView = itemView.findViewById(R.id.trade_plan_timestamp)
             nameView = itemView.findViewById(R.id.trade_plan_name)
@@ -229,20 +197,37 @@ class TradePlansAdapter(
             val canToggleStatus = status.lowercase() in listOf("pending", "approved", "rejected")
             
             if (isSelectionMode && canToggleStatus) {
-                radioView.visibility = View.VISIBLE
-                radioView.isChecked = isSelected
+                checkboxView.visibility = View.VISIBLE
                 iconView.visibility = View.GONE
                 
-                radioView.setOnClickListener {
-                    toggleSelection(tradePlanEntity.id ?: return@setOnClickListener)
+                when (status.lowercase()) {
+                    "pending" -> {
+                        checkboxView.buttonDrawable = null
+                        checkboxView.text = "☐"
+                        checkboxView.setTextColor(itemView.context.getColor(android.R.color.holo_orange_dark))
+                    }
+                    "approved" -> {
+                        checkboxView.buttonDrawable = null
+                        checkboxView.text = "☑"
+                        checkboxView.setTextColor(itemView.context.getColor(android.R.color.holo_green_dark))
+                    }
+                    "rejected" -> {
+                        checkboxView.buttonDrawable = null
+                        checkboxView.text = "✕"
+                        checkboxView.setTextColor(itemView.context.getColor(android.R.color.holo_red_dark))
+                    }
+                }
+                
+                checkboxView.setOnClickListener {
+                    listener?.onTradePlanStatusToggle(tradePlanEntity)
                 }
                 
                 itemView.setOnClickListener {
-                    toggleSelection(tradePlanEntity.id ?: return@setOnClickListener)
+                    listener?.onTradePlanStatusToggle(tradePlanEntity)
                 }
                 itemView.setOnLongClickListener(null)
             } else {
-                radioView.visibility = View.GONE
+                checkboxView.visibility = View.GONE
                 iconView.visibility = View.VISIBLE
                 
                 itemView.setOnClickListener {
@@ -331,6 +316,7 @@ class TradePlansAdapter(
             }
             
             executeApprovedButton.setOnClickListener {
+                android.util.Log.d(TAG, "executeApprovedButton clicked!")
                 listener?.onExecuteApprovedPlans()
             }
             
@@ -352,6 +338,8 @@ class TradePlansAdapter(
                            summaryToUse.rejectedCount + summaryToUse.executedSuccessCount + 
                            summaryToUse.executedFailedCount
             
+            android.util.Log.d(TAG, "SummaryViewHolder.bind: pending=${summaryToUse.pendingCount}, approved=${summaryToUse.approvedCount}, rejected=${summaryToUse.rejectedCount}, completed=${summaryToUse.executedSuccessCount}, failed=${summaryToUse.executedFailedCount}")
+            
             textAllCount.text = totalCount.toString()
             textPendingCount.text = summaryToUse.pendingCount.toString()
             textApprovedCount.text = summaryToUse.approvedCount.toString()
@@ -360,6 +348,7 @@ class TradePlansAdapter(
             textFailedCount.text = summaryToUse.executedFailedCount.toString()
             
             executeApprovedButton.isEnabled = summaryToUse.approvedCount > 0
+            android.util.Log.d(TAG, "bind: approvedCount=${summaryToUse.approvedCount}, executeApprovedButton.isEnabled=${executeApprovedButton.isEnabled}")
             completeButton.visibility = if (selectedTradePlans.isNotEmpty()) View.VISIBLE else View.GONE
         }
     }

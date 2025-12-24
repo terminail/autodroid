@@ -55,8 +55,9 @@ class ItemDeviceManager(
             try {
                 // 格式化更新时间
                 val updatedAt = if ((deviceEntity.updatedAt ?: 0) > 0) {
-                    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                        .format(java.util.Date(deviceEntity.updatedAt ?: 0))
+                    java.time.Instant.ofEpochMilli(deviceEntity.updatedAt ?: 0)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                 } else {
                     "未知"
                 }
