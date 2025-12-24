@@ -1,7 +1,6 @@
 package com.autodroid.trader.network
 
 import android.util.Log
-import com.autodroid.trader.model.TradePlan
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.*
@@ -36,6 +35,13 @@ class ApiClient private constructor() {
     // For physical device: use actual host IP address (e.g., 192.168.1.59)
     private var apiEndpoint: String = "http://10.0.2.2:8004/api" // Default API endpoint for Android emulator
 
+    /**
+     * Get the current API endpoint
+     */
+    fun getApiEndpoint(): String {
+        return apiEndpoint
+    }
+    
     /**
      * Set the API endpoint (for dynamic server discovery)
      */
@@ -202,7 +208,7 @@ class ApiClient private constructor() {
     /**
      * Get trade plans from server
      */
-    fun getTradePlans(): List<TradePlan> {
+    fun getTradePlans(): List<TradePlanResponse> {
         val url = buildApiUrl("/tradeplans")
         val response = makeGetRequest(url)
         
@@ -216,8 +222,13 @@ class ApiClient private constructor() {
         }
         
         try {
-            val tradePlanType = object : TypeToken<List<TradePlan>>() {}.type
-            return gson.fromJson(responseBody, tradePlanType)
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val tradeplansJson = jsonResponse["tradeplans"]
+            if (tradeplansJson != null) {
+                val tradePlanResponseType = object : TypeToken<List<TradePlanResponse>>() {}.type
+                return gson.fromJson(gson.toJson(tradeplansJson), tradePlanResponseType)
+            }
+            return emptyList()
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing trade plans response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
@@ -281,7 +292,7 @@ class ApiClient private constructor() {
     /**
      * Get all trade plans from server
      */
-    fun getAllTradePlans(): List<TradePlan> {
+    fun getAllTradePlans(): List<TradePlanResponse> {
         val url = buildApiUrl("/tradeplans")
         val response = makeGetRequest(url)
         
@@ -298,8 +309,8 @@ class ApiClient private constructor() {
             val jsonResponse = gson.fromJson(responseBody, Map::class.java)
             val tradeplansJson = jsonResponse["tradeplans"]
             if (tradeplansJson != null) {
-                val tradePlanType = object : TypeToken<List<TradePlan>>() {}.type
-                return gson.fromJson(gson.toJson(tradeplansJson), tradePlanType)
+                val tradePlanResponseType = object : TypeToken<List<TradePlanResponse>>() {}.type
+                return gson.fromJson(gson.toJson(tradeplansJson), tradePlanResponseType)
             }
             return emptyList()
         } catch (e: Exception) {

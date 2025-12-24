@@ -3,10 +3,7 @@ package com.autodroid.trader.ui.tradeplans
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.trader.AppViewModel
-import com.autodroid.trader.managers.TradePlanManager
-import com.autodroid.trader.data.dao.TradePlanEntity
-import com.autodroid.trader.model.TradePlanStatus
+import com.autodroid.trader.network.TradePlanStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,7 +15,7 @@ import kotlinx.coroutines.launch
 class ItemTradePlanSummaryManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val appViewModel: AppViewModel,
+    private val tradePlansViewModel: TradePlansViewModel,
     private val onItemUpdate: (TradePlansItem) -> Unit
 ) {
     
@@ -28,16 +25,11 @@ class ItemTradePlanSummaryManager(
     
     private var currentItem = TradePlansItem.ItemTradePlansSummary()
     
-    private val tradePlanManager = TradePlanManager.getInstance(context)
-    
-    private var tradePlanSummary = TradePlanSummary()
-    
     /**
      * Initialize the ItemTradePlanSummaryManager
      */
     fun initialize() {
         setupObservers()
-        loadTradePlans()
     }
     
     /**
@@ -46,59 +38,26 @@ class ItemTradePlanSummaryManager(
     private fun setupObservers() {
         Log.d(TAG, "setupObservers: 开始设置观察者")
         
-        tradePlanManager.getAllTradePlansLiveData().observe(lifecycleOwner) { tradePlans ->
-            Log.d(TAG, "Trade plans updated: ${tradePlans?.size ?: 0} items")
-            tradePlans?.let {
-                updateTradePlanSummary(it)
-                updateItem()
+        // Observe trade plan summary from TradePlansViewModel (single source of truth)
+        tradePlansViewModel.tradePlanSummary.observe(lifecycleOwner) { summary ->
+            Log.d(TAG, "TradePlansViewModel tradePlanSummary updated: $summary")
+            summary?.let {
+                updateItem(it)
             }
         }
-    }
-    
-    /**
-     * Load trade plans from repository
-     */
-    private fun loadTradePlans() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                tradePlanManager.getAllTradePlans()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading trade plans: ${e.message}", e)
-                updateItem(
-                    status = "Error loading trade plans: ${e.message}"
-                )
-            }
-        }
-    }
-    
-    /**
-     * Update trade plan summary statistics
-     */
-    private fun updateTradePlanSummary(tradePlans: List<TradePlanEntity>) {
-        tradePlanSummary = TradePlanSummary(
-            pendingCount = tradePlans.count { it.status == TradePlanStatus.PENDING.value },
-            approvedCount = tradePlans.count { it.status == TradePlanStatus.APPROVED.value },
-            rejectedCount = tradePlans.count { it.status == TradePlanStatus.REJECTED.value },
-            executedSuccessCount = tradePlans.count { it.status == TradePlanStatus.COMPLETED.value && it.lastExecutionResult == "success" },
-            executedFailedCount = tradePlans.count { it.status == TradePlanStatus.COMPLETED.value && it.lastExecutionResult == "failed" }
-        )
-        
-        Log.d(TAG, "Trade plan summary updated: $tradePlanSummary")
     }
     
     /**
      * Update the current item and notify the callback
      */
-    private fun updateItem(
-        status: String = currentItem.status
-    ) {
+    private fun updateItem(summary: TradePlanSummary) {
         currentItem = TradePlansItem.ItemTradePlansSummary(
-            status = status,
-            pendingCount = tradePlanSummary.pendingCount,
-            approvedCount = tradePlanSummary.approvedCount,
-            rejectedCount = tradePlanSummary.rejectedCount,
-            executedSuccessCount = tradePlanSummary.executedSuccessCount,
-            executedFailedCount = tradePlanSummary.executedFailedCount
+            status = currentItem.status,
+            pendingCount = summary.pendingCount,
+            approvedCount = summary.approvedCount,
+            rejectedCount = summary.rejectedCount,
+            executedSuccessCount = summary.executedSuccessCount,
+            executedFailedCount = summary.executedFailedCount
         )
         
         onItemUpdate(currentItem)
@@ -118,10 +77,17 @@ class ItemTradePlanSummaryManager(
         Log.d(TAG, "Refreshing trade plan summary data")
         
         updateItem(
-            status = "Refreshing trade plan summary..."
+            TradePlanSummary(
+                pendingCount = 0,
+                approvedCount = 0,
+                rejectedCount = 0,
+                executedSuccessCount = 0,
+                executedFailedCount = 0
+            )
         )
         
-        loadTradePlans()
+        // Trigger refresh through ViewModel
+        tradePlansViewModel.refresh()
     }
     
     /**
@@ -160,14 +126,3 @@ class ItemTradePlanSummaryManager(
         }
     }
 }
-
-/**
- * Data class to hold trade plan summary statistics
- */
-data class TradePlanSummary(
-    val pendingCount: Int = 0,
-    val approvedCount: Int = 0,
-    val rejectedCount: Int = 0,
-    val executedSuccessCount: Int = 0,
-    val executedFailedCount: Int = 0
-)

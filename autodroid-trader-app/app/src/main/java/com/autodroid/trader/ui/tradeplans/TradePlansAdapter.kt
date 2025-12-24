@@ -9,7 +9,7 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
-import com.autodroid.trader.model.TradePlan
+import com.autodroid.trader.network.TradePlanResponse
 
 class TradePlansAdapter(
     private var items: MutableList<Any>?,
@@ -27,8 +27,8 @@ class TradePlansAdapter(
     private val selectedTradePlans = mutableSetOf<String>()
     
     interface OnTradePlanClickListener {
-        fun onTradePlanClick(tradePlan: TradePlan?)
-        fun onTradePlanLongClick(tradePlan: TradePlan?)
+        fun onTradePlanClick(tradePlanResponse: TradePlanResponse?)
+        fun onTradePlanLongClick(tradePlanResponse: TradePlanResponse?)
         fun onSelectionChanged(selectedIds: Set<String>)
         fun onExecuteApprovedPlans()
         fun onCompleteSelection()
@@ -57,16 +57,16 @@ class TradePlansAdapter(
                 summaryHolder.bind(getCurrentSummary())
             }
             TYPE_TRADE_PLAN -> {
-                val tradePlan = items!![position] as TradePlan
+                val tradePlanResponse = items!![position] as TradePlanResponse
                 val tradePlanHolder = holder as TradePlanViewHolder
-                tradePlanHolder.bind(tradePlan, isSelectionMode, selectedTradePlans.contains(tradePlan.id))
+                tradePlanHolder.bind(tradePlanResponse, isSelectionMode, selectedTradePlans.contains(tradePlanResponse.id))
             }
         }
     }
     
     override fun getItemViewType(position: Int): Int {
         return when (items!![position]) {
-            is TradePlan -> TYPE_TRADE_PLAN
+            is TradePlanResponse -> TYPE_TRADE_PLAN
             else -> TYPE_SUMMARY
         }
     }
@@ -75,10 +75,10 @@ class TradePlansAdapter(
         return if (items != null) items!!.size else 0
     }
 
-    fun updateTradePlans(newTradePlans: MutableList<TradePlan>?) {
+    fun updateTradePlans(newTradePlanResponses: MutableList<TradePlanResponse>?) {
         val newItems = mutableListOf<Any>()
         newItems.add(SummaryItem())
-        newTradePlans?.let { plans ->
+        newTradePlanResponses?.let { plans ->
             newItems.addAll(plans)
         }
         this.items = newItems
@@ -109,7 +109,7 @@ class TradePlansAdapter(
         var executedFailedCount = 0
         
         items?.forEach { item ->
-            if (item is TradePlan) {
+            if (item is TradePlanResponse) {
                 when (item.status?.lowercase()) {
                     "pending" -> pendingCount++
                     "approved" -> approvedCount++
@@ -155,7 +155,7 @@ class TradePlansAdapter(
         listener?.onSelectionChanged(selectedTradePlans)
         
         items?.forEachIndexed { index, item ->
-            if (item is TradePlan && item.id == tradePlanId) {
+            if (item is TradePlanResponse && item.id == tradePlanId) {
                 notifyItemChanged(index)
                 return@forEachIndexed
             }
@@ -172,7 +172,7 @@ class TradePlansAdapter(
             selectedTradePlans.clear()
             
             items?.forEachIndexed { index, item ->
-                if (item is TradePlan && previouslySelected.contains(item.id)) {
+                if (item is TradePlanResponse && previouslySelected.contains(item.id)) {
                     notifyItemChanged(index)
                 }
             }
@@ -200,13 +200,13 @@ class TradePlansAdapter(
             statusView = itemView.findViewById(R.id.trade_plan_status)
         }
 
-        fun bind(tradePlan: TradePlan, isSelectionMode: Boolean, isSelected: Boolean) {
-            nameView.text = tradePlan.name ?: tradePlan.title ?: "Unknown Trade Plan"
-            timeView.text = tradePlan.getDisplayTime()
-            infoLine1View.text = tradePlan.getDisplayInfoLine1()
-            infoLine2View.text = tradePlan.getDisplayInfoLine2()
+        fun bind(tradePlanResponse: TradePlanResponse, isSelectionMode: Boolean, isSelected: Boolean) {
+            nameView.text = tradePlanResponse.name ?: tradePlanResponse.title ?: "Unknown Trade Plan"
+            timeView.text = tradePlanResponse.getDisplayTime()
+            infoLine1View.text = tradePlanResponse.getDisplayInfoLine1()
+            infoLine2View.text = tradePlanResponse.getDisplayInfoLine2()
             
-            val status = tradePlan.status ?: "PENDING"
+            val status = tradePlanResponse.status ?: "PENDING"
             statusView.text = status
             
             when (status.lowercase()) {
@@ -227,11 +227,11 @@ class TradePlansAdapter(
                 iconView.visibility = View.GONE
                 
                 radioView.setOnClickListener {
-                    toggleSelection(tradePlan.id ?: return@setOnClickListener)
+                    toggleSelection(tradePlanResponse.id ?: return@setOnClickListener)
                 }
                 
                 itemView.setOnClickListener {
-                    toggleSelection(tradePlan.id ?: return@setOnClickListener)
+                    toggleSelection(tradePlanResponse.id ?: return@setOnClickListener)
                 }
                 itemView.setOnLongClickListener(null)
             } else {
@@ -239,10 +239,10 @@ class TradePlansAdapter(
                 iconView.visibility = View.VISIBLE
                 
                 itemView.setOnClickListener {
-                    listener?.onTradePlanClick(tradePlan)
+                    listener?.onTradePlanClick(tradePlanResponse)
                 }
                 itemView.setOnLongClickListener {
-                    listener?.onTradePlanLongClick(tradePlan)
+                    listener?.onTradePlanLongClick(tradePlanResponse)
                     true
                 }
             }

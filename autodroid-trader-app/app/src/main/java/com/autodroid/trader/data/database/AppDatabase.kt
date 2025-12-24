@@ -53,14 +53,28 @@ abstract class AppDatabase : RoomDatabase() {
                 val config = ConfigManager.getConfig(context)
                 val databaseName = config.database.name
                 
+                android.util.Log.d("AppDatabase", "创建数据库实例: $databaseName")
+                
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     databaseName
                 )
                     .fallbackToDestructiveMigrationOnDowngrade()
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            android.util.Log.d("AppDatabase", "数据库已创建")
+                        }
+                        
+                        override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            android.util.Log.d("AppDatabase", "数据库已打开")
+                        }
+                    })
                 .build()
                 INSTANCE = instance
+                android.util.Log.d("AppDatabase", "数据库实例创建完成")
                 instance
             }
         }

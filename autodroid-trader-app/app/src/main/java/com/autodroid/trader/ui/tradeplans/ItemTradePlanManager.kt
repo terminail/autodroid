@@ -3,9 +3,7 @@ package com.autodroid.trader.ui.tradeplans
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import com.autodroid.trader.AppViewModel
-import com.autodroid.trader.managers.TradePlanManager
-import com.autodroid.trader.model.TradePlanStatus
+import com.autodroid.trader.network.TradePlanStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,7 +15,7 @@ import kotlinx.coroutines.launch
 class ItemTradePlanManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val appViewModel: AppViewModel,
+    private val tradePlansViewModel: TradePlansViewModel,
     private val onItemUpdate: (TradePlansItem) -> Unit
 ) {
     
@@ -27,13 +25,46 @@ class ItemTradePlanManager(
     
     private var currentItem = TradePlansItem.ItemTradePlans()
     
-    private val tradePlanManager = TradePlanManager.getInstance(context)
+    private val tradePlanManager = com.autodroid.trader.managers.TradePlanManager.getInstance(context)
     
     /**
      * Initialize the ItemTradePlanManager
      */
     fun initialize() {
+        setupObservers()
         Log.d(TAG, "ItemTradePlanManager initialized")
+    }
+    
+    /**
+     * Set up observers for trade plan status
+     */
+    private fun setupObservers() {
+        Log.d(TAG, "setupObservers: 开始设置观察者")
+        
+        // Observe available trade plans from TradePlansViewModel (single source of truth)
+        tradePlansViewModel.availableTradePlans.observe(lifecycleOwner) { tradePlanEntities ->
+            Log.d(TAG, "TradePlansViewModel availableTradePlans updated: ${tradePlanEntities.size} 个交易计划")
+            
+            val status = when {
+                tradePlanEntities.isEmpty() -> "暂无交易计划"
+                tradePlanEntities.any { it.status == TradePlanStatus.EXECUTING.value } -> "正在执行交易计划..."
+                tradePlanEntities.any { it.status == TradePlanStatus.APPROVED.value } -> "有已批准的交易计划待执行"
+                else -> "交易计划已加载"
+            }
+            
+            val executionStatus = when {
+                tradePlanEntities.any { it.status == TradePlanStatus.EXECUTING.value } -> TradePlanStatus.EXECUTING.value
+                tradePlanEntities.any { it.status == TradePlanStatus.APPROVED.value } -> TradePlanStatus.APPROVED.value
+                else -> "IDLE"
+            }
+            
+            updateItem(
+                status = status,
+                executionStatus = executionStatus
+            )
+            
+            Log.d(TAG, "Trade plans status updated: $status, executionStatus: $executionStatus")
+        }
     }
     
     /**
@@ -114,26 +145,17 @@ class ItemTradePlanManager(
     fun refresh() {
         Log.d(TAG, "Refreshing trade plan data")
         
+        // Reset execution state
+        currentItem = TradePlansItem.ItemTradePlans()
+        
+        // Immediately update UI to show refreshing state
         updateItem(
             status = "Refreshing trade plans...",
             executionStatus = "REFRESHING"
         )
         
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                tradePlanManager.getAllTradePlans()
-                updateItem(
-                    status = "Trade plans refreshed",
-                    executionStatus = "IDLE"
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Error refreshing trade plans: ${e.message}", e)
-                updateItem(
-                    status = "Error refreshing trade plans: ${e.message}",
-                    executionStatus = "ERROR"
-                )
-            }
-        }
+        // Reinitialize the trade plan item with current data
+        initialize()
     }
     
     /**

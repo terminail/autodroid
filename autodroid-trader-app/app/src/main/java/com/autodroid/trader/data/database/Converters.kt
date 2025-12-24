@@ -1,6 +1,7 @@
 package com.autodroid.trader.data.database
 
 import androidx.room.TypeConverter
+import com.autodroid.trader.network.Ohlcv
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -60,5 +61,37 @@ class Converters {
     fun toStringAnyMap(json: String): Map<String, Any> {
         val type = object : TypeToken<Map<String, Any>>() {}.type
         return gson.fromJson(json, type)
+    }
+    
+    /**
+     * 将Ohlcv对象转换为JSON字符串存储
+     */
+    @TypeConverter
+    fun fromOhlcv(ohlcv: Ohlcv?): String {
+        return gson.toJson(ohlcv)
+    }
+    
+    /**
+     * 将JSON字符串转换为Ohlcv对象
+     */
+    @TypeConverter
+    fun toOhlcv(json: String): Ohlcv? {
+        return gson.fromJson(json, Ohlcv::class.java)
+    }
+    
+    /**
+     * 将JsonObject对象转换为JSON字符串存储
+     */
+    @TypeConverter
+    fun fromJsonObject(jsonObject: com.google.gson.JsonObject?): String {
+        return gson.toJson(jsonObject)
+    }
+    
+    /**
+     * 将JSON字符串转换为JsonObject对象
+     */
+    @TypeConverter
+    fun toJsonObject(json: String): com.google.gson.JsonObject? {
+        return gson.fromJson(json, com.google.gson.JsonObject::class.java)
     }
 }

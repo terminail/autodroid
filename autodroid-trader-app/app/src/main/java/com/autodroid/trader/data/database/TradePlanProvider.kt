@@ -1,9 +1,10 @@
 package com.autodroid.trader.data.database
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.autodroid.trader.data.dao.TradePlanEntity
-import com.autodroid.trader.model.TradePlanStatus
+import com.autodroid.trader.network.TradePlanStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -17,17 +18,10 @@ class TradePlanProvider private constructor(context: Context) {
     private val tradePlanDao = database.tradePlanDao()
     
     /**
-     * 获取所有交易计划列表
+     * 获取所有交易计划
      */
     fun getAllTradePlans(): LiveData<List<TradePlanEntity>> {
         return tradePlanDao.getAllTradePlans()
-    }
-    
-    /**
-     * 获取激活的交易计划列表
-     */
-    fun getActiveTradePlans(): LiveData<List<TradePlanEntity>> {
-        return tradePlanDao.getActiveTradePlans()
     }
 
     /**
@@ -47,32 +41,34 @@ class TradePlanProvider private constructor(context: Context) {
     }
     
     /**
-     * 根据服务器获取交易计划列表
-     */
-    fun getTradePlansByServer(serverIp: String, serverPort: Int): LiveData<List<TradePlanEntity>> {
-        return tradePlanDao.getTradePlansByServer(serverIp, serverPort)
-    }
-    
-    /**
      * 插入或更新交易计划
      */
     suspend fun insertOrUpdateTradePlan(tradePlan: TradePlanEntity): String {
         return withContext(Dispatchers.IO) {
-            // 检查是否已存在相同ID的交易计划
-            val existingTradePlan = tradePlanDao.getTradePlanById(tradePlan.id)
-            
-            val result: String = if (existingTradePlan != null) {
-                // 更新现有交易计划
-                val updatedTradePlan = tradePlan.copy(updatedAt = System.currentTimeMillis())
-                tradePlanDao.updateTradePlan(updatedTradePlan)
-                tradePlan.id
-            } else {
-                // 插入新交易计划
-                tradePlanDao.insertTradePlan(tradePlan)
-                tradePlan.id
+            try {
+                Log.d("TradePlanProvider", "insertOrUpdateTradePlan: 开始处理交易计划 id=${tradePlan.id}")
+                val existingTradePlan = tradePlanDao.getTradePlanById(tradePlan.id)
+                Log.d("TradePlanProvider", "insertOrUpdateTradePlan: existingTradePlan=${existingTradePlan != null}")
+                
+                val result: String = if (existingTradePlan != null) {
+                    val updatedTradePlan = tradePlan.copy(updatedAt = java.time.Instant.now().toString())
+                    Log.d("TradePlanProvider", "insertOrUpdateTradePlan: 更新现有交易计划")
+                    tradePlanDao.updateTradePlan(updatedTradePlan)
+                    tradePlan.id
+                } else {
+                    val newTradePlan = tradePlan.copy(updatedAt = java.time.Instant.now().toString())
+                    Log.d("TradePlanProvider", "insertOrUpdateTradePlan: 插入新交易计划")
+                    val rowId = tradePlanDao.insertTradePlan(newTradePlan)
+                    Log.d("TradePlanProvider", "insertOrUpdateTradePlan: 插入结果 rowId=$rowId")
+                    tradePlan.id
+                }
+                
+                Log.d("TradePlanProvider", "insertOrUpdateTradePlan: 完成 result=$result")
+                return@withContext result
+            } catch (e: Exception) {
+                Log.e("TradePlanProvider", "insertOrUpdateTradePlan: 失败 ${e.message}", e)
+                throw e
             }
-            
-            return@withContext result
         }
     }
     
@@ -81,7 +77,7 @@ class TradePlanProvider private constructor(context: Context) {
      */
     suspend fun updateTradePlan(tradePlan: TradePlanEntity) {
         withContext(Dispatchers.IO) {
-            val updatedTradePlan = tradePlan.copy(updatedAt = System.currentTimeMillis())
+            val updatedTradePlan = tradePlan.copy(updatedAt = java.time.Instant.now().toString())
             tradePlanDao.updateTradePlan(updatedTradePlan)
         }
     }
@@ -103,61 +99,46 @@ class TradePlanProvider private constructor(context: Context) {
             tradePlanDao.deleteTradePlanById(id)
         }
     }
-
-    /**
-     * 根据服务器删除所有交易计划
-     */
-    suspend fun deleteTradePlansByServer(serverIp: String, serverPort: Int) {
-        withContext(Dispatchers.IO) {
-            tradePlanDao.deleteTradePlansByServer(serverIp, serverPort)
-        }
-    }
-    
-    /**
-     * 更新交易计划激活状态
-     */
-    suspend fun updateActiveStatus(id: String, isActive: Boolean) {
-        withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
-            tradePlanDao.updateActiveStatus(id, isActive, now)
-        }
-    }
-    
-    /**
-     * 更新交易计划执行信息
-     */
-    suspend fun updateExecutionInfo(id: String, lastExecutedTime: Long) {
-        withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
-            tradePlanDao.updateExecutionInfo(id, lastExecutedTime, now)
-        }
-    }
-    
-    /**
-     * 停用所有交易计划
-     */
-    suspend fun deactivateAllTradePlans() {
-        withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
-            tradePlanDao.deactivateAllTradePlans(now)
-        }
-    }
     
     /**
      * 获取交易计划数量
      */
     suspend fun getTradePlanCount(): Int {
         return withContext(Dispatchers.IO) {
-            tradePlanDao.getTradePlanCount()
+            val count = tradePlanDao.getTradePlanCount()
+            Log.d("TradePlanProvider", "getTradePlanCount: 数据库中当前交易计划数量 = $count")
+            count
         }
     }
     
     /**
-     * 获取激活的交易计划数量
+     * 获取所有交易计划（同步方法，用于调试）
      */
-    suspend fun getActiveTradePlanCount(): Int {
+    suspend fun getAllTradePlansSync(): List<TradePlanEntity> {
         return withContext(Dispatchers.IO) {
-            tradePlanDao.getActiveTradePlanCount()
+            try {
+                val db = database.openHelper.writableDatabase
+                val cursor = db.query("SELECT * FROM trade_plans")
+                val count = cursor.count
+                Log.d("TradePlanProvider", "getAllTradePlansSync: 直接查询数据库，找到 $count 条记录")
+                
+                if (count > 0) {
+                    cursor.moveToFirst()
+                    val id = cursor.getString(cursor.getColumnIndexOrThrow("id"))
+                    val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+                    val status = cursor.getString(cursor.getColumnIndexOrThrow("status"))
+                    Log.d("TradePlanProvider", "第一条记录: id=$id, name=$name, status=$status")
+                }
+                
+                cursor.close()
+                
+                val entities = tradePlanDao.getTradePlansByStatus(TradePlanStatus.ALL.value).value ?: emptyList()
+                Log.d("TradePlanProvider", "getAllTradePlansSync: LiveData value 返回 ${entities.size} 个实体")
+                entities
+            } catch (e: Exception) {
+                Log.e("TradePlanProvider", "getAllTradePlansSync: 查询失败 ${e.message}", e)
+                emptyList()
+            }
         }
     }
     
@@ -166,7 +147,7 @@ class TradePlanProvider private constructor(context: Context) {
      */
     suspend fun updateTradePlanStatus(id: String, status: String) {
         withContext(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
+            val now = java.time.Instant.now().toString()
             tradePlanDao.updateTradePlanStatus(id, status, now)
         }
     }
@@ -176,37 +157,6 @@ class TradePlanProvider private constructor(context: Context) {
      */
     fun getTradePlansByStatus(status: String): LiveData<List<TradePlanEntity>> {
         return tradePlanDao.getTradePlansByStatus(status)
-    }
-    
-    /**
-     * 获取所有待批准的交易计划
-     */
-    fun getPendingTradePlans(): LiveData<List<TradePlanEntity>> {
-        return tradePlanDao.getPendingTradePlans(TradePlanStatus.PENDING.value)
-    }
-    
-    /**
-     * 获取所有已批准的交易计划
-     */
-    fun getApprovedTradePlans(): LiveData<List<TradePlanEntity>> {
-        return tradePlanDao.getApprovedTradePlans(TradePlanStatus.APPROVED.value)
-    }
-    
-    /**
-     * 更新交易计划执行结果
-     */
-    suspend fun updateExecutionResult(id: String, executionStatus: String, executionResult: String) {
-        withContext(Dispatchers.IO) {
-            val existingTradePlan = tradePlanDao.getTradePlanById(id)
-            if (existingTradePlan != null) {
-                val updatedTradePlan = existingTradePlan.copy(
-                    executionStatus = executionStatus,
-                    lastExecutionResult = executionResult,
-                    updatedAt = System.currentTimeMillis()
-                )
-                tradePlanDao.updateTradePlan(updatedTradePlan)
-            }
-        }
     }
     
     companion object {

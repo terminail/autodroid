@@ -1,41 +1,14 @@
-package com.autodroid.trader.model
+package com.autodroid.trader.network
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 
-/**
- * 交易计划状态枚举
- */
-enum class TradePlanStatus(val value: String) {
-    PENDING("PENDING"),
-    APPROVED("APPROVED"),
-    REJECTED("REJECTED"),
-    EXECUTING("EXECUTING"),
-    COMPLETED("COMPLETED"),
-    FAILED("FAILED");
 
-    companion object {
-        fun fromValue(value: String?): TradePlanStatus {
-            return values().find { it.value == value } ?: PENDING
-        }
-    }
-}
-
-/**
- * OHLCV 数据类
- */
-data class Ohlcv(
-    val open: Double? = null,
-    val high: Double? = null,
-    val low: Double? = null,
-    val close: Double? = null,
-    val volume: Double? = null
-)
 
 /**
  * Trade plan list item data class
  */
-data class TradePlan(
+data class TradePlanResponse(
     val id: String? = null,
     val script_id: String? = null,
     val name: String? = null,
@@ -59,8 +32,8 @@ data class TradePlan(
     companion object {
         private val gson = Gson()
 
-        fun fromJson(json: String): TradePlan {
-            return gson.fromJson(json, TradePlan::class.java)
+        fun fromJson(json: String): TradePlanResponse {
+            return gson.fromJson(json, TradePlanResponse::class.java)
         }
     }
 
@@ -82,9 +55,9 @@ data class TradePlan(
 
     fun getDisplayInfoLine2(): String {
         val parts = mutableListOf<String>()
-        change_percent?.let { 
+        change_percent?.let {
             val sign = if (it >= 0) "+" else ""
-            parts.add("涨跌幅: ${sign}${"%.2f".format(it)}%") 
+            parts.add("涨跌幅: ${sign}${"%.2f".format(it)}%")
         }
         ohlcv?.volume?.let { parts.add("成交量: ${formatVolume(it)}") }
         return parts.joinToString(" | ")
@@ -108,3 +81,49 @@ data class TradePlan(
         }
     }
 }
+
+
+/**
+ * 交易计划状态枚举
+ */
+enum class TradePlanStatus(val value: String) {
+    ALL("ALL"),
+    PENDING("PENDING"),
+    APPROVED("APPROVED"),
+    REJECTED("REJECTED"),
+    EXECUTING("EXECUTING"),
+    COMPLETED("COMPLETED"),
+    FAILED("FAILED");
+
+    companion object {
+        fun fromValue(value: String?): TradePlanStatus {
+            return values().find { it.value == value } ?: PENDING
+        }
+    }
+}
+
+/**
+ * 执行结果枚举
+ */
+enum class ExecutionResult(val value: String) {
+    SUCCESS("SUCCESS"),
+    FAILED("FAILED"),
+    STOPPED("STOPPED");
+
+    companion object {
+        fun fromValue(value: String?): ExecutionResult {
+            return values().find { it.value == value } ?: FAILED
+        }
+    }
+}
+
+/**
+ * OHLCV 数据类
+ */
+data class Ohlcv(
+    val open: Double? = null,
+    val high: Double? = null,
+    val low: Double? = null,
+    val close: Double? = null,
+    val volume: Double? = null
+)

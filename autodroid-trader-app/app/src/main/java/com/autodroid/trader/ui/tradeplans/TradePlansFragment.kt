@@ -8,9 +8,10 @@ import android.view.ViewConfiguration
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.fragment.app.viewModels
 import com.autodroid.trader.R
 import com.autodroid.trader.ui.BaseFragment
-import com.autodroid.trader.model.TradePlan
+import com.autodroid.trader.network.TradePlanResponse
 import com.autodroid.trader.managers.TradePlanManager
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.coroutines.CoroutineScope
@@ -24,10 +25,13 @@ class TradePlansFragment : BaseFragment() {
     
     private var tradePlansRecyclerView: RecyclerView? = null
     private var adapter: TradePlansAdapter? = null
-    private var tradePlanItems: MutableList<TradePlan>? = null
+    private var tradePlanResponseItems: MutableList<TradePlanResponse>? = null
     
     // Trade plan manager
     private lateinit var tradePlanManager: TradePlanManager
+    
+    // TradePlansViewModel
+    private val tradePlansViewModel: TradePlansViewModel by viewModels()
     
     // Pull-down detection for fragment header
     private var appBarLayout: AppBarLayout? = null
@@ -48,7 +52,7 @@ class TradePlansFragment : BaseFragment() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        tradePlanItems = ArrayList<TradePlan>()
+        tradePlanResponseItems = ArrayList<TradePlanResponse>()
         tradePlanManager = TradePlanManager.getInstance(requireContext())
     }
 
@@ -75,10 +79,14 @@ class TradePlansFragment : BaseFragment() {
         
         // Initialize item managers FIRST
         Log.d(TAG, "开始初始化 itemTradePlanManager")
+        
+        // Initialize TradePlansViewModel
+        tradePlansViewModel.initialize()
+        
         itemTradePlanManager = ItemTradePlanManager(
             requireContext(),
             viewLifecycleOwner,
-            appViewModel,
+            tradePlansViewModel,
             ::onTradePlanItemUpdate
         )
         Log.d(TAG, "itemTradePlanManager 初始化完成")
@@ -86,7 +94,7 @@ class TradePlansFragment : BaseFragment() {
         itemTradePlanSummaryManager = ItemTradePlanSummaryManager(
             requireContext(),
             viewLifecycleOwner,
-            appViewModel,
+            tradePlansViewModel,
             ::onTradePlanSummaryItemUpdate
         )
         Log.d(TAG, "itemTradePlanSummaryManager 初始化完成")
@@ -95,16 +103,16 @@ class TradePlansFragment : BaseFragment() {
         adapter = TradePlansAdapter(
             null,
             object : TradePlansAdapter.OnTradePlanClickListener {
-                override fun onTradePlanClick(tradePlan: TradePlan?) {
+                override fun onTradePlanClick(tradePlanResponse: TradePlanResponse?) {
                     if (!isSelectionMode) {
-                        openTradePlanDetail(tradePlan)
+                        openTradePlanDetail(tradePlanResponse)
                     }
                 }
                 
-                override fun onTradePlanLongClick(tradePlan: TradePlan?) {
+                override fun onTradePlanLongClick(tradePlanResponse: TradePlanResponse?) {
                     if (!isSelectionMode) {
                         enterSelectionMode()
-                        tradePlan?.id?.let { id ->
+                        tradePlanResponse?.id?.let { id ->
                             adapter?.toggleSelection(id)
                             selectedTradePlans.add(id)
                         }
@@ -138,15 +146,72 @@ class TradePlansFragment : BaseFragment() {
         Log.d(TAG, "itemTradePlanManager.initialize() 调用完成")
         itemTradePlanSummaryManager.initialize()
         
-        // Update UI with initial data
-        updateUI()
-        
         // Initial update of command section
         updateCommandSection()
     }
 
     override fun setupObservers() {
-        // 观察者设置已在各个ItemManager中实现
+        Log.d(TAG, "setupObservers: 开始设置观察者")
+        tradePlansViewModel.availableTradePlans.observe(viewLifecycleOwner) { tradePlanEntities ->
+            Log.d(TAG, "收到交易计划数据更新: ${tradePlanEntities.size} 个交易计划")
+            
+            tradePlanResponseItems?.clear()
+            
+            val sortedEntities = tradePlanEntities.sortedByDescending { it.createdAt }
+            
+            val updatedTradePlanResponses = sortedEntities.map { entity ->
+                TradePlanResponse(
+                    id = entity.id,
+                    script_id = entity.script_id,
+                    name = entity.name,
+                    title = entity.title,
+                    subtitle = entity.subtitle,
+                    description = entity.description,
+                    exchange = entity.exchange,
+                    symbol = entity.symbol,
+                    symbol_name = entity.symbol_name,
+                    ohlcv = entity.ohlcv,
+                    change_percent = entity.change_percent,
+                    data = entity.data,
+                    status = entity.status,
+                    executionStatus = entity.executionStatus,
+                    executionResult = entity.executionResult,
+                    startTime = entity.startTime,
+                    endTime = entity.endTime,
+                    createdAt = entity.createdAt,
+                    updatedAt = entity.updatedAt
+                )
+            }
+            
+            tradePlanResponseItems?.addAll(updatedTradePlanResponses)
+            
+            tradePlansItemsList.clear()
+            
+            val summaryItem = itemTradePlanSummaryManager.getCurrentItem()
+            tradePlansItemsList.add(summaryItem)
+            
+            updatedTradePlanResponses.forEach { tradePlanResponse: TradePlanResponse ->
+                val itemTradePlan = TradePlansItem.ItemTradePlans(
+                    status = tradePlanResponse.status ?: "PENDING",
+                    executionStatus = tradePlanResponse.executionResult ?: "IDLE",
+                    pendingCount = 0,
+                    approvedCount = 0,
+                    rejectedCount = 0,
+                    executedSuccessCount = 0,
+                    executedFailedCount = 0
+                )
+                tradePlansItemsList.add(itemTradePlan)
+            }
+            
+            val adapterItems = mutableListOf<Any>()
+            adapterItems.add(TradePlansAdapter.SummaryItem())
+            tradePlanResponseItems?.let { adapterItems.addAll(it) }
+            adapter?.updateTradePlans(tradePlanResponseItems)
+            
+            updateSummarySection(summaryItem)
+            Log.d(TAG, "UI 已更新: ${updatedTradePlanResponses.size} 个交易计划")
+        }
+        Log.d(TAG, "setupObservers: 观察者设置完成")
     }
     
     /**
@@ -156,7 +221,6 @@ class TradePlansFragment : BaseFragment() {
         if (item is TradePlansItem.ItemTradePlans) {
             Log.d(TAG, "onTradePlanItemUpdate called: status=${item.status}, executionStatus=${item.executionStatus}")
         }
-        updateUI()
     }
     
     /**
@@ -165,55 +229,6 @@ class TradePlansFragment : BaseFragment() {
     private fun onTradePlanSummaryItemUpdate(item: TradePlansItem) {
         if (item is TradePlansItem.ItemTradePlansSummary) {
             Log.d(TAG, "onTradePlanSummaryItemUpdate called: status=${item.status}")
-        }
-        updateUI()
-    }
-    
-    /**
-     * Update UI with current data
-     */
-    private fun updateUI() {
-        tradePlansItemsList.clear()
-        
-        // Add summary item at the beginning
-        val summaryItem = itemTradePlanSummaryManager.getCurrentItem()
-        tradePlansItemsList.add(summaryItem)
-        
-        // Load trade plans from repository
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val updatedTradePlans = tradePlanManager.getAllTradePlans()
-                
-                withContext(Dispatchers.Main) {
-                    tradePlanItems?.clear()
-                    tradePlanItems?.addAll(updatedTradePlans)
-                    
-                    // Add trade plan items
-                    updatedTradePlans.forEach { tradePlan: TradePlan ->
-                        val itemTradePlan = TradePlansItem.ItemTradePlans(
-                            status = tradePlan.status ?: "PENDING",
-                            executionStatus = tradePlan.executionResult ?: "IDLE",
-                            pendingCount = 0,
-                            approvedCount = 0,
-                            rejectedCount = 0,
-                            executedSuccessCount = 0,
-                            executedFailedCount = 0
-                        )
-                        tradePlansItemsList.add(itemTradePlan)
-                    }
-                    
-                    // Update adapter with new items
-                    val adapterItems = mutableListOf<Any>()
-                    adapterItems.add(TradePlansAdapter.SummaryItem())
-                    tradePlanItems?.let { adapterItems.addAll(it) }
-                    adapter?.updateTradePlans(tradePlanItems)
-                    
-                    // Update summary section with data from ItemTradePlanSummaryManager
-                    updateSummarySection(summaryItem)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading trade plans: ${e.message}", e)
-            }
         }
     }
     
@@ -257,13 +272,10 @@ class TradePlansFragment : BaseFragment() {
     private fun syncTradePlanStatuses() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                tradePlanItems?.forEach { tradePlan ->
-                    val id = tradePlan.id ?: return@forEach
-                    val newStatus = if (selectedTradePlans.contains(id)) "approved" else "rejected"
-                    
+                selectedTradePlans.forEach { id ->
                     try {
-                        itemTradePlanManager.updateTradePlanStatus(id, newStatus)
-                        Log.d(TAG, "交易计划 $id 状态已同步: $newStatus")
+                        itemTradePlanManager.updateTradePlanStatus(id, "approved")
+                        Log.d(TAG, "交易计划 $id 状态已同步: approved")
                     } catch (e: Exception) {
                         Log.e(TAG, "同步交易计划 $id 状态失败: ${e.message}")
                     }
@@ -290,9 +302,7 @@ class TradePlansFragment : BaseFragment() {
      * 刷新交易计划数据
      */
     private fun refreshTradePlans() {
-        itemTradePlanManager.refresh()
-        itemTradePlanSummaryManager.refresh()
-        updateUI()
+        tradePlansViewModel.refresh()
     }
     
     /**
@@ -302,9 +312,9 @@ class TradePlansFragment : BaseFragment() {
         android.util.Log.d(TAG, message)
     }
 
-    private fun openTradePlanDetail(tradePlan: TradePlan?) {
+    private fun openTradePlanDetail(tradePlanResponse: TradePlanResponse?) {
         // Get trade plan ID
-        val tradePlanId = tradePlan?.id
+        val tradePlanId = tradePlanResponse?.id
         
         // Navigate to TradePlanFragment using Navigation Component
         if (tradePlanId != null) {

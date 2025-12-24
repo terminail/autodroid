@@ -7,15 +7,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.trader.R
-import com.autodroid.trader.model.TradePlan
+import com.autodroid.trader.network.TradePlanResponse
 
 class TradePlanAdapter(
-    private var items: MutableList<TradePlan>?,
+    private var items: MutableList<TradePlanResponse>?,
     private val listener: OnItemClickListener?
 ) : RecyclerView.Adapter<TradePlanAdapter.ViewHolder>() {
     
     interface OnItemClickListener {
-        fun onItemClick(item: TradePlan?)
+        fun onItemClick(item: TradePlanResponse?)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -33,7 +33,7 @@ class TradePlanAdapter(
         return if (items != null) items!!.size else 0
     }
 
-    fun updateItems(newItems: MutableList<TradePlan>?) {
+    fun updateItems(newItems: MutableList<TradePlanResponse>?) {
         this.items = newItems
         notifyDataSetChanged()
     }
@@ -62,7 +62,7 @@ class TradePlanAdapter(
             }
         }
 
-        fun bind(item: TradePlan) {
+        fun bind(item: TradePlanResponse) {
             nameView.text = item.name ?: item.title ?: ""
             timeView.text = item.getDisplayTime()
             infoLine1View.text = item.getDisplayInfoLine1()

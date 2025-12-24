@@ -18,9 +18,8 @@ import com.autodroid.trader.managers.DeviceManager
 import com.autodroid.trader.model.User
 import com.autodroid.trader.model.Network
 import com.autodroid.trader.model.Wifi
-import com.autodroid.trader.model.TradePlan
+import com.autodroid.trader.data.dao.TradePlanEntity
 import com.autodroid.trader.auth.viewmodel.AuthViewModel
-import com.autodroid.trader.network.ApiClient
 
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -61,9 +60,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // Network information (global shared state)
     val network = MutableLiveData<Network>()
-
-    // Test Plans information
-    val availableTradePlans = MutableLiveData<MutableList<TradePlan>>()
 
     /**
      * Initialize() with application context
@@ -219,11 +215,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setWifi(info: Wifi) {
         wifi.value = info
-    }
-
-
-    fun setAvailableTradePlans(tradePlans: MutableList<TradePlan>) {
-        availableTradePlans.value = tradePlans
     }
 
     // Authentication methods

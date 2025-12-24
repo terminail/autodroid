@@ -7,7 +7,6 @@ import androidx.room.Insert
 import androidx.room.Update
 import androidx.room.Delete
 import androidx.room.OnConflictStrategy
-import com.autodroid.trader.model.TradePlanStatus
 
 /**
  * 交易计划数据访问对象
@@ -17,16 +16,10 @@ import com.autodroid.trader.model.TradePlanStatus
 interface TradePlanDao {
     
     /**
-     * 获取所有交易计划列表
+     * 获取所有交易计划
      */
     @Query("SELECT * FROM trade_plans ORDER BY updatedAt DESC")
     fun getAllTradePlans(): LiveData<List<TradePlanEntity>>
-
-    /**
-     * 获取激活的交易计划列表
-     */
-    @Query("SELECT * FROM trade_plans WHERE isActive = 1 ORDER BY updatedAt DESC")
-    fun getActiveTradePlans(): LiveData<List<TradePlanEntity>>
 
     /**
      * 获取最后更新的交易计划
@@ -39,12 +32,6 @@ interface TradePlanDao {
      */
     @Query("SELECT * FROM trade_plans WHERE id = :id")
     fun getTradePlanById(id: String): TradePlanEntity?
-
-    /**
-     * 根据服务器获取交易计划列表
-     */
-    @Query("SELECT * FROM trade_plans WHERE sourceServerIp = :serverIp AND sourceServerPort = :serverPort ORDER BY updatedAt DESC")
-    fun getTradePlansByServer(serverIp: String, serverPort: Int): LiveData<List<TradePlanEntity>>
 
     /**
      * 插入新交易计划
@@ -71,62 +58,21 @@ interface TradePlanDao {
     fun deleteTradePlanById(id: String)
 
     /**
-     * 根据服务器删除所有交易计划
-     */
-    @Query("DELETE FROM trade_plans WHERE sourceServerIp = :serverIp AND sourceServerPort = :serverPort")
-    fun deleteTradePlansByServer(serverIp: String, serverPort: Int)
-
-    /**
-     * 更新交易计划激活状态
-     */
-    @Query("UPDATE trade_plans SET isActive = :isActive, updatedAt = :updatedAt WHERE id = :id")
-    fun updateActiveStatus(id: String, isActive: Boolean, updatedAt: Long)
-
-    /**
-     * 更新交易计划执行信息
-     */
-    @Query("UPDATE trade_plans SET lastExecutedTime = :lastExecutedTime, executionCount = executionCount + 1, updatedAt = :updatedAt WHERE id = :id")
-    fun updateExecutionInfo(id: String, lastExecutedTime: Long, updatedAt: Long)
-
-    /**
-     * 停用所有交易计划
-     */
-    @Query("UPDATE trade_plans SET isActive = 0, updatedAt = :updatedAt")
-    fun deactivateAllTradePlans(updatedAt: Long)
-
-    /**
      * 获取交易计划数量
      */
     @Query("SELECT COUNT(*) FROM trade_plans")
     fun getTradePlanCount(): Int
 
     /**
-     * 获取激活的交易计划数量
-     */
-    @Query("SELECT COUNT(*) FROM trade_plans WHERE isActive = 1")
-    fun getActiveTradePlanCount(): Int
-
-    /**
      * 更新交易计划状态（待批准/已批准）
      */
     @Query("UPDATE trade_plans SET status = :status, updatedAt = :updatedAt WHERE id = :id")
-    fun updateTradePlanStatus(id: String, status: String, updatedAt: Long)
+    fun updateTradePlanStatus(id: String, status: String, updatedAt: String)
 
     /**
      * 根据状态获取交易计划
+     * 当 status = "ALL" 时，返回所有交易计划
      */
-    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM trade_plans WHERE (:status = 'ALL' OR status = :status) ORDER BY createdAt DESC")
     fun getTradePlansByStatus(status: String): LiveData<List<TradePlanEntity>>
-
-    /**
-     * 获取所有待批准的交易计划
-     */
-    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
-    fun getPendingTradePlans(status: String): LiveData<List<TradePlanEntity>>
-
-    /**
-     * 获取所有已批准的交易计划
-     */
-    @Query("SELECT * FROM trade_plans WHERE status = :status ORDER BY updatedAt DESC")
-    fun getApprovedTradePlans(status: String): LiveData<List<TradePlanEntity>>
 }
