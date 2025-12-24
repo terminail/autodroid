@@ -221,7 +221,6 @@
             android:layout_column="6"
             android:layout_columnWeight="0"
             android:text="0.77/3.84%"
-            android:ems="..."
             android:textColor="@android:color/holo_red_light"
             android:textSize="10sp" />
 
