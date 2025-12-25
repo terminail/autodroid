@@ -4,7 +4,8 @@ Handles trade plan CRUD operations, status management, and execution.
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel
 
 from core.tradeplan.models import (
     TradePlanCreateRequest,
@@ -21,12 +22,34 @@ from core.tradeplan.models import (
     TradePlanListResponse,
 )
 from core.tradeplan.service import TradePlanService
+from core.tradeplan.daemon import (
+    get_daemon,
+    TaskType,
+    create_task
+)
 
 # Initialize router
 router = APIRouter(prefix="/api/tradeplans", tags=["tradeplans"])
 
 # Initialize trade plan service
 tradeplan_service = TradePlanService()
+
+
+class AsyncTaskResponse(BaseModel):
+    """异步任务响应"""
+    success: bool = True
+    message: str
+    task_id: Optional[str] = None
+
+
+class TaskStatusResponse(BaseModel):
+    """任务状态响应"""
+    task_id: str
+    task_type: str
+    status: str
+    message: str
+    created_at: str
+    result: Optional[dict] = None
 
 
 @router.get("", response_model=TradePlanListResponse)
@@ -148,8 +171,13 @@ async def create_or_update_demo_tradeplans():
 async def start_approved_tradeplans():
     """开始执行所有已批准的交易计划"""
     try:
-        result = tradeplan_service.start_approved_tradeplans()
-        return result
+        daemon = get_daemon()
+        task = create_task(TaskType.START_ALL_APPROVED)
+        task_id = daemon.submit_task(task)
+        return AsyncTaskResponse(
+            message="已提交执行所有已批准交易计划的任务",
+            task_id=task_id
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -158,7 +186,12 @@ async def start_approved_tradeplans():
 async def stop_approved_tradeplans():
     """停止所有正在执行的交易计划"""
     try:
-        result = tradeplan_service.stop_approved_tradeplans()
-        return result
+        daemon = get_daemon()
+        task = create_task(TaskType.STOP_ALL)
+        task_id = daemon.submit_task(task)
+        return AsyncTaskResponse(
+            message="已提交停止所有正在执行的交易计划的任务",
+            task_id=task_id
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

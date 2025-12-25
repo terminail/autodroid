@@ -77,9 +77,12 @@ class TradePlanDatabase(BaseDatabase):
             return []
     
     def get_tradeplans_by_status(self, status: str) -> List[Dict[str, Any]]:
-        """根据状态获取交易计划"""
+        """根据状态获取交易计划，按创建时间排序"""
         try:
-            tradeplans = TradePlan.select().where(TradePlan.status == status)
+            tradeplans = (TradePlan
+                .select()
+                .where(TradePlan.status == status)
+                .order_by(TradePlan.created_at.asc()))
             return [self._tradeplan_to_dict(tp) for tp in tradeplans]
         except Exception:
             return []
