@@ -12,8 +12,8 @@ object AppScanner {
     /**
      * 扫描所有应用并返回AppItem列表
      */
-    fun scanApps(context: Context): List<NavigationItem.AppItem> {
-        val appItems = mutableListOf<NavigationItem.AppItem>()
+    fun scanApps(context: Context): List<NavigationItem.ApkItem> {
+        val apkItems = mutableListOf<NavigationItem.ApkItem>()
         
         try {
             // 获取assets/pages目录下的所有应用文件夹
@@ -27,27 +27,27 @@ object AppScanner {
                 try {
                     val appItem = scanApp(context, appFolder)
                     if (appItem.flows?.isNotEmpty() == true) {
-                        appItems.add(appItem)
+                        apkItems.add(appItem)
                     }
                 } catch (e: Exception) {
                     println("Error scanning app $appFolder: ${e.message}")
                 }
             }
             
-            // Sort by name as we don't have displayOrder in AppItem anymore
-            appItems.sortBy { it.name }
+            // Sort by name as we don't have displayOrder in ApkItem anymore
+            apkItems.sortBy { it.name }
             
         } catch (e: Exception) {
             e.printStackTrace()
         }
         
-        return appItems
+        return apkItems
     }
     
     /**
      * 扫描单个应用文件夹
      */
-    private fun scanApp(context: Context, appFolder: String): NavigationItem.AppItem {
+    private fun scanApp(context: Context, appFolder: String): NavigationItem.ApkItem {
         // 读取应用配置文件
         val configContent = context.assets.open("apks/$appFolder/config.yaml").bufferedReader().use { it.readText() }
         val yaml = Yaml()
@@ -60,7 +60,7 @@ object AppScanner {
         val flows = scanFlowsFromFolders(context, appFolder)
         
         // 创建AppItem
-        return NavigationItem.AppItem(
+        return NavigationItem.ApkItem(
             name = configMap["name"] as? String ?: appFolder,
             packageName = configMap["package"] as? String ?: "",
             flows = flows
@@ -96,7 +96,7 @@ object AppScanner {
                     
                     if (flowItem != null) {
                         flows.add(flowItem)
-                        println("Added flow: ${flowItem.name} with ${flowItem.pages?.size ?: 0} apks")
+                        println("Added flow: ${flowItem.name} with ${flowItem.steps?.size ?: 0} apks")
                     } else {
                         println("Failed to scan flow: $flowPath")
                     }

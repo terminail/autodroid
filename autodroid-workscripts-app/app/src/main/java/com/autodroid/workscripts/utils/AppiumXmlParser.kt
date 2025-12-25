@@ -190,7 +190,7 @@ class AppiumXmlParser {
         
         return try {
             // 使用正则表达式解析bounds格式: [left,top][right,bottom]
-            val pattern = Regex("\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]")
+            val pattern = Regex("\\[(\\d+),(\\d+)]\\[(\\d+),(\\d+)]")
             val match = pattern.find(boundsStr)
             
             if (match != null) {

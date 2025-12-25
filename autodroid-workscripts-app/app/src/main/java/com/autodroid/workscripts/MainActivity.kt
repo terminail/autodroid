@@ -1,15 +1,18 @@
 package com.autodroid.workscripts
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.autodroid.workscripts.adapter.NavigationAdapter
-import com.autodroid.workscripts.model.NavigationItem
 import com.autodroid.workscripts.fragment.FlowFragment
 import com.autodroid.workscripts.fragment.StepFragment
+import com.autodroid.workscripts.model.NavigationItem
 import com.autodroid.workscripts.utils.AppScanner
 
 /**
@@ -19,13 +22,14 @@ import com.autodroid.workscripts.utils.AppScanner
 class MainActivity : AppCompatActivity() {
     
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: NavigationAdapter
-    private var appItems: List<NavigationItem.AppItem> = emptyList()
+    private lateinit var adapter: MainAdapter
+    private var apkItems: List<NavigationItem.ApkItem> = emptyList()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
+        setupBackPressedHandler()
         setupRecyclerView()
         loadNavigationData()
     }
@@ -34,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         
-        adapter = NavigationAdapter(
+        adapter = MainAdapter(
             onAppClick = { appItem ->
                 onAppClick(appItem)
             },
@@ -51,18 +55,18 @@ class MainActivity : AppCompatActivity() {
     
     private fun loadNavigationData() {
         // 只在首次加载时扫描应用数据
-        if (appItems.isEmpty()) {
+        if (apkItems.isEmpty()) {
             // 使用应用扫描器获取应用数据
-            appItems = AppScanner.scanApps(this)
+            apkItems = AppScanner.scanApps(this)
         }
         
-        adapter.setData(appItems)
+        adapter.setData(apkItems)
         
         // 显示扫描结果
-        val totalApps = appItems.size
-        val totalFlows = appItems.sumOf { it.flows?.size ?: 0 }
-        val totalPages = appItems.sumOf { app -> 
-            app.flows?.sumOf { it.pages?.size ?: 0 } ?: 0 
+        val totalApps = apkItems.size
+        val totalFlows = apkItems.sumOf { it.flows?.size ?: 0 }
+        val totalPages = apkItems.sumOf { app ->
+            app.flows?.sumOf { it.steps?.size ?: 0 } ?: 0
         }
         
         Toast.makeText(
@@ -74,9 +78,9 @@ class MainActivity : AppCompatActivity() {
     
     // 不再需要的辅助方法已删除
     
-    private fun onAppClick(appItem: NavigationItem.AppItem) {
+    private fun onAppClick(apkItem: NavigationItem.ApkItem) {
         // 切换应用的展开/收起状态
-        adapter.toggleAppExpansion(appItem)
+        adapter.toggleAppExpansion(apkItem)
     }
     
     private fun onFlowClick(flowItem: NavigationItem.FlowItem) {
@@ -165,37 +169,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    override fun onBackPressed() {
-        // 检查Fragment返回栈
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-            
-            // 延迟检查返回栈状态，确保UI更新完成
-            recyclerView.post {
-                // 如果返回栈为空，显示导航列表
-                if (supportFragmentManager.backStackEntryCount == 0) {
-                    val fragmentContainer = findViewById<android.widget.FrameLayout>(R.id.fragmentContainer)
-                    // 添加淡出动画效果
-                    fragmentContainer.animate()
-                        .alpha(0f)
-                        .setDuration(200)
-                        .withEndAction {
-                            fragmentContainer.visibility = View.GONE
-                            fragmentContainer.alpha = 1f // Reset alpha for next time
-                            recyclerView.visibility = View.VISIBLE
-                            // 添加淡入动画效果
-                            recyclerView.alpha = 0f
-                            recyclerView.animate()
-                                .alpha(1f)
+    private fun setupBackPressedHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                    
+                    recyclerView.post {
+                        if (supportFragmentManager.backStackEntryCount == 0) {
+                            val fragmentContainer = findViewById<android.widget.FrameLayout>(R.id.fragmentContainer)
+                            fragmentContainer.animate()
+                                .alpha(0f)
                                 .setDuration(200)
+                                .withEndAction {
+                                    fragmentContainer.visibility = View.GONE
+                                    fragmentContainer.alpha = 1f
+                                    recyclerView.visibility = View.VISIBLE
+                                    recyclerView.alpha = 0f
+                                    recyclerView.animate()
+                                        .alpha(1f)
+                                        .setDuration(200)
+                                        .start()
+                                }
                                 .start()
                         }
-                        .start()
+                    }
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
                 }
             }
-        } else {
-            super.onBackPressed()
-        }
+        })
     }
     
     /**
@@ -203,7 +207,6 @@ class MainActivity : AppCompatActivity() {
      */
     fun refreshNavigation() {
         try {
-            // Reload navigation data to ensure it's up to date
             loadNavigationData()
         } catch (e: Exception) {
             android.util.Log.w("MainActivity", "Could not refresh navigation", e)

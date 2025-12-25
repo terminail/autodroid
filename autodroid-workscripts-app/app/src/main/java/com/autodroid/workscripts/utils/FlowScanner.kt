@@ -16,25 +16,22 @@ object FlowScanner {
         try {
             println("Scanning flow: $flowPath")
             
-            // 读取流程配置文件
             val configContent = context.assets.open("apks/$flowPath/config.yaml").bufferedReader().use { it.readText() }
             val yaml = Yaml()
+            @Suppress("UNCHECKED_CAST")
             val configMap = yaml.load<Map<String, Any>>(configContent)
             
             println("Flow config map: $configMap")
             
-            // 解析流程名称和描述
             val flowName = configMap["name"] as? String ?: flowPath.substringAfterLast("/")
             val flowDescription = configMap["description"] as? String ?: ""
             
-            // 解析步骤配置
-            val pages = parseStepsFromConfig(configMap, flowPath)
+            val steps = parseStepsFromConfig(configMap, flowPath)
             
-            // 创建FlowItem
             return NavigationItem.FlowItem(
                 name = flowName,
                 description = flowDescription,
-                pages = pages
+                steps = steps
             )
             
         } catch (e: Exception) {
@@ -46,25 +43,27 @@ object FlowScanner {
     /**
      * 从配置中解析步骤信息
      */
+    @Suppress("UNCHECKED_CAST")
     private fun parseStepsFromConfig(configMap: Map<String, Any>, flowPath: String): List<NavigationItem.StepItem> {
-        val pages = mutableListOf<NavigationItem.StepItem>()
+        val steps = mutableListOf<NavigationItem.StepItem>()
         
-        val stepsConfig = configMap["steps"] as? List<Map<String, Any>>
+        val stepsConfig = configMap["steps"] as? List<*>
         if (stepsConfig != null) {
             println("Found ${stepsConfig.size} steps in flow config")
             
             stepsConfig.forEach { stepMap ->
                 try {
-                    val stepName = stepMap["name"] as? String ?: ""
-                    val stepFile = stepMap["layout"] as? String ?: ""  // Changed from "file" to "layout" to match YAML
-                    val stepDescription = stepMap["description"] as? String ?: ""
-                    val stepNumber = stepMap["step"] as? Int ?: 0
-                    val screenshots = stepMap["screenshots"] as? List<String> ?: emptyList()
-                    val actions = parseActions(stepMap["actions"])
+                    val stepData = stepMap as? Map<String, Any> ?: return@forEach
+                    val stepName = stepData["name"] as? String ?: ""
+                    val stepFile = stepData["layout"] as? String ?: ""
+                    val stepDescription = stepData["description"] as? String ?: ""
+                    val stepNumber = stepData["step"] as? Int ?: 0
+                    val screenshotsData = stepData["screenshots"] as? List<*>
+                    val screenshots = screenshotsData?.filterIsInstance<String>() ?: emptyList()
+                    val actions = parseActions(stepData["actions"])
                     
                     println("Processing step: $stepName -> $stepFile")
                     
-                    // 创建StepItem
                     val stepItem = NavigationItem.StepItem(
                         name = stepName,
                         layoutResourceName = stepFile.removeSuffix(".xml").replace("-", "_"),
@@ -75,7 +74,7 @@ object FlowScanner {
                         actions = actions
                     )
                     
-                    pages.add(stepItem)
+                    steps.add(stepItem)
                     println("Added step: ${stepItem.name}")
                     
                 } catch (e: Exception) {
@@ -86,31 +85,31 @@ object FlowScanner {
             println("No steps configuration found in flow config.yaml")
         }
         
-        return pages
+        return steps
     }
     
     /**
      * 解析动作配置
      */
+    @Suppress("UNCHECKED_CAST")
     private fun parseActions(actionsObj: Any?): List<NavigationItem.Action> {
         val actions = mutableListOf<NavigationItem.Action>()
         
-        val actionsList = actionsObj as? List<Map<String, Any>>
-        if (actionsList != null) {
-            actionsList.forEach { actionMap ->
-                try {
-                    val click = actionMap["click"] as? String ?: ""
-                    val description = actionMap["description"] as? String ?: ""
-                    
-                    val action = NavigationItem.Action(
-                        click = click,
-                        description = description
-                    )
-                    
-                    actions.add(action)
-                } catch (e: Exception) {
-                    println("Error parsing action: ${e.message}")
-                }
+        val actionsList = actionsObj as? List<*>
+        actionsList?.forEach { actionMap ->
+            try {
+                val actionData = actionMap as? Map<String, Any> ?: return@forEach
+                val click = actionData["click"] as? String ?: ""
+                val description = actionData["description"] as? String ?: ""
+
+                val action = NavigationItem.Action(
+                    click = click,
+                    description = description
+                )
+
+                actions.add(action)
+            } catch (e: Exception) {
+                println("Error parsing action: ${e.message}")
             }
         }
         

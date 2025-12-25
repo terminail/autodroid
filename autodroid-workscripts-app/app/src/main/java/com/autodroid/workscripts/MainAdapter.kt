@@ -1,39 +1,38 @@
-package com.autodroid.workscripts.adapter
+package com.autodroid.workscripts
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.autodroid.workscripts.R
 import com.autodroid.workscripts.model.NavigationItem
 
-class NavigationAdapter(
-    private val onAppClick: (NavigationItem.AppItem) -> Unit,
+class MainAdapter(
+    private val onAppClick: (NavigationItem.ApkItem) -> Unit,
     private val onFlowClick: (NavigationItem.FlowItem) -> Unit,
     private val onPageClick: (NavigationItem.StepItem) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var flatItems: List<NavigationItem> = emptyList()
-    val appItems = mutableListOf<NavigationItem.AppItem>()
+    val apkItems = mutableListOf<NavigationItem.ApkItem>()
 
-    fun setData(apps: List<NavigationItem.AppItem>) {
+    fun setData(apps: List<NavigationItem.ApkItem>) {
         // 保存展开状态
         val expansionState = mutableMapOf<String, Boolean>()
         val flowExpansionState = mutableMapOf<String, Boolean>()
         
-        appItems.forEach { app ->
+        apkItems.forEach { app ->
             expansionState[app.name] = app.isExpanded
             app.flows?.forEach { flow ->
                 flowExpansionState[flow.name] = flow.isExpanded
             }
         }
         
-        appItems.clear()
-        appItems.addAll(apps)
+        apkItems.clear()
+        apkItems.addAll(apps)
         
         // 恢复展开状态
-        appItems.forEach { app ->
+        apkItems.forEach { app ->
             app.isExpanded = expansionState[app.name] ?: false
             app.flows?.forEach { flow ->
                 flow.isExpanded = flowExpansionState[flow.name] ?: false
@@ -43,7 +42,7 @@ class NavigationAdapter(
         updateFlatItems()
     }
 
-    fun toggleAppExpansion(app: NavigationItem.AppItem) {
+    fun toggleAppExpansion(app: NavigationItem.ApkItem) {
         app.isExpanded = !app.isExpanded
         updateFlatItems()
     }
@@ -56,7 +55,7 @@ class NavigationAdapter(
     private fun updateFlatItems() {
         val items = mutableListOf<NavigationItem>()
         
-        appItems.forEach { app ->
+        apkItems.forEach { app ->
             // 添加应用项
             items.add(app)
             
@@ -68,8 +67,8 @@ class NavigationAdapter(
                     
                     // 如果流程展开，添加页面项
                     if (flow.isExpanded) {
-                        flow.pages?.forEach { page ->
-                            items.add(page)
+                        flow.steps?.forEach { stepItem ->
+                            items.add(stepItem)
                         }
                     }
                 }
@@ -82,7 +81,7 @@ class NavigationAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when (flatItems[position]) {
-            is NavigationItem.AppItem -> VIEW_TYPE_APP
+            is NavigationItem.ApkItem -> VIEW_TYPE_APP
             is NavigationItem.FlowItem -> VIEW_TYPE_FLOW
             is NavigationItem.StepItem -> VIEW_TYPE_STEP
         }
@@ -111,7 +110,7 @@ class NavigationAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = flatItems[position]) {
-            is NavigationItem.AppItem -> {
+            is NavigationItem.ApkItem -> {
                 (holder as AppViewHolder).bind(item)
             }
             is NavigationItem.FlowItem -> {
@@ -134,11 +133,11 @@ class NavigationAdapter(
         private val appDescriptionTextView: TextView = itemView.findViewById(R.id.appDescriptionTextView)
         private val flowCountTextView: TextView = itemView.findViewById(R.id.flowCountTextView)
         
-        fun bind(app: NavigationItem.AppItem) {
+        fun bind(app: NavigationItem.ApkItem) {
             // 设置应用名称
             appNameTextView.text = app.name
             
-            // We don't have description in AppItem anymore, so hide the description view
+            // We don't have description in ApkItem anymore, so hide the description view
             appDescriptionTextView.visibility = View.GONE
             
             // 设置流程数量
@@ -194,7 +193,7 @@ class NavigationAdapter(
     }
 
     inner class PageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val pageNameTextView: TextView = itemView.findViewById(R.id.pageNameTextView)
+        private val pageNameTextView: TextView = itemView.findViewById(R.id.stepNameTextView)
 
         fun bind(page: NavigationItem.StepItem) {
             // 设置缩进

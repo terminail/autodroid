@@ -32,7 +32,7 @@ class FlowFragment : Fragment() {
             // 将flowItem的基本信息存入Bundle
             args.putString("flow_name", flowItem.name)
             args.putString("flow_description", flowItem.description)
-            args.putSerializable("apks", ArrayList(flowItem.pages ?: emptyList()))
+            args.putSerializable("apks", ArrayList(flowItem.steps ?: emptyList()))
             fragment.arguments = args
             return fragment
         }
@@ -41,8 +41,8 @@ class FlowFragment : Fragment() {
     private lateinit var headerTitleTextView: TextView
     private lateinit var flowNameTextView: TextView
     private lateinit var flowDescriptionTextView: TextView
-    private lateinit var pagesRecyclerView: RecyclerView
-    private lateinit var pagesAdapter: FlowStepsAdapter
+    private lateinit var stepsRecyclerView: RecyclerView
+    private lateinit var flowStepsAdapter: FlowStepsAdapter
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,7 +54,7 @@ class FlowFragment : Fragment() {
         headerTitleTextView = view.findViewById(R.id.headerTitleTextView)
         flowNameTextView = view.findViewById(R.id.flowNameTextView)
         flowDescriptionTextView = view.findViewById(R.id.flowDescriptionTextView)
-        pagesRecyclerView = view.findViewById(R.id.pagesRecyclerView)
+        stepsRecyclerView = view.findViewById(R.id.stepsRecyclerView)
         
         return view
     }
@@ -72,7 +72,7 @@ class FlowFragment : Fragment() {
             // 设置流程信息
             val flowName = arguments?.getString("flow_name") ?: ""
             val flowDescription = arguments?.getString("flow_description") ?: ""
-            val pages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val steps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arguments?.getSerializable("apks", ArrayList::class.java) ?: arrayListOf()
         } else {
             @Suppress("DEPRECATION")
@@ -84,11 +84,11 @@ class FlowFragment : Fragment() {
             flowDescriptionTextView.text = flowDescription
             
             // 设置页面列表
-            pagesAdapter = FlowStepsAdapter(pages) { pageItem ->
+            flowStepsAdapter = FlowStepsAdapter(steps) { pageItem ->
                 onPageClick(pageItem)
             }
-            pagesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-            pagesRecyclerView.adapter = pagesAdapter
+            stepsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+            stepsRecyclerView.adapter = flowStepsAdapter
         } catch (e: Exception) {
             Log.e(TAG, "Error in onViewCreated", e)
             Toast.makeText(
@@ -248,7 +248,7 @@ class FlowFragment : Fragment() {
      * 流程页面适配器
      */
     private inner class FlowStepsAdapter(
-        private val pages: java.util.ArrayList<out Any>,
+        private val steps: java.util.ArrayList<out Any>,
         private val onPageClick: (NavigationItem.StepItem) -> Unit
     ) : RecyclerView.Adapter<FlowStepsAdapter.StepViewHolder>() {
         
@@ -259,22 +259,22 @@ class FlowFragment : Fragment() {
         }
         
         override fun onBindViewHolder(holder: StepViewHolder, position: Int) {
-            holder.bind(pages[position] as NavigationItem.StepItem)
+            holder.bind(steps[position] as NavigationItem.StepItem)
         }
         
-        override fun getItemCount(): Int = pages.size
+        override fun getItemCount(): Int = steps.size
         
         inner class StepViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val pageNameTextView: TextView = itemView.findViewById(R.id.pageNameTextView)
-            private val pageDescriptionTextView: TextView = itemView.findViewById(R.id.pageDescriptionTextView)
+            private val pageNameTextView: TextView = itemView.findViewById(R.id.stepNameTextView)
+            private val pageDescriptionTextView: TextView = itemView.findViewById(R.id.stepDescriptionTextView)
             
-            fun bind(pageItem: NavigationItem.StepItem) {
+            fun bind(stepItem: NavigationItem.StepItem) {
                 try {
-                    pageNameTextView.text = pageItem.name
+                    pageNameTextView.text = stepItem.name
                     
                     // 设置页面描述
-                    if (pageItem.description.isNotEmpty()) {
-                        pageDescriptionTextView.text = pageItem.description
+                    if (stepItem.description.isNotEmpty()) {
+                        pageDescriptionTextView.text = stepItem.description
                         pageDescriptionTextView.visibility = View.VISIBLE
                     } else {
                         pageDescriptionTextView.visibility = View.GONE
@@ -282,7 +282,7 @@ class FlowFragment : Fragment() {
                     
                     itemView.setOnClickListener {
                         try {
-                            onPageClick(pageItem)
+                            onPageClick(stepItem)
                         } catch (e: Exception) {
                             Log.e(TAG, "Error handling page click", e)
                             Toast.makeText(

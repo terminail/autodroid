@@ -10,7 +10,7 @@ sealed class NavigationItem : Serializable {
     /**
      * 应用程序项 - Represents an application in the navigation
      */
-    data class AppItem(
+    data class ApkItem(
         val name: String,
         val packageName: String,
         val iconResourceName: String? = null,
@@ -26,10 +26,10 @@ sealed class NavigationItem : Serializable {
     data class FlowItem(
         val name: String,
         val description: String = "",
-        var pages: List<StepItem>? = null,
+        var steps: List<StepItem>? = null,
         var isExpanded: Boolean = false
     ) : NavigationItem(), Serializable {
-        fun hasPages(): Boolean = pages?.isNotEmpty() == true
+        fun hasPages(): Boolean = steps?.isNotEmpty() == true
     }
     
     /**
