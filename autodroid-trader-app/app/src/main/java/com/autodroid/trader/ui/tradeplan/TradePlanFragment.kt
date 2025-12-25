@@ -1,5 +1,6 @@
 package com.autodroid.trader.ui.tradeplan
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -30,6 +31,7 @@ class TradePlanFragment : BaseFragment() {
 
     private lateinit var tradePlanTitle: TextView
     private lateinit var stockDetailAdapter: StockDetailAdapter
+    private lateinit var newsAdapter: NewsAdapter
 
     private val stockDetailViewModel: StockDetailViewModel by activityViewModels()
 
@@ -62,6 +64,16 @@ class TradePlanFragment : BaseFragment() {
             findNavController().navigateUp()
         }
 
+        val rotateScreenButton = view.findViewById<TextView>(R.id.rotate_screen_button)
+        rotateScreenButton.setOnClickListener {
+            val currentOrientation = requireActivity().requestedOrientation
+            if (currentOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            } else {
+                requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            }
+        }
+
         val stockDetailRecyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.stock_detail_recycler_view)
         stockDetailAdapter = StockDetailAdapter(
             items = emptyList(),
@@ -71,12 +83,26 @@ class TradePlanFragment : BaseFragment() {
         )
         stockDetailRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         stockDetailRecyclerView.adapter = stockDetailAdapter
+
+        val newsRecyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.news_recycler_view)
+        if (newsRecyclerView != null) {
+            newsAdapter = NewsAdapter(newsList = emptyList())
+            newsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+            newsRecyclerView.adapter = newsAdapter
+        }
     }
 
     override fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             stockDetailViewModel.stockDetailItems.collect { items ->
                 stockDetailAdapter.updateItems(items)
+                
+                if (::newsAdapter.isInitialized) {
+                    val newsItem = items.find { it is StockDetailItem.News }
+                    if (newsItem is StockDetailItem.News) {
+                        newsAdapter.updateItems(newsItem.newsList)
+                    }
+                }
             }
         }
     }

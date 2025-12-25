@@ -9,8 +9,13 @@ import com.autodroid.trader.R
 import com.autodroid.trader.ui.tradeplan.StockDetailItem
 
 class NewsAdapter(
-    private val newsList: List<StockDetailItem.News.NewsItem>
+    private var newsList: List<StockDetailItem.News.NewsItem>
 ) : RecyclerView.Adapter<NewsAdapter.NewsItemViewHolder>() {
+
+    fun updateItems(newNewsList: List<StockDetailItem.News.NewsItem>) {
+        newsList = newNewsList
+        notifyDataSetChanged()
+    }
 
     class NewsItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val titleView: TextView = view.findViewById(R.id.news_title)
