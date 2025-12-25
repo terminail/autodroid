@@ -83,12 +83,12 @@ cd /d/git/autodroid/autodroid-trader-server && conda activate autodroid && pip i
 
 3. 启动 Autodroid 服务器（推荐方式）：
    ```bash
-   cd 'd:/git/autodroid/autodroid-trader-server'; conda activate autodroid; python run_server.py
+   cd 'd:/git/autodroid/autodroid-trader-server/backend'; conda activate autodroid; python run_server.py
    ```
 
 4. **Windows用户**：
    ```bash
-   cd 'd:/git/autodroid/autodroid-trader-server'; conda activate autodroid; ./start_server.bat
+   cd 'd:/git/autodroid/autodroid-trader-server/backend'; conda activate autodroid; ./start_server.bat
    ```
 
 ### Docker 方式
