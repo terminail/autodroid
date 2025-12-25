@@ -24,6 +24,14 @@ class ItemTradePlanSummaryManager(
     }
     
     private var currentItem = TradePlansItem.ItemTradePlansSummary()
+    private var adapter: TradePlansAdapter? = null
+    
+    /**
+     * Set the adapter for UI updates
+     */
+    fun setAdapter(tradePlansAdapter: TradePlansAdapter?) {
+        this.adapter = tradePlansAdapter
+    }
     
     /**
      * Initialize the ItemTradePlanSummaryManager
@@ -38,7 +46,7 @@ class ItemTradePlanSummaryManager(
     private fun setupObservers() {
         Log.d(TAG, "setupObservers: 开始设置观察者")
         
-        // Observe trade plan summary from TradePlansViewModel (single source of truth)
+        // Observe trade plan summary from TradePlansViewModel
         tradePlansViewModel.tradePlanSummary.observe(lifecycleOwner) { summary ->
             Log.d(TAG, "TradePlansViewModel tradePlanSummary updated: $summary")
             summary?.let {

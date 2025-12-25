@@ -23,31 +23,23 @@ class TradePlansFragment : BaseFragment() {
     private var tradePlansRecyclerView: RecyclerView? = null
     private var adapter: TradePlansAdapter? = null
     
-    // Trade plan manager
     private lateinit var tradePlanManager: TradePlanManager
     
-    // TradePlansViewModel
     private val tradePlansViewModel: TradePlansViewModel by viewModels()
     
-    // Pull-down detection for fragment header
     private var appBarLayout: AppBarLayout? = null
     private var touchStartY = 0f
     private var isPullingDown = false
     private var touchSlop = 0
     
-    // Selection mode state
-    private var isSelectionMode = false
-    private val selectedTradePlans = mutableSetOf<String>()
-    
-    // Status filter state
     private val selectedStatusFilters = mutableSetOf<String>()
     
-    // Item managers for modular architecture
     private lateinit var itemTradePlanManager: ItemTradePlanManager
     private lateinit var itemTradePlanSummaryManager: ItemTradePlanSummaryManager
     
-    // Trade plan items list
     private val tradePlansItemsList = mutableListOf<Any>()
+    
+    private var isSelectionMode = false
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,24 +53,18 @@ class TradePlansFragment : BaseFragment() {
     override fun initViews(view: View) {
         tradePlansRecyclerView = view?.findViewById<RecyclerView>(R.id.tradeplans_recycler_view)
         
-        // Find AppBarLayout
         appBarLayout = view.findViewById(R.id.app_bar_layout)
         
-        // Initialize touch slop for pull-down detection
         touchSlop = ViewConfiguration.get(requireContext()).scaledTouchSlop
 
-        // Set up RecyclerView
         tradePlansRecyclerView!!.setLayoutManager(LinearLayoutManager(getContext()))
         
-        // Set up touch listener for pull-down detection
         tradePlansRecyclerView!!.setOnTouchListener { _, event ->
             handleTouchEvent(event)
         }
         
-        // Initialize item managers FIRST
         Log.d(TAG, "开始初始化 itemTradePlanManager")
         
-        // Initialize TradePlansViewModel
         tradePlansViewModel.initialize()
         
         itemTradePlanManager = ItemTradePlanManager(
@@ -97,7 +83,6 @@ class TradePlansFragment : BaseFragment() {
         )
         Log.d(TAG, "itemTradePlanSummaryManager 初始化完成")
         
-        // Initialize TradePlansAdapter
         adapter = TradePlansAdapter(
             null,
             object : TradePlansAdapter.OnTradePlanClickListener {
@@ -108,23 +93,20 @@ class TradePlansFragment : BaseFragment() {
                 }
                 
                 override fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?) {
+                    android.util.Log.d(TAG, "onTradePlanLongClick: entityId=${tradePlanEntity?.id}")
                     if (!isSelectionMode) {
                         enterSelectionMode()
-                    }
-                }
-                
-                override fun onTradePlanStatusToggle(tradePlanEntity: TradePlanEntity?) {
-                    if (isSelectionMode) {
                         tradePlanEntity?.id?.let { id ->
-                            tradePlansViewModel.toggleTradePlanStatus(id, tradePlanEntity.status)
+                            selectTradePlan(id)
                         }
                     }
                 }
                 
-                override fun onSelectionChanged(selectedIds: Set<String>) {
-                    selectedTradePlans.clear()
-                    selectedTradePlans.addAll(selectedIds)
-                    updateCommandSection()
+                override fun onTradePlanStatusToggle(tradePlanEntity: TradePlanEntity?) {
+                    android.util.Log.d(TAG, "onTradePlanStatusToggle: entityId=${tradePlanEntity?.id}, status=${tradePlanEntity?.status}")
+                    if (tradePlanEntity != null) {
+                        tradePlansViewModel.toggleTradePlanStatus(tradePlanEntity.id, tradePlanEntity.status)
+                    }
                 }
                 
                 override fun onExecuteApprovedPlans() {
@@ -133,6 +115,7 @@ class TradePlansFragment : BaseFragment() {
                 }
                 
                 override fun onCompleteSelection() {
+                    android.util.Log.d(TAG, "onCompleteSelection: exit selection mode")
                     exitSelectionMode()
                 }
                 
@@ -156,14 +139,38 @@ class TradePlansFragment : BaseFragment() {
         )
         tradePlansRecyclerView!!.setAdapter(adapter)
         
-        // Start item managers
+        itemTradePlanSummaryManager.setAdapter(adapter)
+        
         Log.d(TAG, "调用 itemTradePlanManager.initialize()")
         itemTradePlanManager.initialize()
         Log.d(TAG, "itemTradePlanManager.initialize() 调用完成")
         itemTradePlanSummaryManager.initialize()
         
-        // Initial update of command section
         updateCommandSection()
+    }
+    
+    private fun enterSelectionMode() {
+        android.util.Log.d(TAG, "enterSelectionMode")
+        isSelectionMode = true
+        adapter?.setSelectionMode(true)
+        updateSummarySection()
+    }
+    
+    private fun exitSelectionMode() {
+        android.util.Log.d(TAG, "exitSelectionMode")
+        isSelectionMode = false
+        adapter?.setSelectionMode(false)
+        updateSummarySection()
+    }
+    
+    private fun selectTradePlan(tradePlanId: String) {
+        android.util.Log.d(TAG, "selectTradePlan: $tradePlanId")
+        adapter?.setSelectionMode(true)
+    }
+    
+    private fun toggleTradePlanSelection(tradePlanId: String) {
+        android.util.Log.d(TAG, "toggleTradePlanSelection: $tradePlanId")
+        adapter?.setSelectionMode(true)
     }
 
     override fun setupObservers() {
@@ -188,9 +195,6 @@ class TradePlansFragment : BaseFragment() {
         Log.d(TAG, "setupObservers: 观察者设置完成")
     }
     
-    /**
-     * Apply status filter to trade plans
-     */
     private fun applyStatusFilter() {
         val allItems = tradePlansItemsList.filterIsInstance<TradePlanEntity>()
         
@@ -200,7 +204,7 @@ class TradePlansFragment : BaseFragment() {
             allItems.filter { entity ->
                 val status = entity.status?.uppercase() ?: ""
                 val executionResult = entity.executionResult?.uppercase() ?: ""
-                
+
                 when (status) {
                     "PENDING" -> selectedStatusFilters.contains("PENDING")
                     "APPROVED" -> selectedStatusFilters.contains("APPROVED")
@@ -226,27 +230,18 @@ class TradePlansFragment : BaseFragment() {
         adapter?.updateItems(adapterItems)
     }
     
-    /**
-     * Callback for trade plan item updates
-     */
     private fun onTradePlanItemUpdate(item: TradePlansItem) {
         if (item is TradePlansItem.ItemTradePlans) {
             Log.d(TAG, "onTradePlanItemUpdate called: status=${item.status}, executionStatus=${item.executionStatus}")
         }
     }
     
-    /**
-     * Callback for trade plan summary item updates
-     */
     private fun onTradePlanSummaryItemUpdate(item: TradePlansItem) {
         if (item is TradePlansItem.ItemTradePlansSummary) {
             Log.d(TAG, "onTradePlanSummaryItemUpdate called: status=${item.status}")
         }
     }
     
-    /**
-     * Update summary section with current data
-     */
     private fun updateSummarySection() {
         var pendingCount = 0
         var approvedCount = 0
@@ -283,43 +278,16 @@ class TradePlansFragment : BaseFragment() {
         adapter?.updateSummary(summary)
     }
     
-    /**
-     * 进入多选模式
-     */
-    private fun enterSelectionMode() {
-        isSelectionMode = true
-        adapter?.setSelectionMode(true)
-        updateCommandSection()
-    }
-    
-    /**
-     * 退出多选模式
-     */
-    private fun exitSelectionMode() {
-        isSelectionMode = false
-        adapter?.setSelectionMode(false)
-        selectedTradePlans.clear()
-        updateCommandSection()
-    }
-    
-    /**
-     * 更新命令区域状态
-     */
     private fun updateCommandSection() {
-        adapter?.notifyItemChanged(0)
+        android.util.Log.d(TAG, "updateCommandSection: isSelectionMode=$isSelectionMode")
+        adapter?.setSelectionMode(isSelectionMode)
         updateSummarySection()
     }
     
-    /**
-     * 刷新交易计划数据
-     */
     private fun refreshTradePlans() {
         tradePlansViewModel.refresh()
     }
     
-    /**
-     * 显示消息
-     */
     private fun showMessage(message: String) {
         android.util.Log.d(TAG, message)
     }
@@ -337,9 +305,6 @@ class TradePlansFragment : BaseFragment() {
         }
     }
     
-    /**
-     * Handle touch events for pull-down detection
-     */
     private fun handleTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -349,11 +314,9 @@ class TradePlansFragment : BaseFragment() {
             MotionEvent.ACTION_MOVE -> {
                 val deltaY = event.y - touchStartY
                 
-                // Check if pulling down at the top of the list
                 if (deltaY > touchSlop && !isPullingDown) {
                     val layoutManager = tradePlansRecyclerView?.layoutManager as? LinearLayoutManager
                     if (layoutManager?.findFirstVisibleItemPosition() == 0) {
-                        // At the top of the list and pulling down
                         isPullingDown = true
                         appBarLayout?.visibility = VISIBLE
                         return true

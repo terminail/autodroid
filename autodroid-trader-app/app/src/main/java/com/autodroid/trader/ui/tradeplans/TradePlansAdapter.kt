@@ -14,7 +14,7 @@ import com.autodroid.trader.data.dao.TradePlanEntity
 class TradePlansAdapter(
     private var items: MutableList<Any>?,
     private val listener: OnTradePlanClickListener?
-) : RecyclerView.Adapter<RecyclerView.ViewHolder?>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     companion object {
         private const val TAG = "TradePlanAdapter"
@@ -22,15 +22,13 @@ class TradePlansAdapter(
         private const val TYPE_SUMMARY = 1
     }
     
-    // 多选模式状态
+    private var currentSummary: TradePlanSummary? = null
     private var isSelectionMode = false
-    private val selectedTradePlans = mutableSetOf<String>()
     
     interface OnTradePlanClickListener {
         fun onTradePlanClick(tradePlanEntity: TradePlanEntity?)
         fun onTradePlanLongClick(tradePlanEntity: TradePlanEntity?)
         fun onTradePlanStatusToggle(tradePlanEntity: TradePlanEntity?)
-        fun onSelectionChanged(selectedIds: Set<String>)
         fun onExecuteApprovedPlans()
         fun onCompleteSelection()
         fun onStatusFilterChanged(status: String, isChecked: Boolean)
@@ -61,7 +59,7 @@ class TradePlansAdapter(
             TYPE_TRADE_PLAN -> {
                 val tradePlanEntity = items!![position] as TradePlanEntity
                 val tradePlanHolder = holder as TradePlanViewHolder
-                tradePlanHolder.bind(tradePlanEntity, isSelectionMode, selectedTradePlans.contains(tradePlanEntity.id))
+                tradePlanHolder.bind(tradePlanEntity, isSelectionMode)
             }
         }
     }
@@ -91,8 +89,6 @@ class TradePlansAdapter(
         this.items = newItems
         notifyDataSetChanged()
     }
-    
-    private var currentSummary: TradePlanSummary? = null
     
     fun updateSummary(summary: TradePlanSummary) {
         currentSummary = summary
@@ -138,17 +134,14 @@ class TradePlansAdapter(
     }
     
     fun setSelectionMode(selectionMode: Boolean) {
-        if (isSelectionMode != selectionMode) {
-            isSelectionMode = selectionMode
-            if (!selectionMode) {
-                selectedTradePlans.clear()
-            }
-            notifyDataSetChanged()
-        }
+        android.util.Log.d(TAG, "setSelectionMode: selectionMode=$selectionMode")
+        isSelectionMode = selectionMode
+        notifyDataSetChanged()
     }
     
-    fun getSelectedTradePlans(): Set<String> {
-        return selectedTradePlans.toSet()
+    fun clearSelection() {
+        isSelectionMode = false
+        notifyDataSetChanged()
     }
 
     inner class TradePlanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -172,9 +165,8 @@ class TradePlansAdapter(
             statusView = itemView.findViewById(R.id.trade_plan_status)
         }
 
-        fun bind(tradePlanEntity: TradePlanEntity, isSelectionMode: Boolean, isSelected: Boolean) {
+        fun bind(tradePlanEntity: TradePlanEntity, isSelectionMode: Boolean) {
             val displayTime = tradePlanEntity.getDisplayTime()
-            android.util.Log.d(TAG, "bind: id=${tradePlanEntity.id}, createdAt=${tradePlanEntity.createdAt}, displayTime='$displayTime'")
             timestampView.text = displayTime
             nameView.text = tradePlanEntity.getDisplayName()
             timeView.text = displayTime
@@ -197,6 +189,7 @@ class TradePlansAdapter(
             val canToggleStatus = status.lowercase() in listOf("pending", "approved", "rejected")
             
             if (isSelectionMode && canToggleStatus) {
+                android.util.Log.d(TAG, "bind: SELECTION MODE, entityId=${tradePlanEntity.id}")
                 checkboxView.visibility = View.VISIBLE
                 iconView.visibility = View.GONE
                 
@@ -219,21 +212,23 @@ class TradePlansAdapter(
                 }
                 
                 checkboxView.setOnClickListener {
+                    android.util.Log.d(TAG, "checkboxView click: calling onTradePlanStatusToggle")
                     listener?.onTradePlanStatusToggle(tradePlanEntity)
                 }
                 
-                itemView.setOnClickListener {
-                    listener?.onTradePlanStatusToggle(tradePlanEntity)
-                }
+                itemView.setOnClickListener(null)
                 itemView.setOnLongClickListener(null)
             } else {
+                android.util.Log.d(TAG, "bind: NORMAL MODE, entityId=${tradePlanEntity.id}")
                 checkboxView.visibility = View.GONE
                 iconView.visibility = View.VISIBLE
+                checkboxView.setOnClickListener(null)
                 
                 itemView.setOnClickListener {
                     listener?.onTradePlanClick(tradePlanEntity)
                 }
                 itemView.setOnLongClickListener {
+                    android.util.Log.d(TAG, "onLongClick: entityId=${tradePlanEntity.id}")
                     listener?.onTradePlanLongClick(tradePlanEntity)
                     true
                 }
@@ -338,7 +333,7 @@ class TradePlansAdapter(
                            summaryToUse.rejectedCount + summaryToUse.executedSuccessCount + 
                            summaryToUse.executedFailedCount
             
-            android.util.Log.d(TAG, "SummaryViewHolder.bind: pending=${summaryToUse.pendingCount}, approved=${summaryToUse.approvedCount}, rejected=${summaryToUse.rejectedCount}, completed=${summaryToUse.executedSuccessCount}, failed=${summaryToUse.executedFailedCount}")
+            android.util.Log.d(TAG, "SummaryViewHolder.bind: isSelectionMode=$isSelectionMode")
             
             textAllCount.text = totalCount.toString()
             textPendingCount.text = summaryToUse.pendingCount.toString()
@@ -348,8 +343,16 @@ class TradePlansAdapter(
             textFailedCount.text = summaryToUse.executedFailedCount.toString()
             
             executeApprovedButton.isEnabled = summaryToUse.approvedCount > 0
-            android.util.Log.d(TAG, "bind: approvedCount=${summaryToUse.approvedCount}, executeApprovedButton.isEnabled=${executeApprovedButton.isEnabled}")
-            completeButton.visibility = if (selectedTradePlans.isNotEmpty()) View.VISIBLE else View.GONE
+            
+            if (isSelectionMode) {
+                android.util.Log.d(TAG, "SummaryViewHolder: SHOWING completeButton")
+                executeApprovedButton.visibility = View.GONE
+                completeButton.visibility = View.VISIBLE
+            } else {
+                android.util.Log.d(TAG, "SummaryViewHolder: SHOWING executeApprovedButton")
+                executeApprovedButton.visibility = View.VISIBLE
+                completeButton.visibility = View.GONE
+            }
         }
     }
     

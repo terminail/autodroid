@@ -99,39 +99,6 @@ class TradePlansViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
     }
-    
-    /**
-     * 批量更新交易计划状态
-     * @param statusUpdates Map<交易计划ID, 初始状态>
-     * @param selectedIds 选中的交易计划ID集合
-     */
-    fun batchUpdateTradePlanStatuses(statusUpdates: Map<String, String>, selectedIds: Set<String>) {
-        viewModelScope.launch {
-            try {
-                selectedIds.forEach { id ->
-                    val initialStatus = statusUpdates[id]
-                    val targetStatus = com.autodroid.trader.network.TradePlanStatus.APPROVED.value
-                    
-                    if (initialStatus != targetStatus) {
-                        try {
-                            val result = tradePlanManager.updateAndSyncTradePlan(id, targetStatus)
-                            if (result != null) {
-                                android.util.Log.d("TradePlansViewModel", "交易计划 $id 状态已同步: $initialStatus -> $targetStatus")
-                            } else {
-                                android.util.Log.e("TradePlansViewModel", "交易计划 $id 状态同步失败")
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("TradePlansViewModel", "同步交易计划 $id 状态失败: ${e.message}")
-                        }
-                    }
-                }
-                
-                refresh()
-            } catch (e: Exception) {
-                android.util.Log.e("TradePlansViewModel", "批量更新交易计划状态失败: ${e.message}")
-            }
-        }
-    }
 }
 
 /**
