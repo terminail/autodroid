@@ -337,17 +337,19 @@ class TradePlanService:
             logger.error(f"删除交易计划失败: {e}")
             return False
     
-    def create_demo_tradeplans(self) -> Dict[str, Any]:
-        """创建演示用的交易计划数据"""
+    def create_or_update_demo_tradeplans(self) -> Dict[str, Any]:
+        """创建或更新演示用的交易计划数据"""
         try:
-            created_count = self.tradeplan_db.create_demo_tradeplans()
+            result = self.tradeplan_db.create_or_update_demo_tradeplans()
             return {
-                "message": f"成功创建 {created_count} 个演示交易计划",
-                "created_count": created_count
+                "message": f"成功创建 {result['created']} 个演示交易计划，更新 {result['updated']} 个",
+                "created_count": result['created'],
+                "updated_count": result['updated']
             }
         except Exception as e:
-            logger.error(f"创建演示交易计划失败: {e}")
+            logger.error(f"创建/更新演示交易计划失败: {e}")
             return {
-                "message": f"创建演示交易计划失败: {str(e)}",
-                "created_count": 0
+                "message": f"创建/更新演示交易计划失败: {str(e)}",
+                "created_count": 0,
+                "updated_count": 0
             }

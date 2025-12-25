@@ -206,9 +206,17 @@ class TradePlanDatabase(BaseDatabase):
             "execution_message": tradeplan.execution_message
         }
     
-    def create_demo_tradeplans(self) -> int:
-        """创建演示用的交易计划数据"""
+    def create_or_update_demo_tradeplans(self) -> Dict[str, int]:
+        """创建或更新演示用的交易计划数据"""
         try:
+            from ..database.models import TradeScript
+            
+            existing_scripts = list(TradeScript.select().limit(1))
+            if not existing_scripts:
+                return {"created": 0, "updated": 0}
+            
+            script_id = existing_scripts[0].id
+            
             demo_tradeplans = [
                 {
                     "name": "网格交易策略 - 腾讯控股",
@@ -255,17 +263,39 @@ class TradePlanDatabase(BaseDatabase):
             ]
             
             created_count = 0
-            for demo in demo_tradeplans:
-                tradeplan_id = self.create_tradeplan(
-                    name=demo["name"],
-                    description=demo["description"],
-                    data=demo["data"],
-                    status=demo["status"]
-                )
-                if tradeplan_id:
-                    created_count += 1
+            updated_count = 0
             
-            return created_count
+            for demo in demo_tradeplans:
+                existing = self.get_tradeplan_by_name(demo["name"])
+                
+                if existing:
+                    self.update_tradeplan(
+                        tradeplan_id=existing["id"],
+                        description=demo["description"],
+                        data=demo["data"],
+                        status=demo["status"]
+                    )
+                    updated_count += 1
+                else:
+                    tradeplan_id = self.create_tradeplan(
+                        script_id=script_id,
+                        name=demo["name"],
+                        description=demo["description"],
+                        data=demo["data"],
+                        status=demo["status"]
+                    )
+                    if tradeplan_id:
+                        created_count += 1
+            
+            return {"created": created_count, "updated": updated_count}
             
         except Exception:
-            return 0
+            return {"created": 0, "updated": 0}
+    
+    def get_tradeplan_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """根据名称获取交易计划"""
+        try:
+            tradeplan = TradePlan.get(TradePlan.name == name)
+            return self._tradeplan_to_dict(tradeplan)
+        except Exception:
+            return None

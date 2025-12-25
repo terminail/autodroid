@@ -135,10 +135,10 @@ async def delete_tradeplan(tradeplan_id: str):
 
 
 @router.post("/demo/create")
-async def create_demo_tradeplans():
-    """创建演示用的交易计划数据"""
+async def create_or_update_demo_tradeplans():
+    """创建或更新演示用的交易计划数据"""
     try:
-        result = tradeplan_service.create_demo_tradeplans()
+        result = tradeplan_service.create_or_update_demo_tradeplans()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
