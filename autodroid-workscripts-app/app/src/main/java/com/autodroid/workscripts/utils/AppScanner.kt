@@ -18,7 +18,7 @@ object AppScanner {
         try {
             // 获取assets/pages目录下的所有应用文件夹
             val assetManager = context.assets
-            val appFolders = assetManager.list("pages") ?: emptyArray()
+            val appFolders = assetManager.list("apks") ?: emptyArray()
             
             println("Found app folders: ${appFolders.joinToString(", ")}")
             
@@ -49,7 +49,7 @@ object AppScanner {
      */
     private fun scanApp(context: Context, appFolder: String): NavigationItem.AppItem {
         // 读取应用配置文件
-        val configContent = context.assets.open("pages/$appFolder/config.yaml").bufferedReader().use { it.readText() }
+        val configContent = context.assets.open("apks/$appFolder/config.yaml").bufferedReader().use { it.readText() }
         val yaml = Yaml()
         val configMap = yaml.load<Map<String, Any>>(configContent)
         
@@ -76,7 +76,7 @@ object AppScanner {
         try {
             // 获取应用文件夹下的所有子文件夹（流程文件夹）
             val assetManager = context.assets
-            val flowFolders = assetManager.list("pages/$appFolder") ?: emptyArray()
+            val flowFolders = assetManager.list("apks/$appFolder") ?: emptyArray()
             
             println("Found ${flowFolders.size} potential flow folders in $appFolder")
             
@@ -96,7 +96,7 @@ object AppScanner {
                     
                     if (flowItem != null) {
                         flows.add(flowItem)
-                        println("Added flow: ${flowItem.name} with ${flowItem.pages?.size ?: 0} pages")
+                        println("Added flow: ${flowItem.name} with ${flowItem.pages?.size ?: 0} apks")
                     } else {
                         println("Failed to scan flow: $flowPath")
                     }

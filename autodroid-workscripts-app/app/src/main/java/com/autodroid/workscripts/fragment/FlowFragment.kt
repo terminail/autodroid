@@ -32,7 +32,7 @@ class FlowFragment : Fragment() {
             // 将flowItem的基本信息存入Bundle
             args.putString("flow_name", flowItem.name)
             args.putString("flow_description", flowItem.description)
-            args.putSerializable("pages", ArrayList(flowItem.pages ?: emptyList()))
+            args.putSerializable("apks", ArrayList(flowItem.pages ?: emptyList()))
             fragment.arguments = args
             return fragment
         }
@@ -73,10 +73,10 @@ class FlowFragment : Fragment() {
             val flowName = arguments?.getString("flow_name") ?: ""
             val flowDescription = arguments?.getString("flow_description") ?: ""
             val pages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arguments?.getSerializable("pages", ArrayList::class.java) ?: arrayListOf()
+            arguments?.getSerializable("apks", ArrayList::class.java) ?: arrayListOf()
         } else {
             @Suppress("DEPRECATION")
-            arguments?.getSerializable("pages") as? ArrayList<*> ?: arrayListOf()
+            arguments?.getSerializable("apks") as? ArrayList<*> ?: arrayListOf()
         }
             
             headerTitleTextView.text = flowName
@@ -164,7 +164,7 @@ class FlowFragment : Fragment() {
     }
     
     /**
- * Handle back navigation from the flow pages fragment
+ * Handle back navigation from the flow apks fragment
  */
     private fun handleBackNavigation() {
         try {

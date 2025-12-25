@@ -16,9 +16,7 @@ import com.autodroid.workscripts.model.NavigationItem
 import com.autodroid.workscripts.utils.AppiumXmlParser
 import com.autodroid.workscripts.utils.ControlGridAdapter
 import com.autodroid.workscripts.utils.ControlInfo
-import java.io.File
-import java.io.StringReader
-import org.xmlpull.v1.XmlPullParserFactory
+
 open class StepFragment : Fragment() {
     private lateinit var gridView: GridView
     private lateinit var headerTitleTextView: TextView
@@ -92,14 +90,14 @@ open class StepFragment : Fragment() {
     private fun loadAndSetBackground(view: View, screenshotName: String, fullPath: String) {
         try {
             // Extract the app package name from the full path
-            // Expected format: pages/com.tdx.androidCCZQ/netgrid-trading/config.yaml
+            // Expected format: apks/com.tdx.androidCCZQ/netgrid-trading/config.yaml
             val pathParts = fullPath.split("/")
             if (pathParts.size >= 3) {
                 val appPackageName = pathParts[1] // e.g., "com.tdx.androidCCZQ"
                 val flowName = pathParts[2]       // e.g., "netgrid-trading"
                 
                 // Construct the full asset path for the screenshot
-                val screenshotPath = "pages/$appPackageName/$flowName/$screenshotName"
+                val screenshotPath = "apks/$appPackageName/$flowName/$screenshotName"
                 Log.d("StepPageFragment", "Loading screenshot from: $screenshotPath")
                 
                 // Load the bitmap from assets
@@ -145,15 +143,15 @@ open class StepFragment : Fragment() {
     private fun loadAndDisplayControls() {
         try {
             // Get the step file path from arguments or use default
-            val stepFilePath = arguments?.getString(ARG_STEP_FILE_PATH) ?: "pages/cn.com.gjzq.yjb2/testflowa/step1.xml"
+            val stepFilePath = arguments?.getString(ARG_STEP_FILE_PATH) ?: "apks/cn.com.gjzq.yjb2/testflowa/step1.xml"
             
             Log.d("AppiumXml", "Loading XML file: $stepFilePath")
             
-            // Ensure the path starts with "pages/"
-            val fullPath = if (stepFilePath.startsWith("pages/")) {
+            // Ensure the path starts with "apks/"
+            val fullPath = if (stepFilePath.startsWith("apks/")) {
                 stepFilePath
             } else {
-                "pages/$stepFilePath"
+                "apks/$stepFilePath"
             }
             
             Log.d("AppiumXml", "Full path: $fullPath")

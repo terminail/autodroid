@@ -15,7 +15,7 @@ object StepScanner {
         val pages = mutableListOf<NavigationItem.StepItem>()
         
         try {
-            println("Scanning pages in folder: $folderPath")
+            println("Scanning apks in folder: $folderPath")
             
             // 获取文件夹下的所有文件
             val fileNames = context.assets.list(folderPath) ?: emptyArray()
@@ -37,7 +37,7 @@ object StepScanner {
             pages.sortBy { it.name }
             
         } catch (e: Exception) {
-            println("Error scanning pages in $folderPath: ${e.message}")
+            println("Error scanning apks in $folderPath: ${e.message}")
         }
         
         return pages

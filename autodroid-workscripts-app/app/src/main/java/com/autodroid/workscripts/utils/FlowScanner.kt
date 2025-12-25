@@ -17,7 +17,7 @@ object FlowScanner {
             println("Scanning flow: $flowPath")
             
             // 读取流程配置文件
-            val configContent = context.assets.open("pages/$flowPath/config.yaml").bufferedReader().use { it.readText() }
+            val configContent = context.assets.open("apks/$flowPath/config.yaml").bufferedReader().use { it.readText() }
             val yaml = Yaml()
             val configMap = yaml.load<Map<String, Any>>(configContent)
             

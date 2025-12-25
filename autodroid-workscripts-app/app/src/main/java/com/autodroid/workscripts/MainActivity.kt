@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
             fragmentContainer.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error showing flow pages fragment", e)
+            android.util.Log.e("MainActivity", "Error showing flow apks fragment", e)
             Toast.makeText(
                 this,
                 "显示流程页面失败: ${e.message}",
