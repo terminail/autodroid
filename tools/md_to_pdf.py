@@ -12,6 +12,12 @@ class ChinesePDF(FPDF):
         self.top_margin = 20
         self.bottom_margin = 20
         
+        # Set actual PDF margins
+        self.set_left_margin(self.left_margin)
+        self.set_right_margin(self.right_margin)
+        self.set_top_margin(self.top_margin)
+        self.set_auto_page_break(auto=True, margin=self.bottom_margin)
+        
         # Add Chinese font support
         # Try to find a Chinese font on Windows
         font_paths = [
@@ -50,7 +56,7 @@ class ChinesePDF(FPDF):
 
 def parse_markdown_to_pdf(md_file_path, pdf_output_path):
     pdf = ChinesePDF()
-    pdf.add_page()
+    pdf.add_page(orientation='L')
     
     # Read markdown file
     with open(md_file_path, 'r', encoding='utf-8') as f:
@@ -111,37 +117,55 @@ def parse_markdown_to_pdf(md_file_path, pdf_output_path):
             
             # Create table
             if table_data:
-                col_width = (pdf.w - pdf.left_margin - pdf.right_margin) / len(table_data[0])
+                # Calculate column width
+                available_width = pdf.w - pdf.left_margin - pdf.right_margin
+                num_cols = len(table_data[0])
+                col_width = available_width / num_cols
                 
                 # Header row
                 pdf.set_fill_color(52, 152, 219)
                 pdf.set_text_color(255, 255, 255)
                 if pdf.chinese_font:
-                    pdf.set_font(pdf.chinese_font, 'B', 8)
+                    pdf.set_font(pdf.chinese_font, 'B', 7)
                 else:
-                    pdf.set_font('Arial', 'B', 9)
+                    pdf.set_font('Arial', 'B', 8)
+                
                 for cell in table_data[0]:
-                    pdf.cell(col_width, 7, cell, border=1, fill=True)
+                    pdf.multi_cell(col_width, 6, cell, border=1, fill=True)
                 pdf.ln()
                 
                 # Data rows
                 pdf.set_text_color(0, 0, 0)
                 if pdf.chinese_font:
-                    pdf.set_font(pdf.chinese_font, '', 7)
+                    pdf.set_font(pdf.chinese_font, '', 6)
                 else:
-                    pdf.set_font('Arial', '', 8)
+                    pdf.set_font('Arial', '', 7)
                 for row in table_data[1:]:
                     fill = False
                     pdf.set_fill_color(249, 249, 249)
+                    x_start = pdf.get_x()
+                    y_start = pdf.get_y()
+                    max_height = 0
+                    
+                    # First pass: calculate max height for this row
                     for cell in row:
-                        # Wrap text if too long
-                        wrapped = textwrap.wrap(cell, width=int(col_width / 2.5))
-                        if not wrapped:
-                            wrapped = ['']
-                        pdf.cell(col_width, 7, wrapped[0], border=1, fill=fill)
-                        for wrap_line in wrapped[1:]:
-                            pdf.ln()
-                            pdf.cell(col_width, 7, wrap_line, border=1, fill=fill)
+                        pdf.set_x(x_start)
+                        pdf.set_y(y_start)
+                        # Calculate height needed for this cell
+                        num_lines = len(pdf.multi_cell(col_width, 5, cell, border=1, fill=fill, split_only=True))
+                        cell_height = num_lines * 5
+                        if cell_height > max_height:
+                            max_height = cell_height
+                    
+                    # Second pass: render cells with consistent height
+                    pdf.set_y(y_start)
+                    for cell in row:
+                        pdf.set_x(x_start)
+                        pdf.multi_cell(col_width, 5, cell, border=1, fill=fill)
+                        x_start += col_width
+                        pdf.set_y(y_start)
+                    
+                    pdf.set_y(y_start + max_height)
                     pdf.ln()
                     fill = not fill
                 pdf.ln(5)
@@ -212,8 +236,9 @@ def parse_markdown_to_pdf(md_file_path, pdf_output_path):
                 pdf.set_font(pdf.chinese_font, '', 8)
             else:
                 pdf.set_font('Arial', '', 10)
+            pdf.set_x(pdf.left_margin)
             pdf.cell(10, 5, chr(149), ln=False)
-            pdf.multi_cell(0, 5, text)
+            pdf.multi_cell(pdf.w - pdf.left_margin - pdf.right_margin - 10, 5, text)
             i += 1
             continue
         
@@ -223,7 +248,8 @@ def parse_markdown_to_pdf(md_file_path, pdf_output_path):
                 pdf.set_font(pdf.chinese_font, '', 8)
             else:
                 pdf.set_font('Arial', '', 10)
-            pdf.multi_cell(0, 5, text)
+            pdf.set_x(pdf.left_margin)
+            pdf.multi_cell(pdf.w - pdf.left_margin - pdf.right_margin, 5, text)
             i += 1
             continue
         
@@ -241,7 +267,8 @@ def parse_markdown_to_pdf(md_file_path, pdf_output_path):
                 pdf.set_font(pdf.chinese_font, '', 8)
             else:
                 pdf.set_font('Arial', '', 10)
-            pdf.multi_cell(0, 5, line)
+            pdf.set_x(pdf.left_margin)
+            pdf.multi_cell(pdf.w - pdf.left_margin - pdf.right_margin, 5, line)
             pdf.ln(2)
         
         i += 1
@@ -251,6 +278,6 @@ def parse_markdown_to_pdf(md_file_path, pdf_output_path):
     print(f'PDF generated successfully: {pdf_output_path}')
 
 if __name__ == '__main__':
-    md_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.md'
-    pdf_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.pdf'
+    md_file = r'd:\git\autodroid\tools\course_chose_complete_analysis.md'
+    pdf_file = r'd:\git\autodroid\tools\course_chose_complete_analysis.pdf'
     parse_markdown_to_pdf(md_file, pdf_file)

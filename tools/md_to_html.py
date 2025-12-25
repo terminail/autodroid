@@ -111,6 +111,6 @@ def markdown_to_html(md_file_path, html_output_path):
     print(f'HTML generated successfully: {html_output_path}')
 
 if __name__ == '__main__':
-    md_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.md'
-    html_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.html'
+    md_file = r'd:\git\autodroid\tools\course_chose.md'
+    html_file = r'd:\git\autodroid\tools\course_chose.html'
     markdown_to_html(md_file, html_file)

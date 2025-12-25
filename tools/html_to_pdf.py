@@ -12,16 +12,17 @@ def html_to_pdf(html_file_path, pdf_output_path):
         # Load HTML file
         page.goto(f'file:///{abs_html_path}')
         
-        # Generate PDF
+        # Generate PDF in landscape orientation
         page.pdf(
             path=pdf_output_path,
             format='A4',
+            landscape=True,
             print_background=True,
             margin={
-                'top': '20px',
-                'right': '20px',
-                'bottom': '20px',
-                'left': '20px'
+                'top': '15mm',
+                'right': '10mm',
+                'bottom': '15mm',
+                'left': '10mm'
             }
         )
         
@@ -30,6 +31,6 @@ def html_to_pdf(html_file_path, pdf_output_path):
     print(f'PDF generated successfully: {pdf_output_path}')
 
 if __name__ == '__main__':
-    html_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.html'
-    pdf_file = r'd:\git\autodroid\autodroid-trader-server\course_chose.pdf'
+    html_file = r'd:\git\autodroid\tools\course_chose.html'
+    pdf_file = r'd:\git\autodroid\tools\course_chose.pdf'
     html_to_pdf(html_file, pdf_file)
