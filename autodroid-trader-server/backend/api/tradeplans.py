@@ -100,9 +100,9 @@ async def update_tradeplan_status(tradeplan_id: str, request: TradePlanStatusUpd
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{tradeplan_id}/execute", response_model=TradePlanStartExecuteResponse)
-async def execute_tradeplan(tradeplan_id: str, request: TradePlanStartExecuteRequest = TradePlanStartExecuteRequest()):
-    """执行单个交易计划（异步执行，支持实时状态更新）"""
+@router.post("/{tradeplan_id}/start", response_model=TradePlanStartExecuteResponse)
+async def start_tradeplan(tradeplan_id: str, request: TradePlanStartExecuteRequest = TradePlanStartExecuteRequest()):
+    """启动单个交易计划（异步执行，支持实时状态更新）"""
     try:
         result = tradeplan_service.execute_tradeplan(tradeplan_id, request)
         return result
@@ -139,6 +139,26 @@ async def create_or_update_demo_tradeplans():
     """创建或更新演示用的交易计划数据"""
     try:
         result = tradeplan_service.create_or_update_demo_tradeplans()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/start-approved")
+async def start_approved_tradeplans():
+    """开始执行所有已批准的交易计划"""
+    try:
+        result = tradeplan_service.start_approved_tradeplans()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/stop-approved")
+async def stop_approved_tradeplans():
+    """停止所有正在执行的交易计划"""
+    try:
+        result = tradeplan_service.stop_approved_tradeplans()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

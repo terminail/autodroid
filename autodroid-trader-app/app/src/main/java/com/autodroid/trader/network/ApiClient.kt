@@ -265,8 +265,8 @@ class ApiClient private constructor() {
     /**
      * Execute trade plan on server
      */
-    fun executeTradePlan(id: String): String {
-        val url = buildApiUrl("/tradeplans/$id/execute")
+    fun startTradePlan(id: String): String {
+        val url = buildApiUrl("/tradeplans/$id/start")
         val response = makePostRequest(url, emptyMap<String, Any>())
         
         if (!response.isSuccessful) {
@@ -323,7 +323,7 @@ class ApiClient private constructor() {
      * Execute all approved trade plans on server
      */
     fun executeApprovedPlans(): String {
-        val url = buildApiUrl("/tradeplans/execute-approved")
+        val url = buildApiUrl("/tradeplans/start-approved")
         val response = makePostRequest(url, emptyMap<String, Any>())
         
         if (!response.isSuccessful) {
@@ -342,6 +342,29 @@ class ApiClient private constructor() {
             Log.e(TAG, "Error parsing execute approved plans response: ${e.message}")
             Log.e(TAG, "Response body: $responseBody")
             throw RuntimeException("Failed to parse execute approved plans response", e)
+        }
+    }
+    
+    fun stopApprovedPlans(): String {
+        val url = buildApiUrl("/tradeplans/stop-approved")
+        val response = makePostRequest(url, emptyMap<String, Any>())
+        
+        if (!response.isSuccessful) {
+            throw RuntimeException("Failed to stop approved plans: ${response.code} - ${response.message}")
+        }
+        
+        val responseBody = response.body?.string()
+        if (responseBody.isNullOrEmpty()) {
+            throw RuntimeException("Empty response body from stop approved plans endpoint")
+        }
+        
+        try {
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            return jsonResponse["message"]?.toString() ?: "Approved plans stop request sent"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing stop approved plans response: ${e.message}")
+            Log.e(TAG, "Response body: $responseBody")
+            throw RuntimeException("Failed to parse stop approved plans response", e)
         }
     }
     

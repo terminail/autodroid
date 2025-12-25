@@ -353,3 +353,81 @@ class TradePlanService:
                 "created_count": 0,
                 "updated_count": 0
             }
+    
+    def start_approved_tradeplans(self) -> Dict[str, Any]:
+        """开始执行所有已批准的交易计划"""
+        try:
+            approved_response = self.get_approved_tradeplans()
+            approved_plans = approved_response.tradeplans if approved_response.tradeplans else []
+            
+            if not approved_plans:
+                return {
+                    "message": "没有已批准的交易计划",
+                    "started_count": 0,
+                    "failed_count": 0
+                }
+            
+            started_count = 0
+            failed_count = 0
+            
+            for plan in approved_plans:
+                tradeplan_id = plan.id
+                request = TradePlanStartExecuteRequest()
+                result = self.execute_tradeplan(tradeplan_id, request)
+                if result.status == TradePlanStatus.EXECUTING:
+                    started_count += 1
+                else:
+                    failed_count += 1
+            
+            return {
+                "message": f"已启动 {started_count} 个交易计划，失败 {failed_count} 个",
+                "started_count": started_count,
+                "failed_count": failed_count
+            }
+            
+        except Exception as e:
+            logger.error(f"批量启动交易计划失败: {e}")
+            return {
+                "message": f"批量启动交易计划失败: {str(e)}",
+                "started_count": 0,
+                "failed_count": 0
+            }
+    
+    def stop_approved_tradeplans(self) -> Dict[str, Any]:
+        """停止所有正在执行的交易计划"""
+        try:
+            all_tradeplans = self.get_all_tradeplans()
+            executing_plans = [p for p in all_tradeplans.tradeplans if p.status == TradePlanStatus.EXECUTING.value]
+            
+            if not executing_plans:
+                return {
+                    "message": "没有正在执行的交易计划",
+                    "stopped_count": 0,
+                    "failed_count": 0
+                }
+            
+            stopped_count = 0
+            failed_count = 0
+            
+            for plan in executing_plans:
+                tradeplan_id = plan.id
+                request = TradePlanStopExecuteRequest(reason="用户手动批量停止")
+                result = self.stop_tradeplan(tradeplan_id, request)
+                if result.status != TradePlanStatus.EXECUTING.value:
+                    stopped_count += 1
+                else:
+                    failed_count += 1
+            
+            return {
+                "message": f"已停止 {stopped_count} 个交易计划，失败 {failed_count} 个",
+                "stopped_count": stopped_count,
+                "failed_count": failed_count
+            }
+            
+        except Exception as e:
+            logger.error(f"批量停止交易计划失败: {e}")
+            return {
+                "message": f"批量停止交易计划失败: {str(e)}",
+                "stopped_count": 0,
+                "failed_count": 0
+            }

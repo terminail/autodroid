@@ -150,13 +150,13 @@ class TradePlanRepository private constructor(application: MyApplication) {
     /**
      * 执行交易计划
      */
-    suspend fun executeTradePlan(id: String): String {
+    suspend fun startTradePlan(id: String): String {
         return withContext(Dispatchers.IO) {
             try {
                 val client = getApiClient()
                 
                 // 调用API执行交易计划
-                client.executeTradePlan(id)
+                client.startTradePlan(id)
                 Log.d("TradePlanRepository", "交易计划执行请求已发送: $id")
                 
                 return@withContext "交易计划执行请求已发送: $id"
@@ -174,14 +174,25 @@ class TradePlanRepository private constructor(application: MyApplication) {
         return withContext(Dispatchers.IO) {
             try {
                 val client = getApiClient()
-                
-                // 调用API执行所有已批准的交易计划
                 client.executeApprovedPlans()
                 Log.d("TradePlanRepository", "已批准的交易计划执行请求已发送")
-                
                 return@withContext "已批准的交易计划执行请求已发送"
             } catch (e: Exception) {
                 Log.e("TradePlanRepository", "执行已批准的交易计划失败: ${e.message}")
+                throw e
+            }
+        }
+    }
+    
+    suspend fun stopApprovedPlans(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val client = getApiClient()
+                client.stopApprovedPlans()
+                Log.d("TradePlanRepository", "停止已批准的交易计划请求已发送")
+                return@withContext "停止已批准的交易计划请求已发送"
+            } catch (e: Exception) {
+                Log.e("TradePlanRepository", "停止已批准的交易计划失败: ${e.message}")
                 throw e
             }
         }

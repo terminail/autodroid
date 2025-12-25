@@ -173,6 +173,29 @@ class TradePlanDatabase(BaseDatabase):
         except Exception:
             return False
     
+    def update_tradeplan_execution_result(
+        self,
+        tradeplan_id: str,
+        execution_result: Optional[str] = None,
+        execution_message: Optional[str] = None
+    ) -> bool:
+        """更新交易计划执行结果"""
+        try:
+            tradeplan = TradePlan.get(TradePlan.id == tradeplan_id)
+            
+            if execution_result is not None:
+                tradeplan.execution_result = execution_result
+            if execution_message is not None:
+                tradeplan.execution_message = execution_message
+            
+            tradeplan.save()
+            return True
+            
+        except DoesNotExist:
+            return False
+        except Exception:
+            return False
+    
     def delete_tradeplan(self, tradeplan_id: str) -> bool:
         """删除交易计划"""
         try:
