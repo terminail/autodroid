@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FFFFFF">
+  <group android:scaleX="2.61"
+      android:scaleY="2.61"
+      android:translateX="22.68"
+      android:translateY="22.68">
+    <!-- Upward trending line graph representing trading -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3.5,18.5 L7.5,13.5 L11.5,15.5 L15.5,9.5 L19.5,11.5"/>
+    <!-- Connection dots for the graph -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3.5,18.5m-1,0a1,1 0,1,1,2 0a1,1 0,1,1,-2 0"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M7.5,13.5m-1,0a1,1 0,1,1,2 0a1,1 0,1,1,-2 0"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M11.5,15.5m-1,0a1,1 0,1,1,2 0a1,1 0,1,1,-2 0"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M15.5,9.5m-1,0a1,1 0,1,1,2 0a1,1 0,1,1,-2 0"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M19.5,11.5m-1,0a1,1 0,1,1,2 0a1,1 0,1,1,-2 0"/>
+    <!-- Gear symbol representing automation -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,6L13.5,8.5L16.5,8.5L14,10.5L15,13.5L12,12L9,13.5L10,10.5L7.5,8.5L10.5,8.5L12,6Z"/>
+  </group>
+</vector>

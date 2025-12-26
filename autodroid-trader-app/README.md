@@ -1,6 +1,12 @@
 # Autodroid App
 
-Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和管理测试工作脚本。
+Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和批准否决交易计划tradeplan的管理应用。
+
+主要与autodroid-trader-server交互，主要功能包括：
+1. 发现服务器：通过Manual Set or Scan QRCode to find Autodroid服务器
+2. 注册设备：将测试设备信息注册到服务器
+3. 批准交易计划：根据交易策略创建的交易计划，由用户手动批准或否决
+4. 查看交易记录：查看已执行的交易记录
 
 ## 功能特性
 

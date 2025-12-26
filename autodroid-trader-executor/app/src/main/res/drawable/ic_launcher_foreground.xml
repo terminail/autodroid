@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FFFFFF">
+  <group android:scaleX="2.61"
+      android:scaleY="2.61"
+      android:translateX="22.68"
+      android:translateY="22.68">
+    <!-- Robot head with binary code -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,2A10,10 0,0,0 2,12A10,10 0,0,0 12,22A10,10 0,0,0 22,12A10,10 0,0,0 12,2ZM12,20A8,8 0,0,1 4,12A8,8 0,0,1 12,4A8,8 0,0,1 20,12A8,8 0,0,1 12,20Z"/>
+    <!-- Eyes -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M8,9A1.5,1.5 0,1,1 6.5,10.5A1.5,1.5 0,1,1 8,9Z"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M16,9A1.5,1.5 0,1,1 14.5,10.5A1.5,1.5 0,1,1 16,9Z"/>
+    <!-- Binary code pattern -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10,14L10,15L11,15L11,14ZM12,14L12,15L13,15L13,14ZM14,14L14,15L15,15L15,14Z"/>
+  </group>
+</vector>

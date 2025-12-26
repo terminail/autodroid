@@ -1,6 +1,9 @@
 # Autodroid Trader Server
 
-Autodroid Trader Server 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。
+Autodroid Trader Server 是 Autodroid Android 自动化系统的服务端组件，提供设备管理、工作脚本执行、测试调度等功能。与其他组件交互：
+1. autodroid-trader-strategy：交易策略组件，根据市场量价信息创建交易指令tradeplan。
+2. autodroid-trader-executor：交易执行组件，根据tradeplan执行交易指令。
+3. autodroid-trader-app: 交易应用组件，批准否决交易计划tradeplan的管理应用。
 
 ## 环境要求
 
