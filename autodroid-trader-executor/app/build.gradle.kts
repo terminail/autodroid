@@ -10,7 +10,6 @@ android {
     defaultConfig {
         applicationId = "com.autodroid.tradescripts"
         minSdk = 26
-        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
