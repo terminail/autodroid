@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, TypedDict
+from typing import List, Any, Dict, TypedDict, Optional
 from datetime import datetime
 from pathlib import Path
 import os
@@ -7,30 +7,15 @@ import yaml
 import asyncio
 import logging
 from ..config import get_apks_path
-from .models import TradeScriptResponse
+from .models import TradeScriptResponse, TradeScriptExecutionData, TradeScriptExecutionResult
 
 logger = logging.getLogger(__name__)
-
-
-class TradeScriptExecutionData(TypedDict, total=False):
-    """交易脚本执行数据类型"""
-    id: str
-    script_id: str
-    user_id: str
-    name: str
-    description: str
-    exchange: str
-    symbol: str
-    symbol_name: str
-    change_percent: float
-    data: Dict[str, Any]
-    status: str
 
 
 class TradeScriptService:
     """交易脚本服务类"""
 
-    async def execute_script(self, script_id: str, data: TradeScriptExecutionData) -> Dict[str, Any]:
+    async def execute_script(self, script_id: str, data: TradeScriptExecutionData) -> TradeScriptExecutionResult:
         """执行交易脚本"""
         logger.info(f"开始执行脚本: {script_id}，数据: {data}")
         

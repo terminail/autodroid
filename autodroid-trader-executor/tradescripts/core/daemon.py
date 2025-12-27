@@ -5,38 +5,14 @@
 
 import asyncio
 import logging
-import uuid
 import requests
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from enum import Enum
-from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
 
 from core.tradescript.models import TradePlanResponse
 from core.tradescript.service import TradeScriptExecutionData
 
 logger = logging.getLogger(__name__)
-
-
-class TaskType(str, Enum):
-    """任务类型"""
-    START_SINGLE = "start_single"
-    START_ALL_APPROVED = "start_all_approved"
-    STOP_SINGLE = "stop_single"
-    STOP_ALL = "stop_all"
-
-
-@dataclass
-class TradePlanTask:
-    """交易计划任务"""
-    task_id: str
-    task_type: TaskType
-    tradeplan_id: Optional[str] = None
-    reason: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.now)
-    status: str = "pending"
-    message: str = ""
-    result: Optional[Dict[str, Any]] = None
 
 
 class TradePlanDaemon:
@@ -61,12 +37,8 @@ class TradePlanDaemon:
         self._trader_server_api_endpoint = trader_server_api_endpoint
         
         self.running = False
-        self.poller_task: Optional[asyncio.Task] = None
         self.executor_task: Optional[asyncio.Task] = None
-        self.task_history: Dict[str, TradePlanTask] = {}
-        self.max_history_size = 100
         self.poll_interval = 5
-        self._executing_lock = asyncio.Lock()
         self._request_timeout = 10
         
         logger.info("交易计划 Daemon 已初始化")
@@ -107,16 +79,15 @@ class TradePlanDaemon:
             dots = "." * (poll_count % 10)
             print(f"\r轮询中: {poll_count} {dots}", end="", flush=True)
             try:
-                async with self._executing_lock:
-                    tradeplan = await self._fetch_next_executable()
-                    if tradeplan:
-                        print(f"\n✓ 找到可执行交易计划: {tradeplan.get('name', tradeplan.get('id'))}", flush=True)
-                        await self._execute_tradeplan(tradeplan)
+                tradeplan = await self._fetch_next_executable()
+                if tradeplan:
+                    print(f"\n✓ 找到可执行交易计划: {tradeplan.name} ({tradeplan.id})", flush=True)
+                    await self._execute_tradeplan(tradeplan)
             except Exception as e:
                 logger.error(f"执行交易计划时出错: {e}")
             await asyncio.sleep(self.poll_interval)
     
-    async def _fetch_next_executable(self) -> Optional[Dict[str, Any]]:
+    async def _fetch_next_executable(self) -> Optional[TradePlanResponse]:
         """从 Server 获取下一个可执行的交易计划"""
         try:
             response = requests.get(
@@ -129,7 +100,7 @@ class TradePlanDaemon:
             data = response.json()
             tradeplans = data.get("tradeplans", [])
             if tradeplans:
-                return tradeplans[0]
+                return TradePlanResponse(**tradeplans[0])
             return None
         except requests.RequestException as e:
             logger.error(f"连接 Server 失败: {e}")
@@ -149,30 +120,30 @@ class TradePlanDaemon:
                 execution_message=f"正在执行 {tradeplan_name}..."
             )
             
-            execution_result = await self._run_tradeplan_execution(tradeplan_id, tradeplan)
+            execution_result = await self._run_tradeplan_execution(tradeplan)
             
             if execution_result.get("success"):
-                await self._mark_completed(tradeplan_id, tradeplan)
+                await self._mark_completed(tradeplan, tradeplan)
                 logger.info(f"交易计划执行完成: {tradeplan_name}")
             else:
-                await self._mark_failed(tradeplan_id, execution_result.get("message"))
+                await self._mark_failed(tradeplan_id, execution_result.get("message") or "未知错误")
                 logger.error(f"交易计划执行失败: {tradeplan_name} - {execution_result.get('message')}")
                 
         except Exception as e:
             await self._mark_failed(tradeplan_id, str(e))
             logger.error(f"执行交易计划异常: {tradeplan_name} - {e}")
     
-    async def _run_tradeplan_execution(self, tradeplan_id: str, tradeplan: Dict[str, Any]) -> Dict[str, Any]:
+    async def _run_tradeplan_execution(self, tradeplan: TradePlanResponse) -> Dict[str, Any]:
         """运行交易计划执行逻辑"""
         start_time = datetime.now()
         
-        logger.info(f"执行 {tradeplan.get('name', tradeplan_id)}")
+        logger.info(f"执行 {tradeplan.name}")
         
-        if tradeplan.get("data"):
-            logger.info(f"交易计划配置: {tradeplan['data']}")
+        if tradeplan.data:
+            logger.info(f"交易计划配置: {tradeplan.data}")
         
-        data = tradeplan.get("data", {})
-        script_id = tradeplan.get("script_id")
+        data = tradeplan.data or {}
+        script_id = tradeplan.script_id
         
         if script_id:
             result = await self._execute_script(script_id, data)
@@ -210,11 +181,11 @@ class TradePlanDaemon:
         except Exception as e:
             logger.error(f"更新执行状态出错: {e}")
     
-    async def _mark_completed(self, tradeplan_id: str, tradeplan: TradePlanResponse):
+    async def _mark_completed(self, tradeplan: TradePlanResponse):
         """标记交易计划为已完成"""
         try:
             response = requests.patch(
-                f"{self._trader_server_api_endpoint}/tradeplans/{tradeplan_id}/status",
+                f"{self._trader_server_api_endpoint}/tradeplans/{tradeplan.id}/status",
                 json={
                     "status": "COMPLETED",
                     "execution_result": "SUCCESS",
@@ -281,61 +252,11 @@ class TradePlanDaemon:
         except Exception as e:
             logger.error(f"停止所有计划出错: {e}")
             return {"success": False, "message": str(e)}
-    
-    def _add_to_history(self, task: TradePlanTask):
-        """添加任务到历史记录"""
-        self.task_history[task.task_id] = task
-        if len(self.task_history) > self.max_history_size:
-            oldest_key = next(iter(self.task_history))
-            del self.task_history[oldest_key]
-    
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
-        """获取任务状态"""
-        task = self.task_history.get(task_id)
-        if not task:
-            return None
-        
-        return {
-            "task_id": task.task_id,
-            "task_type": task.task_type,
-            "status": task.status,
-            "message": task.message,
-            "created_at": task.created_at.isoformat(),
-            "result": task.result
-        }
-    
-    def get_all_tasks(self) -> List[Dict[str, Any]]:
-        """获取所有任务状态"""
-        return [
-            {
-                "task_id": task.task_id,
-                "task_type": task.task_type,
-                "tradeplan_id": task.tradeplan_id,
-                "status": task.status,
-                "message": task.message,
-                "created_at": task.created_at.isoformat()
-            }
-            for task in self.task_history.values()
-        ]
 
 
 def get_daemon(server_url: str = "http://localhost:8000") -> TradePlanDaemon:
     """获取全局 Daemon 单例实例"""
     return TradePlanDaemon._instance or TradePlanDaemon(server_url)
-
-
-def create_task(
-    task_type: TaskType,
-    tradeplan_id: Optional[str] = None,
-    reason: Optional[str] = None
-) -> TradePlanTask:
-    """创建新任务"""
-    return TradePlanTask(
-        task_id=f"task_{uuid.uuid4().hex[:12]}",
-        task_type=task_type,
-        tradeplan_id=tradeplan_id,
-        reason=reason
-    )
 
 
 async def run_daemon(trader_server_api_endpoint: str = "http://localhost:8000/api", poll_interval: int = 5):

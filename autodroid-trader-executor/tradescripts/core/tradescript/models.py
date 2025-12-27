@@ -1,5 +1,6 @@
+from typing import List, Any, Dict, TypedDict
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List as PyList, Dict as PyDict, Any
 from datetime import datetime
 from enum import Enum
 
@@ -68,3 +69,32 @@ class TradeScriptListResponse(BaseModel):
     """交易脚本列表响应模型"""
     tradescripts: List[TradeScriptResponse]
     total: int
+
+
+class TradeScriptExecutionDataContent(TypedDict, total=False):
+    """交易脚本执行数据内容类型"""
+    script_id: str
+    script_name: str
+    executed_data: Dict[str, Any]
+    timestamp: str
+
+
+class TradeScriptExecutionData(TypedDict, total=False):
+    """交易脚本执行数据类型"""
+    id: str
+    script_id: str
+    user_id: str
+    name: str
+    description: str
+    exchange: str
+    symbol: str
+    symbol_name: str
+    change_percent: float
+    status: str
+
+
+class TradeScriptExecutionResult(TypedDict, total=False):
+    """交易脚本执行结果类型"""
+    success: bool
+    message: str
+    data: TradeScriptExecutionDataContent
