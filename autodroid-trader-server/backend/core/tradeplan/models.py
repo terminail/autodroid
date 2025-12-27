@@ -4,6 +4,15 @@ from datetime import datetime
 from enum import Enum
 
 
+class Ohlcv(BaseModel):
+    """OHLCV 数据类"""
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    volume: Optional[float] = None
+
+
 class TradePlanStatus(str, Enum):
     """交易计划状态枚举"""
     PENDING = "PENDING"
@@ -23,7 +32,7 @@ class TradePlanCreateRequest(BaseModel):
     exchange: Optional[str] = None
     symbol: Optional[str] = None
     symbol_name: Optional[str] = None
-    ohlcv: Optional[Dict[str, Any]] = None
+    ohlcv: Optional[Ohlcv] = None
     change_percent: Optional[float] = None
     data: Optional[Dict[str, Any]] = None
     status: Optional[TradePlanStatus] = TradePlanStatus.PENDING
@@ -36,7 +45,7 @@ class TradePlanUpdateRequest(BaseModel):
     exchange: Optional[str] = None
     symbol: Optional[str] = None
     symbol_name: Optional[str] = None
-    ohlcv: Optional[Dict[str, Any]] = None
+    ohlcv: Optional[Ohlcv] = None
     change_percent: Optional[float] = None
     data: Optional[Dict[str, Any]] = None
     status: Optional[TradePlanStatus] = None
@@ -76,7 +85,7 @@ class TradePlanResponse(BaseModel):
     exchange: Optional[str] = None
     symbol: Optional[str] = None
     symbol_name: Optional[str] = None
-    ohlcv: Optional[Dict[str, Any]] = None
+    ohlcv: Optional[Ohlcv] = None
     change_percent: Optional[float] = None
     data: Optional[Dict[str, Any]]
     status: TradePlanStatus

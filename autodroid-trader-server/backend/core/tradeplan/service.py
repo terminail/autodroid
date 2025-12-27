@@ -7,6 +7,7 @@ import logging
 from .database import TradePlanDatabase
 from ..database.models import TradePlan as TradePlanModel
 from .models import (
+    Ohlcv,
     TradePlanStatus,
     TradePlanCreateRequest,
     TradePlanUpdateRequest,
@@ -34,6 +35,7 @@ class TradePlanService:
     
     def _to_tradeplan_response(self, tradeplan: TradePlanModel) -> TradePlanResponse:
         """将 Peewee TradePlan 模型转换为 TradePlanResponse Pydantic 模型"""
+        ohlcv = Ohlcv(**json.loads(tradeplan.ohlcv)) if tradeplan.ohlcv else None
         return TradePlanResponse(
             id=tradeplan.id,
             script_id=tradeplan.script.id if tradeplan.script else None,
@@ -43,7 +45,7 @@ class TradePlanService:
             exchange=tradeplan.exchange,
             symbol=tradeplan.symbol,
             symbol_name=tradeplan.symbol_name,
-            ohlcv=json.loads(tradeplan.ohlcv) if tradeplan.ohlcv else None,
+            ohlcv=ohlcv,
             change_percent=tradeplan.change_percent,
             data=json.loads(tradeplan.data) if tradeplan.data else None,
             status=TradePlanStatus(tradeplan.status),
