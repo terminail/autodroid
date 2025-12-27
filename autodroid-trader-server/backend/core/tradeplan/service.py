@@ -1,9 +1,11 @@
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 import asyncio
+import json
 import logging
 
 from .database import TradePlanDatabase
+from ..database.models import TradePlan as TradePlanModel
 from .models import (
     TradePlanStatus,
     TradePlanCreateRequest,
@@ -30,6 +32,29 @@ class TradePlanService:
         """初始化交易计划服务"""
         self.tradeplan_db = TradePlanDatabase()
     
+    def _to_tradeplan_response(self, tradeplan: TradePlanModel) -> TradePlanResponse:
+        """将 Peewee TradePlan 模型转换为 TradePlanResponse Pydantic 模型"""
+        return TradePlanResponse(
+            id=tradeplan.id,
+            script_id=tradeplan.script.id if tradeplan.script else None,
+            user_id=tradeplan.user_id,
+            name=tradeplan.name,
+            description=tradeplan.description,
+            exchange=tradeplan.exchange,
+            symbol=tradeplan.symbol,
+            symbol_name=tradeplan.symbol_name,
+            ohlcv=json.loads(tradeplan.ohlcv) if tradeplan.ohlcv else None,
+            change_percent=tradeplan.change_percent,
+            data=json.loads(tradeplan.data) if tradeplan.data else None,
+            status=TradePlanStatus(tradeplan.status),
+            executable=tradeplan.executable,
+            created_at=tradeplan.created_at,
+            started_at=tradeplan.started_at,
+            ended_at=tradeplan.ended_at,
+            execution_result=tradeplan.execution_result,
+            execution_message=tradeplan.execution_message
+        )
+    
     def create_tradeplan(self, request: TradePlanCreateRequest) -> TradePlanCreateResponse:
         """创建交易计划"""
         try:
@@ -53,8 +78,8 @@ class TradePlanService:
                     tradeplan=None
                 )
             
-            tradeplan_dict = self.tradeplan_db.get_tradeplan_by_id(tradeplan_id)
-            if not tradeplan_dict:
+            tradeplan = self.tradeplan_db.get_tradeplan_by_id(tradeplan_id)
+            if not tradeplan:
                 return TradePlanCreateResponse(
                     message="创建交易计划失败",
                     tradeplan=None
@@ -62,7 +87,7 @@ class TradePlanService:
             
             return TradePlanCreateResponse(
                 message="交易计划创建成功",
-                tradeplan=TradePlanResponse(**tradeplan_dict)
+                trade_plan_response=self._to_tradeplan_response(tradeplan)
             )
             
         except Exception as e:
@@ -75,11 +100,11 @@ class TradePlanService:
     def get_tradeplan_by_id(self, tradeplan_id: str) -> Optional[TradePlanResponse]:
         """根据ID获取交易计划"""
         try:
-            tradeplan_dict = self.tradeplan_db.get_tradeplan_by_id(tradeplan_id)
-            if not tradeplan_dict:
+            tradeplan = self.tradeplan_db.get_tradeplan_by_id(tradeplan_id)
+            if not tradeplan:
                 return None
             
-            return TradePlanResponse(**tradeplan_dict)
+            return self._to_tradeplan_response(tradeplan)
             
         except Exception as e:
             logger.error(f"获取交易计划失败: {e}")
@@ -90,7 +115,7 @@ class TradePlanService:
         try:
             tradeplans = self.tradeplan_db.get_all_tradeplans()
             return TradePlanListResponse(
-                tradeplans=[TradePlanResponse(**tp) for tp in tradeplans],
+                tradeplans=[self._to_tradeplan_response(tp) for tp in tradeplans],
                 total=len(tradeplans)
             )
         except Exception as e:
@@ -102,7 +127,7 @@ class TradePlanService:
         try:
             tradeplans = self.tradeplan_db.get_pending_tradeplans()
             return TradePlanListResponse(
-                tradeplans=[TradePlanResponse(**tp) for tp in tradeplans],
+                tradeplans=[self._to_tradeplan_response(tp) for tp in tradeplans],
                 total=len(tradeplans)
             )
         except Exception as e:
@@ -114,12 +139,35 @@ class TradePlanService:
         try:
             tradeplans = self.tradeplan_db.get_approved_tradeplans()
             return TradePlanListResponse(
-                tradeplans=[TradePlanResponse(**tp) for tp in tradeplans],
+                tradeplans=[self._to_tradeplan_response(tp) for tp in tradeplans],
                 total=len(tradeplans)
             )
         except Exception as e:
             logger.error(f"获取已批准交易计划失败: {e}")
             return TradePlanListResponse(tradeplans=[], total=0)
+    
+    def get_executing_tradeplans(self) -> TradePlanListResponse:
+        """获取正在执行的交易计划"""
+        try:
+            tradeplans = self.tradeplan_db.get_tradeplans_by_status(TradePlanStatus.EXECUTING)
+            return TradePlanListResponse(
+                tradeplans=[self._to_tradeplan_response(tp) for tp in tradeplans],
+                total=len(tradeplans)
+            )
+        except Exception as e:
+            logger.error(f"获取正在执行的交易计划失败: {e}")
+            return TradePlanListResponse(tradeplans=[], total=0)
+    
+    def get_next_executable_tradeplan(self) -> Optional[TradePlanResponse]:
+        """获取按创建时间排序的第一个可执行的交易计划"""
+        try:
+            tradeplan = self.tradeplan_db.get_next_executable_tradeplan()
+            if not tradeplan:
+                return None
+            return self._to_tradeplan_response(tradeplan)
+        except Exception as e:
+            logger.error(f"获取下一个可执行交易计划失败: {e}")
+            return None
     
     def update_tradeplan(
         self,
@@ -169,7 +217,10 @@ class TradePlanService:
         try:
             success = self.tradeplan_db.update_tradeplan_status(
                 tradeplan_id=tradeplan_id,
-                status=request.status
+                status=request.status,
+                executable=request.executable,
+                execution_result=request.execution_result,
+                execution_message=request.execution_message
             )
             
             if not success:
@@ -209,7 +260,7 @@ class TradePlanService:
                     status=TradePlanStatus.FAILED
                 )
             
-            if tradeplan["status"] != TradePlanStatus.APPROVED.value:
+            if tradeplan.status != TradePlanStatus.APPROVED.value:
                 return TradePlanStartExecuteResponse(
                     message="只有已批准的交易计划才能执行",
                     tradeplan_id=tradeplan_id,
@@ -227,7 +278,7 @@ class TradePlanService:
             asyncio.create_task(self._execute_tradeplan_async(tradeplan_id, tradeplan))
             
             return TradePlanStartExecuteResponse(
-                message=f"交易计划开始执行: {tradeplan['name']}",
+                message=f"交易计划开始执行: {tradeplan.name}",
                 tradeplan_id=tradeplan_id,
                 status=TradePlanStatus.EXECUTING
             )
@@ -294,11 +345,11 @@ class TradePlanService:
                     status=TradePlanStatus.FAILED
                 )
             
-            if tradeplan["status"] != TradePlanStatus.EXECUTING.value:
+            if tradeplan.status != TradePlanStatus.EXECUTING.value:
                 return TradePlanStopExecuteResponse(
                     message="只有正在执行中的交易计划才能停止",
                     tradeplan_id=tradeplan_id,
-                    status=tradeplan["status"]
+                    status=tradeplan.status
                 )
             
             # 更新状态为已停止
@@ -314,7 +365,7 @@ class TradePlanService:
             )
             
             return TradePlanStopExecuteResponse(
-                message=f"交易计划已停止: {tradeplan['name']}",
+                message=f"交易计划已停止: {tradeplan.name}",
                 tradeplan_id=tradeplan_id,
                 status=TradePlanStatus.FAILED,
                 execution_result="STOPPED",
@@ -340,7 +391,9 @@ class TradePlanService:
     def create_or_update_demo_tradeplans(self) -> Dict[str, Any]:
         """创建或更新演示用的交易计划数据"""
         try:
+            print("[SERVICE DEBUG] 开始创建演示交易计划...")
             result = self.tradeplan_db.create_or_update_demo_tradeplans()
+            print(f"[SERVICE DEBUG] 数据库层返回结果: {result}")
             return {
                 "message": f"成功创建 {result['created']} 个演示交易计划，更新 {result['updated']} 个",
                 "created_count": result['created'],

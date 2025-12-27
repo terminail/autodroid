@@ -21,7 +21,7 @@ data class AppConfig(
 )
 
 data class ServerConfig(
-    val defaultApiEndpoint: String = "http://192.168.1.59:8004/api",
+    val defaultApiEndpoint: String = "http://192.168.1.59:8008/api",
     val connectionTimeout: Int = 10,
     val maxRetries: Int = 3,
     val healthCheckInterval: Int = 30

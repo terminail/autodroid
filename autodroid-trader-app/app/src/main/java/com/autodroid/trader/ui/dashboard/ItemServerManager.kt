@@ -426,9 +426,9 @@ class ItemServerManager(
         layout.addView(ipInput)
         
         val portInput = android.widget.EditText(context)
-        portInput.hint = "端口号 (默认: 8004)"
+        portInput.hint = "端口号 (默认: 8008)"
         portInput.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-        portInput.setText("8004")
+        portInput.setText("8008")
         layout.addView(portInput)
         
         androidx.appcompat.app.AlertDialog.Builder(context)
@@ -438,7 +438,7 @@ class ItemServerManager(
             .setPositiveButton("添加") { _, _ ->
                 val ip = ipInput.text.toString().trim()
                 val portStr = portInput.text.toString().trim()
-                val port = if (portStr.isNotEmpty()) portStr.toIntOrNull() else 8004
+                val port = if (portStr.isNotEmpty()) portStr.toIntOrNull() else 8008
                 
                 if (ip.isNotEmpty() && port != null && port > 0 && port < 65536) {
                     // Validate and save server

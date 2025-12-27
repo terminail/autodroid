@@ -6,7 +6,6 @@ This script starts both the API server and the frontend application
 
 import uvicorn
 from api import main as api_main
-from core.tradeplan.daemon import get_daemon
 import asyncio
 import time
 import yaml
@@ -70,17 +69,13 @@ async def main():
     """Run the server with proper async handling"""
     config = load_config()
     
-    daemon = get_daemon()
-    await daemon.start()
-    logger.info("Trade plan daemon started successfully")
-    
     # Get server configuration with defaults
     server_config = config.get('server', {})
     backend_config = server_config.get('backend', {})
     frontend_config = server_config.get('frontend', {})
     
     host = backend_config.get('host', '0.0.0.0')  # Bind to all interfaces by default
-    port = backend_config.get('port', 8004)  # Use 8004 as default
+    port = backend_config.get('port', 8008)  # Use 8008 as default
     log_level = backend_config.get('log_level', 'info')
     reload = backend_config.get('reload', False)
     
@@ -91,7 +86,7 @@ async def main():
     print_startup_info(host, port, frontend_mount_path)
     
     uvicorn_config = uvicorn.Config(
-        api_main.app,
+        "api.main:app",
         host=host,
         port=port,
         log_level=log_level,

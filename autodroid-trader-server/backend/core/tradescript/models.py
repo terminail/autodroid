@@ -35,11 +35,11 @@ class TradeScriptResponse(BaseModel):
     """交易脚本响应模型"""
     id: str
     apk_package: str
+    apk_flow: str
     name: str
     description: Optional[str]
     metadata: Dict[str, Any]
     script_path: str
-    status: TradeScriptStatus
     created_at: datetime
 
 

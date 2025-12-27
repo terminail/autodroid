@@ -40,7 +40,7 @@ autodroid_project/
 │   └── autodroid_core.py
 │
 ├── orchestrator_config.json   # **新增：总调度器配置**
-└── run_workflow.py            # 主执行脚本入口
+└── run_tradeflow.py            # 主执行脚本入口
 ```
 
 ## 🔧 核心组件与工作流程
@@ -64,7 +64,7 @@ autodroid_project/
     4.  在真实设备上执行操作。
 *   **输出**：驱动设备完成所有步骤，并可能更新运行时上下文（如保存抓取的文本）。
 
-### 3.3 工作流协调器 (`WorkflowCoordinator`)
+### 3.3 工作流协调器 (`TradeflowCoordinator`)
 这是框架的"指挥"。
 *   **流程**：
     1.  根据配置或手动指定`start_page_id`。
@@ -425,7 +425,7 @@ class EnhancedOrchestrator:
         pass
 ```
 
-### 5.8 主执行脚本 (`run_workflow.py`)
+### 5.8 主执行脚本 (`run_tradeflow.py`)
 
 ```
 #!/usr/bin/env python3
@@ -543,7 +543,7 @@ flowchart TD
 3.  **编辑"剧本"**：在每个页面的离线XML中，按照业务顺序，为需要操作的元素添加 `autodroid:*` 系列属性。
 4.  **准备数据**：在`data/`目录下创建JSON文件，定义多组测试数据。
 5.  **配置连接**：在`config/capabilities.json`中填写设备信息和应用信息。
-6.  **执行测试**：运行`python run_workflow.py`，框架将自动加载数据、识别页面、执行步骤，并完成整个业务流程的测试。
+6.  **执行测试**：运行`python run_tradeflow.py`，框架将自动加载数据、识别页面、执行步骤，并完成整个业务流程的测试。
 
 ## 💡 优势总结
 

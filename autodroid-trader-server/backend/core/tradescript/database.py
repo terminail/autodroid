@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 import json
 import uuid
@@ -52,40 +52,40 @@ class TradeScriptDatabase(BaseDatabase):
         except Exception as e:
             return None
     
-    def get_tradescript_by_id(self, tradescript_id: str) -> Optional[Dict[str, Any]]:
+    def get_tradescript_by_id(self, tradescript_id: str) -> Optional[TradeScript]:
         """根据ID获取交易脚本"""
         try:
             tradescript = TradeScript.get(TradeScript.id == tradescript_id)
-            return self._tradescript_to_dict(tradescript)
+            return tradescript
         except DoesNotExist:
             return None
         except Exception:
             return None
     
-    def get_all_tradescripts(self) -> List[Dict[str, Any]]:
+    def get_all_tradescripts(self) -> List[TradeScript]:
         """获取所有交易脚本"""
         try:
             tradescripts = TradeScript.select()
-            return [self._tradescript_to_dict(ts) for ts in tradescripts]
+            return list(tradescripts)
         except Exception:
             return []
     
-    def get_tradescripts_by_apk(self, apk_package: str) -> List[Dict[str, Any]]:
+    def get_tradescripts_by_apk(self, apk_package: str) -> List[TradeScript]:
         """根据APK获取交易脚本"""
         try:
             apk = Apk.get(Apk.package_name == apk_package)
             tradescripts = TradeScript.select().where(TradeScript.apk == apk)
-            return [self._tradescript_to_dict(ts) for ts in tradescripts]
+            return list(tradescripts)
         except DoesNotExist:
             return []
         except Exception:
             return []
     
-    def get_tradescripts_by_status(self, status: str) -> List[Dict[str, Any]]:
+    def get_tradescripts_by_status(self, status: str) -> List[TradeScript]:
         """根据状态获取交易脚本"""
         try:
             tradescripts = TradeScript.select().where(TradeScript.status == status)
-            return [self._tradescript_to_dict(ts) for ts in tradescripts]
+            return list(tradescripts)
         except Exception:
             return []
     
@@ -136,15 +136,9 @@ class TradeScriptDatabase(BaseDatabase):
         except Exception:
             return False
     
-    def _tradescript_to_dict(self, tradescript: TradeScript) -> Dict[str, Any]:
-        """将TradeScript对象转换为字典"""
-        return {
-            "id": tradescript.id,
-            "apk_package": tradescript.apk.package_name if tradescript.apk else None,
-            "name": tradescript.name,
-            "description": tradescript.description,
-            "metadata": json.loads(tradescript.metadata) if tradescript.metadata else {},
-            "script_path": tradescript.script_path,
-            "status": tradescript.status,
-            "created_at": tradescript.created_at
-        }
+    def get_tradescript_count(self) -> int:
+        """获取交易脚本总数"""
+        try:
+            return TradeScript.select().count()
+        except Exception:
+            return 0

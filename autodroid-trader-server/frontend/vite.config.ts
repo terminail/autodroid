@@ -7,7 +7,7 @@ export default defineConfig({
 		hmr: false,
 		proxy: {
 			'/api': {
-				target: 'http://localhost:8004',
+				target: 'http://localhost:8008',
 				changeOrigin: true,
 				secure: false
 			}

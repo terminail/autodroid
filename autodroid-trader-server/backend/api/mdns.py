@@ -164,7 +164,7 @@ async def register_mdns_from_config(config: Dict[str, Any]) -> MDNSService:
     
     # IMPORTANT: Use the actual server port from backend config, not mdns config
     # This ensures mDNS registration uses the same port the server is actually running on
-    port = server_backend_config.get('port', 8004)
+    port = server_backend_config.get('port', 8008)
     
     print(f"🔧 mDNS registration configuration:")
     print(f"   - Service name: {service_name}")

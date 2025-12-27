@@ -4,37 +4,12 @@
 """
 
 import time
-from typing import List, Optional, Dict, Any
-from peewee import DoesNotExist, CharField, IntegerField, TextField, DateTimeField
+from typing import List, Optional
+from peewee import DoesNotExist
+import json
 
 from ..database.base import BaseDatabase
-from ..database.models import db, create_tables, BaseModel
-
-
-class Server(BaseModel):
-    """服务器模型"""
-    id = CharField(primary_key=True)
-    name = CharField()
-    ip_address = CharField()
-    port = IntegerField()
-    platform = CharField()
-    protocol = CharField(default='http')
-    version = CharField(default='1.0')
-    services = TextField(null=True)  # JSON格式存储
-    capabilities = TextField(null=True)  # JSON格式存储
-    created_at = DateTimeField()
-    updated_at = DateTimeField()
-    
-    class Meta:
-        database = db
-        table_name = 'servers'
-
-
-# 确保在导入时创建表
-def ensure_tables():
-    """确保服务器相关表已创建"""
-    if not Server.table_exists():
-        Server.create_table()
+from ..database.models import Server
 
 
 class ServerDatabase(BaseDatabase):
@@ -43,8 +18,6 @@ class ServerDatabase(BaseDatabase):
     def __init__(self):
         """初始化服务器数据库"""
         super().__init__()
-        # 确保服务器表已创建
-        ensure_tables()
     
     def get_server(self, server_id: str) -> Optional[Server]:
         """根据ID获取服务器"""
@@ -64,7 +37,7 @@ class ServerDatabase(BaseDatabase):
         """获取所有服务器"""
         return list(Server.select())
     
-    def create_or_update_server(self, server_info: Dict[str, Any]) -> Server:
+    def create_or_update_server(self, server_info: dict) -> Server:
         """创建或更新服务器信息"""
         server_id = server_info.get('id', f"{server_info.get('ip_address', 'unknown')}:{server_info.get('port', 0)}")
         ip_address = server_info.get('ip_address')
@@ -73,7 +46,6 @@ class ServerDatabase(BaseDatabase):
         if not ip_address or not port:
             raise ValueError("IP地址和端口是必需的")
         
-        import json
         services_json = json.dumps(server_info.get('services', {}))
         capabilities_json = json.dumps(server_info.get('capabilities', {}))
         

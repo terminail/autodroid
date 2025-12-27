@@ -45,6 +45,9 @@ class TradePlanUpdateRequest(BaseModel):
 class TradePlanStatusUpdateRequest(BaseModel):
     """交易计划状态更新请求模型"""
     status: TradePlanStatus = Field(..., description=f"新状态：{', '.join([s.value for s in TradePlanStatus])}")
+    executable: Optional[bool] = Field(None, description="是否可执行")
+    execution_result: Optional[str] = Field(None, description="执行结果")
+    execution_message: Optional[str] = Field(None, description="执行消息")
 
 
 
@@ -77,6 +80,7 @@ class TradePlanResponse(BaseModel):
     change_percent: Optional[float] = None
     data: Optional[Dict[str, Any]]
     status: TradePlanStatus
+    executable: bool = True
     created_at: datetime
     started_at: Optional[datetime]
     ended_at: Optional[datetime]

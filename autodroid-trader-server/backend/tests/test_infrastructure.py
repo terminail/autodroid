@@ -80,7 +80,7 @@ class TestMdnsDiscovery:
             
             service = listener.discovered_services[0]
             assert service['type'] == "_autodroid._tcp.local."
-            assert service['port'] == 8004
+            assert service['port'] == 8008
             assert 'Autodroid Server' in service['name']
             assert len(service['addresses']) > 0
             
@@ -166,7 +166,7 @@ class TestNetworkConnectivity:
         """Test local server status"""
         try:
             import requests
-            response = requests.get('http://127.0.0.1:8004/api/health', timeout=5)
+            response = requests.get('http://127.0.0.1:8008/api/health', timeout=5)
             assert response.status_code == 200, f"Server returned status: {response.status_code}"
             print(f"Local server status: {response.status_code} - OK")
         except ImportError:

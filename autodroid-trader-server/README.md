@@ -119,7 +119,7 @@ cd /d/git/autodroid/autodroid-trader-server && conda activate autodroid && pip i
 ### 1. 健康检查
 
 ```bash
-curl http://localhost:8004/api/health
+curl http://localhost:8008/api/health
 ```
 
 响应示例：
@@ -137,7 +137,7 @@ curl http://localhost:8004/api/health
 ### 2. 获取服务器信息
 
 ```bash
-curl http://localhost:8004/api/server
+curl http://localhost:8008/api/server
 ```
 
 响应示例：
@@ -170,7 +170,7 @@ curl http://localhost:8004/api/server
 ### 3. 注册设备
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"serialno": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8004/api/devices
+curl -X POST -H "Content-Type: application/json" -d '{"serialno": "emulator-5554", "device_name": "Pixel 6 Pro", "android_version": "13", "battery_level": 80, "connection_type": "network"}' http://localhost:8008/api/devices
 ```
 
 响应示例：
@@ -191,7 +191,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"serialno": "emulator-5554
 ### 4. 获取所有注册设备
 
 ```bash
-curl http://localhost:8004/api/devices
+curl http://localhost:8008/api/devices
 ```
 
 响应示例：
@@ -298,7 +298,7 @@ pytest --html=report.html workscripts/com.example.app/test_script.py
 
 1. **Appium 服务器**：确保在启动 Autodroid 服务器前已启动 Appium 服务器
 2. **设备连接**：确保测试设备已通过 ADB 连接并授权
-3. **端口配置**：Appium 默认使用 4723 端口，Autodroid 服务器默认使用 8004 端口
+3. **端口配置**：Appium 默认使用 4723 端口，Autodroid 服务器默认使用 8008 端口
 4. **Android SDK**：确保已安装 Android SDK 并配置了环境变量
 5. **Java 环境**：Appium 需要 Java 11 或更高版本
 
@@ -335,7 +335,7 @@ pytest --html=report.html workscripts/com.example.app/test_script.py
 
 ### 端口被占用
 
-如果端口 8004 或 4723 已被占用，可以修改配置：
+如果端口 8008 或 4723 已被占用，可以修改配置：
 
 1. 修改 Appium 端口：
    ```bash

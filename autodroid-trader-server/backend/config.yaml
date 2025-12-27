@@ -23,7 +23,7 @@ devices:
   max_concurrent_devices: 10
 logging:
   backup_count: 5
-  file_path: logs/autodroid.log
+  file_path: logs/autodroid-trader-server.log
   level: info
   log_api_requests: false
   max_file_size: 10
@@ -38,7 +38,6 @@ network:
   mdns:
     enabled: false  # Disable mDNS to avoid registration failures
     service_name: Autodroid Server
-    service_port: 8004
     service_type: _autodroid._tcp.local.
 production:
   debug: false
@@ -60,7 +59,7 @@ server:
     api_base: /api
     host: 0.0.0.0
     log_level: info
-    port: 8004
+    port: 8008
     reload: true
     timeout: 10000
     use_https: false
@@ -68,7 +67,6 @@ server:
     build_dir: frontend/build
     hot_reload: true
     port: 5173
-  port: 8004
 ui:
   dashboard:
     refresh_interval: 30

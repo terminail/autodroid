@@ -1,0 +1,21 @@
+development:
+  debug: true
+  docs_url: /docs
+  enable_docs: true
+  redoc_url: /redoc
+logging:
+  backup_count: 5
+  file_path: logs/autodroid-trader-executor.log
+  level: info
+  log_api_requests: false
+  max_file_size: 10
+server:
+  api_base: /api
+  port: 8018
+  backend:
+    host: 0.0.0.0
+    reload: true
+apks:
+  path: app/src/main/assets/apks
+trader-server:
+  api_endpoint: http://127.0.0.1:8008/api

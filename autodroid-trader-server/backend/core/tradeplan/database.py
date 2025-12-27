@@ -1,12 +1,15 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 from datetime import datetime
 import json
 import uuid
+import logging
 from peewee import DoesNotExist
 
 from ..database.base import BaseDatabase
 from ..database.models import TradePlan
 from .models import TradePlanStatus
+
+logger = logging.getLogger(__name__)
 
 
 class TradePlanDatabase(BaseDatabase):
@@ -29,18 +32,29 @@ class TradePlanDatabase(BaseDatabase):
         exchange: Optional[str] = None,
         symbol: Optional[str] = None,
         symbol_name: Optional[str] = None,
-        ohlcv: Optional[Dict[str, Any]] = None,
+        ohlcv: Optional[dict] = None,
         change_percent: Optional[float] = None,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict] = None,
         status: str = TradePlanStatus.PENDING
     ) -> Optional[str]:
         """创建交易计划"""
         try:
+            from ..database.models import TradeScript
             tradeplan_id = self._generate_tradeplan_id()
+            
+            script_obj = None
+            if script_id:
+                try:
+                    script_obj = TradeScript.get(TradeScript.id == script_id)
+                    logger.debug(f"[DEBUG] 找到关联的 TradeScript: {script_id}")
+                except DoesNotExist:
+                    logger.debug(f"[DEBUG] 未找到 TradeScript: {script_id}")
+            
+            logger.debug(f"[DEBUG] 创建 TradePlan，script: {script_obj}, name: {name}")
             
             TradePlan.create(
                 id=tradeplan_id,
-                script_id=script_id,
+                script=script_obj,
                 user_id=user_id,
                 name=name,
                 description=description,
@@ -53,47 +67,70 @@ class TradePlanDatabase(BaseDatabase):
                 status=status
             )
             
+            logger.debug(f"[DEBUG] TradePlan 创建成功: {tradeplan_id}")
             return tradeplan_id
             
         except Exception as e:
+            logger.error(f"[DEBUG] 创建 TradePlan 失败: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
     
-    def get_tradeplan_by_id(self, tradeplan_id: str) -> Optional[Dict[str, Any]]:
+    def get_tradeplan_by_id(self, tradeplan_id: str) -> Optional[TradePlan]:
         """根据ID获取交易计划"""
         try:
             tradeplan = TradePlan.get(TradePlan.id == tradeplan_id)
-            return self._tradeplan_to_dict(tradeplan)
+            return tradeplan
         except DoesNotExist:
             return None
         except Exception:
             return None
     
-    def get_all_tradeplans(self) -> List[Dict[str, Any]]:
+    def get_all_tradeplans(self) -> List[TradePlan]:
         """获取所有交易计划"""
         try:
             tradeplans = TradePlan.select()
-            return [self._tradeplan_to_dict(tp) for tp in tradeplans]
+            return list(tradeplans)
         except Exception:
             return []
     
-    def get_tradeplans_by_status(self, status: str) -> List[Dict[str, Any]]:
+    def get_tradeplans_by_status(self, status: str) -> List[TradePlan]:
         """根据状态获取交易计划，按创建时间排序"""
         try:
             tradeplans = (TradePlan
                 .select()
                 .where(TradePlan.status == status)
                 .order_by(TradePlan.created_at.asc()))
-            return [self._tradeplan_to_dict(tp) for tp in tradeplans]
+            return list(tradeplans)
         except Exception:
             return []
     
-    def get_pending_tradeplans(self) -> List[Dict[str, Any]]:
+    def get_pending_tradeplans(self) -> List[TradePlan]:
         """获取待批准的交易计划"""
         return self.get_tradeplans_by_status(TradePlanStatus.PENDING)
     
-    def get_approved_tradeplans(self) -> List[Dict[str, Any]]:
+    def get_approved_tradeplans(self) -> List[TradePlan]:
         """获取已批准的交易计划"""
         return self.get_tradeplans_by_status(TradePlanStatus.APPROVED)
+    
+    def get_executable_tradeplans(self) -> List[TradePlan]:
+        """获取可执行的交易计划（executable=True），按创建时间排序"""
+        try:
+            tradeplans = (TradePlan
+                .select()
+                .where(TradePlan.executable == True)
+                .order_by(TradePlan.created_at.asc()))
+            return list(tradeplans)
+        except Exception:
+            return []
+    
+    def get_next_executable_tradeplan(self) -> Optional[TradePlan]:
+        """获取按创建时间排序的第一个可执行的交易计划"""
+        try:
+            tradeplans = self.get_executable_tradeplans()
+            return tradeplans[0] if tradeplans else None
+        except Exception:
+            return None
     
     def update_tradeplan(
         self,
@@ -103,10 +140,13 @@ class TradePlanDatabase(BaseDatabase):
         exchange: Optional[str] = None,
         symbol: Optional[str] = None,
         symbol_name: Optional[str] = None,
-        ohlcv: Optional[Dict[str, Any]] = None,
+        ohlcv: Optional[dict] = None,
         change_percent: Optional[float] = None,
-        data: Optional[Dict[str, Any]] = None,
-        status: Optional[str] = None
+        data: Optional[dict] = None,
+        status: Optional[str] = None,
+        executable: Optional[bool] = None,
+        execution_result: Optional[str] = None,
+        execution_message: Optional[str] = None
     ) -> bool:
         """更新交易计划"""
         try:
@@ -130,6 +170,12 @@ class TradePlanDatabase(BaseDatabase):
                 tradeplan.data = json.dumps(data)
             if status is not None:
                 tradeplan.status = status
+            if executable is not None:
+                tradeplan.executable = executable
+            if execution_result is not None:
+                tradeplan.execution_result = execution_result
+            if execution_message is not None:
+                tradeplan.execution_message = execution_message
             
             tradeplan.save()
             return True
@@ -139,14 +185,37 @@ class TradePlanDatabase(BaseDatabase):
         except Exception:
             return False
     
-    def update_tradeplan_status(self, tradeplan_id: str, status: str) -> bool:
+    def update_tradeplan_status(
+        self,
+        tradeplan_id: str,
+        status: str,
+        executable: Optional[bool] = None,
+        execution_result: Optional[str] = None,
+        execution_message: Optional[str] = None
+    ) -> bool:
         """更新交易计划状态"""
-        return self.update_tradeplan(tradeplan_id, status=status)
+        return self.update_tradeplan(
+            tradeplan_id,
+            status=status,
+            executable=executable,
+            execution_result=execution_result,
+            execution_message=execution_message
+        )
     
     def batch_update_tradeplan_status(self, tradeplan_ids: List[str], status: str) -> int:
         """批量更新交易计划状态"""
         try:
             updated_count = TradePlan.update(status=status).where(
+                TradePlan.id.in_(tradeplan_ids)
+            ).execute()
+            return updated_count
+        except Exception:
+            return 0
+    
+    def batch_update_tradeplan_executable(self, tradeplan_ids: List[str], executable: bool) -> int:
+        """批量更新交易计划可执行状态"""
+        try:
+            updated_count = TradePlan.update(executable=executable).where(
                 TradePlan.id.in_(tradeplan_ids)
             ).execute()
             return updated_count
@@ -210,38 +279,64 @@ class TradePlanDatabase(BaseDatabase):
         except Exception:
             return False
     
-    def _tradeplan_to_dict(self, tradeplan: TradePlan) -> Dict[str, Any]:
-        """将WorkPlan对象转换为字典"""
-        return {
-            "id": tradeplan.id,
-            "script_id": tradeplan.script_id,
-            "user_id": tradeplan.user_id,
-            "name": tradeplan.name,
-            "description": tradeplan.description,
-            "exchange": tradeplan.exchange,
-            "symbol": tradeplan.symbol,
-            "symbol_name": tradeplan.symbol_name,
-            "ohlcv": json.loads(tradeplan.ohlcv) if tradeplan.ohlcv else None,
-            "change_percent": float(tradeplan.change_percent) if tradeplan.change_percent else None,
-            "data": json.loads(tradeplan.data) if tradeplan.data else {},
-            "status": tradeplan.status,
-            "created_at": tradeplan.created_at,
-            "started_at": tradeplan.started_at,
-            "ended_at": tradeplan.ended_at,
-            "execution_result": tradeplan.execution_result,
-            "execution_message": tradeplan.execution_message
-        }
-    
-    def create_or_update_demo_tradeplans(self) -> Dict[str, int]:
+    def create_or_update_demo_tradeplans(self) -> dict:
         """创建或更新演示用的交易计划数据"""
         try:
-            from ..database.models import TradeScript
+            from ..database.models import TradeScript, Apk
+            import json
+            print("[DEBUG] 开始创建演示交易计划...")
             
             existing_scripts = list(TradeScript.select().limit(1))
+            print(f"[DEBUG] 现有 TradeScript 数量: {len(existing_scripts)}")
+            
+            script_id = None
+            
             if not existing_scripts:
+                print("[DEBUG] 没有现有脚本，检查 Apk...")
+                existing_apks = list(Apk.select().limit(1))
+                print(f"[DEBUG] 现有 Apk 数量: {len(existing_apks)}")
+                
+                apk = None
+                if not existing_apks:
+                    print("[DEBUG] 创建新的 Apk...")
+                    apk_id = f"apk_{uuid.uuid4().hex[:16]}"
+                    Apk.create(
+                        id=apk_id,
+                        package_name="com.autodroid.trader.demo",
+                        app_name="AutoDroid Trader Demo",
+                        name="AutoDroid Trader Demo",
+                        description="AutoDroid 交易演示应用",
+                        version="1.0.0",
+                        version_code=1
+                    )
+                    apk = Apk.get(Apk.id == apk_id)
+                    print(f"[DEBUG] Apk 创建成功: {apk_id}")
+                else:
+                    apk = existing_apks[0]
+                    print(f"[DEBUG] 使用现有 Apk: {apk.id}")
+                
+                if apk:
+                    script_id = f"ts_{uuid.uuid4().hex[:16]}"
+                    print(f"[DEBUG] 创建新的 TradeScript: {script_id}")
+                    TradeScript.create(
+                        id=script_id,
+                        apk=apk,
+                        name="默认交易脚本",
+                        description="用于演示的默认交易脚本",
+                        metadata=json.dumps({"strategy_type": "demo"}),
+                        script_path="demo_strategy.py",
+                        status="OK"
+                    )
+                    print("[DEBUG] TradeScript 创建成功")
+            else:
+                script_id = existing_scripts[0].id
+                print(f"[DEBUG] 使用现有脚本: {script_id}")
+            
+            if not script_id:
+                print("[DEBUG] 错误: script_id 为空")
                 return {"created": 0, "updated": 0}
             
-            script_id = existing_scripts[0].id
+            print(f"[DEBUG] 开始创建演示交易计划，script_id: {script_id}")
             
             demo_tradeplans = [
                 {
@@ -292,17 +387,21 @@ class TradePlanDatabase(BaseDatabase):
             updated_count = 0
             
             for demo in demo_tradeplans:
+                print(f"[DEBUG] 检查交易计划: {demo['name']}")
                 existing = self.get_tradeplan_by_name(demo["name"])
+                print(f"[DEBUG] 找到现有计划: {existing}")
                 
                 if existing:
+                    print(f"[DEBUG] 更新现有计划: {existing.id}")
                     self.update_tradeplan(
-                        tradeplan_id=existing["id"],
+                        tradeplan_id=str(existing.id),
                         description=demo["description"],
                         data=demo["data"],
                         status=demo["status"]
                     )
                     updated_count += 1
                 else:
+                    print(f"[DEBUG] 创建新计划，使用 script_id: {script_id}")
                     tradeplan_id = self.create_tradeplan(
                         script_id=script_id,
                         name=demo["name"],
@@ -310,18 +409,22 @@ class TradePlanDatabase(BaseDatabase):
                         data=demo["data"],
                         status=demo["status"]
                     )
+                    print(f"[DEBUG] 创建结果: {tradeplan_id}")
                     if tradeplan_id:
                         created_count += 1
             
+            print(f"[DEBUG] 完成 - 创建: {created_count}, 更新: {updated_count}")
+            
             return {"created": created_count, "updated": updated_count}
             
-        except Exception:
+        except Exception as e:
+            logger.error(f"创建演示交易计划失败: {e}")
             return {"created": 0, "updated": 0}
     
-    def get_tradeplan_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_tradeplan_by_name(self, name: str) -> Optional[TradePlan]:
         """根据名称获取交易计划"""
         try:
             tradeplan = TradePlan.get(TradePlan.name == name)
-            return self._tradeplan_to_dict(tradeplan)
+            return tradeplan
         except Exception:
             return None

@@ -26,6 +26,7 @@ data class TradePlanResponse(
     val change_percent: Double? = null,
     val data: JsonObject? = null,
     val status: String? = null,
+    val executable: Boolean? = null,
     @SerializedName("executionStatus")
     val executionStatus: String? = null,
     @SerializedName("execution_result")

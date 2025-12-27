@@ -7,7 +7,7 @@ import requests
 import json
 import pytest
 
-BASE_URL = "http://localhost:8004"
+BASE_URL = "http://localhost:8008"
 DEVICE_SERIALNO = "test-device-123"
 
 

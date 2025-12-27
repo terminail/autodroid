@@ -33,7 +33,7 @@ class ApiClient private constructor() {
 
     // For Android emulator: use 10.0.2.2 to access host machine
     // For physical device: use actual host IP address (e.g., 192.168.1.59)
-    private var apiEndpoint: String = "http://10.0.2.2:8004/api" // Default API endpoint for Android emulator
+    private var apiEndpoint: String = "http://10.0.2.2:8008/api" // Default API endpoint for Android emulator
 
     /**
      * Get the current API endpoint

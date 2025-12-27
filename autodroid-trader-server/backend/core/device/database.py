@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from peewee import DoesNotExist
 
 from ..database.base import BaseDatabase
@@ -33,7 +33,7 @@ class DeviceDatabase(BaseDatabase):
         """获取所有设备"""
         return list(Device.select())
     
-    def get_device_by_serialno(self, serialno: str) -> Device:
+    def get_device_by_serialno(self, serialno: str) -> Optional[Device]:
         """根据序列号获取特定设备"""
         try:
             return Device.get(Device.serialno == serialno)
@@ -46,7 +46,7 @@ class DeviceDatabase(BaseDatabase):
             (Device.is_online == True) & (Device.battery_level > 20)
         ))
     
-    def register_device(self, device_info: Dict[str, Any]) -> Device:
+    def register_device(self, device_info: dict) -> Device:
         """从应用报告注册设备"""
         serialno = device_info.get('serialno')
         if not serialno:
@@ -118,7 +118,7 @@ class DeviceDatabase(BaseDatabase):
             device = Device.get(Device.serialno == serialno)
             device.is_online = is_online
             device.battery_level = battery_level
-            device.last_seen = datetime.datetime.now()
+            device.last_seen = datetime.now()
             device.save()
             return True
         except DoesNotExist:
@@ -136,7 +136,7 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return False
     
-    def add_apk_to_device(self, serialno: str, apk_info: Dict[str, Any]) -> Apk:
+    def add_apk_to_device(self, serialno: str, apk_info: dict) -> Apk:
         """将APK添加到设备"""
         try:
             device = Device.get(Device.serialno == serialno)
@@ -206,7 +206,7 @@ class DeviceDatabase(BaseDatabase):
         except DoesNotExist:
             return None
     
-    def update_device_apk(self, serialno: str, package_name: str, apk_info: Dict[str, Any]) -> Apk:
+    def update_device_apk(self, serialno: str, package_name: str, apk_info: dict) -> Apk:
         """更新设备的APK信息"""
         try:
             device = Device.get(Device.serialno == serialno)
@@ -303,7 +303,7 @@ class DeviceDatabase(BaseDatabase):
         return Device.select().where(Device.is_online == True).count()
     
     def update_device_debug_status(self, serialno: str, usb_debug_enabled: bool, wifi_debug_enabled: bool, 
-                                  check_status: str = "SUCCESS", check_message: str = None) -> bool:
+                                  check_status: str = "SUCCESS", check_message: Optional[str] = None) -> bool:
         """更新设备调试权限状态"""
         try:
             device = Device.get(Device.serialno == serialno)

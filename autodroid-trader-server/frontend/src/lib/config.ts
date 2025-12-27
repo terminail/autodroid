@@ -12,7 +12,7 @@ export interface AppConfig {
 // Default configuration
 export const defaultConfig: AppConfig = {
     server: {
-        url: 'http://127.0.0.1:8004',
+        url: 'http://127.0.0.1:8008',
         api_base: '/api',
         use_https: false,
         timeout: 10000
@@ -39,30 +39,30 @@ export const API_CONFIG = {
     // Use relative URL to avoid hardcoding the server URL
     BASE_URL: '',
     API_PREFIX: '/api',
-    
+
     // Full API URL
     get API_URL() {
         return `${this.BASE_URL}${this.API_PREFIX}`;
     },
-    
+
     // Authentication endpoints
     get AUTH_URL() {
         return `${this.API_URL}/auth`;
     },
-    
+
     // Specific auth endpoints
     get LOGIN_URL() {
         return `${this.AUTH_URL}/login`;
     },
-    
+
     get REGISTER_URL() {
         return `${this.AUTH_URL}/register`;
     },
-    
+
     get ME_URL() {
         return `${this.AUTH_URL}/me`;
     },
-    
+
     get LOGOUT_URL() {
         return `${this.AUTH_URL}/logout`;
     }
@@ -72,12 +72,12 @@ export const API_CONFIG = {
 export const FRONTEND_CONFIG = {
     // Base path for the frontend app
     BASE_PATH: '/app',
-    
+
     // Authentication paths
     get LOGIN_PATH() {
         return `${this.BASE_PATH}/auth/login`;
     },
-    
+
     get REGISTER_PATH() {
         return `${this.BASE_PATH}/auth`;
     }
@@ -92,16 +92,16 @@ export async function loadConfig(): Promise<AppConfig> {
             throw new Error(`Failed to load config: ${response.status} ${response.statusText}`);
         }
         const unifiedConfig = await response.json();
-        
+
         // Extract frontend-specific configuration from unified config
         const frontendConfig = unifiedConfig.frontend || {};
         const serverConfig = unifiedConfig.server || {};
         const networkConfig = unifiedConfig.network || {};
         const mdnsConfig = networkConfig.mdns || {};
-        
+
         // Get the current server URL from the browser
         const currentUrl = window.location.origin;
-        
+
         // Merge with defaults
         return {
             server: {

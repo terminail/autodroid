@@ -1,3 +1,4 @@
+import json
 from typing import Optional, Dict, Any, List
 import logging
 
@@ -11,6 +12,7 @@ from .models import (
     TradeScriptCreateResponse,
     TradeScriptUpdateResponse
 )
+from ..database.models import TradeScript as TradeScriptModel
 
 logger = logging.getLogger(__name__)
 
@@ -40,16 +42,19 @@ class TradeScriptService:
                     tradescript=None
                 )
             
-            tradescript_dict = self.tradescript_db.get_tradescript_by_id(tradescript_id)
-            if not tradescript_dict:
+            tradescript_db_obj = self.tradescript_db.get_tradescript_by_id(tradescript_id)
+            if not tradescript_db_obj:
                 return TradeScriptCreateResponse(
                     message="创建交易脚本失败",
                     tradescript=None
                 )
             
+            # Convert database object to Pydantic model
+            tradescript_response = self._convert_db_to_response(tradescript_db_obj)
+            
             return TradeScriptCreateResponse(
                 message="交易脚本创建成功",
-                tradescript=TradeScriptResponse(**tradescript_dict)
+                tradescript=tradescript_response
             )
             
         except Exception as e:
@@ -62,22 +67,43 @@ class TradeScriptService:
     def get_tradescript_by_id(self, tradescript_id: str) -> Optional[TradeScriptResponse]:
         """根据ID获取交易脚本"""
         try:
-            tradescript_dict = self.tradescript_db.get_tradescript_by_id(tradescript_id)
-            if not tradescript_dict:
+            tradescript_db_obj = self.tradescript_db.get_tradescript_by_id(tradescript_id)
+            if not tradescript_db_obj:
                 return None
             
-            return TradeScriptResponse(**tradescript_dict)
+            return self._convert_db_to_response(tradescript_db_obj)
             
         except Exception as e:
             logger.error(f"获取交易脚本失败: {e}")
             return None
+
+    def _convert_db_to_response(self, db_obj: TradeScriptModel) -> TradeScriptResponse:
+        """将数据库对象转换为响应模型"""
+        metadata = {}
+        try:
+            metadata_str = str(db_obj.metadata) if db_obj.metadata else "{}"
+            metadata = json.loads(metadata_str) if metadata_str else {}
+        except:
+            pass
+        
+        return TradeScriptResponse(
+            id=db_obj.id,
+            apk_package=db_obj.apk.package_name if db_obj.apk else None,
+            apk_flow=db_obj.name,
+            name=db_obj.name,
+            description=db_obj.description,
+            metadata=metadata,
+            script_path=db_obj.script_path,
+            created_at=db_obj.created_at
+        )
     
     def get_all_tradescripts(self) -> TradeScriptListResponse:
         """获取所有交易脚本"""
         try:
-            tradescripts = self.tradescript_db.get_all_tradescripts()
+            tradescripts_db = self.tradescript_db.get_all_tradescripts()
+            tradescripts = [self._convert_db_to_response(ts) for ts in tradescripts_db]
             return TradeScriptListResponse(
-                tradescripts=[TradeScriptResponse(**ts) for ts in tradescripts],
+                tradescripts=tradescripts,
                 total=len(tradescripts)
             )
         except Exception as e:
@@ -87,9 +113,10 @@ class TradeScriptService:
     def get_tradescripts_by_apk(self, apk_package: str) -> TradeScriptListResponse:
         """根据APK包名获取交易脚本"""
         try:
-            tradescripts = self.tradescript_db.get_tradescripts_by_apk(apk_package)
+            tradescripts_db = self.tradescript_db.get_tradescripts_by_apk(apk_package)
+            tradescripts = [self._convert_db_to_response(ts) for ts in tradescripts_db]
             return TradeScriptListResponse(
-                tradescripts=[TradeScriptResponse(**ts) for ts in tradescripts],
+                tradescripts=tradescripts,
                 total=len(tradescripts)
             )
         except Exception as e:
@@ -99,9 +126,10 @@ class TradeScriptService:
     def get_tradescripts_by_status(self, status: TradeScriptStatus) -> TradeScriptListResponse:
         """根据状态获取交易脚本"""
         try:
-            tradescripts = self.tradescript_db.get_tradescripts_by_status(status.value)
+            tradescripts_db = self.tradescript_db.get_tradescripts_by_status(status.value)
+            tradescripts = [self._convert_db_to_response(ts) for ts in tradescripts_db]
             return TradeScriptListResponse(
-                tradescripts=[TradeScriptResponse(**ts) for ts in tradescripts],
+                tradescripts=tradescripts,
                 total=len(tradescripts)
             )
         except Exception as e:

@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "autodroid-trader-server"
+name = "autodroid-trader-tradescripts"
 version = "1.0.0"
-description = "Autodroid Android Automation System Container"
+description = "Autodroid Tradescript Engine API"
 authors = [{ name = "Autodroid Team" }]
 requires-python = ">=3.10"
 dependencies = [
@@ -15,7 +15,7 @@ dependencies = [
     "python-multipart==0.0.6",
 
     # 数据验证和配置
-    "pydantic==2.5.2",
+    "pydantic==2.10.5",
     "pydantic-settings==2.1.0",
     "python-dotenv==1.0.0",
 
@@ -41,10 +41,10 @@ dependencies = [
 
     # Appium 自动化测试
     "appium-python-client==2.11.1",
-
 ]
+
 [project.scripts]
-autodroid-server = "backend.api.main:main"
+autodroid-tradescripts = "tradescripts.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

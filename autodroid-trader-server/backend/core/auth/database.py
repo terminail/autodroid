@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Dict, Any
+from typing import Optional
 from datetime import datetime
 import hashlib
 import secrets
@@ -79,7 +79,7 @@ class AuthDatabase(BaseDatabase):
         except Exception:
             return None
     
-    def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """用户认证"""
         try:
             # 获取用户信息
@@ -93,33 +93,19 @@ class AuthDatabase(BaseDatabase):
             user.last_login = datetime.now()
             user.save()
             
-            # 返回用户信息
-            return {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "role": user.role,
-                "last_login": user.last_login,
-                "created_at": user.created_at
-            }
+            # 返回用户对象
+            return user
             
         except DoesNotExist:
             return None
         except Exception:
             return None
     
-    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
         """根据ID获取用户信息"""
         try:
             user = User.get(User.id == user_id)
-            return {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "role": user.role,
-                "last_login": user.last_login,
-                "created_at": user.created_at
-            }
+            return user
         except DoesNotExist:
             return None
         except Exception:
@@ -135,20 +121,12 @@ class AuthDatabase(BaseDatabase):
         except Exception:
             return None
     
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_email(self, email: str) -> Optional[User]:
         """根据邮箱获取用户信息"""
         try:
             user = User.get(User.email == email)
-            return {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "role": user.role,
-                "last_login": user.last_login,
-                "created_at": user.created_at
-            }
+            return user
         except DoesNotExist:
             return None
         except Exception:
             return None
-    

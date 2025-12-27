@@ -119,6 +119,7 @@ class TradePlan(BaseModel):
     change_percent = DecimalField(null=True)  # 涨跌幅
     data = TextField(null=True)  # JSON格式存储，交易计划数据符合TradeScript的metadata要求
     status = CharField(default='PENDING')  # 状态：PENDING、APPROVED、REJECTED、EXECUTING、COMPLETED、FAILED
+    executable = BooleanField(default=True)  # 是否可执行
     created_at = DateTimeField(default=datetime.now)
     started_at = DateTimeField(null=True)
     ended_at = DateTimeField(null=True)
@@ -150,13 +151,27 @@ class TradeOrder(BaseModel):
     contract_profit_loss = DecimalField(default=0.00)  # 利润损失
     created_at = DateTimeField(default=datetime.now)
 
+class Server(BaseModel):
+    """服务器模型"""
+    id = CharField(primary_key=True)
+    name = CharField()
+    ip_address = CharField()
+    port = IntegerField()
+    platform = CharField()
+    protocol = CharField(default='http')
+    version = CharField(default='1.0')
+    services = TextField(null=True)  # JSON格式存储
+    capabilities = TextField(null=True)  # JSON格式存储
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
+
 # 创建所有表
 def create_tables():
     """创建所有数据库表"""
     with db:
         db.create_tables([
             User, Device, Apk, DeviceApk, 
-            TradeScript, TradePlan, Contract, TradeOrder
+            TradeScript, TradePlan, Contract, TradeOrder, Server
         ])
 
 # 初始化数据库

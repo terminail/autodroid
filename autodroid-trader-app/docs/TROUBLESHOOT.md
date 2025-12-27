@@ -6,7 +6,7 @@
 Android 模拟器无法连接到本地服务器，导致 APK 扫描和设备注册功能失败。
 
 ### 问题症状
-- 应用日志显示："Failed to connect to http://192.168.1.59:8004"
+- 应用日志显示："Failed to connect to http://192.168.1.59:8008"
 - 网络请求超时或连接被拒绝
 - APK 扫描按钮点击后无响应或显示连接错误
 
@@ -24,13 +24,13 @@ Android 模拟器使用特殊的网络配置：
 **修改前：**
 ```kotlin
 // ApiClient.kt
-private const val BASE_URL = "http://192.168.1.59:8004"
+private const val BASE_URL = "http://192.168.1.59:8008"
 ```
 
 **修改后：**
 ```kotlin
 // ApiClient.kt
-private const val BASE_URL = "http://10.0.2.2:8004"
+private const val BASE_URL = "http://10.0.2.2:8008"
 ```
 
 #### 2. 启用模拟器网络连接
@@ -41,7 +41,7 @@ private const val BASE_URL = "http://10.0.2.2:8004"
 3. **检查网络状态**：
    ```bash
    adb shell ping -c 3 10.0.2.2
-   adb shell nc -z -w 5 10.0.2.2 8004
+   adb shell nc -z -w 5 10.0.2.2 8008
    ```
 
 #### 3. 验证网络连接状态
@@ -70,10 +70,10 @@ adb shell dumpsys connectivity
 
 ```bash
 # 测试端口连接
-adb shell "nc -z -w 5 10.0.2.2 8004 && echo '端口8004可访问' || echo '端口8004不可访问'"
+adb shell "nc -z -w 5 10.0.2.2 8008 && echo '端口8008可访问' || echo '端口8008不可访问'"
 
 # 测试 API 端点
-adb shell "echo '测试设备注册API' && echo 'POST http://10.0.2.2:8004/api/devices/register' | nc -q 5 10.0.2.2 8004"
+adb shell "echo '测试设备注册API' && echo 'POST http://10.0.2.2:8008/api/devices/register' | nc -q 5 10.0.2.2 8008"
 ```
 
 ### 网络连接验证步骤
@@ -103,7 +103,7 @@ adb shell ping -c 3 10.0.2.2
 
 #### 步骤 4：测试服务器端口
 ```bash
-adb shell nc -z -w 5 10.0.2.2 8004
+adb shell nc -z -w 5 10.0.2.2 8008
 ```
 **期望结果：** 端口可访问，无连接超时
 
@@ -146,7 +146,7 @@ private fun updateUI() {
 **检查 run_server.py：**
 ```python
 # 服务器应该绑定到 0.0.0.0（所有接口）
-uvicorn.run(app, host="0.0.0.0", port=8004)
+uvicorn.run(app, host="0.0.0.0", port=8008)
 ```
 
 ### 常见错误及解决方法
@@ -190,7 +190,7 @@ adb logcat | grep -E "(ApiClient|ApkScanner|Network)"
 ```
 
 **关键日志信息：**
-- `Making POST request to: http://10.0.2.2:8004/api/devices/register`
+- `Making POST request to: http://10.0.2.2:8008/api/devices/register`
 - `Registered 1 APKs for device [设备ID]`
 - `Scan completed: 1 APKs ready for display`
 

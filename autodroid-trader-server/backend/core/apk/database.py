@@ -1,5 +1,5 @@
 import time
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from peewee import DoesNotExist
 
 from ..database.base import BaseDatabase
@@ -13,10 +13,10 @@ class ApkDatabase(BaseDatabase):
         """初始化APK数据库"""
         super().__init__()
     
-    def register_apk_to_device(self, apk_data: Dict[str, Any], serialno: str) -> Optional[Apk]:
+    def register_apk_to_device(self, apk_data: dict, serialno: str) -> Optional[Apk]:
         """将APK注册到设备（多对多关系）"""
         try:
-            with Apk._meta.database.atomic():
+            with self.db.atomic():
                 # 1. 检查APK是否已存在，不存在则插入
                 apk, created = Apk.get_or_create(
                     package_name=apk_data['package_name'],
@@ -71,7 +71,7 @@ class ApkDatabase(BaseDatabase):
         except Exception:
             return []
     
-    def update_apk(self, package_name: str, update_data: Dict[str, Any]) -> bool:
+    def update_apk(self, package_name: str, update_data: dict) -> bool:
         """更新APK信息"""
         try:
             # 过滤有效字段
@@ -91,9 +91,9 @@ class ApkDatabase(BaseDatabase):
     def delete_apk(self, package_name: str) -> bool:
         """删除APK记录"""
         try:
-            with Apk._meta.database.atomic():
+            with self.db.atomic():
                 # 先删除关联的设备记录
-                DeviceApk.delete().where(DeviceApk.package_name == package_name).execute()
+                DeviceApk.delete().where(DeviceApk.apk == Apk.get(Apk.package_name == package_name)).execute()
                 
                 # 再删除APK记录
                 deleted_count = Apk.delete().where(Apk.package_name == package_name).execute()
