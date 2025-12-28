@@ -18,11 +18,14 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+nul
 
 # Project specific ignores
 OpenAutoGLM/
 **/editor_management/__pycache__/
 **/editor_management/frontend/.svelte-kit/
+
+appium-uiautomator2-server/
 
 # Node.js dependencies
 node_modules/
@@ -39,8 +42,6 @@ node_modules/
 Open-AutoGLM/
 autodroid_database.db
 
-<<<<<<< HEAD
-=======
 # SSH keys
 gitee
 gitee.pub
@@ -55,7 +56,6 @@ gitee.pub
 **/dist/*.exe
 **/autodroid-analyzer/dist/
 
->>>>>>> 105a6d8 (Update .gitignore to exclude SSH keys, APK files and executables)
 # Push scripts (local use only)
 push-to-all.sh
 push-to-all.bat

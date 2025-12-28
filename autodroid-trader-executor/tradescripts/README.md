@@ -74,3 +74,12 @@ To run the tests:
 ```bash
 python -m pytest tests/
 ```
+
+
+## tools
+
+- `adb_operator.py` - ADB操作工具，用于与Android设备交互
+- `adb_autoop.py` - 自动操作工具，用于执行 tradescripts 定义的操作
+```bash
+cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py
+```

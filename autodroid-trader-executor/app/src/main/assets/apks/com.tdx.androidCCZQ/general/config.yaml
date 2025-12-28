@@ -1,0 +1,51 @@
+name: 返回主页
+description: 从任意页面返回主页
+steps:
+  - name: 登录提示
+    layout: deng-lu-ti-shi.xml
+    screenshot: deng-lu-ti-shi.png
+    description: 这是登录提示
+  - name: 登录
+    layout: deng-lu.xml
+    screenshot: deng-lu.png
+    description: 这是登录
+  - name: 公告
+    layout: gong-gao.xml
+    screenshot: gong-gao.png
+    description: 这是公告
+  - name: 广告
+    layout: guang-gao.xml
+    screenshot: guang-gao.png
+    description: 这是广告 
+  - name: 行情
+    layout: hang-qing.xml
+    screenshot: hang-qing.png
+    description: 这是行情
+  - name: 交易
+    layout: jiao-yi.xml
+    screenshot: jiao-yi.png
+    description: 这是交易
+  - name: 接收短信
+    layout: jie-shou-duan-xin.xml
+    screenshot: jie-shou-duan-xin.png
+    description: 这是接收短信
+  - name: 开通指纹
+    layout: kai-tong-zhi-wen.xml
+    screenshot: kai-tong-zhi-wen.png
+    description: 这是开通指纹
+  - name: 商城
+    layout: shang-cheng.xml
+    screenshot: shang-cheng.png
+    description: 这是商城
+  - name: 条件单
+    layout: tiao-ding-dan.xml
+    screenshot: tiao-ding-dan.png
+    description: 这是条件单
+  - name: 我的
+    layout: wo-de.xml
+    screenshot: wo-de.png
+    description: 这是我的
+  - name: 隐私政策
+    layout: yin-si-zheng-ce.xml
+    screenshot: yin-si-zheng-ce.png
+    description: 这是隐私政策

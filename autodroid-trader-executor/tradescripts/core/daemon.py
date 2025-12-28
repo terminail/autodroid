@@ -6,11 +6,14 @@
 import asyncio
 import logging
 import requests
+import hashlib
 from datetime import datetime
 from typing import Optional, Dict, Any
+from pathlib import Path
 
 from core.tradescript.models import TradePlanResponse
 from core.tradescript.service import TradeScriptExecutionData
+from core.config import get_apks_path
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +140,10 @@ class TradePlanDaemon:
         """运行交易计划执行逻辑"""
         start_time = datetime.now()
         
+        script_id = tradeplan.script_id
+        apk_flow = self._get_apk_flow_from_script_id(script_id)
         logger.info(f"执行 {tradeplan.name}")
+        logger.info(f"APK Flow: {apk_flow}")
         
         if tradeplan.data:
             logger.info(f"交易计划配置: {tradeplan.data}")
@@ -163,6 +169,35 @@ class TradePlanDaemon:
         except Exception as e:
             logger.error(f"执行脚本失败: {e}")
             return {"success": False, "message": str(e)}
+    
+    def _get_apk_flow_from_script_id(self, script_id: str) -> str:
+        """根据 script_id 查找对应的 apk_flow"""
+        if not script_id:
+            return "Unknown"
+        
+        try:
+            apks_path = get_apks_path()
+            if not apks_path.exists():
+                return "Unknown"
+            
+            for apk_package_dir in apks_path.iterdir():
+                if not apk_package_dir.is_dir():
+                    continue
+                
+                for flow_dir in apk_package_dir.iterdir():
+                    if not flow_dir.is_dir():
+                        continue
+                    
+                    id_string = f"{apk_package_dir.name}_{flow_dir.name}"
+                    id_hash = hashlib.md5(id_string.encode()).hexdigest()
+                    
+                    if id_hash == script_id:
+                        return str(flow_dir.relative_to(apks_path))
+            
+            return "Unknown"
+        except Exception as e:
+            logger.error(f"查找 apk_flow 失败: {e}")
+            return "Unknown"
     
     async def _update_execution_status(self, tradeplan_id: str, execution_result: str, execution_message: str):
         """更新执行状态"""

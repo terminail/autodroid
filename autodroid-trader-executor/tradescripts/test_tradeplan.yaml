@@ -1,0 +1,125 @@
+version: "1.0"
+
+name: 明佣宝网格交易测试计划
+name_en: Mingyongbao Grid Trading Test Plan
+description: 测试明佣宝App冷启动并导航到网格交易页面
+description_en: Test cold start Mingyongbao App and navigate to grid trading page
+
+device:
+  device_id: "emulator-5554"
+  platform: "Android"
+  platform_version: "13.0"
+  device_type: "emulator"
+
+app:
+  package_name: "com.tdx.androidCCZQ"
+  main_activity: ".ui.MainActivity"
+  launch_timeout: 30
+  clear_data_on_start: false
+
+test_data:
+  capture_screenshot: true
+  capture_xml: true
+  wait_for_idle: true
+  idle_timeout: 3.0
+
+scenarios:
+  cold_start:
+    name: 冷启动测试
+    name_en: Cold Start Test
+    description: 冷启动明佣宝App并验证首页加载
+    enabled: true
+    steps: []
+
+  navigate_to_grid:
+    name: 导航测试
+    name_en: Navigation Test
+    description: 从首页导航到网格交易页面
+    enabled: true
+    steps:
+      - page_id: "home"
+        action_type: "click"
+        target_element:
+          resource-id: "entry-xzsg"
+        description: "点击【条件单】入口"
+        wait_after: 2.0
+        expected_page_after: "entry-xzsg"
+        timeout: 10
+        retries: 2
+
+      - page_id: "entry-xzsg"
+        action_type: "click"
+        target_element:
+          text: "6d13594be6254ee3c53cf86bd9783178"
+        description: "点击【网格交易】入口"
+        wait_after: 3.0
+        expected_page_after: "grid-trading"
+        timeout: 10
+        retries: 2
+
+  full_flow:
+    name: 完整流程测试
+    name_en: Full Flow Test
+    description: 完整的冷启动和导航流程测试
+    enabled: true
+    steps:
+      - page_id: "home"
+        action_type: "click"
+        target_element:
+          resource-id: "entry-xzsg"
+        description: "点击【条件单】入口"
+        wait_after: 2.0
+        expected_page_after: "entry-xzsg"
+        timeout: 10
+        retries: 2
+
+      - page_id: "entry-xzsg"
+        action_type: "click"
+        target_element:
+          text: "6d13594be6254ee3c53cf86bd9783178"
+        description: "点击【网格交易】入口"
+        wait_after: 3.0
+        expected_page_after: "grid-trading"
+        timeout: 10
+        retries: 2
+
+expected_results:
+  cold_start:
+    app_started: true
+    home_page_loaded: true
+    elements_found: true
+
+  navigate_to_grid:
+    navigation_completed: true
+    final_page: "grid-trading"
+    steps_completed: 2
+
+  full_flow:
+    app_started: true
+    navigation_completed: true
+    final_page: "grid-trading"
+    all_steps_completed: true
+
+verification:
+  home_page_elements:
+    - resource-id: "entry-xzsg"
+      description: "条件单入口按钮"
+
+  entry_xzsg_page_elements:
+    - text: "6d13594be6254ee3c53cf86bd9783178"
+      description: "网格交易入口"
+
+  grid_trading_page_elements:
+    - resource-id: "grid-trading"
+      description: "网格交易主页面"
+    - resource-id: "grid-config"
+      description: "网格配置区域"
+
+timeout:
+  single_action: 10
+  page_transition: 15
+  total_test: 120
+
+retry:
+  max_retries: 3
+  retry_delay: 1.0

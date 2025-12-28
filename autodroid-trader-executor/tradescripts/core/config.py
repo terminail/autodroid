@@ -51,6 +51,7 @@ def get_server_config():
     server_config = config.get('server', {})
     backend_config = server_config.get('backend', {})
     trader_server_config = config.get('trader-server', {})
+    development_config = config.get('development', {})
     
     trader_server_api_endpoint = trader_server_config.get('api_endpoint', 'http://localhost:8008/api')
     
@@ -64,5 +65,8 @@ def get_server_config():
         'poll_interval': backend_config.get('poll_interval', 5),
         'trader_server_api_endpoint': trader_server_api_endpoint,
         'log_level': config.get('logging', {}).get('level', 'info'),
-        'reload': backend_config.get('reload', False)
+        'reload': backend_config.get('reload', False),
+        'docs_url': development_config.get('docs_url', '/docs'),
+        'redoc_url': development_config.get('redoc_url', '/redoc'),
+        'enable_docs': development_config.get('enable_docs', True)
     }

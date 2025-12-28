@@ -2,7 +2,7 @@
 
 ## 📖 文档概述
 
-本文档旨在提供一个名为 **Autodroid** 的、基于 Appium 的、数据驱动的、可感知页面的自动化测试框架的完整解决方案。该框架的核心创新在于：**通过编辑包含自定义属性（`autodroid:*`）的离线XML"剧本"来描述操作，并由智能引擎解析执行，实现了业务逻辑（操作流）、定位逻辑（智能查找）与测试数据的彻底分离**，从而解决了传统脚本编写和维护成本高、复用性差、无法灵活适应多入口和动态数据的问题。
+本文档旨在提供一个名为 **Autodroid** 的、基于 ADB 的、数据驱动的、可感知页面的自动化测试框架的完整解决方案。该框架的核心创新在于：**通过编辑包含自定义属性（`autodroid:*`）的离线XML"剧本"来描述操作，并由智能引擎解析执行，实现了业务逻辑（操作流）、定位逻辑（智能查找）与测试数据的彻底分离**，从而解决了传统脚本编写和维护成本高、复用性差、无法灵活适应多入口和动态数据的问题。
 
 ## 🎯 核心设计理念
 
@@ -17,7 +17,7 @@
 autodroid_project/
 │
 ├── config/
-│   └── capabilities.json      # Appium连接设备的配置
+│   └── capabilities.json      # ADB连接设备的配置
 │
 ├── data/                      # 外部测试数据
 │   ├── users.json
@@ -47,7 +47,7 @@ autodroid_project/
 
 ### 3.1 智能页面匹配引擎 (`PageMatcher`)
 这是框架的"眼睛"和"大脑"。
-*   **输入**：实时从Appium获取的当前界面XML源码。
+*   **输入**：实时从 ADB 获取的当前界面 XML 源码。
 *   **处理**：将实时XML与`apks/`目录下的所有离线XML进行"指纹"比对。
 *   **指纹算法**：提取离线XML中所有带有`autodroid:*`属性的元素，将其**稳定的原生属性**（如`resource-id`, `text`, `class`的组合）作为该页面的特征指纹。
 *   **输出**：计算匹配度，返回匹配度最高的`page_id`。匹配成功意味着框架"知道"自己现在在哪一页。
@@ -280,102 +280,189 @@ graph TD
 import xml.etree.ElementTree as ET
 import time
 import json
-from appium import webdriver
-from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+import re
+from typing import Optional, Tuple, Dict, Any, List
+from pathlib import Path
+
+from core.tradescript.adb_driver import ADBManager
 
 class AutodroidCore:
-    def __init__(self, driver, apks_dir='apks'):
-        self.driver = driver
-        self.apks_dir = apks_dir
-        self.page_fingerprints = self._load_page_fingerprints()
-        self.test_data = {}  # 由主脚本传入
-        self.runtime_context = {}  # 存储运行时获取的数据
-        self.wait = WebDriverWait(self.driver, 10)
+    def __init__(self, adb_manager: ADBManager, device_id: str, apks_dir: str = 'apks'):
+        self.adb_manager = adb_manager
+        self.device_id = device_id
+        self.apks_dir = Path(apks_dir)
+        self.test_data: Dict[str, Any] = {}
+        self.runtime_context: Dict[str, str] = {}
         
-    def _load_page_fingerprints(self):
+    def _load_page_fingerprints(self) -> Dict[str, Dict]:
         """加载所有页面XML，构建页面指纹库"""
         fingerprints = {}
-        # ... (遍历apks_dir，解析XML，提取带autodroid属性的元素特征)
+        for xml_file in self.apks_dir.glob('**/*.xml'):
+            try:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+                page_id = root.get('autodroid:page_id')
+                if page_id:
+                    fingerprints[page_id] = self._extract_page_features(root)
+            except Exception as e:
+                print(f"加载页面XML失败 {xml_file}: {e}")
         return fingerprints
         
-    def identify_current_page(self, live_xml_source):
+    def _extract_page_features(self, root: ET.Element) -> Dict[str, Dict]:
+        """提取页面特征用于匹配"""
+        features = {}
+        for elem in root.iter():
+            if elem.get('autodroid:page_id'):
+                continue
+            autodroid_id = elem.get('autodroid:id') or elem.get('autodroid:name')
+            if autodroid_id:
+                feature = {
+                    'resource_id': elem.get('resource-id', ''),
+                    'text': elem.get('text', ''),
+                    'class': elem.get('class', ''),
+                    'bounds': elem.get('bounds', ''),
+                    'content_desc': elem.get('content-desc', ''),
+                }
+                features[autodroid_id] = feature
+        return features
+        
+    def identify_current_page(self, live_xml_source: str) -> Optional[str]:
         """识别当前页面：核心匹配算法"""
         best_match_id, best_score = None, 0
-        live_root = ET.fromstring(live_xml_source.encode('utf-8'))
-        live_features = self._extract_features(live_root)
+        try:
+            live_root = ET.fromstring(live_xml_source.encode('utf-8'))
+            live_features = self._extract_page_features(live_root)
+            
+            for page_id, offline_features in self.page_fingerprints.items():
+                score = self._calculate_similarity(offline_features, live_features)
+                if score > best_score:
+                    best_score, best_match_id = score, page_id
+            return best_match_id if best_score > 0.6 else None
+        except Exception as e:
+            print(f"页面识别失败: {e}")
+            return None
+            
+    def _calculate_similarity(self, offline: Dict, live: Dict) -> float:
+        """计算页面相似度"""
+        if not offline or not live:
+            return 0.0
+        matches = 0
+        total = len(offline)
+        for elem_id, offline_elem in offline.items():
+            if elem_id in live:
+                live_elem = live[elem_id]
+                if (offline_elem['resource_id'] == live_elem['resource_id'] and
+                    offline_elem['class'] == live_elem['class']):
+                    matches += 1
+        return matches / total if total > 0 else 0.0
         
-        for page_id, offline_features in self.page_fingerprints.items():
-            score = self._calculate_similarity(offline_features, live_features)
-            if score > best_score:
-                best_score, best_match_id = score, page_id
-        return best_match_id if best_score > 0.6 else None  # 可调阈值
-        
-    def execute_page_flow(self, page_id):
+    def execute_page_flow(self, page_id: str) -> bool:
         """执行指定页面的所有步骤"""
-        xml_path = f"{self.apks_dir}/{page_id}.xml"
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
-        steps = self._collect_steps(root)
+        xml_path = self.apks_dir / f"{page_id}.xml"
+        if not xml_path.exists():
+            print(f"页面XML不存在: {xml_path}")
+            return False
+            
+        try:
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+            steps = self._collect_steps(root)
+            
+            for step_info in steps:
+                success = self._execute_single_step(step_info)
+                if not success:
+                    print(f"步骤执行失败: {step_info}")
+                    return False
+                    
+                wait_time = float(step_info['element'].get('autodroid:wait_after', 0))
+                if wait_time > 0:
+                    time.sleep(wait_time)
+            return True
+        except Exception as e:
+            print(f"执行页面流程失败: {e}")
+            return False
+            
+    def _collect_steps(self, root: ET.Element) -> List[Dict]:
+        """收集页面中所有带步骤的元素"""
+        steps = []
+        for elem in root.iter():
+            if elem.get('autodroid:step') and elem.get('autodroid:action'):
+                step_num = int(elem.get('autodroid:step', 0))
+                action = elem.get('autodroid:action')
+                steps.append({
+                    'element': elem,
+                    'action': action,
+                    'step': step_num,
+                    'name': elem.get('autodroid:name'),
+                    'value': elem.get('autodroid:value'),
+                    'save_to': elem.get('autodroid:save_to'),
+                })
+        return sorted(steps, key=lambda x: x['step'])
         
-        for step_info in steps:
-            self._execute_single_step(step_info)
-            # 执行后等待
-            wait_time = float(step_info['element'].get('autodroid:wait_after', 0))
-            if wait_time > 0:
-                time.sleep(wait_time)
-                
-    def _execute_single_step(self, step_info):
-        """执行单个步骤：智能定位 + 数据驱动执行"""
+    def _execute_single_step(self, step_info: Dict) -> bool:
+        """执行单个步骤：ADB定位 + 数据驱动执行"""
         elem = step_info['element']
         action = step_info['action']
         
-        # 1. 智能定位
-        locators = self._generate_locators(elem)
-        live_element = self._find_element(locators)
-        if not live_element:
-            print(f"定位失败: {elem.attrib}")
-            return
+        bounds = self._get_element_bounds(elem)
+        if not bounds:
+            print(f"无法获取元素边界: {elem.attrib}")
+            return False
             
-        # 2. 数据解析：决定要使用的值
-        field_name = elem.get('autodroid:name')
-        hardcoded_value = elem.get('autodroid:value')
-        target_value = self.test_data.get(field_name, hardcoded_value)
+        center_x, center_y = self._calculate_center(bounds)
         
-        # 3. 执行动作
+        field_name = step_info.get('name')
+        hardcoded_value = step_info.get('value')
+        target_value = self.test_data.get(field_name, hardcoded_value) if field_name else hardcoded_value
+        
         if action == 'input' and target_value:
-            live_element.clear()
-            live_element.send_keys(target_value)
+            self.adb_manager.tap(self.device_id, center_x, center_y)
+            time.sleep(0.2)
+            self.adb_manager.input_text(self.device_id, str(target_value))
             print(f"输入: [{target_value}]")
         elif action == 'select' and target_value:
-            self._handle_dropdown(live_element, target_value)
+            self.adb_manager.tap(self.device_id, center_x, center_y)
+            time.sleep(0.5)
+            self._select_option(target_value)
         elif action == 'click':
-            live_element.click()
-            print("点击")
+            result = self.adb_manager.tap(self.device_id, center_x, center_y)
+            print(f"点击: ({center_x}, {center_y})")
+            return result
         elif action == 'get_text':
-            captured = live_element.text
-            save_key = elem.get('autodroid:save_to', field_name)
+            captured = elem.get('text', '')
+            save_key = step_info.get('save_to') or field_name
             if save_key:
                 self.runtime_context[save_key] = captured
                 print(f"保存文本 [{save_key}]: {captured}")
-                
-    def _generate_locators(self, offline_elem):
-        """生成定位器优先级列表"""
-        locators = []
-        attrs = offline_elem.attrib
+        return True
         
-        if 'resource-id' in attrs:
-            rid = attrs['resource-id'].split('/')[-1]
-            locators.append((AppiumBy.ID, rid))
-        if 'content-desc' in attrs:
-            locators.append((AppiumBy.ACCESSIBILITY_ID, attrs['content-desc']))
-        if 'text' in attrs:
-            uia = f'new UiSelector().text("{attrs["text"]}")'
-            locators.append((AppiumBy.ANDROID_UIAUTOMATOR, uia))
-        # ... 可添加更多回退定位策略
-        return locators
+    def _get_element_bounds(self, elem: ET.Element) -> Optional[Tuple[int, int, int, int]]:
+        """从XML元素中提取边界坐标"""
+        bounds = elem.get('bounds', '')
+        if bounds:
+            match = re.findall(r'\[(\d+),(\d+)\]', bounds)
+            if len(match) >= 2:
+                x1, y1 = int(match[0][0]), int(match[0][1])
+                x2, y2 = int(match[1][0]), int(match[1][1])
+                return (x1, y1, x2, y2)
+        return None
+        
+    def _calculate_center(self, bounds: Tuple[int, int, int, int]) -> Tuple[int, int]:
+        """计算边界中心点"""
+        x1, y1, x2, y2 = bounds
+        return ((x1 + x2) // 2, (y1 + y2) // 2)
+        
+    def _select_option(self, option_text: str):
+        """ADB方式选择下拉选项"""
+        dump_xml = self.adb_manager.dump_xml(self.device_id)
+        root = ET.fromstring(dump_xml.encode('utf-8'))
+        for elem in root.iter():
+            if elem.get('text') == option_text:
+                bounds = self._get_element_bounds(elem)
+                if bounds:
+                    cx, cy = self._calculate_center(bounds)
+                    return self.adb_manager.tap(self.device_id, cx, cy)
+        return False
 ```
 
 ### 5.7 增强的智能调度器核心逻辑
@@ -430,51 +517,44 @@ class EnhancedOrchestrator:
 ```
 #!/usr/bin/env python3
 import json
-from appium import webdriver
+from core.tradescript.adb_driver import ADBManager
 from lib.autodroid_core import AutodroidCore
 
 def main():
-    # 1. 加载外部测试数据
+    device_id = "TDCDU17905004388"
+    adb_manager = ADBManager()
+    
     with open('data/user_login.json', 'r') as f:
         test_cases = json.load(f)
         
-    # 2. 加载设备配置
-    with open('config/capabilities.json', 'r') as f:
-        desired_caps = json.load(f)
-    
     for case in test_cases:
         print(f"\n开始用例: {case['case_name']}")
         
-        # 3. 启动Appium会话
-        driver = webdriver.Remote('http://localhost:4723', desired_caps)
-        time.sleep(3)  # 等待应用初始页面
-        
         try:
-            # 4. 初始化框架，并注入当前用例的测试数据
-            autodroid = AutodroidCore(driver, apks_dir='apks')
+            autodroid = AutodroidCore(
+                adb_manager=adb_manager,
+                device_id=device_id,
+                apks_dir='apks'
+            )
             autodroid.test_data = case['data']
             
-            # 5. 启动自我驱动的工作流（假设从登录页开始）
-            current_page = autodroid.identify_current_page(driver.page_source)
+            live_xml = adb_manager.dump_xml(device_id)
+            current_page = autodroid.identify_current_page(live_xml)
             if not current_page:
-                current_page = 'login_page'  # 或通过配置指定起始页
+                current_page = 'login_page'
             
             while current_page:
                 print(f"当前页面: {current_page}")
                 autodroid.execute_page_flow(current_page)
-                # 执行后，重新识别页面
-                new_page = autodroid.identify_current_page(driver.page_source)
+                new_xml = adb_manager.dump_xml(device_id)
+                new_page = autodroid.identify_current_page(new_xml)
                 if new_page == current_page:
                     print("流程在该页面结束。")
                     break
                 current_page = new_page
                 
-            # 6. （可选）进行断言，利用 runtime_context
-            # if autodroid.runtime_context.get('login_status') != 'success':
-            #    raise AssertionError("登录失败")
-                
-        finally:
-            driver.quit()
+        except Exception as e:
+            print(f"执行出错: {e}")
 
 if __name__ == '__main__':
     main()
@@ -538,8 +618,8 @@ flowchart TD
 
 ## 🚀 使用步骤总结
 
-1.  **环境搭建**：确保Python、Appium Server、被测APK、设备连接就绪。
-2.  **分析页面**：使用Appium Inspector或`adb shell uiautomator dump`获取目标应用的各个页面XML，保存至`apks/`目录。
+1.  **环境搭建**：确保Python、被测APK、设备连接就绪。
+2.  **分析页面**：使用 `adb shell uiautomator dump` 获取目标应用的各个页面XML，保存至`apks/`目录。
 3.  **编辑"剧本"**：在每个页面的离线XML中，按照业务顺序，为需要操作的元素添加 `autodroid:*` 系列属性。
 4.  **准备数据**：在`data/`目录下创建JSON文件，定义多组测试数据。
 5.  **配置连接**：在`config/capabilities.json`中填写设备信息和应用信息。
@@ -644,7 +724,7 @@ flowchart TD
 │                驱动层 (Driver)                  │
 │                                                 │
 │            ┌──────────────────┐                │
-│            │   Appium驱动层   │                │
+│            │   ADB驱动层      │                │
 │            └──────────────────┘                │
 │                         │                      │
 │            ┌──────────────────┐                │
@@ -839,7 +919,6 @@ class FlowOrchestrator:
 
 #### 2.8.1 环境要求
 - Python 3.8+
-- Appium Server 2.0+
 - Android SDK Platform-Tools
 - 待测Android应用APK
 
@@ -944,7 +1023,7 @@ graph TD
         B2 --> B3[解析每个元素的 autodroid:action];
         B3 --> B4{执行动作};
         B4 --> B5[根据 name/value 逻辑获取数据];
-        B5 --> B6[调用Appium执行];
+        B5 --> B6[调用ADB执行];
     end
 
     subgraph “流程调度引擎”

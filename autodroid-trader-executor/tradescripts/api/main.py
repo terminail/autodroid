@@ -40,9 +40,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Tradescript API",
     version="1.0.0",
-    debug=True,  # Always True for development server
-    docs_url=config_data.get('docs_url', '/docs'),
-    redoc_url=config_data.get('redoc_url', '/redoc')
+    debug=True,
+    docs_url=config_data.get('docs_url') if config_data.get('enable_docs') else None,
+    redoc_url=config_data.get('redoc_url') if config_data.get('enable_docs') else None
 )
 
 
@@ -69,6 +69,17 @@ async def get_tradescripts():
     """获取交易脚本信息列表"""
     tradescripts = scan_apks_directory()
     return TradeScriptListResponse(tradescripts=tradescripts, total=len(tradescripts))
+
+
+@app.get(f"{config_data.get('api_base', '/api')}/tradescripts/{{script_id}}", response_model=TradeScriptResponse)
+async def get_tradescript(script_id: str):
+    """根据 script_id 获取单个交易脚本信息"""
+    tradescripts = scan_apks_directory()
+    for ts in tradescripts:
+        if ts.id == script_id:
+            return ts
+    from fastapi import HTTPException
+    raise HTTPException(status_code=404, detail=f"未找到脚本: {script_id}")
 
 
 @app.get("/")

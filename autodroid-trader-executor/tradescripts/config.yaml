@@ -16,6 +16,6 @@ server:
     host: 0.0.0.0
     reload: true
 apks:
-  path: app/src/main/assets/apks
+  path: ../app/src/main/assets/apks
 trader-server:
   api_endpoint: http://127.0.0.1:8008/api

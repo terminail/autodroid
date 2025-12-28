@@ -3,6 +3,7 @@
 *.aar
 *.ap_
 *.aab
+nul
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -98,6 +99,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+autodroid_trader_tradescripts.egg-info/
 
 # Zenoh demos
 zenoh-demos/

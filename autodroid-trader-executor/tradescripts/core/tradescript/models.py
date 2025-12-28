@@ -27,9 +27,9 @@ class Ohlcv(BaseModel):
 class TradePlanResponse(BaseModel):
     """交易计划响应模型"""
     id: str
-    script_id: Optional[str] = None
+    script_id: str
     user_id: Optional[str] = None
-    name: str
+    name: Optional[str] = None
     description: Optional[str] = None
     exchange: Optional[str] = None
     symbol: Optional[str] = None

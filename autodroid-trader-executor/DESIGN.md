@@ -2,16 +2,16 @@
 
 ## 概述
 
-AutoDroid WorkScripts 是一个用于自动化测试的 Android 应用程序，它能够解析 Appium Inspector 导出的 XML 文件，并将其转换为可视化的界面元素。该应用主要包含以下功能：
+AutoDroid WorkScripts 是一个用于自动化测试的 Android 应用程序，它能够解析 ADB UI Automator 导出的 XML 文件，并将其转换为可视化的界面元素。该应用主要包含以下功能：
 
-1. 解析 Appium XML 文件
+1. 解析 ADB XML 文件
 2. 动态创建 Android 视图元素
 3. 提供导航和流程管理功能
 4. 支持返回按钮导航
 
 ## DEBUG
 ```bash
-$ adb logcat -s AppiumXml
+$ adb logcat -s ADBXml
 
 $ powershell -Command "adb pull '/sdcard/Android/data/com.autodroid.tradescripts/files/temp_xzsg-step0a.xml' ."
 
@@ -20,10 +20,10 @@ $ powershell -Command "adb pull '/sdcard/Android/data/com.autodroid.tradescripts
 
 ### 1. StepDetailFragment
 
-负责显示单个步骤的详细信息，从 Appium XML 文件中提取带有文本内容的元素并动态创建视图。
+负责显示单个步骤的详细信息，从 ADB XML 文件中提取带有文本内容的元素并动态创建视图。
 
 #### 主要功能：
-- 解析 Appium XML 文件
+- 解析 ADB XML 文件
 - 提取包含文本的元素
 - 动态创建 TextView 并设置位置和大小
 - 坐标缩放以适配不同屏幕尺寸
@@ -31,7 +31,7 @@ $ powershell -Command "adb pull '/sdcard/Android/data/com.autodroid.tradescripts
 
 #### 关键方法：
 ```kotlin
-private fun createDynamicViewsFromAppiumXml(inputStream: InputStream)
+private fun createDynamicViewsFromADBXml(inputStream: InputStream)
 ```
 
 ### 2. FlowPagesFragment
@@ -52,8 +52,8 @@ private fun createDynamicViewsFromAppiumXml(inputStream: InputStream)
 
 ### XML 解析与处理
 
-最初尝试直接将 Appium XML 转换为 Android 布局 XML，但发现两者格式不兼容：
-- Appium XML 包含运行时属性，不适合直接转换为 Android 布局 XML
+最初尝试直接将 ADB XML 转换为 Android 布局 XML，但发现两者格式不兼容：
+- ADB XML 包含运行时属性，不适合直接转换为 Android 布局 XML
 - Android 布局 XML 需要遵循特定的结构和验证规则
 
 最终采用动态视图创建方式：
@@ -63,7 +63,7 @@ private fun createDynamicViewsFromAppiumXml(inputStream: InputStream)
 
 ### 坐标系统与缩放
 
-由于 Appium XML 中的坐标基于特定设备屏幕尺寸（如 1080x1920），需要进行缩放以适配当前设备：
+由于 ADB XML 中的坐标基于特定设备屏幕尺寸（如 1080x1920），需要进行缩放以适配当前设备：
 
 ```kotlin
 // 获取屏幕尺寸用于缩放
@@ -179,7 +179,7 @@ app/src/main/
 ## 已知问题与解决方案
 
 ### 1. XML 转换问题
-**问题：** 直接将 Appium XML 转换为 Android 布局 XML 存在兼容性问题。
+**问题：** 直接将 ADB XML 转换为 Android 布局 XML 存在兼容性问题。
 **解决方案：** 改为动态创建视图的方式，只关注有文本内容的元素。
 
 ### 2. 元素定位问题

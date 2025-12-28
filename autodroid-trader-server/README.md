@@ -257,28 +257,23 @@ Appium 测试脚本位于 `workscripts/` 目录下，使用 Python 编写。主�
 #### 示例测试脚本结构：
 
 ```python
-from appium import webdriver
-from appium.webdriver.common.appiumby import AppiumBy
 import pytest
 
-# 设备能力配置
+# 设备配置
 DESIRED_CAPS = {
     'platformName': 'Android',
     'platformVersion': '10',
     'deviceName': 'Android Device',
     'appPackage': 'com.example.app',
     'appActivity': '.MainActivity',
-    'automationName': 'UiAutomator2',
-    'noReset': True
 }
 
-# 连接设备
-driver = webdriver.Remote('http://localhost:4723/wd/hub', DESIRED_CAPS)
-
-# 元素定位和操作
+# 使用 ADB 执行操作
 element = driver.find_element(AppiumBy.ID, 'com.example.app:id/button')
 element.click()
 ```
+
+替换为更简洁的 ADB 方式。
 
 ### 测试
 
@@ -296,34 +291,15 @@ pytest --html=report.html workscripts/com.example.app/test_script.py
 
 ## 注意事项
 
-1. **Appium 服务器**：确保在启动 Autodroid 服务器前已启动 Appium 服务器
-2. **设备连接**：确保测试设备已通过 ADB 连接并授权
-3. **端口配置**：Appium 默认使用 4723 端口，Autodroid 服务器默认使用 8008 端口
-4. **Android SDK**：确保已安装 Android SDK 并配置了环境变量
-5. **Java 环境**：Appium 需要 Java 11 或更高版本
+1. **ADB 连接**：确保测试设备已通过 ADB 连接并授权
+2. **端口配置**：Autodroid 服务器默认使用 8008 端口
+3. **Android SDK**：确保已安装 Android SDK 并配置了环境变量
 
 ## 故障排除
 
-### Appium 相关问题
+### ADB 相关问题
 
-1. **Appium 服务器启动失败**：
-   ```bash
-   # 检查 Node.js 版本
-   node --version
-   
-   # 重新安装 Appium
-   npm uninstall -g appium
-   npm install -g appium
-   ```
-
-2. **驱动安装失败**：
-   ```bash
-   # 重新安装 Android 驱动
-   appium driver uninstall uiautomator2
-   appium driver install uiautomator2
-   ```
-
-3. **设备连接问题**：
+1. **设备连接问题**：
    ```bash
    # 检查设备连接状态
    adb devices
@@ -335,17 +311,11 @@ pytest --html=report.html workscripts/com.example.app/test_script.py
 
 ### 端口被占用
 
-如果端口 8008 或 4723 已被占用，可以修改配置：
+如果端口 8008 已被占用，可以修改配置：
 
-1. 修改 Appium 端口：
-   ```bash
-   appium --port 4724 --base-path /wd/hub
-   ```
-
-2. 修改 Autodroid 服务器端口（编辑配置文件）：
-   ```bash
-   uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
-   ```
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+```
 
 ### 依赖安装失败
 
