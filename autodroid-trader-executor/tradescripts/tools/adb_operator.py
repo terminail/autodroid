@@ -1,3 +1,4 @@
+from core.config import get_apks_path
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -56,36 +57,17 @@ def _preprocess_xml_for_parsing(xml_content: str) -> str:
 class ADBAutoOpTool:
     def __init__(
         self,
-        device_id: str = "TDCDU17905004388",
-        config_path: str = r"d:\git\autodroid\autodroid-trader-executor\tradescripts\config.yaml"
+        device_id: str = "TDCDU17905004388"
     ):
         self.device_id = device_id
-        self.config_path = Path(config_path)
         self.test_data: Dict[str, str] = {}
         self.runtime_context: Dict[str, str] = {}
         self.page_fingerprints: Dict[str, Dict] = {}
         self._d: Optional[u2.Device] = None
 
-        self._load_config()
-        self._load_flow_pages()
-
-    def _load_config(self):
-        import yaml
-        if self.config_path.exists():
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f)
-            apk_dir = config.get("apk_dir", "")
-            if not apk_dir:
-                apk_dir = config.get("apks", {}).get("path", "")
-            if apk_dir:
-                if not Path(apk_dir).is_absolute():
-                    apk_dir = self.config_path.parent / apk_dir
-                self.apk_dir = Path(apk_dir)
-            else:
-                self.apk_dir = self.config_path.parent / "apks"
-        else:
-            self.apk_dir = self.config_path.parent.parent / "apks"
+        self.apk_dir = get_apks_path()
         print(f"📂 APK目录: {self.apk_dir}")
+        self._load_flow_pages()
 
     def _get_flow_dir(self, apk_package: str, flow_name: str) -> Path:
         return self.apk_dir / apk_package / flow_name
