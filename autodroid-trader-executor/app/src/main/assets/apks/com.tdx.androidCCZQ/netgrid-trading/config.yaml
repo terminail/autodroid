@@ -1,10 +1,14 @@
 name: 网格交易
-description: 这是一个网格交易流程，自动高抛低吸，卖出、买入
+description: 这是一个网格交易流程，自动高抛低吸，卖出、买入股票
+begin:
+  - name: 网格交易准备
+    flow: general
+    description: 当前页面需要在首页 
 steps:
   - name: 首页
     layout: home.xml
     screenshot: home.png
-    description: 这是Home
+    description: 这是Home,点击【条件单】
     step: 0
     actions:
       - click: resource-id="entry-xzsg"
@@ -75,4 +79,8 @@ steps:
     actions:
       - click: View text="我的条件单"
         description: 在【我的条件单】页面，点击View text="我的条件单"的兄弟View，返回【我的条件单】页面
-
+ends:
+  - name: 首页
+    layout: home.xml
+    screenshot: home.png
+    description: 成功返回主页，结束general流程

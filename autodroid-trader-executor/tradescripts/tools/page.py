@@ -37,6 +37,7 @@ class PageFingerprint:
     long_clickable_count: int
     help_elements: List[Dict]
     help_to_action: Dict
+    webview_texts: List[str]
 
 
 def preprocess_xml_for_parsing(xml_content: str) -> str:
@@ -269,6 +270,7 @@ def build_page_fingerprint(root: ET.Element, page_id: str) -> PageFingerprint:
     clickable_count = 0
     long_clickable_count = 0
     all_bounds_set = set()
+    webview_texts = []
 
     for i, elem in enumerate(all_elems):
         if elem.tag == "hierarchy":
@@ -290,13 +292,16 @@ def build_page_fingerprint(root: ET.Element, page_id: str) -> PageFingerprint:
             all_content_descs.append(content_desc)
         if class_name:
             all_classes.append(class_name)
-        if bounds:
+        if bounds and clickable:
             all_bounds_set.add(bounds)
 
         if clickable:
             clickable_count += 1
         if long_clickable:
             long_clickable_count += 1
+
+        if class_name == "android.webkit.WebView" and text:
+            webview_texts.append(text)
 
     return PageFingerprint(
         page_id=page_id,
@@ -310,6 +315,7 @@ def build_page_fingerprint(root: ET.Element, page_id: str) -> PageFingerprint:
         long_clickable_count=long_clickable_count,
         help_elements=help_elements,
         help_to_action=help_to_action,
+        webview_texts=webview_texts,
     )
 
 
@@ -389,11 +395,12 @@ class PageMatcher:
                 pass
 
     def calculate_multi_strategy_score(self, live_root: ET.Element, page_fingerprint: PageFingerprint) -> Dict[str, float]:
-        live_bounds_set = set()
+        live_bounds_list = []
         live_resource_ids = set()
         live_texts = set()
         live_content_descs = set()
         live_clickable_count = 0
+        live_webview_texts = set()
 
         for elem in live_root.iter():
             if elem.tag == "hierarchy":
@@ -403,9 +410,12 @@ class PageMatcher:
             text = elem.get("text", "").strip()
             content_desc = elem.get("content-desc", "").strip()
             clickable = elem.get("clickable", "").strip() == "true"
+            class_name = elem.get("class", "").strip()
 
             if bounds:
-                live_bounds_set.add(bounds)
+                parsed = parse_bounds(bounds)
+                if parsed:
+                    live_bounds_list.append(parsed)
             if rid:
                 live_resource_ids.add(rid)
             if text:
@@ -414,22 +424,51 @@ class PageMatcher:
                 live_content_descs.add(content_desc)
             if clickable:
                 live_clickable_count += 1
+            if class_name == "android.webkit.WebView" and text:
+                live_webview_texts.add(text)
 
-        page_bounds_set = set(page_fingerprint.bounds_set)
+        page_bounds_list = [parse_bounds(b) for b in page_fingerprint.bounds_set if parse_bounds(b)]
         page_resource_ids = set(page_fingerprint.resource_ids)
         page_texts = set(page_fingerprint.texts)
         page_content_descs = set(page_fingerprint.content_descs)
         page_clickable_count = page_fingerprint.clickable_count
+        page_webview_texts = set(page_fingerprint.webview_texts)
 
-        bounds_overlap = len(live_bounds_set & page_bounds_set)
+        bounds_overlap_count = 0
+        matched_live_indices = set()
+        for i, page_bounds in enumerate(page_bounds_list):
+            page_area = (page_bounds[2] - page_bounds[0]) * (page_bounds[3] - page_bounds[1])
+            for j, live_bounds in enumerate(live_bounds_list):
+                if j in matched_live_indices:
+                    continue
+                live_area = (live_bounds[2] - live_bounds[0]) * (live_bounds[3] - live_bounds[1])
+                overlap = calculate_overlap(live_bounds, page_bounds)
+                if overlap:
+                    overlap_area = (overlap[2] - overlap[0]) * (overlap[3] - overlap[1])
+                    if overlap_area >= live_area * 0.8 and overlap_area >= page_area * 0.8:
+                        bounds_overlap_count += 1
+                        matched_live_indices.add(j)
+                        break
+                    if overlap_area >= page_area * 0.9:
+                        bounds_overlap_count += 1
+                        matched_live_indices.add(j)
+                        break
+
         id_overlap = len(live_resource_ids & page_resource_ids)
         text_overlap = len(live_texts & page_texts)
         content_desc_overlap = len(live_content_descs & page_content_descs)
+        webview_text_overlap = len(live_webview_texts & page_webview_texts)
 
-        bounds_score = bounds_overlap / len(page_bounds_set) if page_bounds_set else 0
+        bounds_score = bounds_overlap_count / len(page_bounds_list) if page_bounds_list else 0
         id_score = id_overlap / len(page_resource_ids) if page_resource_ids else 0
         text_score = text_overlap / len(page_texts) if page_texts else 0
         content_desc_score = content_desc_overlap / len(page_content_descs) if page_content_descs else 0
+        if page_webview_texts:
+            webview_text_score = webview_text_overlap / len(page_webview_texts)
+        elif live_webview_texts:
+            webview_text_score = -0.15
+        else:
+            webview_text_score = 0
         clickable_score = 1.0 - abs(live_clickable_count - page_clickable_count) / max(page_clickable_count, 1) if page_clickable_count > 0 else 0.5
 
         return {
@@ -437,9 +476,12 @@ class PageMatcher:
             "id_score": id_score,
             "text_score": text_score,
             "content_desc_score": content_desc_score,
+            "webview_text_score": webview_text_score,
             "clickable_score": clickable_score,
-            "bounds_overlap": bounds_overlap,
-            "total_bounds": len(page_bounds_set),
+            "bounds_overlap": bounds_overlap_count,
+            "total_bounds": len(page_bounds_list),
+            "webview_text_overlap": webview_text_overlap,
+            "total_webview_texts": len(page_webview_texts),
         }
 
     def calculate_page_similarity(self, live_root: ET.Element, page_fingerprint: PageFingerprint) -> float:
@@ -618,9 +660,9 @@ class PageMatcher:
 
         return None
 
-    def identify_page(self, live_root: ET.Element) -> Tuple[Optional[str], float]:
+    def identify_page(self, live_root: ET.Element) -> Tuple[Optional[str], float, List[Tuple[str, float, Dict]]]:
         if not self._page_fingerprints:
-            return (None, 0.0)
+            return (None, 0.0, [])
 
         live_bounds_set = set()
         for elem in live_root.iter():
@@ -633,19 +675,21 @@ class PageMatcher:
         for page_id, page_data in self._page_fingerprints.items():
             page_bounds_set = set(page_data.bounds_set)
             if page_bounds_set and page_bounds_set == live_bounds_set:
-                return (page_id, 1.0)
+                return (page_id, 1.0, [(page_id, 1.0, {})])
 
         best_match_id = None
         best_score = 0.0
+        all_scores = []
 
         for page_id, page_data in self._page_fingerprints.items():
             multi_scores = self.calculate_multi_strategy_score(live_root, page_data)
 
             weights = {
-                "bounds_score": 0.40,
+                "bounds_score": 0.45,
                 "id_score": 0.20,
-                "text_score": 0.25,
-                "content_desc_score": 0.10,
+                "text_score": 0.10,
+                "webview_text_score": 0.15,
+                "content_desc_score": 0.05,
                 "clickable_score": 0.05,
             }
 
@@ -657,20 +701,33 @@ class PageMatcher:
             fine_score = self.calculate_page_similarity(live_root, page_data) if combined_score > 0.2 else 0.0
             final_score = (combined_score * 0.6) + (fine_score * 0.4)
 
+            all_scores.append((page_id, final_score, {
+                "bounds_overlap": multi_scores.get('bounds_overlap', 0),
+                "total_bounds": multi_scores.get('total_bounds', 0),
+                "id_overlap": multi_scores.get('id_overlap', 0),
+                "total_ids": multi_scores.get('total_ids', 0),
+                "text_overlap": multi_scores.get('text_overlap', 0),
+                "total_texts": multi_scores.get('total_texts', 0),
+                "webview_overlap": multi_scores.get('webview_text_overlap', 0),
+                "webview_total": multi_scores.get('total_webview_texts', 0),
+            }))
+
             if final_score > best_score:
                 best_score = final_score
                 best_match_id = page_id
 
-        return (best_match_id if best_score > 0.4 else None, best_score)
+        return (best_match_id if best_score > 0.4 else None, best_score, all_scores)
 
-    def find_element(self, live_root: ET.Element, elem_info: Dict) -> Tuple[Optional[ET.Element], str]:
+    def find_element(self, live_root: ET.Element, elem_info: Dict, page_fingerprint: PageFingerprint = None) -> Tuple[Optional[ET.Element], str]:
         return self._find_in_live_xml(live_root, elem_info)
 
     def execute_steps(
         self,
         page_id: str,
         live_root: ET.Element,
-        execute_action: Callable
+        execute_action: Callable,
+        end_pages: Optional[List[str]] = None,
+        refresh_page_callback: Optional[Callable[[], str]] = None
     ) -> bool:
         if page_id not in self._page_fingerprints:
             print(f"❌ 页面不存在: {page_id}")
@@ -678,13 +735,14 @@ class PageMatcher:
 
         page_data = self._page_fingerprints[page_id]
         action_elements = page_data.action_elements
+        total_steps = len(action_elements)
 
         if not action_elements:
             print(f"\n⚠️ 页面 {page_id} 已匹配，但无 autodroid:action 定义")
             return True
 
         print(f"\n📋 执行页面流程: {page_id}")
-        print(f"   步骤数: {len(action_elements)}")
+        print(f"   步骤数: {total_steps}")
         print("-" * 40)
 
         for idx, elem_info in enumerate(action_elements, 1):
@@ -696,7 +754,7 @@ class PageMatcher:
             save_to = elem_info.get("save_to", "")
             wait_after = elem_info.get("wait_after", "")
 
-            print(f"\n步骤 {step}: {action}")
+            print(f"\n[{idx}/{total_steps}] 步骤 {step}: {action}")
             if desc:
                 print(f"   描述: {desc}")
             if name:
@@ -729,5 +787,19 @@ class PageMatcher:
                     pass
 
         print("\n" + "=" * 40)
-        print(f"✅ 页面流程完成: {page_id}")
+        if end_pages:
+            if refresh_page_callback:
+                latest_xml = refresh_page_callback()
+                current_page_id, _ = self.identify_page(parse_xml(latest_xml))
+            else:
+                current_page_id, _ = self.identify_page(live_root)
+            if current_page_id in end_pages:
+                print(f"🏁 已到达结束页面: {current_page_id}")
+                print(f"✅ general 流程执行完成！\n")
+            else:
+                print(f"✅ 页面 {page_id} 执行完成 ({idx}/{total_steps})")
+                print(f"   当前页面: {current_page_id}")
+                print(f"   继续执行下一步...\n")
+        else:
+            print(f"✅ 页面 {page_id} 执行完成 ({idx}/{total_steps})\n")
         return True

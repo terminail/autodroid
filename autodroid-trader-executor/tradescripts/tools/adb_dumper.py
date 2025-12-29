@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ADB Dump Tool - 交互式页面转储工具
-持续运行，等待用户命令，支持截图和XML页面结构导出
+持续运行，等待用户命令，支持截图和XML页面结构导出，并进行页面识别
 """
 
 import sys
@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.tradescript.adb_driver import ADBManager
+from tools.page import parse_xml, PageMatcher
 
 
 class ADBDumper:
@@ -20,6 +21,19 @@ class ADBDumper:
         self.adb_manager = ADBManager()
         self.output_dir = Path(r"d:\git\autodroid\autodroid-trader-executor\tradescripts\dump-pages")
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.page_matcher = None
+        self._init_page_matcher()
+
+    def _init_page_matcher(self):
+        """初始化页面匹配器并加载页面指纹"""
+        try:
+            apk_dir = Path(r"d:\git\autodroid\autodroid-trader-executor\app\src\main\assets\apks\com.tdx.androidCCZQ")
+            self.page_matcher = PageMatcher(apk_dir)
+            self.page_matcher.load_and_build_fingerprints("com.tdx.androidCCZQ", "general")
+            print(f"✓ 已加载 {len(self.page_matcher._page_fingerprints)} 个页面指纹")
+        except Exception as e:
+            print(f"⚠ 页面指纹加载失败: {e}")
+            self.page_matcher = None
 
     def _get_timestamp(self) -> str:
         return time.strftime("%Y%m%d_%H%M%S")

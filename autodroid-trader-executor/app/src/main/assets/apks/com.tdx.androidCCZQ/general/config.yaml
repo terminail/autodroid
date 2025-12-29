@@ -49,3 +49,9 @@ steps:
     layout: yin-si-zheng-ce.xml
     screenshot: yin-si-zheng-ce.png
     description: 这是隐私政策
+ends:
+  - name: 首页
+    layout: home.xml
+    screenshot: home.png
+    description: 成功返回主页，结束general流程
+    

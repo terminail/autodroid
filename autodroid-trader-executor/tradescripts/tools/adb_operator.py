@@ -46,14 +46,24 @@ class ADBAutoOpTool:
     def dump_hierarchy(self) -> str:
         return self.device.dump_hierarchy()
 
-    def identify_page(self, live_xml: Optional[str] = None) -> Tuple[Optional[str], float]:
+    def save_current_page(self, page_id: str, prefix: str = "live") -> str:
+        live_xml = self.dump_hierarchy()
+        timestamp = int(time.time())
+        filename = f"{prefix}_{page_id}_{timestamp}.xml"
+        filepath = Path(self.apk_dir).parent.parent / "debug_xmls" / filename
+        filepath.parent.mkdir(exist_ok=True)
+        filepath.write_text(live_xml, encoding="utf-8")
+        print(f"💾 已保存当前页面: {filepath}")
+        return str(filepath)
+
+    def identify_page(self, live_xml: Optional[str] = None) -> Tuple[Optional[str], float, List[Tuple[str, float, Dict]]]:
         if live_xml is None:
             live_xml = self.dump_hierarchy()
 
         return self.flow_manager.identify_page(live_xml)
 
     def execute_page_steps(self, page_id: str, live_xml: str) -> bool:
-        return self.flow_manager.execute_page_steps(page_id, live_xml, self.execute_action_callback)
+        return self.flow_manager.execute_page_steps(page_id, live_xml, self.execute_action_callback, self.dump_hierarchy)
 
     def execute_action_callback(self, step: int, action: str, elem_info: Dict, live_elem) -> bool:
         step_info = StepInfo(
