@@ -4,6 +4,7 @@
 *.ap_
 *.aab
 nul
+tools/dump-pages/
 
 # Files for the ART/Dalvik VM
 *.dex

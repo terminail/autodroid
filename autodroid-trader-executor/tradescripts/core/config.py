@@ -22,22 +22,22 @@ def get_apks_path():
     """Get the apks directory path from configuration with fallbacks"""
     config = load_config()
     
-    # Get the apks directory path from config, with fallback to default
     apks_config = config.get('apks', {})
     apks_path_str = apks_config.get('path', 'app/src/main/assets/apks')
     apks_path = Path(apks_path_str)
     
-    # If path is not absolute, make it relative to the project
     if not apks_path.is_absolute():
-        # First try relative to the tradescripts directory
-        current_dir = Path(__file__).parent.parent  # This gets us to the core directory
-        apks_path = current_dir.parent / apks_path_str
+        current_dir = Path.cwd()
+        apks_path = current_dir / apks_path_str
         
-        # If not found, try relative to parent directory (executor root)
         if not apks_path.exists():
-            apks_path = current_dir.parent.parent / apks_path_str
+            script_dir = Path(__file__).parent.parent
+            apks_path = script_dir / apks_path_str
         
-        # If still not found, try relative to current working directory
+        if not apks_path.exists():
+            executor_root = Path(__file__).parent.parent.parent
+            apks_path = executor_root / apks_path_str
+        
         if not apks_path.exists():
             apks_path = Path(apks_path_str)
     

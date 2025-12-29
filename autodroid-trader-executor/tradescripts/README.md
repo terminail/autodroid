@@ -86,5 +86,4 @@ cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate auto
 
 cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py
 
-cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/test_live_page_recognition.py
 ```

@@ -13,27 +13,15 @@ tradescripts/                 # Main project root
 │
 ├── config.yaml               # Central configuration file
 │
-├── core/                     # Core framework library
-│   ├── config.py             # Configuration loader
-│   ├── daemon.py             # Daemon service
-│   └── tradescript/          # Tradescript engine core
-│       ├── __init__.py
-│       ├── adb_driver.py     # ADB operations manager (ADBManager)
-│       ├── data_executor.py  # Data-driven executor (ActionHandler, DataDrivenExecutor)
-│       ├── flow_coordinator.py # Flow coordinator (TradeflowCoordinator)
-│       ├── models.py         # Data models and response types
-│       ├── page_matcher.py   # Smart page matching engine (PageMatcher)
-│       ├── service.py        # TradeScript service layer
-│       ├── test_data.py      # Test scenarios and configurations
-│       └── test_runner.py    # Test execution framework (TradeScriptTestRunner)
-│
-├── api/                      # API layer
-│   └── main.py               # FastAPI application entry
-│
-├── tools/                    # Utility tools
+├── tools/                    # Core framework library (flow → page → element architecture)
+│   ├── flow.py               # Flow layer: Orchestrates execution across multiple pages
+│   ├── page.py               # Page layer: Handles page recognition and execution
+│   ├── element.py            # Element layer: Handles element matching and action execution
+│   ├── u2device.py           # Device operations: ADB and uiautomator2 integration
+│   ├── adb_operator.py       # ADB operation utilities (main entry point)
+│   ├── interactive_cli.py    # Interactive CLI for manual testing
 │   ├── adb_debug_tool.py     # ADB debugging utilities
 │   ├── adb_dumper.py         # Page XML dumper
-│   ├── adb_operator.py       # ADB operation utilities
 │   ├── check_namespaces.py   # Namespace validation
 │   ├── verify_tradescript.py # Script verification
 │   └── xml_analyzer.py       # XML analysis tools
@@ -58,14 +46,73 @@ tradescripts/                 # Main project root
 ├── tests/                    # Test suite
 │   └── test_api.py           # API tests
 │
-├── run_server.py             # Server startup script
-├── pyproject.toml            # Project configuration
-└── test_tradeplan.yaml       # Test plan configuration
+└── DESIGN.md                 # Architecture documentation
 ```
+
+### 1.1 Three-Layer Architecture (flow → page → element)
+
+The framework follows a hierarchical architecture that reflects the natural structure of Android UI automation:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Flow Layer (flow.py)                                │
+│                         FlowManager                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │  Responsibilities:                                                     │ │
+│  │  - Orchestrates execution across multiple pages                       │ │
+│  │  - Manages flow configuration and end pages                            │ │
+│  │  - Coordinates page recognition and execution                          │ │
+│  │  - Integrates ElementExecutor for action execution                     │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Page Layer (page.py)                           │ │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                    │ │
+│  │  │   PageMatcher        │  │   PageExecutor       │                    │ │
+│  │  │  - Page recognition  │  │  - Page execution    │                    │ │
+│  │  │  - Fingerprinting    │  │  - Step orchestration│                    │ │
+│  │  └──────────────────────┘  └──────────────────────┘                    │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                        Element Layer (element.py)                       │ │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                    │ │
+│  │  │   ElementMatcher     │  │   ElementExecutor    │                    │ │
+│  │  │  - Element matching  │  │  - Action execution  │                    │ │
+│  │  │  - Bounds matching   │  │  - ADB operations    │                    │ │
+│  │  └──────────────────────┘  └──────────────────────┘                    │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Architecture Principles:**
+
+1. **Flow Layer (flow.py)**: 
+   - `FlowManager` is the top-level orchestrator
+   - Manages the entire execution flow across multiple pages
+   - Coordinates page recognition and execution
+   - Integrates `ElementExecutor` directly for action execution
+   - No intermediate ActionExecutor needed - direct flow → element integration
+
+2. **Page Layer (page.py)**:
+   - `PageMatcher`: Handles page recognition and fingerprinting
+   - `PageExecutor`: Handles page step execution
+   - Separates recognition concerns from execution concerns
+   - Works with both FlowManager and ElementMatcher
+
+3. **Element Layer (element.py)**:
+   - `ElementMatcher`: Handles element matching across devices
+   - `ElementExecutor`: Handles action execution on elements
+   - Provides the lowest-level interaction with device
+
+**Key Design Decision:**
+The architecture eliminates the intermediate `ActionExecutor` class that was previously used as a bridge between `FlowManager` and `ElementExecutor`. Instead, `FlowManager` now directly integrates `ElementExecutor`, reflecting the flow → page → element hierarchy more cleanly.
 
 ## Core Workflow: ADB-Based Approach
 
-### 2.1 Design Architecture (Three-Layer)
+### 2.1 Design Architecture (Three-Layer: flow → page → element)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -95,12 +142,12 @@ tradescripts/                 # Main project root
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Page Library Loading (Once)                               │
+│                    Flow Layer: Page Library Loading                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  _load_flow_pages(apk_package, flow_name)                                    │
+│  FlowManager.load_and_build_fingerprints(apk_package, flow_name)            │
 │    │                                                                         │
-│    ├── apk_dir = get_apk_dir_from_config()                                  │
+│    ├── apk_dir = self.apk_dir                                               │
 │    ├── flow_dir = apk_dir / apk_package / flow_name                          │
 │    │                                                                         │
 │    └── For each XML file in flow_dir:                                        │
@@ -112,24 +159,27 @@ tradescripts/                 # Main project root
 │          │                       class, children}, ...]                      │
 │          │       ⚠️ NO bounds stored (live page has real bounds)             │
 │          │                                                                   │
-│          └── Store: {page_id: action_elements}                               │
+│          └── Store: {page_id: PageFingerprint}                               │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Page Matching                                        │
+│                    Page Layer: Page Matching                                 │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  identify_page(live_xml)                                                     │
+│  FlowManager.identify_page(live_xml)                                         │
 │    │                                                                         │
-│    └── For each offline page:                                                │
+│    └── PageMatcher.identify_page(live_root)                                  │
 │          │                                                                   │
-│          ├── For each action_element in offline page:                        │
-│          │   └── _find_in_live_xml(live_root, offline_elem) → bool          │
-│          │                                                                     │
-│          └── Calculate match_rate = matched_count / total_elements           │
+│          └── For each offline page:                                          │
+│                │                                                             │
+│                ├── For each action_element in offline page:                  │
+│                │   └── ElementMatcher.find_element(live_root, offline_elem)  │
+│                │       → bool                                                │
+│                │                                                             │
+│                └── Calculate match_rate = matched_count / total_elements     │
 │                                                                              │
-│  _find_in_live_xml(live_root, offline_elem)                                  │
+│  ElementMatcher.find_element(live_root, offline_elem)                        │
 │    │                                                                         │
 │    ├── Priority 1: resource-id match (most reliable)                        │
 │    │   └── match_by_resource_id(live_root, offline_elem["resource-id"])     │
@@ -141,33 +191,61 @@ tradescripts/                 # Main project root
 │    │   └── match_by_content_desc(live_root, offline_elem["content-desc"])   │
 │    │                                                                         │
 │    └── Priority 4: child features match (fallback)                          │
-│        └── match_by_children(live_root, offline_elem["children"])           │
+│        └── match_by_children(live_root, offline_elem["children"])         │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Step Execution (Reuse Dumped XML)                         │
+│                    Flow → Page → Element: Step Execution                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  execute_page_flow(page_id, live_xml)                                        │
+│  FlowManager.execute_page_steps(page_id, live_xml)                           │
 │    │                                                                         │
-│    └── For each pre-parsed step in page_fingerprints[page_id]:              │
+│    └── PageExecutor.execute_steps(page_id, live_root,                        │
+│                                    FlowManager._execute_action_callback,    │
+│                                    end_pages, refresh_page_callback)        │
 │          │                                                                   │
-│          ├── Extract offline element attributes (no bounds)                 │
-│          │   └── {resource-id, text, content-desc, class, children}         │
-│          │                                                                   │
-│          ├── _find_in_live_xml(live_root, offline_elem) → live_elem        │
-│          │       ⚠️ live_elem HAS bounds (from live XML)                    │
-│          │                                                                   │
-│          └── _execute_action(step, live_elem)                               │
-│              │                                                               │
-│              └── Based on action type:                                       │
-│                  ├── click → Parse bounds, calculate center, ADB tap         │
-│                  ├── input → Clear field, input text via ADB                │
-│                  ├── get_text → Read text, save to context                  │
-│                  └── ...                                                     │
+│          └── For each pre-parsed step in page_fingerprints[page_id]:        │
+│                │                                                             │
+│                ├── Extract offline element attributes (no bounds)           │
+│                │   └── {resource-id, text, content-desc, class, children}   │
+│                │                                                             │
+│                ├── ElementMatcher.find_element(live_root, offline_elem)     │
+│                │       → live_elem                                          │
+│                │       ⚠️ live_elem HAS bounds (from live XML)              │
+│                │                                                             │
+│                └── FlowManager._execute_action_callback(step, action,       │
+│                                                       elem_info, live_elem)  │
+│                      │                                                       │
+│                      └── ElementExecutor.execute_action(step_info, live_elem)│
+│                          │                                                   │
+│                          └── Based on action type:                           │
+│                              ├── click → Parse bounds, calculate center,    │
+│                              │          ADB tap                              │
+│                              ├── input → Clear field, input text via ADB    │
+│                              ├── get_text → Read text, save to context      │
+│                              └── ...                                         │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Architecture Flow:**
+
+1. **Flow Layer (FlowManager)**:
+   - Orchestrates the entire execution flow
+   - Manages page library loading and fingerprinting
+   - Coordinates page recognition and execution
+   - Directly integrates ElementExecutor for action execution
+
+2. **Page Layer (PageMatcher + PageExecutor)**:
+   - PageMatcher: Handles page recognition using fingerprinting
+   - PageExecutor: Handles step execution on a page
+   - Works with ElementMatcher to find elements
+
+3. **Element Layer (ElementMatcher + ElementExecutor)**:
+   - ElementMatcher: Finds elements in live XML using offline element info
+   - ElementExecutor: Executes actions on matched elements
+   - Provides the lowest-level interaction with device via ADB
 ```
 
 ### Key Differences from Appium Approach

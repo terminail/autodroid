@@ -1,11 +1,14 @@
 from typing import Optional
+from pathlib import Path
+import time
 import uiautomator2 as u2
 
 
 class U2Device:
-    def __init__(self, device_id: str = None):
+    def __init__(self, device_id: str = None, apk_dir: Optional[Path] = None):
         self._device_id: Optional[str] = device_id
         self._d: Optional[u2.Device] = None
+        self.apk_dir = apk_dir
 
     @property
     def device_id(self) -> Optional[str]:
@@ -27,6 +30,22 @@ class U2Device:
 
     def dump_hierarchy(self) -> str:
         return self.d.dump_hierarchy()
+
+    def save_current_page(self, page_id: str, prefix: str = "live") -> str:
+        live_xml = self.dump_hierarchy()
+        timestamp = int(time.time())
+        filename = f"{prefix}_{page_id}_{timestamp}.xml"
+        if self.apk_dir:
+            filepath = Path(self.apk_dir).parent.parent / "debug_xmls" / filename
+        else:
+            filepath = Path(__file__).parent.parent / "debug_xmls" / filename
+        filepath.parent.mkdir(exist_ok=True)
+        filepath.write_text(live_xml, encoding="utf-8")
+        print(f"💾 已保存当前页面: {filepath}")
+        return str(filepath)
+
+    def set_apk_dir(self, apk_dir: Path):
+        self.apk_dir = apk_dir
 
     def click(self, x: int, y: int) -> bool:
         try:
