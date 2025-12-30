@@ -80,10 +80,39 @@ python -m pytest tests/
 
 - `adb_operator.py` - ADB操作工具，用于与Android设备交互
 - `adb_autoop.py` - 自动操作工具，用于执行 tradescripts 定义的操作
+
+### adb_operator.py 使用方法
+
 ```bash
-
-cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_dumper.py
-
 cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py
+```
 
+#### 命令行参数
+
+- `--device, -d`: 设备ID (默认: TDCDU17905004388)
+- `--package, -p`: 应用包名 (默认: com.tdx.androidCCZQ)
+- `--flow, -f`: 流程名称 (默认: general，可选: general, netgrid-trading)
+- `--method, -m`: 页面识别方法 (默认: 0)
+
+#### 示例
+
+使用默认流程 (general):
+```bash
+cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py
+```
+
+指定 netgrid-trading 流程:
+```bash
+cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py --flow netgrid-trading
+```
+
+指定设备和流程:
+```bash
+cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_operator.py -d YOUR_DEVICE_ID -f netgrid-trading
+```
+
+### adb_dumper.py 使用方法
+
+```bash
+cd 'd:/git/autodroid/autodroid-trader-executor/tradescripts';conda activate autodroid; python tools/adb_dumper.py
 ```
