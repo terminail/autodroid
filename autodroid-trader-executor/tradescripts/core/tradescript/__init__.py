@@ -3,7 +3,7 @@ from .service import scan_apks_directory
 from .page_matcher import PageMatcher, MatchResult
 from .data_executor import DataDrivenExecutor, ActionHandler, ExecutionResult
 from .flow_coordinator import TradeflowCoordinator, FlowStatus
-from .adb_driver import ADBManager, DeviceInfo
+# ADBManager has been merged into U2Device in tools/u2device.py
 from .test_data import (
     TestCase,
     TestScenario,
@@ -29,8 +29,7 @@ __all__ = [
     "ExecutionResult",
     "TradeflowCoordinator",
     "FlowStatus",
-    "ADBManager",
-    "DeviceInfo",
+    # ADBManager and DeviceInfo have been merged into U2Device
     "TestCase",
     "TestScenario",
     "DeviceConfig",

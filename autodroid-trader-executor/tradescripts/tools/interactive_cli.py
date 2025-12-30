@@ -1,59 +1,74 @@
 import time
 from typing import Optional
 
-from flow import FlowManager
-from u2device import U2Device
+try:
+    from .flow import FlowManager
+    from .u2device import U2Device
+except ImportError:
+    # 当直接运行脚本时使用绝对导入
+    from flow import FlowManager
+    from u2device import U2Device
 
 
 class InteractiveCLI:
-    def __init__(self, flow_manager: FlowManager, device_manager: U2Device):
+    def __init__(self, flow_manager: FlowManager, u2_device: U2Device):
         self.flow_manager = flow_manager
-        self.device_manager = device_manager
+        self.u2_device = u2_device
+        self.current_apk_package = "com.tdx.androidCCZQ"
+        self.current_flow_name = "general"
 
     def run_interactive_mode(self, default_method: int = 0):
         self._print_menu()
         print(f"📊 当前匹配模式: {self._get_method_name(default_method)}")
+        print(f"📱 当前流程: {self.current_apk_package}/{self.current_flow_name}")
         current_method = default_method
 
         while True:
             try:
-                user_input = input("\n[?] 是否自动操作当前页面? (y/n/q/m): ").strip().lower()
+                user_input = input("\n[?] 是否自动操作当前页面? (y/n/q/m/f): ").strip().lower()
 
                 if user_input == 'q':
                     print("\n👋 再见!")
                     break
 
                 elif user_input == 'm':
-                    print("\n📊 选择匹配模式:")
-                    print("  0 - 混合方案 (快速精确匹配 + 结构化特征匹配)")
-                    print("  1 - 快速精确匹配 (仅使用resource-id)")
-                    print("  2 - 结构化特征匹配 (基于特征工程)")
-                    method_input = input("请输入模式编号 (0/1/2): ").strip()
-                    if method_input in ['0', '1', '2']:
-                        current_method = int(method_input)
-                        print(f"✓ 已切换到: {self._get_method_name(current_method)}")
+                    print("\n🎯 当前匹配模式: 选择器方案 (autodroid:fingerprint=\"true\")")
+                    print("⚠️ 仅支持选择器方案，无需切换")
+
+                elif user_input == 'f':
+                    print("\n🔄 选择流程:")
+                    print("  1 - general (通用流程)")
+                    print("  2 - netgrid-trading (网格交易流程)")
+                    flow_input = input("请输入流程编号 (1/2): ").strip()
+                    if flow_input == '1':
+                        self.current_flow_name = "general"
+                        self._reload_flow()
+                        print(f"✓ 已切换到: {self.current_apk_package}/{self.current_flow_name}")
+                    elif flow_input == '2':
+                        self.current_flow_name = "netgrid-trading"
+                        self._reload_flow()
+                        print(f"✓ 已切换到: {self.current_apk_package}/{self.current_flow_name}")
                     else:
-                        print("⚠️ 无效输入，保持当前模式")
+                        print("⚠️ 无效输入，保持当前流程")
 
                 elif user_input == 'n':
                     print("⏸️ 等待手动操作...")
                     time.sleep(2)
 
                 elif user_input == 'y':
-                    live_xml = self.device_manager.dump_hierarchy()
-                    page_id, score, all_scores = self.flow_manager.identify_page(live_xml, current_method)
-
+                    # 使用选择器方案进行快速页面识别，无需下载完整livexml
+                    page_id = self._quick_identify_page()
+                    
                     if page_id:
-                        print(f"\n📄 识别页面: {page_id} (匹配度: {score:.2%})")
-                        if all_scores:
-                            print(f"📊 匹配详情: {all_scores[0][2].get('method', 'unknown')}")
+                        print(f"\n📄 识别页面: {page_id} (选择器方案)")
                         print("-" * 60)
-                        self.flow_manager.execute_page_steps(page_id, live_xml, self.device_manager.dump_hierarchy)
+                        # 使用选择器方案执行页面步骤
+                        self._execute_page_steps_with_selectors(page_id)
                     else:
                         print("\n⚠️ 未能识别当前页面")
                         time.sleep(2)
                 else:
-                    print("\n⚠️ 无效输入，请输入 y/n/q/m")        
+                    print("\n⚠️ 无效输入，请输入 y/n/q/m/f")        
                     time.sleep(1)
 
             except KeyboardInterrupt:
@@ -70,8 +85,41 @@ class InteractiveCLI:
 
     def _get_method_name(self, method: int) -> str:
         names = {
-            0: "混合方案",
-            1: "快速精确匹配",
-            2: "结构化特征匹配"
+            0: "选择器方案"
         }
-        return names.get(method, "未知模式")
+        return names.get(method, "选择器方案")
+
+    def _reload_flow(self):
+        """重新加载当前流程的页面指纹"""
+        self.flow_manager.load_and_build_pages(self.current_apk_package, self.current_flow_name)
+
+    def _quick_identify_page(self) -> Optional[str]:
+        """使用选择器方案快速识别页面"""
+        try:
+            # 使用选择器方案进行快速页面识别
+            if hasattr(self.flow_manager, '_quick_identify_page'):
+                result = self.flow_manager._quick_identify_page()
+                # _quick_identify_page返回tuple (page_id, score, method_dict)，需要提取page_id
+                if result and isinstance(result, tuple):
+                    return result[0]  # 返回page_id
+                return result
+            else:
+                # 使用选择器方案进行页面识别
+                page_id, score, all_scores = self.flow_manager.identify_page()
+                return page_id
+        except Exception as e:
+            print(f"⚠️ 快速页面识别失败: {e}")
+            return None
+
+    def _execute_page_steps_with_selectors(self, page_id: str) -> bool:
+        """使用选择器方案执行页面步骤"""
+        try:
+            # 使用选择器方案执行页面步骤
+            if hasattr(self.flow_manager, '_execute_steps_with_selectors'):
+                return self.flow_manager._execute_steps_with_selectors(page_id)
+            else:
+                # 使用选择器方案执行页面步骤
+                return self.flow_manager.execute_page_steps(page_id, self.u2_device.dump_hierarchy)
+        except Exception as e:
+            print(f"⚠️ 选择器方案执行失败: {e}")
+            return False

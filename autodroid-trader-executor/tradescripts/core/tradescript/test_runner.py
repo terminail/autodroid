@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from .adb_driver import ADBManager
+from tools.u2device import U2Device
 from .page_matcher import PageMatcher
 from .data_executor import DataDrivenExecutor
 from .flow_coordinator import TradeflowCoordinator
@@ -61,7 +61,7 @@ class TradeScriptTestRunner:
         self.apks_dir = Path(apks_dir)
         self.output_dir = Path(output_dir) if output_dir else Path("test_output")
         
-        self.adb_manager = ADBManager()
+        self.adb_manager = U2Device()
         self.page_matcher: Optional[PageMatcher] = None
         self.data_executor: Optional[DataDrivenExecutor] = None
         self.flow_coordinator: Optional[TradeflowCoordinator] = None

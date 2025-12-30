@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-from .adb_driver import ADBManager
+from tools.u2device import U2Device
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class ActionHandler:
         },
     }
 
-    def __init__(self, adb_manager: ADBManager, device_id: str, wait_timeout: int = 30):
+    def __init__(self, adb_manager: U2Device, device_id: str, wait_timeout: int = 30):
         self.adb_manager = adb_manager
         self.device_id = device_id
         self.wait_timeout = wait_timeout
@@ -289,7 +289,7 @@ class ActionHandler:
 class DataDrivenExecutor:
     def __init__(
         self,
-        adb_manager: ADBManager,
+        adb_manager: U2Device,
         device_id: str,
         apks_dir: str,
         wait_timeout: int = 30,

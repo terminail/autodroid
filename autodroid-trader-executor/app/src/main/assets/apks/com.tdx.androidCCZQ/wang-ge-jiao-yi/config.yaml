@@ -10,20 +10,14 @@ steps:
     screenshot: home.png
     description: 这是Home,点击【条件单】
     step: 0
-    actions:
-      - click: resource-id="entry-xzsg"
-        description: 点击【条件单】，在Home页面，resource-id="entry-xzsg"，text="条件单"
   - name: 条件单
-    layout: entry-xzsg.xml
-    screenshot: entry-xzsg0.png
+    layout: tiao-jian-dan.xml
+    screenshot: tiao-jian-dan0.png
     description: 这是条件单页面
     step: 1
-    actions:
-      - click: text="6d13594be6254ee3c53cf86bd9783178"
-        description: 点击Image【网格交易】，.Image text="6d13594be6254ee3c53cf86bd9783178"
   - name: 网格交易
-    layout: netgrid-trading.xml
-    screenshot: netgrid-trading.png
+    layout: wang-ge-jiao-yi.xml
+    screenshot: wang-ge-jiao-yi.png
     description: 这是网格交易页面
     step: 2
     actions:
@@ -46,24 +40,24 @@ steps:
       - click: text="600000"祖父控件
         description: 在股票搜索结果页面，点击text="600000"祖父控件，选择股票"600000"
   - name: 网格交易填好股票代码
-    layout: netgrid-trading-with-stock.xml  
-    screenshot: netgrid-trading-with-stock0.png
+    layout: wang-ge-jiao-yi-with-stock.xml  
+    screenshot: wang-ge-jiao-yi-with-stock0.png
     description: 这是网格交易填好股票代码页面
     step: 5
     actions:
       - click: Button text="确定下单"
         description: 在网格交易填好股票代码页面，点击Button text="确定下单"，确认下单
   - name: 网格交易确认
-    layout: netgrid-trading-confirm.xml
-    screenshot: netgrid-trading-confirm.png
+    layout: wang-ge-jiao-yi-confirm.xml
+    screenshot: wang-ge-jiao-yi-confirm.png
     description: 这是网格交易确认页面
     step: 6
     actions:
       - click: Button text="确认"
         description: 在网格交易确认对话框，点击Button text="确认"，确认下单
   - name: 条件单创建成功
-    layout: netgrid-trading-success.xml
-    screenshot: netgrid-trading-success.png
+    layout: wang-ge-jiao-yi-success.xml
+    screenshot: wang-ge-jiao-yi-success.png
     description: 这是网格交易成功页面
     step: 7
     actions:
