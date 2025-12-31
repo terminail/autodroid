@@ -19,7 +19,6 @@ class StepInfo:
     name: Optional[str]
     value: Optional[str]
     save_to: Optional[str]
-    wait_after: float
     description: str
 
 
@@ -365,11 +364,7 @@ class DataDrivenExecutor:
             result = self._execute_single_step(step_info)
             results.append(result)
 
-            if result.success:
-                if step_info.wait_after > 0:
-                    logger.info(f"Waiting after step {step_info.step_number}: {step_info.wait_after}s")
-                    time.sleep(step_info.wait_after)
-            else:
+            if not result.success:
                 logger.warning(
                     f"Step {step_info.step_number} failed: {result.message}"
                 )
@@ -412,7 +407,6 @@ class DataDrivenExecutor:
                 name=elem.get("autodroid:name"),
                 value=elem.get("autodroid:value"),
                 save_to=elem.get("autodroid:save_to"),
-                wait_after=float(elem.get("autodroid:wait_after", 0)),
                 description=elem.get("autodroid:desc", f"Step {step_number}"),
             )
 

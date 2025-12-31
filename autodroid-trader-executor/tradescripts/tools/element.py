@@ -19,7 +19,6 @@ class ActionType(Enum):
     VERIFY = "verify"
     WAIT_FOR_USER = "wait_for_user"
     PRESS_KEY = "press_key"
-    REDIRECT = "redirect"
 
 
 class ElementInfo(BaseModel):
@@ -35,7 +34,6 @@ class ElementInfo(BaseModel):
     value: Optional[str] = None
     save_to: Optional[str] = None
     desc: Optional[str] = None
-    wait_after: Optional[str] = None
     bounds: str = ""
     id: Optional[str] = None
     index: int = 0
@@ -272,8 +270,6 @@ class ElementExecutor:
 
         if action == ActionType.CLICK.value:
             return self._execute_click(elem_name, elem_info, live_elem)
-        elif action == ActionType.REDIRECT.value:
-            return self._execute_redirect(elem_name, elem_info, live_elem)
         elif action == ActionType.INPUT.value:
             return self._execute_input(step_info, elem_name, live_elem)
         elif action == ActionType.GET_TEXT.value:
@@ -354,54 +350,6 @@ class ElementExecutor:
                 return False
         except Exception as e:
             print(f"  ⚠️ 点击失败: {e}")
-            return False
-
-    def _execute_redirect(self, elem_name: str, elem_info: ElementInfo, live_elem) -> bool:
-        try:
-            print(f"  🔍 _execute_redirect 开始执行")
-            print(f"     elem_name: {elem_name}")
-            print(f"     elem_info.name: {elem_info.name}")
-            print(f"     elem_info.text: {elem_info.text}")
-            print(f"     elem_info.resource_id: {elem_info.resource_id}")
-            
-            if not live_elem:
-                print(f"  ⚠️ 元素不存在: {elem_name}")
-                return False
-            
-            print(f"  🔍 : {live_elem}")
-            bounds_str = live_elem.get("bounds", "")
-            print(f"  🔍 live_elem bounds: {bounds_str}")
-            
-            bounds = ScreenUtils.parse_bounds(bounds_str)
-            if bounds:
-                cx, cy = calculate_center(bounds)
-                print(f"  🔍 计算点击坐标: ({cx}, {cy})")
-                self.device.click(cx, cy)
-                if elem_info.name:
-                    print(f"  ✓ 跳转 [{elem_info.name}] [{elem_name}] @ ({cx}, {cy})")
-                else:
-                    print(f"  ✓ 跳转 [{elem_name}] @ ({cx}, {cy})")
-                return True
-            else:
-                print(f"  ⚠️ 无法解析bounds，使用fallback方法")
-                live_elem_elem = self.device.d(resourceId=live_elem.get("resource-id", "")) if live_elem.get("resource-id") else None
-                if not live_elem_elem or not live_elem_elem.exists:
-                    print(f"  🔍 尝试使用text定位: {live_elem.get('text', '')}")
-                    live_elem_elem = self.device.d(text=live_elem.get("text", ""))
-                if live_elem_elem and live_elem_elem.exists:
-                    print(f"  🔍 找到元素，执行click")
-                    live_elem_elem.click()
-                    if elem_info.name:
-                        print(f"  ✓ 跳转 [{elem_info.name}] [{elem_name}]")
-                    else:
-                        print(f"  ✓ 跳转 [{elem_name}]")
-                    return True
-                print(f"  ⚠️ 无法获取元素坐标")
-                return False
-        except Exception as e:
-            print(f"  ⚠️ 跳转失败: {e}")
-            import traceback
-            traceback.print_exc()
             return False
 
     def _execute_input(self, step_info: StepInfo, elem_name: str, live_elem, test_data: Dict = None) -> bool:

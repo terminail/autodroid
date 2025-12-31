@@ -96,7 +96,7 @@ autodroid_project/
 | 类别 | 核心目的 | 关键属性 |
 | :--- | :--- | :--- |
 | **1. 页面与标识** | 定义页面身份，建立页面库 | `autodroid:page_id` |
-| **2. 流程与步骤** | 编排操作顺序与流程控制 | `autodroid:step`, `autodroid:action`, `autodroid:wait_after` |
+| **2. 流程与步骤** | 编排操作顺序与流程控制 | `autodroid:step`, `autodroid:action` |
 | **3. 数据与变量** | 实现数据驱动与状态传递 | `autodroid:name`, `autodroid:value`, `autodroid:save_to` |
 | **4. 元素与定位** | 提供定位辅助与验证信息 | `autodroid:desc` (隐式：依赖 `resource-id`, `text` 等原生属性) |
 
@@ -112,7 +112,6 @@ autodroid_project/
 | **`autodroid:name`** | 需要数据的元素 | String | 否 | **数据字段键名**。为 `input`、`select` 等动作提供键，用于从外部测试数据 (`test_data`) 中动态查找并填充值。**与 `value` 互斥，优先级更高。** | `autodroid:name="username"` |
 | **`autodroid:value`** | 需要数据的元素 | String | 否 | **硬编码默认值**。当未设置 `name`，或 `name` 在外部数据中未匹配时，将使用此值。实现了**灵活的后备机制**。 | `autodroid:value="test@example.com"` |
 | **`autodroid:save_to`** | 可输出数据的元素 | String | 否 | **运行时变量存储键**。主要用于 `action="get_text"`，将抓取到的文本存入**运行时上下文** (`context`)，供后续步骤引用或最终断言。 | `autodroid:save_to="product_price"` |
-| **`autodroid:wait_after`** | 任何步骤元素 | Float | 否 | **步骤后等待时间（秒）**。在当前步骤成功后，暂停指定时间，等待界面稳定或加载。 | `autodroid:wait_after="2.5"` |
 | **`autodroid:desc`** | 任何元素 | String | 否 | **人工描述**。仅用于提高XML文件的可读性和可维护性，**不影响框架执行逻辑**。 | `autodroid:desc="点击登录按钮"` |
 
 ### 4.4 核心动作类型 (`autodroid:action`) 详解
@@ -181,7 +180,6 @@ graph TD
         text="登录"
         autodroid:step="3"
         autodroid:action="click"
-        autodroid:wait_after="1.5"
         autodroid:desc="点击登录按钮" />
         
 </hierarchy>
@@ -373,10 +371,6 @@ class AutodroidCore:
                 if not success:
                     print(f"步骤执行失败: {step_info}")
                     return False
-                    
-                wait_time = float(step_info['element'].get('autodroid:wait_after', 0))
-                if wait_time > 0:
-                    time.sleep(wait_time)
             return True
         except Exception as e:
             print(f"执行页面流程失败: {e}")
@@ -959,7 +953,7 @@ config/
 | 类别 | 核心目的 | 关键属性 |
 | :--- | :--- | :--- |
 | **1. 页面与标识** | 定义页面身份，建立页面库 | `autodroid:page_id` |
-| **2. 流程与步骤** | 编排操作顺序与流程控制 | `autodroid:step`, `autodroid:action`, `autodroid:wait_after` |
+| **2. 流程与步骤** | 编排操作顺序与流程控制 | `autodroid:step`, `autodroid:action` |
 | **3. 数据与变量** | 实现数据驱动与状态传递 | `autodroid:name`, `autodroid:value`, `autodroid:save_to` |
 | **4. 元素与定位** | 提供定位辅助与验证信息 | `autodroid:desc` (隐式：依赖 `resource-id`, `text` 等原生属性) |
 
@@ -975,7 +969,6 @@ config/
 | **`autodroid:name`** | 需要数据的元素 | String | 否 | **数据字段键名**。为 `input`、`select` 等动作提供键，用于从外部测试数据 (`test_data`) 中动态查找并填充值。**与 `value` 互斥，优先级更高。** | `autodroid:name=”username”` |
 | **`autodroid:value`** | 需要数据的元素 | String | 否 | **硬编码默认值**。当未设置 `name`，或 `name` 在外部数据中未匹配时，将使用此值。实现了**灵活的后备机制**。 | `autodroid:value=”test@example.com”` |
 | **`autodroid:save_to`** | 可输出数据的元素 | String | 否 | **运行时变量存储键**。主要用于 `action=”get_text”`，将抓取到的文本存入**运行时上下文** (`context`)，供后续步骤引用或最终断言。 | `autodroid:save_to=”product_price”` |
-| **`autodroid:wait_after`** | 任何步骤元素 | Float | 否 | **步骤后等待时间（秒）**。在当前步骤成功后，暂停指定时间，等待界面稳定或加载。 | `autodroid:wait_after=”2.5”` |
 | **`autodroid:desc`** | 任何元素 | String | 否 | **人工描述**。仅用于提高XML文件的可读性和可维护性，**不影响框架执行逻辑**。 | `autodroid:desc=”点击登录按钮”` |
 
 ### 2.9.4 核心动作类型 (`autodroid:action`) 详解
@@ -1064,7 +1057,6 @@ graph TD
         resource-id="com.example:id/login_btn"
         autodroid:step="3"
         autodroid:action="click"
-        autodroid:wait_after="1.5"      <!-- 点击后等待跳转 -->
         autodroid:desc="点击登录按钮" />
     
     <!-- 步骤4：验证登录成功 - 获取欢迎文本并保存 -->

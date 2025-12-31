@@ -33,7 +33,6 @@ AUTODROID_NAME = f"{{{AUTODROID_NS}}}name"
 AUTODROID_VALUE = f"{{{AUTODROID_NS}}}value"
 AUTODROID_SAVE_TO = f"{{{AUTODROID_NS}}}save_to"
 AUTODROID_DESC = f"{{{AUTODROID_NS}}}desc"
-AUTODROID_WAIT_AFTER = f"{{{AUTODROID_NS}}}wait_after"
 AUTODROID_ID = f"{{{AUTODROID_NS}}}id"
 AUTODROID_HELP = f"{{{AUTODROID_NS}}}help"
 AUTODROID_FINGERPRINT = f"{{{AUTODROID_NS}}}fingerprint"
@@ -280,7 +279,6 @@ def build_page_info(root: ET.Element, page_id: str) -> PageInfo:
                 value=elem.get(AUTODROID_VALUE) or elem.get("value"),
                 save_to=elem.get(AUTODROID_SAVE_TO) or elem.get("save_to"),
                 desc=elem.get(AUTODROID_DESC) or elem.get("desc"),
-                wait_after=elem.get(AUTODROID_WAIT_AFTER) or elem.get("wait_after"),
                 bounds=bounds_str,
             )
 
@@ -539,7 +537,6 @@ class PageExecutor:
             name = elem_info.name
             value = elem_info.value
             save_to = elem_info.save_to
-            wait_after = elem_info.wait_after
 
             print(f"\n[{idx}/{total_steps}] 步骤 {step}: {action}")
             if desc:
@@ -558,14 +555,6 @@ class PageExecutor:
             else:
                 print(f"\n⚠️ 步骤 {step} 执行失败")
                 return False
-
-            if wait_after:
-                try:
-                    wait_time = float(wait_after)
-                    time.sleep(wait_time)
-                    print(f"  ⏸️ 等待 {wait_time} 秒后继续")
-                except (ValueError, TypeError):
-                    pass
 
         print("\n" + "=" * 40)
         return True

@@ -245,8 +245,6 @@ class TradeScriptTestRunner:
                         step_result["success"] = True
                         step_result["message"] = "Click successful"
                         
-                        time.sleep(step.wait_after)
-                        
                         if step.expected_page_after:
                             xml_source = self.dump_page_source(device_id)
                             if xml_source:

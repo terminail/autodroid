@@ -318,6 +318,11 @@ The "eyes" and "brain" of the framework.
   - Extract features from offline XML elements
   - Use stable native attributes as page fingerprint features
   - **Weighted Matching**: Different features have different importance weights
+  - **Selector-Based Matching** (Recommended):
+    - Use `autodroid:fingerprint="true"` to mark unique page elements
+    - Only marked elements are used for page matching (selector scheme)
+    - Improves accuracy and reduces false positives
+    - Example: Mark elements with unique resource-id, text, or combination of attributes
 - **Output**: Return MatchResult with page_id, score, and matched elements
 - **Advantages**: Supports multi-entry points, insensitive to non-critical UI changes
 
@@ -529,7 +534,7 @@ All `autodroid:*` attributes can be divided into four major categories according
 
 | Category | Core Purpose | Key Attributes |
 | :--- | :--- | :--- |
-| **2. Process and Steps** | Orchestrate operation order and process control | `autodroid:step`, `autodroid:action`, `autodroid:wait_after` |
+| **2. Process and Steps** | Orchestrate operation order and process control | `autodroid:step`, `autodroid:action` |
 | **3. Data and Variables** | Implement data-driven and state transfer | `autodroid:name`, `autodroid:value`, `autodroid:save_to` |
 | **4. Elements and Location** | Provide location assistance and verification information | `autodroid:desc` (implicit: depends on native attributes like `resource-id`, `text`) |
 
@@ -541,10 +546,10 @@ The following table is the complete definition of the `autodroid:*` attribute se
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`autodroid:step`** | Operable elements | Integer | **No** (auto-generated if only `action` present) | **Step sequence number**. Defines the **execution order** of operations within the same page. If not specified and only `autodroid:action` is present, steps are auto-numbered sequentially (1, 2, 3...). | `autodroid:step="1"` |
 | **`autodroid:action`** | Operable elements | String | **Yes** (required for actionable elements) | **Action to execute**. The "verb" of the framework, determines the specific operation on the element. See [Action Type Table]. | `autodroid:action="click"` |
+| **`autodroid:fingerprint`** | Any element | String | No | **Page fingerprint marker**. When set to `"true"`, marks this element as a unique identifier for the page. Only elements marked with `autodroid:fingerprint="true"` are used for page matching (selector scheme), significantly improving recognition accuracy. Recommended for elements with unique `resource-id`, `text`, or combination of attributes. | `autodroid:fingerprint="true"` |
 | **`autodroid:name`** | Elements requiring data | String | No | **Data field key name**. Provides key for `input`, `select` etc. actions, used to dynamically find and fill values from external test data (`test_data`). **Mutually exclusive with `value`, higher priority.** | `autodroid:name="username"` |
 | **`autodroid:value`** | Elements requiring data | String | No | **Hardcoded default value**. When `name` is not set, or `name` is not matched in external data, this value will be used. Implements **flexible fallback mechanism**. | `autodroid:value="test@example.com"` |
 | **`autodroid:save_to`** | Elements that can output data | String | No | **Runtime variable storage key**. Mainly used for `action="get_text"`, saves captured text to **runtime context** (`context`) for reference by subsequent steps or final assertion. | `autodroid:save_to="product_price"` |
-| **`autodroid:wait_after`** | Any step element | Float | No | **Wait time after step (seconds)**. After current step succeeds, pause for specified time to wait for interface stability or loading. | `autodroid:wait_after="2.5"` |
 | **`autodroid:desc`** | Any element | String | No | **Human description**. Only used to improve readability and maintainability of XML files, **does not affect framework execution logic**. | `autodroid:desc="Click login button"` |
 
 ### 3.4 Core Action Types (`autodroid:action`) Detailed
@@ -596,6 +601,16 @@ apk_dir: "d:/git/autodroid/autodroid-trader-executor/app/src/main/assets/apks"
 <?xml version="1.0" encoding="UTF-8"?>
 <hierarchy>
     
+    <!-- Page fingerprint: Unique element that identifies this page -->
+    <!-- Mark with autodroid:fingerprint="true" for accurate page recognition -->
+    <node
+        index="0"
+        text="川财APP首页"
+        resource-id=""
+        class="android.webkit.WebView"
+        package="com.tdx.androidCCZQ"
+        autodroid:fingerprint="true" />
+    
     <!-- 步骤1: 输入股票代码. 使用 'name' 从外部数据获取值，fallback 到 'value' -->
     <android.widget.EditText
         index="0"
@@ -622,7 +637,6 @@ apk_dir: "d:/git/autodroid/autodroid-trader-executor/app/src/main/assets/apks"
         text="Buy"
         autodroid:step="3"
         autodroid:action="click"
-        autodroid:wait_after="1.5"
         autodroid:desc="Click buy button" />
         
 </hierarchy>
@@ -1051,8 +1065,7 @@ class DataDrivenExecutor:
                         'bounds': elem.get('bounds', ''),
                         'name': elem.get('autodroid:name'),
                         'value': elem.get('autodroid:value'),
-                        'save_to': elem.get('autodroid:save_to'),
-                        'wait_after': float(elem.get('autodroid:wait_after', 0))
+                        'save_to': elem.get('autodroid:save_to')
                     }
                 }
                 steps.append(step_info)
@@ -1072,8 +1085,6 @@ class DataDrivenExecutor:
             if success:
                 if native.get('save_to') and live_elem.get('text'):
                     self.runtime_context[native['save_to']] = live_elem.get('text')
-                if native.get('wait_after', 0) > 0:
-                    time.sleep(native['wait_after'])
                     
     def _find_live_element(self, live_root: ET.Element, native: Dict) -> Optional[ET.Element]:
         """Find matching element in live XML by native attributes"""
@@ -1285,6 +1296,226 @@ Start trading suite
 This solution addresses multi-flow navigation by allowing any starting point execution. Each trading flow is defined as "performing a series of operations on the `profile_page` page". Regardless of which page the previous flow ended on (`pageX` or `pageY`), the orchestrator will first try to navigate to `profile_page` through **general navigation** before executing operations. 
 
 The general navigation instruction library (`global_nav_actions.xml`) uses navigation paths accessible within the app while maintaining the logged-in state. This is like having an assistant who knows how to navigate from bedroom to living room in your house (logged-in app) without kicking you out of the house (logging out).
+
+## Page Fingerprinting with `autodroid:fingerprint="true"`
+
+### Overview
+
+The framework supports two page matching schemes:
+
+1. **Weighted Feature Matching (Legacy)**: Uses all elements with `autodroid:action` attributes for page matching with weighted scoring
+2. **Selector-Based Matching (Recommended)**: Uses only elements marked with `autodroid:fingerprint="true"` for page matching
+
+### Why Use `autodroid:fingerprint="true"`?
+
+**Problems with Weighted Feature Matching:**
+- Uses all action elements, which may include many common UI elements (buttons, inputs)
+- Common elements across pages can cause false positives
+- Requires careful weight tuning to avoid misidentification
+- More computationally expensive as it processes many elements
+
+**Benefits of Selector-Based Matching:**
+- **Higher Accuracy**: Only uses carefully selected unique elements for page identification
+- **Reduced False Positives**: Unique elements are less likely to appear on multiple pages
+- **Simpler Logic**: No need for complex weight calculations
+- **Better Performance**: Processes fewer elements during matching
+- **Explicit Control**: You explicitly choose which elements identify each page
+
+### How to Use `autodroid:fingerprint="true"`
+
+#### Step 1: Identify Unique Elements for Each Page
+
+For each page in your application, identify 1-3 elements that uniquely identify that page. Good candidates include:
+
+- Elements with unique `resource-id` values
+- Elements with unique `text` content (e.g., page titles)
+- Combinations of attributes that together form a unique signature
+- Elements that are stable and unlikely to change between app versions
+
+**Example Unique Elements:**
+```xml
+<!-- Page: Home -->
+<node text="川财APP首页" class="android.webkit.WebView" autodroid:fingerprint="true" />
+
+<!-- Page: Trading -->
+<node resource-id="com.tdx.androidCCZQ:id/trading_panel" autodroid:fingerprint="true" />
+
+<!-- Page: Profile -->
+<node text="我的账户" resource-id="com.tdx.androidCCZQ:id/profile_title" autodroid:fingerprint="true" />
+```
+
+#### Step 2: Add `autodroid:fingerprint="true"` to Offline XML
+
+Add the attribute to the identified elements in your offline XML files:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy>
+    
+    <!-- Page fingerprint: Unique element that identifies this page -->
+    <node
+        index="0"
+        text="川财APP首页"
+        resource-id=""
+        class="android.webkit.WebView"
+        package="com.tdx.androidCCZQ"
+        content-desc=""
+        checkable="false"
+        checked="false"
+        clickable="false"
+        enabled="true"
+        focusable="true"
+        focused="true"
+        scrollable="true"
+        long-clickable="false"
+        password="false"
+        selected="false"
+        bounds="[0,0][1080,1676]"
+        autodroid:fingerprint="true" />
+    
+    <!-- Action elements for execution -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/stock_code"
+        autodroid:action="input"
+        autodroid:name="stock_code"
+        autodroid:desc="Input stock code" />
+        
+</hierarchy>
+```
+
+#### Step 3: Framework Automatically Uses Fingerprint Elements
+
+When the framework loads page XML files, it automatically:
+1. Extracts all elements with `autodroid:fingerprint="true"` into a fingerprint list
+2. Uses only these fingerprint elements for page matching
+3. Matches live XML elements against fingerprint elements using the same matching logic (resource-id, text, content-desc, etc.)
+
+### Matching Algorithm for Fingerprint Elements
+
+The framework uses the following priority order to match fingerprint elements:
+
+```python
+def _match_fingerprint_element(offline_elem, live_elem):
+    # Priority 1: resource-id match (most reliable)
+    if offline_elem.resource_id and offline_elem.resource_id == live_elem.resource_id:
+        return True
+    
+    # Priority 2: text match (second reliable)
+    if offline_elem.text and offline_elem.text == live_elem.text:
+        return True
+    
+    # Priority 3: content-desc match
+    if offline_elem.content_desc and offline_elem.content_desc == live_elem.content_desc:
+        return True
+    
+    # Priority 4: class + bounds combination (fallback)
+    if (offline_elem.class_name == live_elem.class_name and 
+        offline_elem.bounds == live_elem.bounds):
+        return True
+    
+    return False
+```
+
+### Page Matching with Fingerprint Elements
+
+When identifying the current page:
+
+```python
+def identify_page(live_root, offline_pages):
+    best_match = None
+    best_score = 0.0
+    
+    for page_id, page_info in offline_pages.items():
+        fingerprint_elements = page_info.fingerprint_elements
+        
+        if not fingerprint_elements:
+            # Fallback to weighted matching if no fingerprint elements
+            continue
+        
+        matched_count = 0
+        for offline_fp in fingerprint_elements:
+            live_elem = find_matching_element(live_root, offline_fp)
+            if live_elem:
+                matched_count += 1
+        
+        # Calculate match rate: matched / total fingerprint elements
+        match_rate = matched_count / len(fingerprint_elements)
+        
+        if match_rate > best_score:
+            best_score = match_rate
+            best_match = page_id
+    
+    # Return best match if score >= threshold (e.g., 0.5)
+    if best_score >= 0.5:
+        return best_match, best_score
+    return None, best_score
+```
+
+### Best Practices
+
+1. **Use 1-3 Fingerprint Elements per Page**: More elements increase accuracy but also increase complexity
+2. **Choose Stable Elements**: Prefer elements that don't change frequently between app versions
+3. **Prioritize resource-id**: resource-id is the most reliable identifier
+4. **Use Unique Text**: If resource-id is not available, use unique text content
+5. **Test Matching**: Verify that fingerprint elements correctly identify pages during testing
+6. **Avoid Common Elements**: Don't use elements like "Back" button that appear on multiple pages
+
+### Example: Complete Page with Fingerprint
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy>
+    
+    <!-- Fingerprint Element 1: Unique page title -->
+    <node
+        index="0"
+        text="网格交易"
+        resource-id="com.tdx.androidCCZQ:id/page_title"
+        class="android.widget.TextView"
+        package="com.tdx.androidCCZQ"
+        autodroid:fingerprint="true" />
+    
+    <!-- Fingerprint Element 2: Unique panel -->
+    <node
+        index="1"
+        resource-id="com.tdx.androidCCZQ:id/grid_trading_panel"
+        class="android.widget.LinearLayout"
+        package="com.tdx.androidCCZQ"
+        autodroid:fingerprint="true" />
+    
+    <!-- Action Step 1 -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/stock_code_input"
+        autodroid:step="1"
+        autodroid:action="input"
+        autodroid:name="stock_code"
+        autodroid:desc="Input stock code" />
+    
+    <!-- Action Step 2 -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/confirm_btn"
+        autodroid:step="2"
+        autodroid:action="click"
+        autodroid:desc="Click confirm button" />
+        
+</hierarchy>
+```
+
+### Verification
+
+After adding fingerprint elements, verify page matching accuracy:
+
+```python
+from page import PageMatcher
+
+pm = PageMatcher()
+
+# Test page identification
+live_xml = dump_page_xml()
+page_id, score = pm.identify_page(live_xml)
+
+print(f"Identified page: {page_id} (confidence: {score:.2f})")
+```
 
 ## Implementation Steps Summary
 

@@ -1978,7 +1978,7 @@
                                         enabled="true" focusable="true" focused="false"
                                         scrollable="false" long-clickable="false" password="false"
                                         selected="false" bounds="[0,1676][216,1812]"
-                                        autodroid:action="redirect" autodroid:wait_after="3" />
+                                        autodroid:action="click" />
                                     <node index="0" text="" resource-id=""
                                         class="android.widget.LinearLayout"
                                         package="com.tdx.androidCCZQ" content-desc=""

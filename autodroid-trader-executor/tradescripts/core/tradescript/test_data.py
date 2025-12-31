@@ -41,7 +41,6 @@ class NavigationStep:
     action_type: str
     target_element: Dict[str, str]
     description: str
-    wait_after: float = 1.0
     expected_page_after: Optional[str] = None
     timeout: int = 10
     retries: int = 2
@@ -151,7 +150,6 @@ def get_navigation_test_case() -> TestCase:
                 action_type="click",
                 target_element={"resource-id": "entry-xzsg"},
                 description="Click on 条件单 entry in home page",
-                wait_after=2.0,
                 expected_page_after="entry-xzsg",
                 timeout=10,
                 retries=2,
@@ -162,7 +160,6 @@ def get_navigation_test_case() -> TestCase:
                 action_type="click",
                 target_element={"text": "6d13594be6254ee3c53cf86bd9783178"},
                 description="Click on 网格交易 in entry-xzsg page",
-                wait_after=3.0,
                 expected_page_after="grid-trading",
                 timeout=10,
                 retries=2,
@@ -193,7 +190,6 @@ def get_full_flow_test_case() -> TestCase:
                 action_type="click",
                 target_element={"resource-id": "entry-xzsg"},
                 description="Click on 条件单 entry in home page",
-                wait_after=2.0,
                 expected_page_after="entry-xzsg",
                 timeout=10,
                 retries=2,
@@ -204,7 +200,6 @@ def get_full_flow_test_case() -> TestCase:
                 action_type="click",
                 target_element={"text": "6d13594be6254ee3c53cf86bd9783178"},
                 description="Click on 网格交易 in entry-xzsg page",
-                wait_after=3.0,
                 expected_page_after="grid-trading",
                 timeout=10,
                 retries=2,
