@@ -1,0 +1,8 @@
+name: 回落卖出
+description: 这是一个回落卖出流程，自动高抛低吸，卖出、买入
+steps:
+  - name: 首页
+    layout: home.xml
+    screenshot: home.png
+    description: 这是Home
+    step: 0

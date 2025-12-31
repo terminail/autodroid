@@ -6,7 +6,7 @@ import re
 import xml.etree.ElementTree as ET
 from pydantic import BaseModel
 
-from u2device import U2Device
+from u2device import U2Device, ScreenUtils, calculate_center
 
 
 class ActionType(Enum):
@@ -50,14 +50,6 @@ class StepInfo:
     value: Optional[str] = None
     save_to: Optional[str] = None
     desc: Optional[str] = None
-
-
-def _bounds_match(norm1: Tuple[float, float, float, float], norm2: Tuple[float, float, float, float], tolerance: float = 0.02) -> bool:
-    x1_diff = abs(norm1[0] - norm2[0])
-    y1_diff = abs(norm1[1] - norm2[1])
-    x2_diff = abs(norm1[2] - norm2[2])
-    y2_diff = abs(norm1[3] - norm2[3])
-    return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
 
 
 def structural_match(live_root: ET.Element, elem_info: Union[Dict, ElementInfo]) -> Tuple[Optional[ET.Element], str]:
@@ -198,35 +190,6 @@ def structural_match(live_root: ET.Element, elem_info: Union[Dict, ElementInfo])
     return (None, "未找到结构化匹配")
 
 
-def parse_bounds(bounds_str: str) -> Optional[Tuple[int, int, int, int]]:
-    if not bounds_str:
-        return None
-    try:
-        parts = bounds_str.strip("[]").split("][")
-        x1, y1 = map(int, parts[0].split(","))
-        x2, y2 = map(int, parts[1].split(","))
-        return (x1, y1, x2, y2)
-    except:
-        return None
-
-
-def normalize_bounds(bounds: Tuple[int, int, int, int], screen_width: int, screen_height: int) -> Tuple[float, float, float, float]:
-    x1, y1, x2, y2 = bounds
-    return (round(x1 / screen_width, 4), round(y1 / screen_height, 4),
-            round(x2 / screen_width, 4), round(y2 / screen_height, 4))
-
-
-def get_screen_size(root: ET.Element) -> Tuple[int, int]:
-    for elem in root.iter():
-        if elem.tag == "hierarchy":
-            bounds_str = elem.get("bounds", "")
-            if bounds_str:
-                bounds = parse_bounds(bounds_str)
-                if bounds:
-                    return (bounds[2], bounds[3])
-    return (1080, 1920)
-
-
 def exact_match(live_root: ET.Element, elem_info: Union[Dict, ElementInfo]) -> Tuple[Optional[ET.Element], str]:
     if isinstance(elem_info, ElementInfo):
         rid = elem_info.resource_id.strip()
@@ -250,15 +213,15 @@ def exact_match(live_root: ET.Element, elem_info: Union[Dict, ElementInfo]) -> T
                 return elem, f"resource-id精确匹配: {rid}"
 
     if normalized_bounds and normalized_bounds != (0.0, 0.0, 0.0, 0.0):
-        live_screen_width, live_screen_height = get_screen_size(live_root)
+        live_screen_width, live_screen_height = ScreenUtils.get_screen_size(live_root)
         for elem in live_root.iter():
             if elem.tag == "hierarchy":
                 continue
             live_bounds_str = elem.get("bounds", "").strip()
-            live_bounds = parse_bounds(live_bounds_str)
+            live_bounds = ScreenUtils.parse_bounds(live_bounds_str)
             if live_bounds:
-                live_normalized = normalize_bounds(live_bounds, live_screen_width, live_screen_height)
-                if _bounds_match(normalized_bounds, live_normalized):
+                live_normalized = ScreenUtils.normalize_bounds(live_bounds, live_screen_width, live_screen_height)
+                if ScreenUtils.bounds_match(normalized_bounds, live_normalized):
                     return elem, f"归一化bounds匹配: {bounds}"
 
     if text:
@@ -294,46 +257,6 @@ class ElementMatcher:
         pass
 
 
-def calculate_center(bounds):
-    x1, y1, x2, y2 = bounds
-    return (x1 + x2) // 2, (y1 + y2) // 2
-
-
-def _execute_get_text(step_info: StepInfo, live_elem, runtime_context: Dict = None) -> bool:
-    try:
-        text = live_elem.get("text", "")
-        if step_info.save_to and runtime_context:
-            runtime_context[step_info.save_to] = text
-            print(f"  ✓ 获取文本: [{text}] -> {step_info.save_to}")
-        else:
-            print(f"  ✓ 获取文本: [{text}]")
-        return True
-    except Exception as e:
-        print(f"  ⚠️ 获取文本失败: {e}")
-        return False
-
-
-def _execute_wait(step_info: StepInfo) -> bool:
-    wait_time = float(step_info.value) if step_info.value else 1.0
-    try:
-        time.sleep(wait_time)
-        print(f"  ✓ 等待 {wait_time} 秒")
-        return True
-    except:
-        return False
-
-
-def _execute_wait_for_user(step_info: StepInfo) -> bool:
-    print(f"  ⏸️ 等待用户操作...")
-    try:
-        input("  按回车键继续...")
-        print(f"  ✓ 用户继续")
-        return True
-    except:
-        print(f"  ⚠️ 用户取消")
-        return False
-
-
 class ElementExecutor:
     def __init__(self, device: U2Device):
         self.device = device
@@ -354,24 +277,67 @@ class ElementExecutor:
         elif action == ActionType.INPUT.value:
             return self._execute_input(step_info, elem_name, live_elem)
         elif action == ActionType.GET_TEXT.value:
-            return _execute_get_text(step_info, live_elem)
+            return self._execute_get_text(step_info, live_elem)
         elif action == ActionType.WAIT.value:
-            return _execute_wait(step_info)
+            return self._execute_wait(step_info)
         elif action == ActionType.WAIT_FOR_USER.value:
-            return _execute_wait_for_user(step_info)
+            return self._execute_wait_for_user(step_info)
         elif action == ActionType.PRESS_KEY.value:
             return self._execute_press_key(step_info)
         else:
             print(f"  ⚠️ 不支持的动作: {action}")
             return False
 
+    def _execute_get_text(self, step_info: StepInfo, live_elem, runtime_context: Dict = None) -> bool:
+        try:
+            if not live_elem:
+                print(f"  ⚠️ 元素不存在")
+                return False
+            
+            text = live_elem.get("text", "")
+            if step_info.save_to and runtime_context:
+                runtime_context[step_info.save_to] = text
+                print(f"  ✓ 获取文本: [{text}] -> {step_info.save_to}")
+            else:
+                print(f"  ✓ 获取文本: [{text}]")
+            return True
+        except Exception as e:
+            print(f"  ⚠️ 获取文本失败: {e}")
+            return False
+
+    def _execute_wait(self, step_info: StepInfo) -> bool:
+        wait_time = float(step_info.value) if step_info.value else 1.0
+        try:
+            time.sleep(wait_time)
+            print(f"  ✓ 等待 {wait_time} 秒")
+            return True
+        except (ValueError, TypeError):
+            return False
+
+    def _execute_wait_for_user(self, step_info: StepInfo) -> bool:
+        print(f"  ⏸️ 等待用户操作...")
+        try:
+            input("  按回车键继续...")
+            print(f"  ✓ 用户继续")
+            return True
+        except EOFError:
+            print(f"  ⚠️ 用户取消")
+            return False
+
     def _execute_click(self, elem_name: str, elem_info: ElementInfo, live_elem) -> bool:
         try:
-            bounds = parse_bounds(live_elem.get("bounds", ""))
+            if not live_elem:
+                print(f"  ⚠️ 元素不存在: {elem_name}")
+                return False
+            
+            bounds = ScreenUtils.parse_bounds(live_elem.get("bounds", ""))
             if bounds:
                 cx, cy = calculate_center(bounds)
                 self.device.click(cx, cy)
-                print(f"  ✓ 点击 [{elem_name}] @ ({cx}, {cy})")
+                if elem_info.name:
+                    print(f"  ✓ 点击 [{elem_info.name}] [{elem_name}] @ ({cx}, {cy})")
+                else:
+                    print(f"  ✓ 点击 [{elem_name}] @ ({cx}, {cy})")
                 return True
             else:
                 live_elem_elem = self.device.d(resourceId=live_elem.get("resource-id", "")) if live_elem.get("resource-id") else None
@@ -379,7 +345,10 @@ class ElementExecutor:
                     live_elem_elem = self.device.d(text=live_elem.get("text", ""))
                 if live_elem_elem and live_elem_elem.exists:
                     live_elem_elem.click()
-                    print(f"  ✓ 点击 [{elem_name}]")
+                    if elem_info.name:
+                        print(f"  ✓ 点击 [{elem_info.name}] [{elem_name}]")
+                    else:
+                        print(f"  ✓ 点击 [{elem_name}]")
                     return True
                 print(f"  ⚠️ 无法获取元素坐标")
                 return False
@@ -389,31 +358,61 @@ class ElementExecutor:
 
     def _execute_redirect(self, elem_name: str, elem_info: ElementInfo, live_elem) -> bool:
         try:
-            bounds = parse_bounds(live_elem.get("bounds", ""))
+            print(f"  🔍 _execute_redirect 开始执行")
+            print(f"     elem_name: {elem_name}")
+            print(f"     elem_info.name: {elem_info.name}")
+            print(f"     elem_info.text: {elem_info.text}")
+            print(f"     elem_info.resource_id: {elem_info.resource_id}")
+            
+            if not live_elem:
+                print(f"  ⚠️ 元素不存在: {elem_name}")
+                return False
+            
+            print(f"  🔍 : {live_elem}")
+            bounds_str = live_elem.get("bounds", "")
+            print(f"  🔍 live_elem bounds: {bounds_str}")
+            
+            bounds = ScreenUtils.parse_bounds(bounds_str)
             if bounds:
                 cx, cy = calculate_center(bounds)
+                print(f"  🔍 计算点击坐标: ({cx}, {cy})")
                 self.device.click(cx, cy)
-                print(f"  ✓ 跳转 [{elem_name}] @ ({cx}, {cy})")
+                if elem_info.name:
+                    print(f"  ✓ 跳转 [{elem_info.name}] [{elem_name}] @ ({cx}, {cy})")
+                else:
+                    print(f"  ✓ 跳转 [{elem_name}] @ ({cx}, {cy})")
                 return True
             else:
+                print(f"  ⚠️ 无法解析bounds，使用fallback方法")
                 live_elem_elem = self.device.d(resourceId=live_elem.get("resource-id", "")) if live_elem.get("resource-id") else None
                 if not live_elem_elem or not live_elem_elem.exists:
+                    print(f"  🔍 尝试使用text定位: {live_elem.get('text', '')}")
                     live_elem_elem = self.device.d(text=live_elem.get("text", ""))
                 if live_elem_elem and live_elem_elem.exists:
+                    print(f"  🔍 找到元素，执行click")
                     live_elem_elem.click()
-                    print(f"  ✓ 跳转 [{elem_name}]")
+                    if elem_info.name:
+                        print(f"  ✓ 跳转 [{elem_info.name}] [{elem_name}]")
+                    else:
+                        print(f"  ✓ 跳转 [{elem_name}]")
                     return True
                 print(f"  ⚠️ 无法获取元素坐标")
                 return False
         except Exception as e:
             print(f"  ⚠️ 跳转失败: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _execute_input(self, step_info: StepInfo, elem_name: str, live_elem, test_data: Dict = None) -> bool:
         target_value = step_info.name and test_data.get(step_info.name) if test_data else step_info.value
         if target_value:
             try:
-                bounds = parse_bounds(live_elem.get("bounds", ""))
+                if not live_elem:
+                    print(f"  ⚠️ 元素不存在: {elem_name}")
+                    return False
+                
+                bounds = ScreenUtils.parse_bounds(live_elem.get("bounds", ""))
                 if bounds:
                     cx, cy = calculate_center(bounds)
                     self.device.click(cx, cy)

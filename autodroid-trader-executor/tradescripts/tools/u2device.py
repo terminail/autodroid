@@ -19,15 +19,21 @@ class ScreenUtils:
             parts = bounds_str.strip("[]").split("][")
             x1, y1 = map(int, parts[0].split(","))
             x2, y2 = map(int, parts[1].split(","))
-            return (x1, y1, x2, y2)
-        except:
+            return x1, y1, x2, y2
+        except (ValueError, IndexError):
             return None
+
+    @staticmethod
+    def format_bounds(bounds: Tuple[int, int, int, int]) -> str:
+        """Format bounds tuple to string format [x1,y1][x2,y2]"""
+        x1, y1, x2, y2 = bounds
+        return f"[{x1},{y1}][{x2},{y2}]"
 
     @staticmethod
     def normalize_bounds(bounds: Tuple[int, int, int, int], screen_width: int, screen_height: int) -> Tuple[float, float, float, float]:
         """Normalize bounds to relative coordinates (0-1)"""
         x1, y1, x2, y2 = bounds
-        return (x1,y1,x2,y2)
+        return x1,y1,x2,y2
         # for now, return absolute coordinates
         # return (round(x1 / screen_width, 4), round(y1 / screen_height, 4), 
         #         round(x2 / screen_width, 4), round(y2 / screen_height, 4))
@@ -41,21 +47,24 @@ class ScreenUtils:
                 if bounds_str:
                     bounds = ScreenUtils.parse_bounds(bounds_str)
                     if bounds:
-                        return (bounds[2], bounds[3])
-        return (1080, 1920)
-
-    @staticmethod
-    def bounds_match(norm1: Tuple[float, float, float, float], 
-                     norm2: Tuple[float, float, float, float], 
-                     tolerance: float = 0.02) -> bool:
-        """Check if two normalized bounds match within tolerance"""
-        x1_diff = abs(norm1[0] - norm2[0])
-        y1_diff = abs(norm1[1] - norm2[1])
-        x2_diff = abs(norm1[2] - norm2[2])
-        y2_diff = abs(norm1[3] - norm2[3])
-        return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
+                        return bounds[2], bounds[3]
+        return 1080, 1920
 
 
+def bounds_match(norm1: Tuple[float, float, float, float],
+                 norm2: Tuple[float, float, float, float],
+                 tolerance: float = 0.02) -> bool:
+    """Check if two normalized bounds match within tolerance"""
+    x1_diff = abs(norm1[0] - norm2[0])
+    y1_diff = abs(norm1[1] - norm2[1])
+    x2_diff = abs(norm1[2] - norm2[2])
+    y2_diff = abs(norm1[3] - norm2[3])
+    return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
+
+def calculate_center(bounds: Tuple[int, int, int, int]) -> Tuple[int, int]:
+    """Calculate center point of bounds"""
+    x1, y1, x2, y2 = bounds
+    return (x1 + x2) // 2, (y1 + y2) // 2
 
 
 class U2Device:
@@ -158,6 +167,57 @@ class U2Device:
         except Exception as e:
             logger.warning(f"获取元素数量失败 {selector}: {e}")
             return 0
+
+    def get_element_bounds(self, selector: str) -> List[Tuple[int, int, int, int]]:
+        """获取匹配元素的bounds信息"""
+        try:
+            bounds_list = []
+            
+            # 解析选择器并转换为uiautomator2的关键字参数调用方式
+            if selector.startswith('text("') and selector.endswith('")'):
+                # 处理 text("value") 格式
+                text_value = selector[6:-2]  # 提取 "value" 部分
+                elements = self.d(text=text_value)
+                print(f"  🔍 get_element_bounds: 使用text选择器 '{text_value}'，找到 {len(elements)} 个元素")
+            elif selector.startswith('resourceId("') and selector.endswith('")'):
+                # 处理 resourceId("value") 格式
+                resource_id = selector[12:-2]  # 提取 "value" 部分
+                elements = self.d(resourceId=resource_id)
+                print(f"  🔍 get_element_bounds: 使用resourceId选择器 '{resource_id}'，找到 {len(elements)} 个元素")
+            elif selector.startswith('description("') and selector.endswith('")'):
+                # 处理 description("value") 格式
+                desc_value = selector[12:-2]  # 提取 "value" 部分
+                elements = self.d(description=desc_value)
+                print(f"  🔍 get_element_bounds: 使用description选择器 '{desc_value}'，找到 {len(elements)} 个元素")
+            else:
+                # 其他选择器格式，尝试直接使用
+                logger.warning(f"不支持的选择器格式: {selector}")
+                return bounds_list
+            
+            # 提取每个元素的bounds
+            for idx, elem in enumerate(elements):
+                elem_info = elem.info
+                bounds = elem_info.get('bounds', {})
+                if bounds:
+                    x1 = bounds.get('left', 0)
+                    y1 = bounds.get('top', 0)
+                    x2 = bounds.get('right', 0)
+                    y2 = bounds.get('bottom', 0)
+                    bounds_tuple = (x1, y1, x2, y2)
+                    bounds_list.append(bounds_tuple)
+                    print(f"  🔍 get_element_bounds: 元素[{idx}] bounds=({x1},{y1},{x2},{y2})")
+                    # 打印更多元素信息
+                    elem_text = elem_info.get('text', '')
+                    elem_rid = elem_info.get('resourceId', '')
+                    elem_desc = elem_info.get('contentDescription', '')
+                    print(f"     text='{elem_text}', resourceId='{elem_rid}', contentDescription='{elem_desc}'")
+            
+            return bounds_list
+        except Exception as e:
+            logger.warning(f"获取元素bounds失败 {selector}: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def save_current_page(self, page_id: str, prefix: str = "live") -> str:
         live_xml = self.dump_hierarchy()
@@ -356,7 +416,7 @@ class U2Device:
                     try:
                         # 使用errors='replace'来保留特殊字符
                         xml_content = xml_content.encode('utf-8', errors='replace').decode('utf-8')
-                    except:
+                    except (UnicodeDecodeError, UnicodeEncodeError):
                         # 如果所有方法都失败，使用原始内容
                         pass
                 

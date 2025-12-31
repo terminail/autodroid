@@ -31,11 +31,11 @@ def print_startup_info(host, port):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             server_ip = s.getsockname()[0]
-    except:
+    except (socket.error, OSError):
         # Fallback to hostname resolution
         try:
             server_ip = socket.gethostbyname(socket.gethostname())
-        except:
+        except (socket.gaierror, socket.error):
             server_ip = "localhost"
     
     # Determine which URL to display

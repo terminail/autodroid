@@ -5,12 +5,12 @@ import xml.etree.ElementTree as ET
 import yaml
 
 try:
-    from .page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml
+    from .page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml, PageInfo
     from .element import ElementExecutor, StepInfo
     from .u2device import U2Device
 except ImportError:
     # 当直接运行脚本时使用绝对导入
-    from page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml
+    from page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml, PageInfo
     from element import ElementExecutor, StepInfo
     from u2device import U2Device
 
@@ -38,10 +38,9 @@ class FlowManager:
         if device:
             self._element_executor = ElementExecutor(device)
         self._end_pages: List[str] = []
-        self._shared_elements: Dict[str, Dict] = {}
         self._executed_steps: set = set()
         self._total_steps: int = 0
-        self._page_infos: Dict = {}
+        self._page_infos: Dict[str, PageInfo] = {}
         self._page_executor.set_executed_steps_callback(self._on_step_executed)
         self._page_executor.set_status_callback(self.get_execution_status)
 
@@ -56,109 +55,91 @@ class FlowManager:
     def get_flow_dir(self, apk_package: str, flow_name: str) -> Path:
         return self.apk_dir / apk_package / flow_name
 
-    def _quick_identify_page(self) -> Optional[Tuple[str, float, Dict]]:
-        """快速页面识别（选择器方案）"""
-        if not self.device:
-            print("⚠️ 未初始化设备，无法进行快速页面识别")
-            return None
-        
-        try:
-            # 使用选择器方案进行快速页面识别
-            print("🔍 开始选择器方案页面识别...")
-            
-            # 遍历所有页面，检查是否有匹配的元素
-            for page_id, page_info in self._page_infos.items():
-                if self._is_page_matched_by_selectors(page_id, page_info):
-                    print(f"✅ 识别到页面: {page_id} (选择器方案)")
-                    return (page_id, 1.0, {"method": "selector"})
-            
-            print("❌ 未找到匹配的页面")
-            return None
-        except Exception as e:
-            print(f"⚠️ 快速页面识别失败: {e}")
-            return None
-
-    def _is_page_matched_by_selectors(self, page_id: str, page_info) -> bool:
-        """使用选择器检查页面是否匹配"""
+    def _is_page_matched_by_selectors(self, page_id: str, page_info: PageInfo) -> bool:
+        """使用选择器检查页面是否匹配，优先使用fingerprint元素进行精确匹配"""
         if not self.device:
             return False
         
-        # 检查页面是否有action_elements
+        # 优先使用fingerprint元素进行精确匹配
+        fingerprint_elements = page_info.fingerprint_elements
+        if fingerprint_elements:
+            print(f"  🔍 页面 {page_id}: 使用 {len(fingerprint_elements)} 个fingerprint元素进行精确匹配")
+            
+            # 检查所有fingerprint元素，只要有一个存在就认为页面匹配
+            for fp_elem in fingerprint_elements:
+                resource_id = fp_elem.resource_id.strip()
+                text = fp_elem.text.strip()
+                content_desc = fp_elem.content_desc.strip()
+                
+                print(f"    - 检查fingerprint元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
+                
+                # 使用选择器检查元素是否存在
+                if resource_id:
+                    selector = f'resourceId("{resource_id}")'
+                    if self.device.check_element_exists(selector):
+                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
+                        return True
+                    else:
+                        print(f"    ✗ 未找到fingerprint元素: {selector}")
+                elif text:
+                    selector = f'text("{text}")'
+                    if self.device.check_element_exists(selector):
+                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
+                        return True
+                    else:
+                        print(f"    ✗ 未找到fingerprint元素: {selector}")
+                elif content_desc:
+                    selector = f'description("{content_desc}")'
+                    if self.device.check_element_exists(selector):
+                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
+                        return True
+                    else:
+                        print(f"    ✗ 未找到fingerprint元素: {selector}")
+            
+            # 如果有fingerprint元素但都没找到，页面不匹配
+            print(f"  ✗ 页面 {page_id}: 所有fingerprint元素都未找到")
+            return False
+        
+        # 如果没有fingerprint元素，回退到action元素匹配
         action_elements = page_info.action_elements
         if not action_elements:
+            print(f"  ⚠️ 页面 {page_id}: 没有fingerprint元素和action元素")
             return False
         
-        # 检查第一个action元素是否存在
-        first_elem = action_elements[0]
-        resource_id = first_elem.resource_id.strip()
-        text = first_elem.text.strip()
-        content_desc = first_elem.content_desc.strip()
+        print(f"  🔍 页面 {page_id}: 检查 {len(action_elements)} 个action元素（回退方案）")
         
-        # 使用选择器检查元素是否存在
-        if resource_id:
-            if self.device.check_element_exists(f'resourceId("{resource_id}")'):
-                return True
-        elif text:
-            if self.device.check_element_exists(f'text("{text}")'):
-                return True
-        elif content_desc:
-            if self.device.check_element_exists(f'description("{content_desc}")'):
-                return True
+        # 检查所有action元素，只要有任何一个存在就认为页面匹配
+        for elem_info in action_elements:
+            resource_id = elem_info.resource_id.strip()
+            text = elem_info.text.strip()
+            content_desc = elem_info.content_desc.strip()
+            
+            print(f"    - 检查元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
+            
+            # 使用选择器检查元素是否存在
+            if resource_id:
+                selector = f'resourceId("{resource_id}")'
+                if self.device.check_element_exists(selector):
+                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
+                    return True
+                else:
+                    print(f"    ✗ 未找到元素: {selector}")
+            elif text:
+                selector = f'text("{text}")'
+                if self.device.check_element_exists(selector):
+                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
+                    return True
+                else:
+                    print(f"    ✗ 未找到元素: {selector}")
+            elif content_desc:
+                selector = f'description("{content_desc}")'
+                if self.device.check_element_exists(selector):
+                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
+                    return True
+                else:
+                    print(f"    ✗ 未找到元素: {selector}")
         
         return False
-
-    def _execute_steps_with_selectors(self, page_id: str) -> bool:
-        """使用选择器方案执行页面步骤（flow层职责）"""
-        if not self.device:
-            print("⚠️ 未初始化设备，无法执行选择器步骤")
-            return False
-        
-        try:
-            # 使用PageExecutor执行页面步骤（不需要live_xml）
-            return self._page_executor.execute_steps(
-                page_id=page_id,
-                execute_action=self._execute_action_callback,
-                device=self.device,
-                end_pages=self._end_pages,
-                refresh_page_callback=self.refresh_current_page
-            )
-        except Exception as e:
-            print(f"⚠️ 选择器方案执行失败: {e}")
-            return False
-
-    def _build_selector_from_element(self, element: dict) -> Optional[str]:
-        """从元素构建选择器（element层职责）"""
-        if not self._element_executor:
-            print("⚠️ 未初始化ElementExecutor，无法构建选择器")
-            return None
-        
-        try:
-            return self._element_executor.build_selector(element)
-        except Exception as e:
-            print(f"⚠️ 构建选择器失败: {e}")
-            return None
-
-    def _execute_selector_action(self, selector: str, action: str, element: dict) -> bool:
-        """执行选择器动作"""
-        try:
-            if action == 'click':
-                return self.device.d(selector).click()
-            elif action == 'input':
-                text = element.get('value', '')
-                if text:
-                    return self.device.d(selector).set_text(text)
-            elif action == 'get_text':
-                text = self.device.d(selector).get_text()
-                save_to = element.get('save_to', '')
-                if save_to:
-                    # 保存到运行时上下文（需要实现运行时上下文管理）
-                    print(f"📝 保存文本到 {save_to}: {text}")
-                return True
-            # 其他动作类型...
-            return True
-        except Exception as e:
-            print(f"⚠️ 执行选择器动作失败: {action} - {e}")
-            return False
 
     def _load_flow_config(self, apk_package: str, flow_name: str) -> List[str]:
         flow_dir = self.get_flow_dir(apk_package, flow_name)
@@ -189,9 +170,7 @@ class FlowManager:
         self,
         apk_package: str = "com.tdx.androidCCZQ",
         flow_name: str = "general",
-        preprocess_func=None,
-        exclude_shared_elements: bool = False,
-        min_shared_pages: int = 2
+        preprocess_func=None
     ) -> LoadResult:
         self.reset_execution_state()
         flow_dir = self.get_flow_dir(apk_package, flow_name)
@@ -200,12 +179,6 @@ class FlowManager:
         if not flow_dir.exists():
             print(f"❌ 目录不存在: {flow_dir}")
             return LoadResult(loaded_count=0, page_info={})
-
-        if exclude_shared_elements:
-            print(f"🔍 识别共享元素...")
-            self.identify_and_mark_shared_elements(apk_package, flow_name, min_shared_pages)
-            self._page_matcher.set_element_filter(self.is_shared_element)
-            print(f"✅ 共享元素过滤已启用")
 
         loaded_count = 0
         page_info: Dict[str, int] = {}
@@ -261,11 +234,29 @@ class FlowManager:
         Returns:
             (page_id, score, all_scores)
         """
-        # 使用选择器方案进行页面识别
-        if self._page_infos:
-            page_id = list(self._page_infos.keys())[0]
-            return (page_id, 1.0, [(page_id, 1.0, {"method": "selector"})])
-        else:
+        if not self.device:
+            print("⚠️ 未初始化设备，无法进行页面识别")
+            return (None, 0.0, [])
+        
+        try:
+            print("🔍 开始选择器方案页面识别...")
+            
+            # 遍历所有页面，检查是否有匹配的元素
+            for page_id, page_info in self._page_infos.items():
+                print(f"  🔍 检查页面: {page_id}")
+                if self._is_page_matched_by_selectors(page_id, page_info):
+                    print(f"✅ 识别到页面: {page_id} (选择器方案)")
+                    return (page_id, 1.0, [(page_id, 1.0, {"method": "selector"})])
+            
+            # 未找到匹配的页面
+            print("❌ 未找到匹配的页面")
+            print("⚠️ 请用户手动操作到已知页面，或检查页面XML是否定义了fingerprint元素")
+            print("   提示：可以使用 autodroid:fingerprint='true' 标记页面唯一元素以提高识别准确率")
+            return (None, 0.0, [])
+        except Exception as e:
+            print(f"⚠️ 页面识别失败: {e}")
+            import traceback
+            traceback.print_exc()
             return (None, 0.0, [])
 
     def execute_page_steps(self, page_id: str, refresh_page_callback: Optional[Callable[[], str]] = None) -> bool:
@@ -325,117 +316,13 @@ class FlowManager:
 
     def refresh_current_page(self) -> str:
         """刷新当前页面识别"""
-        result = self._quick_identify_page()
-        if result:
-            page_id, score, _ = result
-            return page_id
-        return ""
+        page_id, _, _ = self.identify_page()
+        return page_id if page_id else ""
 
     def check_current_page(self) -> Tuple[Optional[str], bool]:
         current_page_id, score, _ = self.identify_page()
         is_end_page = current_page_id in self._end_pages if current_page_id else False
         return current_page_id, is_end_page
-
-    def identify_and_mark_shared_elements(
-        self,
-        apk_package: str = "com.tdx.androidCCZQ",
-        flow_name: str = "general",
-        min_shared_pages: int = 2
-    ) -> Dict[str, Dict]:
-        """
-        识别并标记流程中多个页面共享的元素
-        
-        Args:
-            apk_package: APK包名
-            flow_name: 流程名称
-            min_shared_pages: 最少在多少个页面中出现才认为是共享元素
-        
-        Returns:
-            共享元素字典 {element_key: {page_ids: [], count: int, ...}}
-        """
-        flow_dir = self.get_flow_dir(apk_package, flow_name)
-        if not flow_dir.exists():
-            print(f"❌ 目录不存在: {flow_dir}")
-            return {}
-
-        print(f"🔍 扫描共享元素: {flow_dir}")
-
-        element_occurrences: Dict[str, Dict] = {}
-
-        for xml_file in sorted(flow_dir.glob("*.xml")):
-            try:
-                with open(xml_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                content = preprocess_xml_for_parsing(content)
-                root = ET.fromstring(content)
-
-                page_id = xml_file.stem
-
-                for elem in root.iter():
-                    if elem.tag == "hierarchy":
-                        continue
-                    
-                    rid = elem.get("resource-id", "").strip()
-                    text = elem.get("text", "").strip()
-                    bounds = elem.get("bounds", "").strip()
-                    class_name = elem.get("class", "").strip()
-
-                    if not rid and not text:
-                        continue
-
-                    element_key = f"{rid}|{text}|{bounds}|{class_name}"
-
-                    if element_key not in element_occurrences:
-                        element_occurrences[element_key] = {
-                            "page_ids": [],
-                            "count": 0,
-                            "resource_id": rid,
-                            "text": text,
-                            "bounds": bounds,
-                            "class": class_name
-                        }
-
-                    if page_id not in element_occurrences[element_key]["page_ids"]:
-                        element_occurrences[element_key]["page_ids"].append(page_id)
-                        element_occurrences[element_key]["count"] += 1
-
-            except Exception as e:
-                print(f"  ⚠️ 处理 {xml_file.name} 时出错: {e}")
-
-        shared_elements = {}
-        for key, info in element_occurrences.items():
-            if info["count"] >= min_shared_pages:
-                shared_elements[key] = info
-
-        self._shared_elements = shared_elements
-
-        print(f"✅ 识别完成: 找到 {len(shared_elements)} 个共享元素")
-        if shared_elements:
-            print(f"   共享元素出现在 {min_shared_pages} 个或更多页面中")
-
-        return shared_elements
-
-    def is_shared_element(self, element: Dict) -> bool:
-        """
-        检查元素是否是共享元素
-        
-        Args:
-            element: 元素字典，包含 resource-id, text, bounds, class 等字段
-        
-        Returns:
-            True 如果是共享元素，否则 False
-        """
-        rid = element.get("resource_id", "").strip()
-        text = element.get("text", "").strip()
-        bounds = element.get("bounds", "").strip()
-        class_name = element.get("class", "").strip()
-
-        element_key = f"{rid}|{text}|{bounds}|{class_name}"
-        return element_key in self._shared_elements
-
-    @property
-    def shared_elements(self) -> Dict[str, Dict]:
-        return self._shared_elements
 
     def reset_execution_state(self):
         """重置执行状态"""

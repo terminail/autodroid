@@ -102,7 +102,7 @@ class ADBDumper:
                 # 删除临时文件
                 try:
                     temp_xml_path.unlink()
-                except:
+                except (OSError, FileNotFoundError):
                     pass
             
             if attempt < max_retries:

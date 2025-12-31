@@ -121,7 +121,7 @@ def scan_apks_directory() -> List[TradeScriptResponse]:
                             updated_at=updated_at
                         )
                         tradescripts.append(tradescript)
-                except:
+                except (FileNotFoundError, yaml.YAMLError, KeyError, TypeError):
                     # If there's an error reading config.yaml (including file not found), skip this flow
                     continue
     
