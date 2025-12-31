@@ -38,7 +38,9 @@ class InteractiveCLI:
 
         while True:
             try:
-                user_input = input("\n[?] 是否自动操作当前页面? (y/n/q/m/f): ").strip().lower()
+                user_input = input("\n[?] 是否自动操作当前页面? (Y/n/q/m/f): ").strip().lower()
+                if user_input == '':
+                    user_input = 'y'
 
                 if user_input == 'q':
                     print("\n👋 再见!")

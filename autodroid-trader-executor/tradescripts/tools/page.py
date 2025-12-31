@@ -8,11 +8,11 @@ import re
 from pydantic import BaseModel
 try:
     from .u2device import U2Device, ScreenUtils
-    from .element import ElementInfo
+    from .element import ElementInfo, ActionType
 except ImportError:
     # 当直接运行脚本时使用绝对导入
     from u2device import U2Device, ScreenUtils
-    from element import ElementInfo
+    from element import ElementInfo, ActionType
 
 
 AUTODROID_NS = "https://autodroid.example.com"
@@ -276,7 +276,6 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
     resource_id = elem_info.resource_id.strip()
     text = elem_info.text.strip()
     content_desc = elem_info.content_desc.strip()
-    bounds = elem_info.bounds
 
     # 优先使用resource-id定位
     if resource_id:
@@ -287,17 +286,9 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
                 return device.d(resourceId=resource_id)
-            elif count > 1 and bounds:
-                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                elem_bounds_list = device.get_element_bounds(selector)
-                target_bounds = ScreenUtils.parse_bounds(bounds)
-                if target_bounds:
-                    for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
-                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                            print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                            return device.d(resourceId=resource_id, instance=idx)
-                    print(f"  ✗ 未找到匹配bounds的元素")
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  💡 建议：使用更具体的选择器或通过其他属性区分元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
         else:
@@ -314,22 +305,9 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
                 return device.d(text=text)
-            elif count > 1 and bounds:
-                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                elem_bounds_list = device.get_element_bounds(selector)
-                print(f"  🔍 所有匹配元素的bounds:")
-                for idx, elem_bounds in enumerate(elem_bounds_list):
-                    bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                    print(f"     [{idx}] {bounds_str}")
-
-                target_bounds = ScreenUtils.parse_bounds(bounds)
-                if target_bounds:
-                    for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
-                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                            print(f"  ✓ 找到匹配bounds的元素 [{idx}]: {live_bounds_str}")
-                            return device.d(text=text, instance=idx)
-                    print(f"  ✗ 未找到匹配bounds的元素")
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  � 建议：使用更具体的选择器或通过其他属性区分元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
         else:
@@ -344,17 +322,9 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
                 return device.d(description=content_desc)
-            elif count > 1 and bounds:
-                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                elem_bounds_list = device.get_element_bounds(selector)
-                target_bounds = ScreenUtils.parse_bounds(bounds)
-                if target_bounds:
-                    for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
-                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                            print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                            return device.d(description=content_desc, instance=idx)
-                    print(f"  ✗ 未找到匹配bounds的元素")
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  💡 建议：使用更具体的选择器或通过其他属性区分元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
         else:
@@ -430,7 +400,9 @@ class PageExecutor:
             if value:
                 print(f"   默认值: {value}")
 
-            live_elem = self._make_live_elem_visible(device, elem_info)
+            # 确保元素可见（通用逻辑，适用于所有操作类型）
+            is_input_action = action == ActionType.INPUT.value
+            live_elem = self._make_live_elem_visible(device, elem_info, is_input=is_input_action)
 
             if execute_action(step, action, elem_info, live_elem):
                 print(f"  ✓ {action} 完成")
@@ -443,43 +415,179 @@ class PageExecutor:
         print("\n" + "=" * 40)
         return True
 
-    def _make_live_elem_visible(self, device: U2Device, elem_info):
-        live_elem_obj = _find_element_by_selector(device, elem_info)
+    def _make_live_elem_visible(self, device: U2Device, elem_info, is_input: bool = False):
+        import time
 
-        if not live_elem_obj or not live_elem_obj.exists:
-            print(f"  ⚠️ 未找到元素")
-            return None
-
-        # 如果元素不在屏幕内，滚动到元素位置
         screen_width = device.d.info.get('displayWidth', 1080)
         screen_height = device.d.info.get('displayHeight', 1920)
 
-        # 获取元素的bounds
-        live_bounds = live_elem_obj.info.get('bounds')
-        if live_bounds:
-            live_bounds_str = f"[{live_bounds['left']},{live_bounds['top']}][{live_bounds['right']},{live_bounds['bottom']}]"
-            print(f"  🔍 使用实时bounds进行滚动判断: {live_bounds_str}")
-            scrolled = device.scroll_to_element_by_bounds(live_bounds_str, screen_width, screen_height)
-        # 如果没有实时bounds（元素不在屏幕内），使用离线bounds估算滚动位置
-        elif elem_info.bounds:
-            offline_bounds = elem_info.bounds
-            print(f"  🔍 元素不在屏幕内，使用离线bounds估算滚动位置: {offline_bounds}")
-            scrolled = device.scroll_to_element_by_bounds(offline_bounds, screen_width, screen_height)
-        else:
-            scrolled = False
-
-        # 只有在真正执行了滚动操作后，才重新获取元素对象
-        if scrolled:
-            print(f"  🔄 滚动后重新获取元素对象")
-            live_elem_obj = _find_element_by_selector(device, elem_info)
-        else:
-            print(f"  ✅ 无需滚动，使用当前元素")
-
+        # 通用逻辑：对所有操作类型都确保元素可见
+        # 首先尝试直接查找元素
+        live_elem_obj = _find_element_by_selector(device, elem_info)
+        
         if not live_elem_obj or not live_elem_obj.exists:
-            print(f"  ⚠️ 滚动后仍未找到元素")
-            return None
-
+            # 如果元素不存在，尝试滚动查找
+            found = self._scroll_to_find_element(device, elem_info, screen_width, screen_height)
+            if not found:
+                print(f"  ⚠️ 滚动查找未找到元素")
+                return None
+            
+            # 重新查找元素
+            live_elem_obj = _find_element_by_selector(device, elem_info)
+            if not live_elem_obj or not live_elem_obj.exists:
+                print(f"  ⚠️ 未找到元素")
+                return None
+        
+        # 检查元素是否在可见区域，如果不在则滚动
+        bounds = live_elem_obj.info.get('bounds')
+        if bounds:
+            center_x = (bounds['left'] + bounds['right']) // 2
+            center_y = (bounds['top'] + bounds['bottom']) // 2
+            
+            # 如果元素不在可见区域（顶部200像素到底部200像素之间）
+            if not (200 <= center_y <= (screen_height - 200)):
+                print(f"  🔄 元素不在可见区域，执行滚动")
+                bounds_str = f"[{bounds['left']},{bounds['top']}][{bounds['right']},{bounds['bottom']}]"
+                
+                # 根据元素实际位置计算需要滚动的距离
+                center_y = (bounds['top'] + bounds['bottom']) // 2
+                safe_center_y = screen_height // 2  # 安全区域的中心位置
+                
+                # 计算需要滚动的距离（注意方向）
+                # 如果元素在屏幕下方（center_y > safe_center_y），需要向上滚动（负距离）
+                # 如果元素在屏幕上方（center_y < safe_center_y），需要向下滚动（正距离）
+                scroll_distance = safe_center_y - center_y
+                
+                # 执行精确滚动
+                device.scroll_by_distance(scroll_distance, screen_width, screen_height)
+                
+                # 重新查找元素
+                live_elem_obj = _find_element_by_selector(device, elem_info)
+                
+                # 再次检查可见性
+                if live_elem_obj and live_elem_obj.exists:
+                    bounds = live_elem_obj.info.get('bounds')
+                    if bounds:
+                        center_y = (bounds['top'] + bounds['bottom']) // 2
+                        if 200 <= center_y <= (screen_height - 200):
+                            print(f"  ✅ 滚动后元素可见: center_y={center_y}")
+                        else:
+                            print(f"  ⚠️ 滚动后元素仍不可见: center_y={center_y}")
+                            # 如果滚动后仍不可见，继续滚动直到可见
+                            max_retries = 3
+                            for retry in range(max_retries):
+                                # 再次计算滚动距离（注意方向）
+                                new_scroll_distance = safe_center_y - center_y
+                                device.scroll_by_distance(new_scroll_distance, screen_width, screen_height)
+                                
+                                # 重新检查
+                                live_elem_obj = _find_element_by_selector(device, elem_info)
+                                if live_elem_obj and live_elem_obj.exists:
+                                    bounds = live_elem_obj.info.get('bounds')
+                                    if bounds:
+                                        center_y = (bounds['top'] + bounds['bottom']) // 2
+                                        if 200 <= center_y <= (screen_height - 200):
+                                            print(f"  ✅ 滚动重试{retry+1}后元素可见: center_y={center_y}")
+                                            break
+                                        else:
+                                            print(f"  🔄 滚动重试{retry+1}后仍不可见: center_y={center_y}")
+                                else:
+                                    print(f"  ⚠️ 滚动重试{retry+1}后未找到元素")
+                                    break
+        
+        # 对于输入操作，设置快速输入
+        if is_input and live_elem_obj and live_elem_obj.exists:
+            self._setup_fast_input(device)
+        
         return live_elem_obj
+
+    def _setup_fast_input(self, device: U2Device):
+        pass
+
+    def _clear_fast_input(self, device: U2Device):
+        pass
+
+    def _install_uiautomator_ime(self, device: U2Device):
+        try:
+            device.d.shell(['pm', 'install', '-r', '/data/local/tmp/uiautomator2.apk'])
+        except Exception:
+            pass
+
+    def _close_keyboard(self, device: U2Device):
+        try:
+            d = device.d
+            hierarchy = d.dump_hierarchy()
+
+            keyboard_classes = ['android.widget.KeyboardView', 'android.inputmethodservice.KeyboardView',
+                              'com.android.inputmethod.latin.InputMethodSurface',
+                              'android.inputmethodservice.InputMethodService$InputMethodImpl']
+
+            if 'hierarchy' in hierarchy and hasattr(hierarchy['hierarchy'], '__iter__'):
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(hierarchy['hierarchy'])
+                for elem in root.iter():
+                    elem_class = elem.get('class', '')
+                    for kc in keyboard_classes:
+                        if kc in elem_class:
+                            d.press("back")
+                            return
+
+            is_keyboard_shown = d.info.get('keyboardVisible', False)
+            if is_keyboard_shown:
+                d.press("back")
+        except Exception:
+            pass
+
+    def _scroll_to_find_element(self, device: U2Device, elem_info, screen_width: int, screen_height: int) -> bool:
+        max_scrolls = 10
+        scroll_count = 0
+
+        while scroll_count < max_scrolls:
+            live_elem_obj = _find_element_by_selector(device, elem_info)
+            if live_elem_obj and live_elem_obj.exists:
+                bounds = live_elem_obj.info.get('bounds')
+                if bounds:
+                    center_x = (bounds['left'] + bounds['right']) // 2
+                    center_y = (bounds['top'] + bounds['bottom']) // 2
+
+                    # 检查元素是否在屏幕可见区域内（顶部200像素到底部200像素之间）
+                    if 200 <= center_y <= (screen_height - 200):
+                        print(f"  ✅ 滚动找到元素: center_y={center_y}")
+                        time.sleep(0.5)
+                        return True
+                    else:
+                        # 元素在屏幕外，需要滚动
+                        if center_y < 200:  # 元素在屏幕上方
+                            print(f"  🔄 元素在屏幕上方，向下滚动")
+                            start_x = screen_width // 2
+                            start_y = 300  # 从屏幕上方开始
+                            end_x = screen_width // 2
+                            end_y = start_y + 500  # 向下滚动500像素
+                            device.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+                        else:  # 元素在屏幕下方
+                            print(f"  🔄 元素在屏幕下方，向上滚动")
+                            start_x = screen_width // 2
+                            start_y = screen_height - 200  # 从屏幕下方开始
+                            end_x = screen_width // 2
+                            end_y = start_y - 500  # 向上滚动500像素
+                            device.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+                        time.sleep(0.5)
+                        scroll_count += 1
+                        continue
+
+            # 如果未找到元素，尝试向上滚动
+            scroll_count += 1
+            start_x = screen_width // 2
+            start_y = int(screen_height * 0.7)
+            end_x = screen_width // 2
+            end_y = int(screen_height * 0.3)
+
+            print(f"  🔄 向上滚动半屏 ({scroll_count}/{max_scrolls})")
+            device.d.swipe(start_x, start_y, end_x, end_y, 0.8)
+            time.sleep(0.8)
+
+        print(f"  ⚠️ 滚动到最大次数仍未找到元素")
+        return False
 
 
 class PageMatcher:

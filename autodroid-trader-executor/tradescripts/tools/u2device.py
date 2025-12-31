@@ -363,10 +363,8 @@ class U2Device:
     def input_text(self, device_id: str, text: str) -> bool:
         logger.info(f"Inputting text on device: {device_id}")
         try:
-            # 转义特殊字符
-            escaped_text = text.replace(' ', '%s').replace('"', '\\"')
-            result = self.run_command(["-s", device_id, "shell", "input", "text", escaped_text])
-            return result.returncode == 0
+            # 使用uiautomator2的send_keys方法，避免ADB input text触发系统对话框
+            return self.send_keys(text)
         except Exception as e:
             logger.error(f"Failed to input text: {e}")
             return False
@@ -441,6 +439,8 @@ class U2Device:
 
     def scroll_to_element_by_bounds(self, bounds_str: str, screen_width: int, screen_height: int) -> bool:
         """根据bounds字符串滚动到元素位置，返回是否执行了滚动操作"""
+        import time
+        
         if not bounds_str:
             return False
         
@@ -460,21 +460,64 @@ class U2Device:
             print(f"  ✅ 元素已在安全区域内，无需滚动 (y2={y2} < safe_height={safe_height})")
             return False
         
+        # 首先尝试找到可滚动的父容器并直接滚动它
+        try:
+            # 查找包含元素的可滚动容器
+            scrollable_containers = self.d(scrollable=True)
+            if scrollable_containers.exists:
+                # 找到包含目标元素的可滚动容器
+                for container in scrollable_containers:
+                    container_bounds = container.info.get('bounds', {})
+                    if container_bounds:
+                        c_x1, c_y1 = container_bounds.get('left', 0), container_bounds.get('top', 0)
+                        c_x2, c_y2 = container_bounds.get('right', 0), container_bounds.get('bottom', 0)
+                        
+                        # 检查元素是否在容器内
+                        if (c_x1 <= x1 <= c_x2 and c_y1 <= y1 <= c_y2 and
+                            c_x1 <= x2 <= c_x2 and c_y1 <= y2 <= c_y2):
+                            print(f"  🔄 找到包含元素的可滚动容器，尝试容器内滚动")
+                            
+                            # 根据元素位置决定滚动方向
+                            if center_y > screen_height * 0.7:
+                                # 元素在下方，向上滚动
+                                try:
+                                    # 直接使用设备级滚动，跳过容器滚动
+                                    # 容器滚动可能不可靠，直接使用设备级滚动
+                                    print(f"  🔄 跳过容器滚动，使用设备级滚动")
+                                    break
+                                except Exception as e:
+                                    print(f"  ⚠️ 容器内滚动失败: {e}")
+                            elif center_y < screen_height * 0.3:
+                                # 元素在上方，向下滚动
+                                try:
+                                    print(f"  🔄 跳过容器滚动，使用设备级滚动")
+                                    break
+                                except Exception as e:
+                                    print(f"  ⚠️ 容器内滚动失败: {e}")
+                            break
+        except Exception as e:
+            print(f"  ⚠️ 查找可滚动容器失败: {e}")
+        
+        # 如果容器滚动失败，回退到设备级滚动
         # 如果元素在屏幕下方，向上滚动
         if center_y > screen_height * 0.7:
-            scroll_distance = y2 - safe_height + 100
-            max_attempts = 5
-            for attempt in range(max_attempts):
-                start_x = screen_width // 2
-                start_y = screen_height - 200
-                end_x = screen_width // 2
-                end_y = 200
-                self.d.swipe(start_x, start_y, end_x, end_y, 0.5)
-                time.sleep(0.5)
-                
-                if y2 - scroll_distance * (attempt + 1) < safe_height:
-                    print(f"  🔄 向上滚动到元素位置")
-                    return True
+            # 只滚动一点点，让元素刚好进入可见区域
+            # 计算需要滚动的距离，确保元素进入可见区域
+            scroll_distance = min(300, max(100, y2 - safe_height + 50))
+            
+            # 在屏幕中间区域进行小幅度滚动
+            start_x = screen_width // 2
+            start_y = screen_height * 0.6  # 从屏幕60%位置开始
+            end_x = screen_width // 2
+            end_y = screen_height * 0.4    # 滚动到屏幕40%位置
+            
+            # 执行滚动 - 小幅度滚动
+            self.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+            time.sleep(0.8)
+            
+            print(f"  🔄 向上滚动一点点 (distance={scroll_distance})")
+            
+            return True
         
         # 如果元素在屏幕上方，向下滚动
         elif center_y < screen_height * 0.3:
@@ -482,10 +525,46 @@ class U2Device:
             start_y = screen_height * 0.3
             end_x = screen_width // 2
             end_y = screen_height * 0.7
-            self.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+            self.d.swipe(start_x, start_y, end_x, end_y, 0.8)
+            time.sleep(1.0)
             print(f"  🔄 向下滚动到元素位置")
             return True
         
         # 元素在中间区域，不需要滚动
         print(f"  ✅ 元素在中间区域，无需滚动 (center_y={center_y})")
         return False
+
+    def scroll_by_distance(self, distance: int, screen_width: int, screen_height: int) -> bool:
+        """根据精确的距离进行滚动"""
+        import time
+        
+        if abs(distance) < 50:  # 距离太小，不需要滚动
+            print(f"  ✅ 滚动距离太小 ({distance}px)，无需滚动")
+            return False
+        
+        # 计算滚动参数
+        if distance > 0:
+            # 向下滚动（元素在屏幕上方）
+            start_x = screen_width // 2
+            start_y = screen_height * 0.4
+            end_x = screen_width // 2
+            end_y = screen_height * 0.6
+            direction = "向下"
+        else:
+            # 向上滚动（元素在屏幕下方）
+            start_x = screen_width // 2
+            start_y = screen_height * 0.6
+            end_x = screen_width // 2
+            end_y = screen_height * 0.4
+            direction = "向上"
+            distance = -distance  # 取绝对值
+        
+        # 根据距离调整滚动速度和幅度
+        scroll_duration = max(0.3, min(0.8, distance / 500))
+        
+        # 执行滚动
+        self.d.swipe(start_x, start_y, end_x, end_y, scroll_duration)
+        time.sleep(0.5)
+        
+        print(f"  🔄 {direction}滚动 {distance}px (duration={scroll_duration:.2f}s)")
+        return True

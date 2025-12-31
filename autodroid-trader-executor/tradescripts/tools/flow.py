@@ -65,81 +65,49 @@ class FlowManager:
         if fingerprint_elements:
             print(f"  🔍 页面 {page_id}: 使用 {len(fingerprint_elements)} 个fingerprint元素进行精确匹配")
             
-            # 检查所有fingerprint元素，只要有一个存在就认为页面匹配
-            for fp_elem in fingerprint_elements:
-                resource_id = fp_elem.resource_id.strip()
-                text = fp_elem.text.strip()
-                content_desc = fp_elem.content_desc.strip()
-                
-                print(f"    - 检查fingerprint元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
-                
-                # 使用选择器检查元素是否存在
-                if resource_id:
-                    selector = f'resourceId("{resource_id}")'
-                    if self.device.check_element_exists(selector):
-                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
-                        return True
-                    else:
-                        print(f"    ✗ 未找到fingerprint元素: {selector}")
-                elif text:
-                    selector = f'text("{text}")'
-                    if self.device.check_element_exists(selector):
-                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
-                        return True
-                    else:
-                        print(f"    ✗ 未找到fingerprint元素: {selector}")
-                elif content_desc:
-                    selector = f'description("{content_desc}")'
-                    if self.device.check_element_exists(selector):
-                        print(f"  ✓ 页面 {page_id}: 找到fingerprint元素 {selector}")
-                        return True
-                    else:
-                        print(f"    ✗ 未找到fingerprint元素: {selector}")
+            # 检查所有fingerprint元素，必须所有元素都存在才认为页面匹配
+        found_count = 0
+        total_count = len(fingerprint_elements)
+        
+        for fp_elem in fingerprint_elements:
+            resource_id = fp_elem.resource_id.strip()
+            text = fp_elem.text.strip()
+            content_desc = fp_elem.content_desc.strip()
             
-            # 如果有fingerprint元素但都没找到，页面不匹配
-            print(f"  ✗ 页面 {page_id}: 所有fingerprint元素都未找到")
-            return False
-        
-        # 如果没有fingerprint元素，回退到action元素匹配
-        action_elements = page_info.action_elements
-        if not action_elements:
-            print(f"  ⚠️ 页面 {page_id}: 没有fingerprint元素和action元素")
-            return False
-        
-        print(f"  🔍 页面 {page_id}: 检查 {len(action_elements)} 个action元素（回退方案）")
-        
-        # 检查所有action元素，只要有任何一个存在就认为页面匹配
-        for elem_info in action_elements:
-            resource_id = elem_info.resource_id.strip()
-            text = elem_info.text.strip()
-            content_desc = elem_info.content_desc.strip()
-            
-            print(f"    - 检查元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
+            print(f"    - 检查fingerprint元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
             
             # 使用选择器检查元素是否存在
             if resource_id:
                 selector = f'resourceId("{resource_id}")'
                 if self.device.check_element_exists(selector):
-                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
-                    return True
+                    print(f"    ✓ 找到fingerprint元素 {selector}")
+                    found_count += 1
                 else:
-                    print(f"    ✗ 未找到元素: {selector}")
+                    print(f"    ✗ 未找到fingerprint元素: {selector}")
             elif text:
                 selector = f'text("{text}")'
                 if self.device.check_element_exists(selector):
-                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
-                    return True
+                    print(f"    ✓ 找到fingerprint元素 {selector}")
+                    found_count += 1
                 else:
-                    print(f"    ✗ 未找到元素: {selector}")
+                    print(f"    ✗ 未找到fingerprint元素: {selector}")
             elif content_desc:
                 selector = f'description("{content_desc}")'
                 if self.device.check_element_exists(selector):
-                    print(f"  ✓ 页面 {page_id}: 找到元素 {selector}")
-                    return True
+                    print(f"    ✓ 找到fingerprint元素 {selector}")
+                    found_count += 1
                 else:
-                    print(f"    ✗ 未找到元素: {selector}")
+                    print(f"    ✗ 未找到fingerprint元素: {selector}")
         
-        return False
+        if found_count == total_count:
+            print(f"  ✓ 页面 {page_id}: 所有fingerprint元素都匹配 ({found_count}/{total_count})")
+            return True
+        else:
+            if found_count == 0:
+                print(f"  ✗ 页面 {page_id}: 所有fingerprint元素都未找到 (0/{total_count})")
+            else:
+                print(f"  ✗ 页面 {page_id}: 部分fingerprint元素未找到 ({found_count}/{total_count})")
+            return False
 
     def _load_flow_config(self, apk_package: str, flow_name: str) -> List[str]:
         flow_dir = self.get_flow_dir(apk_package, flow_name)

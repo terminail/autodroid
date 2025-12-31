@@ -107,6 +107,87 @@ The framework follows a hierarchical architecture that reflects the natural stru
    - `ElementExecutor`: Handles action execution on elements
    - Provides the lowest-level interaction with device
 
+### 1.2 Scroll Design for Element Visibility
+
+The framework implements intelligent scrolling to ensure elements are visible before interaction, addressing the common challenge of elements being off-screen during automation.
+
+#### Scroll Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Scroll Architecture                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Page Layer (page.py)                                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │  _make_live_elem_visible()                                              │ │
+│  │  - Universal visibility handling for all element types                  │ │
+│  │  - Coordinates with U2Device for scrolling                              │ │
+│  │  - Ensures elements are visible before interaction                      │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                        Device Layer (u2device.py)                       │ │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                    │ │
+│  │  │   scroll_by_distance │  │ scroll_to_element_   │                    │ │
+│  │  │  - Precise distance- │  │ by_bounds            │                    │ │
+│  │  │    based scrolling   │  │ - Human-like scroll- │                    │ │
+│  │  │  - Direction-aware   │  │   ing patterns       │                    │ │
+│  │  │  - Adaptive speed    │  │ - Small incremental  │                    │ │
+│  │  └──────────────────────┘  └──────────────────────┘                    │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Scroll Implementation Details
+
+**1. Universal Element Visibility (`page.py`)**
+- **Purpose**: Ensure all element types (not just input elements) are visible before interaction
+- **Method**: `_make_live_elem_visible()`
+- **Visibility Check**: Elements must be within 200px from top and bottom edges
+- **Scroll Strategy**: Small incremental scrolls after each input operation
+
+**2. Precise Distance-Based Scrolling (`u2device.py`)**
+- **Method**: `scroll_by_distance(distance, screen_width, screen_height)`
+- **Direction Calculation**: 
+  ```python
+  scroll_distance = safe_center_y - center_y  # Correct direction calculation
+  # Positive: scroll down (element above screen center)
+  # Negative: scroll up (element below screen center)
+  ```
+- **Adaptive Speed**: Scroll duration based on distance (0.3s to 0.8s)
+
+**3. Human-Like Scrolling Patterns**
+- **Start Position**: Screen middle (60% for up, 40% for down)
+- **End Position**: Screen middle (40% for up, 60% for down)
+- **Small Increments**: 100-300px scrolls after each input
+- **Natural Timing**: 0.5s wait after scroll completion
+
+**4. Scroll Validation and Retry**
+- **Post-Scroll Check**: Re-verify element visibility after scrolling
+- **Retry Mechanism**: Up to 3 retries with recalculated distances
+- **Progressive Approach**: Small scrolls to bring elements into view gradually
+
+#### Scroll Flow
+
+```
+1. Detect element not visible (center_y outside 200px to screen_height-200px)
+2. Calculate precise scroll distance: safe_center_y - center_y
+3. Execute scroll with adaptive speed
+4. Re-find element and verify visibility
+5. If still not visible, retry with recalculated distance (max 3 retries)
+6. Confirm element visible before proceeding with interaction
+```
+
+#### Key Design Principles
+
+1. **Synchronization**: Scroll and input operations are fully synchronized
+2. **Precision**: Scroll distances calculated based on live element bounds
+3. **Human-Like**: Mimics natural scrolling patterns with small increments
+4. **Universal**: Works for all element types, not just input fields
+5. **Robust**: Includes retry mechanisms and validation checks
+
 **Key Design Decision:**
 The architecture eliminates the intermediate `ActionExecutor` class that was previously used as a bridge between `FlowManager` and `ElementExecutor`. Instead, `FlowManager` now directly integrates `ElementExecutor`, reflecting the flow → page → element hierarchy more cleanly.
 
