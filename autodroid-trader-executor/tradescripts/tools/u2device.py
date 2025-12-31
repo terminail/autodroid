@@ -429,7 +429,7 @@ class U2Device:
             return "" if local_path is None else ""
 
     def scroll_to_element_by_bounds(self, bounds_str: str, screen_width: int, screen_height: int) -> bool:
-        """根据bounds字符串滚动到元素位置"""
+        """根据bounds字符串滚动到元素位置，返回是否执行了滚动操作"""
         if not bounds_str:
             return False
         
@@ -444,9 +444,10 @@ class U2Device:
         # 计算安全区域高度（考虑导航栏）
         safe_height = screen_height - 150
         
-        # 如果元素已经在安全区域内，不需要滚动
+        # 如果元素已经在安全区域内，不需要滚动，返回 False（表示没有执行滚动）
         if y2 < safe_height:
-            return True
+            print(f"  ✅ 元素已在安全区域内，无需滚动 (y2={y2} < safe_height={safe_height})")
+            return False
         
         # 如果元素在屏幕下方，向上滚动
         if center_y > screen_height * 0.7:
@@ -474,4 +475,6 @@ class U2Device:
             print(f"  🔄 向下滚动到元素位置")
             return True
         
+        # 元素在中间区域，不需要滚动
+        print(f"  ✅ 元素在中间区域，无需滚动 (center_y={center_y})")
         return False

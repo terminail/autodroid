@@ -592,10 +592,12 @@ class PageExecutor:
         else:
             scrolled = False
 
-        # 滚动后重新获取元素的bounds（因为滚动后元素位置会变化）
+        # 只有在真正执行了滚动操作后，才重新获取元素的bounds
         if scrolled:
             print(f"  🔄 滚动后重新获取元素bounds")
             live_elem = _find_element_by_selector(device, elem_info)
+        else:
+            print(f"  ✅ 无需滚动，使用当前元素")
         return live_elem
 
 
