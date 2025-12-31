@@ -427,3 +427,51 @@ class U2Device:
         except Exception as e:
             logger.error(f"Failed to dump page XML: {e}")
             return "" if local_path is None else ""
+
+    def scroll_to_element_by_bounds(self, bounds_str: str, screen_width: int, screen_height: int) -> bool:
+        """根据bounds字符串滚动到元素位置"""
+        if not bounds_str:
+            return False
+        
+        bounds = ScreenUtils.parse_bounds(bounds_str)
+        if not bounds:
+            return False
+        
+        x1, y1, x2, y2 = bounds
+        center_x = (x1 + x2) // 2
+        center_y = (y1 + y2) // 2
+        
+        # 计算安全区域高度（考虑导航栏）
+        safe_height = screen_height - 150
+        
+        # 如果元素已经在安全区域内，不需要滚动
+        if y2 < safe_height:
+            return True
+        
+        # 如果元素在屏幕下方，向上滚动
+        if center_y > screen_height * 0.7:
+            scroll_distance = y2 - safe_height + 100
+            max_attempts = 5
+            for attempt in range(max_attempts):
+                start_x = screen_width // 2
+                start_y = screen_height - 200
+                end_x = screen_width // 2
+                end_y = 200
+                self.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+                time.sleep(0.5)
+                
+                if y2 - scroll_distance * (attempt + 1) < safe_height:
+                    print(f"  🔄 向上滚动到元素位置")
+                    return True
+        
+        # 如果元素在屏幕上方，向下滚动
+        elif center_y < screen_height * 0.3:
+            start_x = screen_width // 2
+            start_y = screen_height * 0.3
+            end_x = screen_width // 2
+            end_y = screen_height * 0.7
+            self.d.swipe(start_x, start_y, end_x, end_y, 0.5)
+            print(f"  🔄 向下滚动到元素位置")
+            return True
+        
+        return False

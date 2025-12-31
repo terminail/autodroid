@@ -349,6 +349,139 @@ def find_overlapping_visible_element(all_elems: List[ET.Element], action_bounds:
     return best_match
 
 
+def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optional[Dict]:
+    """使用选择器定位实时UI元素"""
+    if not device:
+        return None
+
+    resource_id = elem_info.resource_id.strip()
+    text = elem_info.text.strip()
+    content_desc = elem_info.content_desc.strip()
+    bounds = elem_info.bounds
+
+    # 优先使用resource-id定位
+    if resource_id:
+        selector = f'resourceId("{resource_id}")'
+        print(f"  🔍 尝试通过resource-id定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                live_bounds = device.get_element_bounds(selector)
+                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
+                return {
+                    "resource-id": resource_id,
+                    "text": text,
+                    "content-desc": content_desc,
+                    "bounds": live_bounds_str
+                }
+            elif count > 1 and bounds:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
+                elem_bounds_list = device.get_element_bounds(selector)
+                target_bounds = ScreenUtils.parse_bounds(bounds)
+                if target_bounds:
+                    for idx, elem_bounds in enumerate(elem_bounds_list):
+                        if bounds_match_raw(target_bounds, elem_bounds):
+                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
+                            print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
+                            return {
+                                "resource-id": resource_id,
+                                "text": text,
+                                "content-desc": content_desc,
+                                "bounds": live_bounds_str
+                            }
+                    print(f"  ✗ 未找到匹配bounds的元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    # 其次使用text定位
+    if text:
+        selector = f'text("{text}")'
+        print(f"  🔍 尝试通过text定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            print(f"  🔍 找到 {count} 个匹配元素")
+
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                live_bounds = device.get_element_bounds(selector)
+                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
+                print(f"  🔍 Live element bounds: {live_bounds_str}")
+                return {
+                    "resource-id": resource_id,
+                    "text": text,
+                    "content-desc": content_desc,
+                    "bounds": live_bounds_str
+                }
+            elif count > 1 and bounds:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
+                elem_bounds_list = device.get_element_bounds(selector)
+                print(f"  🔍 所有匹配元素的bounds:")
+                for idx, elem_bounds in enumerate(elem_bounds_list):
+                    bounds_str = ScreenUtils.format_bounds(elem_bounds)
+                    print(f"     [{idx}] {bounds_str}")
+
+                target_bounds = ScreenUtils.parse_bounds(bounds)
+                if target_bounds:
+                    for idx, elem_bounds in enumerate(elem_bounds_list):
+                        if bounds_match_raw(target_bounds, elem_bounds):
+                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
+                            print(f"  ✓ 找到匹配bounds的元素 [{idx}]: {live_bounds_str}")
+                            return {
+                                "resource-id": resource_id,
+                                "text": text,
+                                "content-desc": content_desc,
+                                "bounds": live_bounds_str
+                            }
+                    print(f"  ✗ 未找到匹配bounds的元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    # 最后使用content-desc定位
+    if content_desc:
+        selector = f'description("{content_desc}")'
+        print(f"  🔍 尝试通过content-desc定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                live_bounds = device.get_element_bounds(selector)
+                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
+                return {
+                    "resource-id": resource_id,
+                    "text": text,
+                    "content-desc": content_desc,
+                    "bounds": live_bounds_str
+                }
+            elif count > 1 and bounds:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
+                elem_bounds_list = device.get_element_bounds(selector)
+                target_bounds = ScreenUtils.parse_bounds(bounds)
+                if target_bounds:
+                    for idx, elem_bounds in enumerate(elem_bounds_list):
+                        if bounds_match_raw(target_bounds, elem_bounds):
+                            live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
+                            print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
+                            return {
+                                "resource-id": resource_id,
+                                "text": text,
+                                "content-desc": content_desc,
+                                "bounds": live_bounds_str
+                            }
+                    print(f"  ✗ 未找到匹配bounds的元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    print(f"  ⚠️ 无法通过选择器定位元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
+    return None
+
+
 class PageExecutor:
     def __init__(self, page_matcher: 'PageMatcher'):
         self._page_matcher = page_matcher
@@ -416,7 +549,7 @@ class PageExecutor:
             if value:
                 print(f"   默认值: {value}")
 
-            live_elem = self._make_liveelm_visible(device, elem_info)
+            live_elem = self._make_live_elem_visible(device, elem_info)
 
             if execute_action(step, action, elem_info, live_elem):
                 print(f"  ✓ {action} 完成")
@@ -437,10 +570,10 @@ class PageExecutor:
         print("\n" + "=" * 40)
         return True
 
-    def _make_liveelm_visible(self, device: U2Device, elem_info) -> dict | None:
+    def _make_live_elem_visible(self, device: U2Device, elem_info) -> dict | None:
         # 使用选择器方案执行步骤（不需要XML解析）
         # 构建选择器来定位实时元素
-        live_elem = self._find_element_by_selector(device, elem_info)
+        live_elem = _find_element_by_selector(device, elem_info)
 
         # 如果元素不在屏幕内，滚动到元素位置
         screen_width = device.d.info.get('displayWidth', 1080)
@@ -450,200 +583,20 @@ class PageExecutor:
         if live_elem and live_elem.get("bounds"):
             live_bounds = live_elem.get("bounds", "")
             print(f"  🔍 使用实时bounds进行滚动判断: {live_bounds}")
-            scrolled = self._scroll_to_element_by_bounds(device, live_bounds, screen_width, screen_height)
+            scrolled = device.scroll_to_element_by_bounds(live_bounds, screen_width, screen_height)
         # 如果没有实时bounds（元素不在屏幕内），使用离线bounds估算滚动位置
         elif elem_info.bounds:
             offline_bounds = elem_info.bounds
             print(f"  🔍 元素不在屏幕内，使用离线bounds估算滚动位置: {offline_bounds}")
-            scrolled = self._scroll_to_element_by_bounds(device, offline_bounds, screen_width, screen_height)
+            scrolled = device.scroll_to_element_by_bounds(offline_bounds, screen_width, screen_height)
         else:
             scrolled = False
 
         # 滚动后重新获取元素的bounds（因为滚动后元素位置会变化）
         if scrolled:
             print(f"  🔄 滚动后重新获取元素bounds")
-            live_elem = self._find_element_by_selector(device, elem_info)
+            live_elem = _find_element_by_selector(device, elem_info)
         return live_elem
-
-    def _find_element_by_selector(self, device: U2Device, elem_info: ElementInfo) -> Optional[Dict]:
-        """使用选择器定位实时UI元素"""
-        if not device:
-            return None
-            
-        resource_id = elem_info.resource_id.strip()
-        text = elem_info.text.strip()
-        content_desc = elem_info.content_desc.strip()
-        bounds = elem_info.bounds
-        
-        # 优先使用resource-id定位
-        if resource_id:
-            selector = f'resourceId("{resource_id}")'
-            print(f"  🔍 尝试通过resource-id定位: {selector}")
-            if device.check_element_exists(selector):
-                count = device.get_element_count(selector)
-                if count == 1:
-                    print(f"  ✓ 找到元素: {selector}")
-                    live_bounds = device.get_element_bounds(selector)
-                    live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                    return {
-                        "resource-id": resource_id,
-                        "text": text,
-                        "content-desc": content_desc,
-                        "bounds": live_bounds_str
-                    }
-                elif count > 1 and bounds:
-                    print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                    elem_bounds_list = device.get_element_bounds(selector)
-                    target_bounds = ScreenUtils.parse_bounds(bounds)
-                    if target_bounds:
-                        for idx, elem_bounds in enumerate(elem_bounds_list):
-                            if bounds_match_raw(target_bounds, elem_bounds):
-                                live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                                print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                                return {
-                                    "resource-id": resource_id,
-                                    "text": text,
-                                    "content-desc": content_desc,
-                                    "bounds": live_bounds_str
-                                }
-                        print(f"  ✗ 未找到匹配bounds的元素")
-                else:
-                    print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
-            else:
-                print(f"  ✗ 未找到元素: {selector}")
-        
-        # 其次使用text定位
-        if text:
-            selector = f'text("{text}")'
-            print(f"  🔍 尝试通过text定位: {selector}")
-            if device.check_element_exists(selector):
-                count = device.get_element_count(selector)
-                print(f"  🔍 找到 {count} 个匹配元素")
-                
-                if count == 1:
-                    print(f"  ✓ 找到元素: {selector}")
-                    live_bounds = device.get_element_bounds(selector)
-                    live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                    print(f"  🔍 Live element bounds: {live_bounds_str}")
-                    return {
-                        "resource-id": resource_id,
-                        "text": text,
-                        "content-desc": content_desc,
-                        "bounds": live_bounds_str
-                    }
-                elif count > 1 and bounds:
-                    print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                    elem_bounds_list = device.get_element_bounds(selector)
-                    print(f"  🔍 所有匹配元素的bounds:")
-                    for idx, elem_bounds in enumerate(elem_bounds_list):
-                        bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                        print(f"     [{idx}] {bounds_str}")
-                    
-                    target_bounds = ScreenUtils.parse_bounds(bounds)
-                    if target_bounds:
-                        for idx, elem_bounds in enumerate(elem_bounds_list):
-                            if bounds_match_raw(target_bounds, elem_bounds):
-                                live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                                print(f"  ✓ 找到匹配bounds的元素 [{idx}]: {live_bounds_str}")
-                                return {
-                                    "resource-id": resource_id,
-                                    "text": text,
-                                    "content-desc": content_desc,
-                                    "bounds": live_bounds_str
-                                }
-                        print(f"  ✗ 未找到匹配bounds的元素")
-                else:
-                    print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
-            else:
-                print(f"  ✗ 未找到元素: {selector}")
-        
-        # 最后使用content-desc定位
-        if content_desc:
-            selector = f'description("{content_desc}")'
-            print(f"  🔍 尝试通过content-desc定位: {selector}")
-            if device.check_element_exists(selector):
-                count = device.get_element_count(selector)
-                if count == 1:
-                    print(f"  ✓ 找到元素: {selector}")
-                    live_bounds = device.get_element_bounds(selector)
-                    live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                    return {
-                        "resource-id": resource_id,
-                        "text": text,
-                        "content-desc": content_desc,
-                        "bounds": live_bounds_str
-                    }
-                elif count > 1 and bounds:
-                    print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
-                    elem_bounds_list = device.get_element_bounds(selector)
-                    target_bounds = ScreenUtils.parse_bounds(bounds)
-                    if target_bounds:
-                        for idx, elem_bounds in enumerate(elem_bounds_list):
-                            if bounds_match_raw(target_bounds, elem_bounds):
-                                live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
-                                print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                                return {
-                                    "resource-id": resource_id,
-                                    "text": text,
-                                    "content-desc": content_desc,
-                                    "bounds": live_bounds_str
-                                }
-                        print(f"  ✗ 未找到匹配bounds的元素")
-                else:
-                    print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
-            else:
-                print(f"  ✗ 未找到元素: {selector}")
-        
-        print(f"  ⚠️ 无法通过选择器定位元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
-        return None
-
-    def _scroll_to_element_by_bounds(self, device: U2Device, bounds_str: str, screen_width: int, screen_height: int) -> bool:
-        """根据bounds字符串滚动到元素位置"""
-        if not bounds_str:
-            return False
-        
-        bounds = ScreenUtils.parse_bounds(bounds_str)
-        if not bounds:
-            return False
-        
-        x1, y1, x2, y2 = bounds
-        center_x = (x1 + x2) // 2
-        center_y = (y1 + y2) // 2
-        
-        # 计算安全区域高度（考虑导航栏）
-        safe_height = screen_height - 150
-        
-        # 如果元素已经在安全区域内，不需要滚动
-        if y2 < safe_height:
-            return True
-        
-        # 如果元素在屏幕下方，向上滚动
-        if center_y > screen_height * 0.7:
-            scroll_distance = y2 - safe_height + 100
-            max_attempts = 5
-            for attempt in range(max_attempts):
-                start_x = screen_width // 2
-                start_y = screen_height - 200
-                end_x = screen_width // 2
-                end_y = 200
-                device.d.swipe(start_x, start_y, end_x, end_y, 0.5)
-                time.sleep(0.5)
-                
-                if y2 - scroll_distance * (attempt + 1) < safe_height:
-                    print(f"  🔄 向上滚动到元素位置")
-                    return True
-        
-        # 如果元素在屏幕上方，向下滚动
-        elif center_y < screen_height * 0.3:
-            start_x = screen_width // 2
-            start_y = screen_height * 0.3
-            end_x = screen_width // 2
-            end_y = screen_height * 0.7
-            device.d.swipe(start_x, start_y, end_x, end_y, 0.5)
-            print(f"  🔄 向下滚动到元素位置")
-            return True
-        
-        return False
 
 
 class PageMatcher:
