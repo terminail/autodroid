@@ -15,17 +15,6 @@ except ImportError:
     from element import ElementInfo
 
 
-def bounds_match_raw(bounds1: Tuple[int, int, int, int], 
-                     bounds2: Tuple[int, int, int, int],
-                     tolerance: int = 5) -> bool:
-    """Check if two raw bounds match within tolerance (in pixels)"""
-    x1_diff = abs(bounds1[0] - bounds2[0])
-    y1_diff = abs(bounds1[1] - bounds2[1])
-    x2_diff = abs(bounds1[2] - bounds2[2])
-    y2_diff = abs(bounds1[3] - bounds2[3])
-    return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
-
-
 AUTODROID_NS = "https://autodroid.example.com"
 AUTODROID_ACTION = f"{{{AUTODROID_NS}}}action"
 AUTODROID_STEP = f"{{{AUTODROID_NS}}}step"
@@ -36,15 +25,6 @@ AUTODROID_DESC = f"{{{AUTODROID_NS}}}desc"
 AUTODROID_ID = f"{{{AUTODROID_NS}}}id"
 AUTODROID_HELP = f"{{{AUTODROID_NS}}}help"
 AUTODROID_FINGERPRINT = f"{{{AUTODROID_NS}}}fingerprint"
-
-
-class PageInfo:
-    page_id: str
-    xml_path: Path
-    steps: List[Dict]
-
-
-
 
 
 class FingerprintElement(BaseModel):
@@ -117,17 +97,6 @@ def find_autodroid_action_elements(offline_xml: str) -> List[Dict]:
 def calculate_center(bounds: Tuple[int, int, int, int]) -> Tuple[int, int]:
     x1, y1, x2, y2 = bounds
     return ((x1 + x2) // 2, (y1 + y2) // 2)
-
-
-def calculate_overlap(bounds1: Tuple[int, int, int, int], bounds2: Tuple[int, int, int, int]) -> Optional[Tuple[int, int, int, int]]:
-    x1 = max(bounds1[0], bounds2[0])
-    y1 = max(bounds1[1], bounds2[1])
-    x2 = min(bounds1[2], bounds2[2])
-    y2 = min(bounds1[3], bounds2[3])
-
-    if x1 < x2 and y1 < y2:
-        return (x1, y1, x2, y2)
-    return None
 
 
 def build_parent_map(root: ET.Element) -> Dict[ET.Element, ET.Element]:
@@ -221,7 +190,7 @@ def follow_relative_path(from_elem: ET.Element, path: List[str], parent_map: Dic
                 return None
         else:
             import re
-            match = re.match(r'\[(\d+)\]', step)
+            match = re.match(r'\[(\d+)]', step)
             if not match:
                 continue
             child_idx = int(match.group(1))
@@ -299,56 +268,8 @@ def build_page_info(root: ET.Element, page_id: str) -> PageInfo:
     )
 
 
-
-
-
-
-
-
-def find_overlapping_visible_element(all_elems: List[ET.Element], action_bounds: Tuple[int, int, int, int]) -> Optional[Dict]:
-    overlapping_elements = []
-
-    for elem in all_elems:
-        if elem.tag == "hierarchy":
-            continue
-
-        text = elem.get("text", "").strip()
-        content_desc = elem.get("content-desc", "").strip()
-        resource_id = elem.get("resource-id", "").strip()
-
-        if not (text or content_desc or resource_id):
-            continue
-
-        bounds_str = elem.get("bounds", "")
-        elem_bounds = ScreenUtils.parse_bounds(bounds_str)
-        if not elem_bounds:
-            continue
-
-        overlap = calculate_overlap(action_bounds, elem_bounds)
-        if overlap and text:
-            overlapping_elements.append({
-                "text": text,
-                "content_desc": content_desc,
-                "resource_id": resource_id,
-                "bounds": bounds_str,
-                "overlap": overlap
-            })
-
-    if not overlapping_elements:
-        return None
-
-    best_match = overlapping_elements[0]
-    for elem in overlapping_elements:
-        overlap_area = (elem['overlap'][2] - elem['overlap'][0]) * (elem['overlap'][3] - elem['overlap'][1])
-        best_area = (best_match['overlap'][2] - best_match['overlap'][0]) * (best_match['overlap'][3] - best_match['overlap'][1])
-        if overlap_area > best_area:
-            best_match = elem
-
-    return best_match
-
-
-def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optional[Dict]:
-    """使用选择器定位实时UI元素"""
+def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
+    """使用选择器定位实时UI元素，返回uiautomator2元素对象"""
     if not device:
         return None
 
@@ -365,29 +286,17 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optio
             count = device.get_element_count(selector)
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
-                live_bounds = device.get_element_bounds(selector)
-                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                return {
-                    "resource-id": resource_id,
-                    "text": text,
-                    "content-desc": content_desc,
-                    "bounds": live_bounds_str
-                }
+                return device.d(resourceId=resource_id)
             elif count > 1 and bounds:
                 print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
                 elem_bounds_list = device.get_element_bounds(selector)
                 target_bounds = ScreenUtils.parse_bounds(bounds)
                 if target_bounds:
                     for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if bounds_match_raw(target_bounds, elem_bounds):
+                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
                             live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
                             print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                            return {
-                                "resource-id": resource_id,
-                                "text": text,
-                                "content-desc": content_desc,
-                                "bounds": live_bounds_str
-                            }
+                            return device.d(resourceId=resource_id, instance=idx)
                     print(f"  ✗ 未找到匹配bounds的元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
@@ -404,15 +313,7 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optio
 
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
-                live_bounds = device.get_element_bounds(selector)
-                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                print(f"  🔍 Live element bounds: {live_bounds_str}")
-                return {
-                    "resource-id": resource_id,
-                    "text": text,
-                    "content-desc": content_desc,
-                    "bounds": live_bounds_str
-                }
+                return device.d(text=text)
             elif count > 1 and bounds:
                 print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
                 elem_bounds_list = device.get_element_bounds(selector)
@@ -424,15 +325,10 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optio
                 target_bounds = ScreenUtils.parse_bounds(bounds)
                 if target_bounds:
                     for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if bounds_match_raw(target_bounds, elem_bounds):
+                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
                             live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
                             print(f"  ✓ 找到匹配bounds的元素 [{idx}]: {live_bounds_str}")
-                            return {
-                                "resource-id": resource_id,
-                                "text": text,
-                                "content-desc": content_desc,
-                                "bounds": live_bounds_str
-                            }
+                            return device.d(text=text, instance=idx)
                     print(f"  ✗ 未找到匹配bounds的元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
@@ -447,29 +343,17 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo) -> Optio
             count = device.get_element_count(selector)
             if count == 1:
                 print(f"  ✓ 找到元素: {selector}")
-                live_bounds = device.get_element_bounds(selector)
-                live_bounds_str = ScreenUtils.format_bounds(live_bounds[0]) if live_bounds else bounds
-                return {
-                    "resource-id": resource_id,
-                    "text": text,
-                    "content-desc": content_desc,
-                    "bounds": live_bounds_str
-                }
+                return device.d(description=content_desc)
             elif count > 1 and bounds:
                 print(f"  ⚠️ 找到 {count} 个匹配元素，使用bounds进一步筛选: {bounds}")
                 elem_bounds_list = device.get_element_bounds(selector)
                 target_bounds = ScreenUtils.parse_bounds(bounds)
                 if target_bounds:
                     for idx, elem_bounds in enumerate(elem_bounds_list):
-                        if bounds_match_raw(target_bounds, elem_bounds):
+                        if ScreenUtils.bounds_match_raw(target_bounds, elem_bounds):
                             live_bounds_str = ScreenUtils.format_bounds(elem_bounds)
                             print(f"  ✓ 找到匹配bounds的元素: {live_bounds_str}")
-                            return {
-                                "resource-id": resource_id,
-                                "text": text,
-                                "content-desc": content_desc,
-                                "bounds": live_bounds_str
-                            }
+                            return device.d(description=content_desc, instance=idx)
                     print(f"  ✗ 未找到匹配bounds的元素")
             else:
                 print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
@@ -559,20 +443,23 @@ class PageExecutor:
         print("\n" + "=" * 40)
         return True
 
-    def _make_live_elem_visible(self, device: U2Device, elem_info) -> dict | None:
-        # 使用选择器方案执行步骤（不需要XML解析）
-        # 构建选择器来定位实时元素
-        live_elem = _find_element_by_selector(device, elem_info)
+    def _make_live_elem_visible(self, device: U2Device, elem_info):
+        live_elem_obj = _find_element_by_selector(device, elem_info)
+
+        if not live_elem_obj or not live_elem_obj.exists:
+            print(f"  ⚠️ 未找到元素")
+            return None
 
         # 如果元素不在屏幕内，滚动到元素位置
         screen_width = device.d.info.get('displayWidth', 1080)
         screen_height = device.d.info.get('displayHeight', 1920)
 
-        # 优先使用实时bounds判断是否需要滚动
-        if live_elem and live_elem.get("bounds"):
-            live_bounds = live_elem.get("bounds", "")
-            print(f"  🔍 使用实时bounds进行滚动判断: {live_bounds}")
-            scrolled = device.scroll_to_element_by_bounds(live_bounds, screen_width, screen_height)
+        # 获取元素的bounds
+        live_bounds = live_elem_obj.info.get('bounds')
+        if live_bounds:
+            live_bounds_str = f"[{live_bounds['left']},{live_bounds['top']}][{live_bounds['right']},{live_bounds['bottom']}]"
+            print(f"  🔍 使用实时bounds进行滚动判断: {live_bounds_str}")
+            scrolled = device.scroll_to_element_by_bounds(live_bounds_str, screen_width, screen_height)
         # 如果没有实时bounds（元素不在屏幕内），使用离线bounds估算滚动位置
         elif elem_info.bounds:
             offline_bounds = elem_info.bounds
@@ -581,13 +468,18 @@ class PageExecutor:
         else:
             scrolled = False
 
-        # 只有在真正执行了滚动操作后，才重新获取元素的bounds
+        # 只有在真正执行了滚动操作后，才重新获取元素对象
         if scrolled:
-            print(f"  🔄 滚动后重新获取元素bounds")
-            live_elem = _find_element_by_selector(device, elem_info)
+            print(f"  🔄 滚动后重新获取元素对象")
+            live_elem_obj = _find_element_by_selector(device, elem_info)
         else:
             print(f"  ✅ 无需滚动，使用当前元素")
-        return live_elem
+
+        if not live_elem_obj or not live_elem_obj.exists:
+            print(f"  ⚠️ 滚动后仍未找到元素")
+            return None
+
+        return live_elem_obj
 
 
 class PageMatcher:

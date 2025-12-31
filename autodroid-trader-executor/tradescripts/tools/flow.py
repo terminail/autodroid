@@ -55,8 +55,8 @@ class FlowManager:
     def get_flow_dir(self, apk_package: str, flow_name: str) -> Path:
         return self.apk_dir / apk_package / flow_name
 
-    def _is_page_matched_by_selectors(self, page_id: str, page_info: PageInfo) -> bool:
-        """使用选择器检查页面是否匹配，优先使用fingerprint元素进行精确匹配"""
+    def _is_current_page_matched(self, page_id: str, page_info: PageInfo) -> bool:
+        """检查当前页面是否匹配预期的页面定义，优先使用fingerprint元素进行精确匹配"""
         if not self.device:
             return False
         
@@ -160,12 +160,6 @@ class FlowManager:
 
         return end_pages
 
-    def load_flow_pages(self, apk_package: str = "com.tdx.androidCCZQ", flow_name: str = "general") -> List[Path]:
-        flow_dir = self.get_flow_dir(apk_package, flow_name)
-        if not flow_dir.exists():
-            return []
-        return sorted(flow_dir.glob("*.xml"))
-
     def load_and_build_pages(
         self,
         apk_package: str = "com.tdx.androidCCZQ",
@@ -244,7 +238,7 @@ class FlowManager:
             # 遍历所有页面，检查是否有匹配的元素
             for page_id, page_info in self._page_infos.items():
                 print(f"  🔍 检查页面: {page_id}")
-                if self._is_page_matched_by_selectors(page_id, page_info):
+                if self._is_current_page_matched(page_id, page_info):
                     print(f"✅ 识别到页面: {page_id} (选择器方案)")
                     return (page_id, 1.0, [(page_id, 1.0, {"method": "selector"})])
             
@@ -330,16 +324,7 @@ class FlowManager:
         self._total_steps = 0
 
     def _on_step_executed(self, step: int, page_id: str = None):
-        """步骤执行回调"""
-        print(f"  🔍 调试 _on_step_executed: step类型={type(step)}, step值='{step}', page_id='{page_id}'")
-        # 确保step是整数
-        if not isinstance(step, int):
-            print(f"  ⚠️ 警告: step不是整数类型，类型={type(step)}, 值='{step}'")
-            try:
-                step = int(step)
-            except (ValueError, TypeError):
-                print(f"  ❌ 错误: 无法将step转换为整数")
-                return
+        """步骤执行回调 - 记录已执行的步骤"""
         self._executed_steps.add(step)
 
     def _calculate_total_steps(self) -> int:

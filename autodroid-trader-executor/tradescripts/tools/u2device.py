@@ -50,16 +50,27 @@ class ScreenUtils:
                         return bounds[2], bounds[3]
         return 1080, 1920
 
+    @staticmethod
+    def bounds_match_raw(bounds1: Tuple[int, int, int, int], 
+                         bounds2: Tuple[int, int, int, int],
+                         tolerance: int = 5) -> bool:
+        """Check if two raw bounds match within tolerance (in pixels)"""
+        x1_diff = abs(bounds1[0] - bounds2[0])
+        y1_diff = abs(bounds1[1] - bounds2[1])
+        x2_diff = abs(bounds1[2] - bounds2[2])
+        y2_diff = abs(bounds1[3] - bounds2[3])
+        return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
 
-def bounds_match(norm1: Tuple[float, float, float, float],
-                 norm2: Tuple[float, float, float, float],
-                 tolerance: float = 0.02) -> bool:
-    """Check if two normalized bounds match within tolerance"""
-    x1_diff = abs(norm1[0] - norm2[0])
-    y1_diff = abs(norm1[1] - norm2[1])
-    x2_diff = abs(norm1[2] - norm2[2])
-    y2_diff = abs(norm1[3] - norm2[3])
-    return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
+    @staticmethod
+    def bounds_match(norm1: Tuple[float, float, float, float],
+                     norm2: Tuple[float, float, float, float],
+                     tolerance: float = 0.02) -> bool:
+        """Check if two normalized bounds match within tolerance"""
+        x1_diff = abs(norm1[0] - norm2[0])
+        y1_diff = abs(norm1[1] - norm2[1])
+        x2_diff = abs(norm1[2] - norm2[2])
+        y2_diff = abs(norm1[3] - norm2[3])
+        return x1_diff <= tolerance and y1_diff <= tolerance and x2_diff <= tolerance and y2_diff <= tolerance
 
 def calculate_center(bounds: Tuple[int, int, int, int]) -> Tuple[int, int]:
     """Calculate center point of bounds"""
