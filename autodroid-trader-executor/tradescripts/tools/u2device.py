@@ -390,52 +390,473 @@ class U2Device:
             如果local_path为None，返回XML字符串；否则返回文件路径或空字符串
         """
         logger.info(f"Dumping page UI hierarchy for device: {device_id}")
+        
+        # 首先尝试使用自定义的 AccessibilityService
+        xml_content = self._dump_xml_via_custom_accessibility_service(device_id, local_path)
+        if xml_content:
+            logger.info("成功通过自定义 AccessibilityService 获取页面结构")
+            return xml_content
+        
+        # 如果自定义服务失败，尝试原始的 uiautomator dump
         try:
-            # 执行uiautomator dump命令
+            # 首先尝试不指定路径的uiautomator dump命令（更安全）
             dump_result = self.run_command(["-s", device_id, "shell", "uiautomator", "dump"])
-            if dump_result.returncode != 0:
-                logger.error(f"uiautomator dump failed: {dump_result.stderr}")
-                return "" if local_path is None else ""
             
-            # 如果指定了本地文件路径，使用pull方式
-            if local_path:
-                pull_result = self.run_command(["-s", device_id, "pull", "/sdcard/window_dump.xml", local_path])
-                if pull_result.returncode != 0:
-                    logger.error(f"pull failed: {pull_result.stderr}")
-                    return ""
-                logger.info(f"Page dumped to: {local_path}")
-                return local_path
-            
-            # 否则使用cat方式读取内容
-            result = self.run_command(["-s", device_id, "shell", "cat", "/sdcard/window_dump.xml"])
-            
-            # 清理临时文件
-            self.run_command(["-s", device_id, "shell", "rm", "/sdcard/window_dump.xml"])
-
-            if result.returncode == 0 and result.stdout:
-                # 尝试多种编码方式处理特殊字符
-                xml_content = result.stdout.strip()
+            # 如果返回码为0，说明成功
+            if dump_result.returncode == 0:
+                # 默认路径通常是 /sdcard/window_dump.xml
+                default_dump_path = "/sdcard/window_dump.xml"
                 
-                # 改进的Unicode字符处理逻辑
-                try:
-                    # 首先尝试直接使用UTF-8解码
-                    xml_content = xml_content.encode('utf-8').decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果UTF-8失败，尝试使用更宽松的处理方式
+                if local_path:
+                    pull_result = self.run_command(["-s", device_id, "pull", default_dump_path, local_path])
+                    if pull_result.returncode != 0:
+                        logger.error(f"pull failed: {pull_result.stderr}")
+                        return ""
+                    logger.info(f"Page dumped to: {local_path}")
+                    return local_path
+                
+                result = self.run_command(["-s", device_id, "shell", "cat", default_dump_path])
+                
+                # 清理临时文件
+                self.run_command(["-s", device_id, "shell", "rm", default_dump_path])
+
+                if result.returncode == 0 and result.stdout:
+                    xml_content = result.stdout.strip()
+                    
                     try:
-                        # 使用errors='replace'来保留特殊字符
-                        xml_content = xml_content.encode('utf-8', errors='replace').decode('utf-8')
-                    except (UnicodeDecodeError, UnicodeEncodeError):
-                        # 如果所有方法都失败，使用原始内容
-                        pass
-                
-                return xml_content
+                        xml_content = xml_content.encode('utf-8').decode('utf-8')
+                    except UnicodeDecodeError:
+                        try:
+                            xml_content = xml_content.encode('utf-8', errors='replace').decode('utf-8')
+                        except (UnicodeDecodeError, UnicodeEncodeError):
+                            pass
+                    
+                    return xml_content
 
-            return ""
+                return ""
+            else:
+                # 检查是否是被系统终止
+                stderr_output = dump_result.stderr or ""
+                stdout_output = dump_result.stdout or ""
+                
+                if "Killed" in stderr_output or "Killed" in stdout_output:
+                    logger.warning("uiautomator dump 被系统终止，尝试使用 dumpsys 替代方案")
+                    return self._dump_xml_via_dumpsys(device_id, local_path)
+                else:
+                    logger.warning(f"uiautomator dump 返回非零状态码 {dump_result.returncode}，错误: {stderr_output}，尝试使用 dumpsys 替代方案")
+                    return self._dump_xml_via_dumpsys(device_id, local_path)
 
         except Exception as e:
             logger.error(f"Failed to dump page XML: {e}")
+            # 如果 uiautomator dump 失败，最后尝试 dumpsys 方式
+            return self._dump_xml_via_dumpsys(device_id, local_path)
+
+    def _dump_xml_via_dumpsys(self, device_id: str, local_path: str = None) -> str:
+        """
+        使用 dumpsys accessibility 作为 uiautomator dump 的替代方案
+        """
+        logger.info("使用 dumpsys accessibility 导出页面结构")
+        try:
+            # 首先尝试使用 dumpsys accessibility 获取无障碍服务信息
+            result = self.run_command([
+                "-s", device_id, "shell", "dumpsys", "accessibility"
+            ])
+            
+            if result.returncode == 0 and result.stdout:
+                xml_content = self._convert_accessibility_to_xml(result.stdout)
+                
+                if local_path and xml_content:
+                    try:
+                        with open(local_path, 'w', encoding='utf-8', errors='replace') as f:
+                            f.write(xml_content)
+                        logger.info(f"Page dumped to: {local_path}")
+                        return local_path
+                    except Exception as e:
+                        logger.error(f"Failed to write XML file: {e}")
+                
+                return xml_content
+            
+            return ""
+            
+        except Exception as e:
+            logger.error(f"Failed to dump via dumpsys: {e}")
             return "" if local_path is None else ""
+
+    def _dump_xml_via_custom_accessibility_service(self, device_id: str, local_path: str = None) -> str:
+        """
+        使用自定义的 AccessibilityService 获取页面信息
+        """
+        logger.info("使用自定义 AccessibilityService 导出页面结构")
+        try:
+            # 首先触发自定义的 AccessibilityService 进行页面 dump
+            result = self.run_command([
+                "-s", device_id, "shell", "am", "broadcast", 
+                "-a", "com.autodroid.trader.ACCESSIBILITY_DUMP_REQUEST",
+                "-n", "com.autodroid.trader.ime/.AccessibilityDumpReceiver"
+            ])
+            
+            if result.returncode == 0:
+                # 等待一小段时间让服务处理请求
+                time.sleep(3)  # 增加等待时间以确保服务完成处理
+                
+                # 获取 dump 文件
+                # 我们的服务现在使用固定文件名，简化查找过程
+                json_file_path = "/data/user/0/com.autodroid.trader.ime/files/autodroid_dumps/trader_ime_dump.json"
+                
+                # 检查文件是否存在
+                result = self.run_command([
+                    "-s", device_id, "shell", "run-as", "com.autodroid.trader.ime", 
+                    "ls", "-l", json_file_path
+                ])
+                
+                if result.returncode != 0:
+                    # 如果文件不存在，返回 None
+                    json_file_path = None
+                
+                if json_file_path:
+                    # 从设备拉取 JSON 文件，使用 run-as 访问私有存储
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.json', encoding='utf-8') as tmp_file:
+                        temp_json_path = tmp_file.name
+                    
+                    # 使用 adb exec-out + run-as 来直接获取文件内容（这种方法更可靠）
+                    result = self.run_command([
+                        "-s", device_id, "exec-out", f"run-as com.autodroid.trader.ime cat {json_file_path}"
+                    ])
+                    
+                    if result.returncode == 0 and result.stdout:
+                        # 将内容写入临时文件
+                        with open(temp_json_path, 'w', encoding='utf-8') as f:
+                            f.write(result.stdout)
+                        
+                        # 读取 JSON 文件并转换为 XML
+                        import json
+                        with open(temp_json_path, 'r', encoding='utf-8') as f:
+                            json_data = json.load(f)
+                        
+                        xml_content = self._convert_accessibility_json_to_xml(json_data)
+                        
+                        # 清理临时文件
+                        import os
+                        os.unlink(temp_json_path)
+                        
+                        # 删除设备上的原始 JSON 文件
+                        self.run_command([
+                            "-s", device_id, "shell", "run-as", "com.autodroid.trader.ime", 
+                            "rm", json_file_path
+                        ])
+                        
+                        if local_path and xml_content:
+                            try:
+                                with open(local_path, 'w', encoding='utf-8', errors='replace') as f:
+                                    f.write(xml_content)
+                                logger.info(f"Page dumped to: {local_path}")
+                                return local_path
+                            except Exception as e:
+                                logger.error(f"Failed to write XML file: {e}")
+                        
+                        return xml_content
+                    else:
+                        logger.warning(f"Failed to get JSON file content: {result.stderr if result.stderr else 'No content returned'}")
+                else:
+                    logger.warning("No accessibility dump file found")
+            
+            logger.warning("自定义 AccessibilityService 方式失败，回退到其他方式")
+            return ""
+            
+        except Exception as e:
+            logger.error(f"Failed to dump via custom accessibility service: {e}")
+            return "" if local_path is None else ""
+
+    def dump_page_via_dumpsys(self, device_id: str, local_path: str = None) -> str:
+        """
+        专门使用 dumpsys 方法导出页面XML结构
+        """
+        logger.info(f"使用 dumpsys 导出页面结构 for device: {device_id}")
+        return self._dump_xml_via_dumpsys(device_id, local_path)
+
+    def dump_page_xml_direct(self, device_id: str, local_path: str = None) -> str:
+        """
+        直接使用 uiautomator 方法导出页面XML结构（不经过自定义服务的尝试）
+        """
+        logger.info(f"直接使用 uiautomator 导出页面结构 for device: {device_id}")
+        try:
+            # 直接尝试 uiautomator dump 命令
+            dump_result = self.run_command(["-s", device_id, "shell", "uiautomator", "dump"])
+            
+            # 如果返回码为0，说明成功
+            if dump_result.returncode == 0:
+                # 默认路径通常是 /sdcard/window_dump.xml
+                default_dump_path = "/sdcard/window_dump.xml"
+                
+                if local_path:
+                    pull_result = self.run_command(["-s", device_id, "pull", default_dump_path, local_path])
+                    if pull_result.returncode != 0:
+                        logger.error(f"pull failed: {pull_result.stderr}")
+                        return ""
+                    logger.info(f"Page dumped to: {local_path}")
+                    return local_path
+                
+                result = self.run_command(["-s", device_id, "shell", "cat", default_dump_path])
+                
+                # 清理临时文件
+                self.run_command(["-s", device_id, "shell", "rm", default_dump_path])
+
+                if result.returncode == 0 and result.stdout:
+                    xml_content = result.stdout.strip()
+                    
+                    try:
+                        xml_content = xml_content.encode('utf-8').decode('utf-8')
+                    except UnicodeDecodeError:
+                        try:
+                            xml_content = xml_content.encode('utf-8', errors='replace').decode('utf-8')
+                        except (UnicodeDecodeError, UnicodeEncodeError):
+                            pass
+                    
+                    return xml_content
+
+                return ""
+            else:
+                logger.warning(f"uiautomator dump failed with return code {dump_result.returncode}")
+                return ""
+
+        except Exception as e:
+            logger.error(f"Failed to dump page XML directly via uiautomator: {e}")
+            return ""
+
+    def _convert_accessibility_json_to_xml(self, json_data, level=1) -> str:
+        """
+        将 AccessibilityService 输出的 JSON 转换为 XML 格式
+        """
+        xml_lines = []
+        
+        if level == 1:  # 只在顶层添加 XML 声明和根元素
+            xml_lines.append('<?xml version="1.0" encoding="UTF-8"?>')
+            xml_lines.append('<hierarchy rotation="0">')
+        
+        # 递归处理 JSON 节点
+        self._process_json_node(json_data, xml_lines, level)
+        
+        if level == 1:  # 只在顶层添加结束标签
+            xml_lines.append('</hierarchy>')
+        
+        return '\n'.join(xml_lines)
+
+    def _process_json_node(self, node, xml_lines, level):
+        """
+        递归处理 JSON 节点并转换为 XML
+        """
+        if node is None or node == "null":
+            return
+            
+        if isinstance(node, dict):
+            # 提取节点属性 (使用与XML相同的属性名)
+            class_name = node.get('class', 'android.view.View')
+            text = node.get('text', '')
+            content_desc = node.get('content-desc', '')
+            resource_id = node.get('resource-id', '')
+            package_name = node.get('package', '')
+            checkable = str(node.get('checkable', False)).lower()
+            checked = str(node.get('checked', False)).lower()
+            clickable = str(node.get('clickable', False)).lower()
+            enabled = str(node.get('enabled', True)).lower()
+            focusable = str(node.get('focusable', False)).lower()
+            focused = str(node.get('focused', False)).lower()
+            scrollable = str(node.get('scrollable', False)).lower()
+            long_clickable = str(node.get('long-clickable', False)).lower()  # Changed to match XML format
+            password = str(node.get('password', False)).lower()
+            selected = str(node.get('selected', False)).lower()
+            
+            # 处理新增的属性
+            editable = str(node.get('editable', False)).lower()
+            multiline = str(node.get('multiline', False)).lower()
+            dismissable = str(node.get('dismissable', False)).lower()
+            visible_to_user = str(node.get('visibleToUser', True)).lower()
+            
+            # 获取边界信息 (now in string format [left,top][right,bottom])
+            bounds_str = node.get('bounds', '[0,0][0,0]')
+            bounds = bounds_str
+            
+            # 使用 text 或 contentDescription 作为文本内容，优先使用 text
+            final_text = text if text else content_desc
+            
+            # 构建属性字典, only include meaningful attributes
+            attributes = {}
+            attributes['index'] = "0"
+            
+            # Include text if not empty
+            if final_text:
+                attributes['text'] = self._escape_xml(final_text)
+            
+            # Include resource-id if not empty
+            if resource_id:
+                attributes['resource-id'] = self._escape_xml(resource_id)
+            
+            # Include class
+            attributes['class'] = self._escape_xml(class_name)
+            
+            # Include package if not empty
+            if package_name:
+                attributes['package'] = self._escape_xml(package_name)
+            
+            # Include boolean attributes only if they're true
+            if checkable == 'true':
+                attributes['checkable'] = checkable
+            if checked == 'true':
+                attributes['checked'] = checked
+            if clickable == 'true':
+                attributes['clickable'] = clickable
+            # enabled is typically included
+            if enabled == 'true':
+                attributes['enabled'] = enabled
+            elif enabled != 'true':  # include if false
+                attributes['enabled'] = enabled
+            if focusable == 'true':
+                attributes['focusable'] = focusable
+            if focused == 'true':
+                attributes['focused'] = focused
+            if scrollable == 'true':
+                attributes['scrollable'] = scrollable
+            if long_clickable == 'true':
+                attributes['long-clickable'] = long_clickable
+            if password == 'true':
+                attributes['password'] = password
+            if selected == 'true':
+                attributes['selected'] = selected
+            if editable == 'true':
+                attributes['editable'] = editable
+            if multiline == 'true':
+                attributes['multiline'] = multiline
+            if dismissable == 'true':
+                attributes['dismissable'] = dismissable
+            # visibleToUser is typically included
+            if visible_to_user == 'true':
+                attributes['visibleToUser'] = visible_to_user
+            elif visible_to_user != 'true':  # include if false
+                attributes['visibleToUser'] = visible_to_user
+            
+            # Include bounds
+            attributes['bounds'] = bounds
+            
+            # 递归处理子节点 first to see if there are any
+            children = node.get('children', [])
+            has_children = len(children) > 0
+            
+            # Build XML node string
+            indent = "  " * level
+            attr_str = " ".join([f'{key}="{value}"' for key, value in attributes.items()])
+            
+            if has_children:
+                # Create opening tag for parent with children
+                xml_node = f'{indent}<node {attr_str}>'
+                xml_lines.append(xml_node)
+                
+                # Process all children
+                for child in children:
+                    self._process_json_node(child, xml_lines, level + 1)
+                
+                # Add closing tag for parent
+                xml_lines.append(f'{indent}</node>')
+            else:
+                # Create self-closing tag for node without children
+                xml_node = f'{indent}<node {attr_str} />'
+                xml_lines.append(xml_node)
+        
+        elif isinstance(node, list):
+            # 处理节点列表
+            for child in node:
+                self._process_json_node(child, xml_lines, level)
+
+    def _escape_xml(self, text):
+        """
+        转义 XML 特殊字符
+        """
+        if text is None:
+            return ""
+        str_text = str(text)
+        str_text = str_text.replace("&", "&amp;")
+        str_text = str_text.replace("<", "&lt;")
+        str_text = str_text.replace(">", "&gt;")
+        str_text = str_text.replace('"', "&quot;")
+        str_text = str_text.replace("'", "&apos;")
+        return str_text
+
+    def _convert_accessibility_to_xml(self, accessibility_output: str) -> str:
+        """
+        将 dumpsys accessibility 输出转换为 XML 格式
+        """
+        import re
+        lines = accessibility_output.split('\n')
+        xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<hierarchy rotation="0">']
+        
+        # 首先解析全局信息，如当前活动和包名
+        current_activity = "unknown"
+        package_name = "unknown"
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or 'ACCESSIBILITY MANAGER' in stripped:
+                continue
+            
+            # 查找当前活动和包名信息
+            activity_match = re.search(r'Current\s+accessibility focused window:\s+Window\[AccessibilityWindowInfo\[title=([^\]]*),?id=\d+,.*?packageName=([^\s,]+)', stripped)
+            if activity_match:
+                title = activity_match.group(1)
+                package_name = activity_match.group(2)
+                if title and not title.startswith('AccessibilityWindowInfo'):
+                    current_activity = title
+            
+            # 查找其他窗口信息
+            window_match = re.search(r'Window\[AccessibilityWindowInfo\[title=([^\]]*),?id=(\d+),.*?packageName=([^\s,]+),?\s*type=([^\s,]+),\s*layer=(\d+),\s*bounds=Rect\(([\d\s,-]+)\),\s*focused=([^\s,\]]+)', stripped)
+            if not window_match:
+                # 尝试备用正则表达式模式
+                window_match = re.search(r'Window\[AccessibilityWindowInfo\[title=([^\]]*),?id=(\d+),\s*type=([^\s,]+),\s*layer=(\d+),\s*bounds=Rect\(([\d\s,-]+)\),\s*focused=([^\s,\]]+)', stripped)
+            
+            if window_match:
+                title = window_match.group(1)
+                window_id = window_match.group(2)
+                window_type = window_match.group(3) if len(window_match.groups()) >= 3 else "unknown"
+                layer = window_match.group(4) if len(window_match.groups()) >= 4 else "0"
+                bounds_raw = window_match.group(5) if len(window_match.groups()) >= 5 else "0,0 1080,1920"
+                focused = window_match.group(6) if len(window_match.groups()) >= 6 else "false"
+                
+                # 尝试从标题中提取包名（如果packageName未在其他地方找到）
+                if package_name == "unknown" and title:
+                    # 检查标题是否包含应用名称
+                    if "川财明佣宝" in title:
+                        package_name = "com.tdx.androidCCZQ"
+                
+                # 格式化边界
+                bounds_parts = [x.strip() for x in bounds_raw.split('-')]
+                if len(bounds_parts) == 2:
+                    start = bounds_parts[0].strip(' ()')
+                    end = bounds_parts[1].strip(' ()')
+                    bounds = f"[{start.replace(' ', ',')}][{end.replace(' ', ',')}]"
+                else:
+                    # 处理格式如 "0,0 1080,1920" 的边界
+                    coord_parts = bounds_raw.strip(' ()').split()
+                    if len(coord_parts) == 2:
+                        start = coord_parts[0].replace(' ', ',')
+                        end = coord_parts[1].replace(' ', ',')
+                        bounds = f"[{start}][{end}]"
+                    else:
+                        bounds = "[0,0][1080,1920]"
+                
+                # 创建XML节点，使用从dumpsys中获取的详细信息
+                xml_node = f'  <node index="0" text="{title}" class="android.app.Activity" package="{package_name}" '
+                xml_node += f'clickable="true" enabled="true" focusable="true" focused="{focused}" '
+                xml_node += f'bounds="{bounds}" />'
+                
+                xml_lines.append(xml_node)
+        
+        # 如果没有找到任何窗口信息，创建一个基本的XML结构
+        if len(xml_lines) <= 2:  # 只有起始标签
+            xml_lines.append(f'  <node index="0" text="Accessibility Info" class="android.app.Activity" package="{package_name}" '
+                            f'clickable="true" enabled="true" focusable="true" '
+                            f'bounds="[0,0][1080,1920]" />')
+        
+        xml_lines.append('</hierarchy>')
+        return '\n'.join(xml_lines)
 
     def scroll_to_element_by_bounds(self, bounds_str: str, screen_width: int, screen_height: int) -> bool:
         """根据bounds字符串滚动到元素位置，返回是否执行了滚动操作"""
@@ -534,7 +955,7 @@ class U2Device:
         print(f"  ✅ 元素在中间区域，无需滚动 (center_y={center_y})")
         return False
 
-    def scroll_by_distance(self, distance: int, screen_width: int, screen_height: int) -> bool:
+    def scroll_by_distance(self, distance: int, screen_width: int, screen_height: int, duration: float = None) -> bool:
         """根据精确的距离进行滚动"""
         import time
         
@@ -559,12 +980,15 @@ class U2Device:
             direction = "向上"
             distance = -distance  # 取绝对值
         
-        # 根据距离调整滚动速度和幅度
-        scroll_duration = max(0.3, min(0.8, distance / 500))
+        # 如果指定了duration则使用指定值，否则根据距离自动计算
+        if duration is not None:
+            scroll_duration = duration
+        else:
+            scroll_duration = max(0.2, min(0.5, distance / 500))
         
         # 执行滚动
         self.d.swipe(start_x, start_y, end_x, end_y, scroll_duration)
-        time.sleep(0.5)
+        time.sleep(0.3)
         
         print(f"  🔄 {direction}滚动 {distance}px (duration={scroll_duration:.2f}s)")
         return True

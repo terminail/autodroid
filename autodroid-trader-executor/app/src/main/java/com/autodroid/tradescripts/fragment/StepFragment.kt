@@ -15,7 +15,7 @@ import androidx.core.graphics.toColorInt
 import androidx.fragment.app.Fragment
 import com.autodroid.tradescripts.R
 import com.autodroid.tradescripts.model.NavigationItem
-import com.autodroid.tradescripts.utils.AppiumXmlParser
+import com.autodroid.tradescripts.utils.Uiautomator2XmlParser
 import com.autodroid.tradescripts.utils.ControlInfo
 
 open class StepFragment : Fragment() {
@@ -152,7 +152,7 @@ open class StepFragment : Fragment() {
             val stepFilePath = arguments?.getString(ARG_STEP_FILE_PATH)
                 ?: "apks/cn.com.gjzq.yjb2/testflowa/step1.xml"
 
-            Log.d("AppiumXml", "Loading XML file: $stepFilePath")
+            Log.d("Uiautomator2Xml", "Loading XML file: $stepFilePath")
 
             // Ensure the path starts with "apks/"
             val fullPath = if (stepFilePath.startsWith("apks/")) {
@@ -161,16 +161,16 @@ open class StepFragment : Fragment() {
                 "apks/$stepFilePath"
             }
 
-            Log.d("AppiumXml", "Full path: $fullPath")
+            Log.d("Uiautomator2Xml", "Full path: $fullPath")
 
             // Load the step XML file from the correct path
             val inputStream = requireContext().assets.open(fullPath)
 
             // Parse XML and extract control information
-            val parser = AppiumXmlParser()
+            val parser = Uiautomator2XmlParser()
             controlList = parser.parseXml(inputStream)
 
-            Log.d("AppiumXml", "Found ${controlList.size} controls")
+            Log.d("Uiautomator2Xml", "Found ${controlList.size} controls")
 
             // Set up GridView adapter
             adapter = StepAdapter(requireContext(), controlList)
@@ -186,7 +186,7 @@ open class StepFragment : Fragment() {
                 .show()
 
         } catch (e: Exception) {
-            Log.e("AppiumXml", "Error loading XML: ${e.message}", e)
+            Log.e("Uiautomator2Xml", "Error loading XML: ${e.message}", e)
             e.printStackTrace()
             Toast.makeText(requireContext(), "解析XML失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }

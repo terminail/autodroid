@@ -6,20 +6,16 @@ import yaml
 
 try:
     from .page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml, PageInfo
-    from .element import ElementExecutor, StepInfo
+    from .element import ElementExecutor, StepInfo, ActionType
     from .u2device import U2Device
 except ImportError:
     # 当直接运行脚本时使用绝对导入
     from page import PageMatcher, PageExecutor, preprocess_xml_for_parsing, parse_xml, PageInfo
-    from element import ElementExecutor, StepInfo
+    from element import ElementExecutor, StepInfo, ActionType
     from u2device import U2Device
 
 
-@dataclass
-class FlowInfo:
-    apk_package: str
-    flow_name: str
-    flow_dir: Path
+from typing import Dict
 
 
 @dataclass
@@ -36,13 +32,14 @@ class FlowManager:
         self._page_executor = PageExecutor(self._page_matcher)
         self._element_executor = None
         if device:
-            self._element_executor = ElementExecutor(device)
+            self._element_executor = ElementExecutor(device, self._page_matcher)
         self._end_pages: List[str] = []
-        self._executed_steps: set = set()
+        self._executed_steps_by_page: Dict[str, set] = {}  # 按页面跟踪执行的步骤
         self._total_steps: int = 0
         self._page_infos: Dict[str, PageInfo] = {}
         self._page_executor.set_executed_steps_callback(self._on_step_executed)
         self._page_executor.set_status_callback(self.get_execution_status)
+        self._current_executing_page_id: Optional[str] = None
 
     @property
     def page_matcher(self) -> PageMatcher:
@@ -73,8 +70,9 @@ class FlowManager:
             resource_id = fp_elem.resource_id.strip()
             text = fp_elem.text.strip()
             content_desc = fp_elem.content_desc.strip()
+            bounds = fp_elem.bounds.strip()
             
-            print(f"    - 检查fingerprint元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
+            print(f"    - 检查fingerprint元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}', bounds='{bounds}'")
             
             # 使用选择器检查元素是否存在
             if resource_id:
@@ -98,6 +96,30 @@ class FlowManager:
                     found_count += 1
                 else:
                     print(f"    ✗ 未找到fingerprint元素: {selector}")
+            elif bounds:
+                # 如果没有其他标识符，尝试使用bounds进行匹配
+                print(f"    🔍 尝试通过bounds匹配: {bounds}")
+                try:
+                    # 获取当前页面的XML并查找具有指定bounds的元素
+                    live_xml = self.device.dump_hierarchy()
+                    live_root = ET.fromstring(live_xml.encode('utf-8'))
+                    
+                    element_found = False
+                    for elem in live_root.iter():
+                        if elem.get("bounds") == bounds:
+                            # 检查是否还有其他匹配条件需要验证
+                            if (not fp_elem.class_name or elem.get("class", "") == fp_elem.class_name) and \
+                               (not fp_elem.clickable or elem.get("clickable", "") == fp_elem.clickable):
+                                element_found = True
+                                print(f"    ✓ 找到fingerprint元素 (bounds匹配): {bounds}")
+                                break
+                    
+                    if element_found:
+                        found_count += 1
+                    else:
+                        print(f"    ✗ 未找到fingerprint元素 (bounds: {bounds})")
+                except Exception as e:
+                    print(f"    ✗ bounds匹配失败: {e}")
         
         if found_count == total_count:
             print(f"  ✓ 页面 {page_id}: 所有fingerprint元素都匹配 ({found_count}/{total_count})")
@@ -221,50 +243,11 @@ class FlowManager:
             traceback.print_exc()
             return (None, 0.0, [])
 
-    def execute_page_steps(self, page_id: str, refresh_page_callback: Optional[Callable[[], str]] = None) -> bool:
-        current_page_id, _, _ = self.identify_page()
-        
-        if not current_page_id:
-            print(f"\n⚠️ 未能识别当前页面")
-            return False
-        
-        is_end_page = current_page_id in self._end_pages if current_page_id else False
-        
-        # 检查页面是否有可执行的动作元素
-        has_steps = self._page_matcher.has_page_steps(current_page_id)
-        
-        if not has_steps:
-            if is_end_page:
-                if len(self._executed_steps) == 0:
-                    print(f"\n⚠️ 检测到结束页面 {current_page_id}，但尚未执行任何步骤")
-                    print(f"   流程尚未启动，需要先执行步骤才能判断流程完成\n")
-                    return False
-                
-                status = self.get_execution_status()
-                print(f"\n🏁 成功到达结束页面: {current_page_id}")
-                print(f"📊 流程执行状态:")
-                print(f"   已执行步骤: {status['executed_steps']}/{status['total_steps']}")
-                print(f"   完成率: {status['completion_rate']:.1%}")
-                
-                if status['is_complete']:
-                    print(f"✅ 流程执行完整正确！\n")
-                else:
-                    print(f"⚠️ 流程未完整执行，部分步骤未完成\n")
-                
-                return True
-            else:
-                print(f"\n⚠️ 页面 {current_page_id} 没有定义步骤，且不是结束页面")
-                return False
-        
-        # 使用选择器方案执行步骤（不需要XML解析）
-        return self._page_executor.execute_steps(current_page_id, self._execute_action_callback, self.device, self._end_pages, refresh_page_callback)
-
     def _execute_action_callback(self, step: int, action: str, elem_info, live_elem) -> bool:
         if not self._element_executor:
             print(f"  ⚠️ 未初始化 ElementExecutor，无法执行动作")
             return False
         
-        # elem_info是ElementInfo对象，直接使用
         step_info = StepInfo(
             step=step,
             action=action,
@@ -274,7 +257,261 @@ class FlowManager:
             save_to=elem_info.save_to,
             desc=elem_info.desc
         )
+        
         return self._element_executor.execute_action(step_info, live_elem)
+
+    def run_flow(self, start_page: str = None, max_iterations: int = 1000, step_by_step: bool = False) -> bool:
+        """运行流程主循环 - FlowManager总控
+        1. 启动时识别当前页面（应该是start_page）
+        2. 循环：
+           - 识别当前页面
+           - 如果是结束页，检查流程是否完成
+           - 如果不是结束页，调用对应页面的 next_step()
+           - 步骤执行后更新当前页面
+           
+        Args:
+            step_by_step: 如果为True，每执行一步后暂停等待用户确认
+        """
+        import time
+        import sys
+        
+        print("\n" + "=" * 60)
+        print("🚀 启动流程执行")
+        print("=" * 60)
+        
+        if not self.device:
+            print("❌ 未初始化设备，无法执行流程")
+            return False
+        
+        if not self._page_infos:
+            print("❌ 未加载任何页面")
+            return False
+        
+        iteration_count = 0
+        consecutive_not_found_count = 0
+        last_not_found_page = None
+        
+        while iteration_count < max_iterations:
+            iteration_count += 1
+            
+            current_page_id, _, _ = self.identify_page()
+            
+            if not current_page_id:
+                if last_not_found_page == current_page_id:
+                    consecutive_not_found_count += 1
+                else:
+                    consecutive_not_found_count = 1
+                    last_not_found_page = current_page_id
+                
+                if consecutive_not_found_count > 3:
+                    print(f"\n❌ 连续 {consecutive_not_found_count} 次未能识别页面，退出流程")
+                    return False
+                
+                print(f"\n⚠️ 未能识别当前页面 (第 {iteration_count} 次迭代)")
+                time.sleep(1)
+                continue
+            
+            consecutive_not_found_count = 0
+            last_not_found_page = None
+            
+            print(f"\n🔍 当前页面: {current_page_id}")
+            
+            is_end_page = current_page_id in self._end_pages
+            
+            if is_end_page:
+                status = self.get_execution_status()
+                print(f"\n🏁 到达结束页面: {current_page_id}")
+                print(f"📊 流程执行状态:")
+                print(f"   已执行步骤: {status['executed_steps']}/{status['total_steps']}")
+                print(f"   完成率: {status['completion_rate']:.1%}")
+                
+                if status['executed_steps'] == 0:
+                    print(f"\n⚠️ 到达结束页面但尚未执行任何步骤")
+                    print(f"   流程可能未正确启动")
+                    return False
+                
+                if status['is_complete']:
+                    print(f"\n✅ 流程执行完成！")
+                    return True
+                else:
+                    print(f"\n⚠️ 流程未完整执行，部分步骤未完成")
+                    return False
+            
+            has_more_steps = self._page_executor.has_more_steps(current_page_id)
+            
+            if not has_more_steps:
+                print(f"\n⚠️ 页面 {current_page_id} 没有更多步骤可执行")
+                time.sleep(0.5)
+                continue
+            
+            next_elem = self._page_executor.get_next_elem_info(current_page_id)
+            if next_elem:
+                print(f"   待执行步骤: {next_elem.action}")
+            
+            # 获取当前页面的数据和执行状态
+            if current_page_id not in self._page_matcher._page_infos:
+                print(f"  ⚠️ 页面不存在: {current_page_id}")
+                return False
+                
+            page_data = self._page_matcher._page_infos[current_page_id]
+            current_page_executed_steps = self._executed_steps_by_page.get(current_page_id, set())
+            
+            step_success = self._page_executor.next_step(
+                current_page_id,
+                page_data,
+                current_page_executed_steps,
+                self._execute_action_callback,
+                self.device,
+                self.refresh_current_page
+            )
+            
+            # 如果步骤执行成功，执行状态已在PageExecutor中更新（通过step_executed属性）
+            # 无需额外更新执行状态
+            
+            if not step_success:
+                print(f"\n⚠️ 步骤执行失败，页面: {current_page_id}")
+                return False
+            
+            time.sleep(0.3)
+            
+            if step_by_step:
+                print("\n" + "-" * 60)
+                user_input = input("[?] 是否继续执行下一步? (Y/n): ").strip().lower()
+                if user_input == '' or user_input == 'y':
+                    continue
+                elif user_input == 'n':
+                    print("⏸️ 暂停执行，等待手动操作...")
+                    return True
+                else:
+                    print("⚠️ 无效输入，继续执行...")
+                    continue
+        
+        print(f"\n⚠️ 达到最大迭代次数 {max_iterations}，退出流程")
+        return False
+
+    def run_flow_single_step(self, start_page: str = None) -> bool:
+        """执行单个步骤后暂停，等待用户确认
+        流程：
+        1. 识别当前页面
+        2. 显示待执行步骤（如果是redirect显示目标页面）
+        3. 提示用户确认
+        4. 执行一步后返回
+        """
+        import time
+        
+        if not self.device:
+            print("❌ 未初始化设备，无法执行流程")
+            return False
+        
+        if not self._page_infos:
+            print("❌ 未加载任何页面")
+            return False
+        
+        current_page_id, _, _ = self.identify_page()
+        
+        if not current_page_id:
+            print(f"\n⚠️ 未能识别当前页面")
+            return False
+        
+        print(f"\n🔍 当前页面: {current_page_id}")
+        
+        is_end_page = current_page_id in self._end_pages
+        
+        if is_end_page:
+            status = self.get_execution_status()
+            print(f"\n🏁 到达结束页面: {current_page_id}")
+            print(f"📊 流程执行状态:")
+            print(f"   已执行步骤: {status['executed_steps']}/{status['total_steps']}")
+            print(f"   完成率: {status['completion_rate']:.1%}")
+            if status['is_complete']:
+                print(f"\n✅ 流程执行完成！")
+            return True
+        
+        has_more_steps = self._page_executor.has_more_steps(current_page_id)
+        
+        if not has_more_steps:
+            print(f"\n⚠️ 页面 {current_page_id} 没有更多步骤可执行")
+            return False
+        
+        next_elem = self._page_executor.get_next_elem_info(current_page_id)
+        if next_elem:
+            print(f"   待执行步骤: {next_elem.action}")
+            if next_elem.action == "redirect" and next_elem.value:
+                print(f"   ⟶ 目标页面: {next_elem.value}")
+        
+        print("\n" + "-" * 60)
+        user_input = input("[?] 是否自动操作当前页面? (Y/n/q/m/f): ").strip().lower()
+        
+        if user_input == 'q':
+            print("👋 再见!")
+            return False
+        
+        if user_input == 'm':
+            print("\n🎯 当前匹配模式: 选择器方案 (autodroid:fingerprint=\"true\")")
+            print("⚠️ 仅支持选择器方案，无需切换")
+            return True
+        
+        if user_input == 'n':
+            print("⏸️ 等待手动操作...")
+            return True
+        
+        if user_input == '' or user_input == 'y':
+            # 获取当前页面的数据和执行状态
+            if current_page_id not in self._page_matcher._page_infos:
+                print(f"  ⚠️ 页面不存在: {current_page_id}")
+                return False
+                
+            page_data = self._page_matcher._page_infos[current_page_id]
+            current_page_executed_steps = self._executed_steps_by_page.get(current_page_id, set())
+            
+            success, action_type, target_page = self._page_executor.next_step(
+                current_page_id,
+                page_data,
+                current_page_executed_steps,
+                self._execute_action_callback,
+                self.device,
+                self.refresh_current_page
+            )
+            
+            # 如果步骤执行成功，执行状态已在PageExecutor中更新（通过step_executed属性）
+            # 无需额外更新执行状态
+            
+            if not success:
+                print(f"\n⚠️ 步骤执行失败，页面: {current_page_id}")
+                return False
+            
+            print(f"  ✓ {action_type} 完成")
+            
+            if action_type == "redirect" and target_page:
+                print(f"\n⟶ 等待目标页面: {target_page}")
+                if self._wait_for_page(target_page, timeout=15):
+                    # 检查目标页面是否有待执行的步骤
+                    next_elem_info = self._page_executor.get_next_elem_info(target_page)
+                    if next_elem_info:
+                        step_info = next_elem_info.step or "未知"
+                        print(f"  ✓ 成功到达目标页面: {target_page}，准备执行第{step_info}步")
+                    else:
+                        print(f"  ✓ 成功到达目标页面: {target_page}，无待执行步骤")
+                else:
+                    print(f"  ⚠️ 等待目标页面超时: {target_page}")
+            
+            return True
+        
+        print("⚠️ 无效输入")
+        return True
+
+    def _wait_for_page(self, target_page_id: str, timeout: int = 15) -> bool:
+        """等待目标页面出现"""
+        import time
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            page_id, _, _ = self.identify_page()
+            if page_id == target_page_id:
+                return True
+            time.sleep(0.5)
+        
+        return False
 
     def refresh_current_page(self) -> str:
         """刷新当前页面识别"""
@@ -288,12 +525,15 @@ class FlowManager:
 
     def reset_execution_state(self):
         """重置执行状态"""
-        self._executed_steps = set()
+        self._executed_steps_by_page = {}
         self._total_steps = 0
 
     def _on_step_executed(self, step: int, page_id: str = None):
         """步骤执行回调 - 记录已执行的步骤"""
-        self._executed_steps.add(step)
+        if page_id:
+            if page_id not in self._executed_steps_by_page:
+                self._executed_steps_by_page[page_id] = set()
+            self._executed_steps_by_page[page_id].add(step)
 
     def _calculate_total_steps(self) -> int:
         """计算流程中所有页面的总步骤数"""
@@ -303,9 +543,11 @@ class FlowManager:
 
     def get_execution_status(self) -> Dict:
         """获取流程执行状态"""
+        # 计算所有页面的已执行步骤总数
+        total_executed = sum(len(steps) for steps in self._executed_steps_by_page.values())
         return {
-            "executed_steps": len(self._executed_steps),
+            "executed_steps": total_executed,
             "total_steps": self._total_steps,
-            "completion_rate": len(self._executed_steps) / self._total_steps if self._total_steps > 0 else 0.0,
-            "is_complete": len(self._executed_steps) == self._total_steps and self._total_steps > 0
+            "completion_rate": total_executed / self._total_steps if self._total_steps > 0 else 0.0,
+            "is_complete": total_executed == self._total_steps and self._total_steps > 0
         }

@@ -331,13 +331,13 @@ The architecture eliminates the intermediate `ActionExecutor` class that was pre
 
 ### Key Differences from Appium Approach
 
-| Aspect | Appium Approach (Old) | ADB Approach (New) |
+| Aspect | Appium Approach (Old) | ADB + Uiautomator2 Approach (New) |
 | :--- | :--- | :--- |
 | **Page Source** | `driver.page_source` via Appium RPC | `adb shell uiautomator dump` via ADB |
 | **XML Format** | Appium-specific format | Standard UI Automator XML |
-| **Dependency** | Appium server must be running | ADB only (lighter weight) |
+| **Dependency** | Appium server must be running | ADB + Uiautomator2 only (lighter weight) |
 | **Speed** | Slower (HTTP RPC overhead) | Faster (direct ADB call) |
-| **Element Location** | Appium's find_element | ADB shell input or Appium fallback |
+| **Element Location** | Appium's find_element | ADB shell input or Uiautomator2 fallback |
 
 ## Core Components and Workflows
 
@@ -509,48 +509,310 @@ class ActionHandler:
         # ... other actions
 ```
 
-### 2.4 Tradeflow Coordinator (`TradeflowCoordinator`)
+## Core Workflow: FlowManager-Based Automatic Page Navigation
 
-The "commander" of the framework.
+### 2.1 FlowManager Architecture Overview
 
-- **Workflow**:
-  1. According to configuration
-  2. Call `ADBDumpManager` to capture current page XML via ADB
-  3. Call `PageMatcher` to confirm current page
-  4. Load corresponding offline XML, call `DataDrivenExecutor` to execute
-  5. After steps are executed, call `ADBDumpManager` + `PageMatcher` again to perceive new page
-  6. Loop steps 2-5 until the page perceived by the framework has no unexecuted steps, or reaches preset endpoint
-- **Features**: Implements self-driven page flow, completely driven by the actual jump logic of the application, without hard-coding "page A is followed by page B" in the script
+The framework uses **FlowManager** as the central orchestrator for automatic page navigation. Unlike traditional approaches that require explicit "wait for result" callbacks, FlowManager automatically identifies the current page after each action and continues execution based on the detected page.
 
-```python
-class TradeflowCoordinator:
-    def __init__(
-        self,
-        adb_manager: ADBManager,
-        device_id: str,
-        apks_dir: str,
-        page_matcher: PageMatcher,
-        data_executor: DataDrivenExecutor,
-        wait_timeout: int = 30
-    ):
-        self.adb_manager = adb_manager
-        self.device_id = device_id
-        self.apks_dir = Path(apks_dir)
-        self.page_matcher = page_matcher
-        self.data_executor = data_executor
-        self.wait_timeout = wait_timeout
-
-    def execute_tradeflow(self, tradeflow: List[Dict[str, Any]]) -> List[ExecutionResult]:
-        results = []
-        for testcase in tradeflow:
-            page_id = testcase["page_id"]
-            test_data = testcase.get("data", {})
-            result = self.data_executor.execute_page_flow(page_id, test_data)
-            results.append(result)
-        return results
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    FlowManager: Automatic Page Navigation                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                           ┌─────────────────┐                                │
+│                           │   FlowManager   │                                │
+│                           │   (总控制器)     │                                │
+│                           └────────┬────────┘                                │
+│                                    │                                         │
+│         ┌──────────────────────────┼──────────────────────────┐              │
+│         │                          │                          │              │
+│         ▼                          ▼                          ▼              │
+│  ┌─────────────┐          ┌─────────────┐          ┌─────────────┐          │
+│  │  PageLayer  │          │ ElementLayer│          │   Device    │          │
+│  │  (页面识别)  │          │  (元素执行)  │          │   (设备)    │          │
+│  └──────┬──────┘          └──────┬──────┘          └──────┬──────┘          │
+│         │                         │                       │                   │
+│         ▼                         ▼                       ▼                   │
+│  ┌─────────────┐          ┌─────────────┐          ┌─────────────┐          │
+│  │ PageMatcher │          │ElementExe-  │          │   U2Device  │          │
+│  │ (页面匹配)   │          │   cutor     │          │  (ADB控制)  │          │
+│  └─────────────┘          └─────────────┘          └─────────────┘          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.5 Test Runner Framework (`TradeScriptTestRunner`)
+**Key Design Principles:**
+
+1. **Automatic Page Recognition**: After each action, FlowManager re-identifies the current page
+2. **No Explicit Wait Callbacks**: The `wait_for_result` action type has been removed
+3. **State-Driven Navigation**: Flow is controlled by actual page state, not hardcoded sequences
+4. **Selector-Based Matching**: Uses `autodroid:fingerprint="true"` for reliable page identification
+
+### 2.2 FlowManager Execution Loop
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         FlowManager run_flow() Loop                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. START                                                                   │
+│     ├─ Load all page XML files from apks/ directory                         │
+│     ├─ Build page fingerprints (using autodroid:fingerprint elements)        │
+│     └─ Initialize FlowManager with device connection                         │
+│                                                                              │
+│  2. ENTER EXECUTION LOOP (max_iterations)                                   │
+│     │                                                                       │
+│     ├─ STEP 1: identify_page()                                              │
+│     │  │                                                                    │
+│     │  └─> PageMatcher checks all fingerprint elements                      │
+│     │      └─> Returns matched page_id or None                              │
+│     │                                                                      │
+│     ├─ STEP 2: Check if current_page is end_page                           │
+│     │  │                                                                    │
+│     │  ├─ YES: Verify all steps completed, return success                  │
+│     │  └─ NO: Continue execution                                            │
+│     │                                                                       │
+│     ├─ STEP 3: Check if page has unexecuted steps                           │
+│     │  │                                                                    │
+│     │  ├─ YES: Get next element info                                        │
+│     │  └─ NO: Wait and continue loop                                        │
+│     │                                                                       │
+│     ├─ STEP 4: Execute next_step()                                          │
+│     │  │                                                                    │
+│     │  └─> ElementExecutor performs the action (click, input, etc.)         │
+│     │      └─> Action modifies app state, triggering page transition        │
+│     │                                                                       │
+│     ├─ STEP 5: Wait briefly (0.3s) for page transition                      │
+│     │  │                                                                    │
+│     │  └─> Loop returns to STEP 1 (automatic re-identification)             │
+│     │                                                                       │
+│     └─ LOOP UNTIL:                                                          │
+│         ├─ End page reached AND all steps completed                         │
+│         ├─ Maximum iterations reached                                       │
+│         └─ Step execution failed                                            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Code Flow Example:**
+
+```python
+class FlowManager:
+    def run_flow(self, start_page: str = None, max_iterations: int = 1000) -> bool:
+        """Main flow execution loop - FlowManager as total controller"""
+        
+        while iteration_count < max_iterations:
+            iteration_count += 1
+            
+            # STEP 1: Automatic page identification after each action
+            current_page_id, _, _ = self.identify_page()
+            
+            if not current_page_id:
+                print(f"⚠️ Unable to identify current page")
+                time.sleep(1)
+                continue
+            
+            print(f"🔍 Current page: {current_page_id}")
+            
+            # STEP 2: Check if end page reached
+            is_end_page = current_page_id in self._end_pages
+            
+            if is_end_page:
+                status = self.get_execution_status()
+                if status['is_complete']:
+                    print(f"✅ Flow completed successfully!")
+                    return True
+                else:
+                    print(f"⚠️ Flow incomplete, some steps not executed")
+                    return False
+            
+            # STEP 3: Get next step to execute
+            has_more_steps = self._page_executor.has_more_steps(current_page_id)
+            
+            if not has_more_steps:
+                print(f"⚠️ Page {current_page_id} has no more steps")
+                time.sleep(0.5)
+                continue
+            
+            # STEP 4: Execute the step (NO explicit wait_for_result needed)
+            step_success = self._page_executor.next_step(
+                current_page_id,
+                self._execute_action_callback,
+                self.device,
+                self.refresh_current_page  # Auto-refresh page after action
+            )
+            
+            if not step_success:
+                print(f"⚠️ Step execution failed")
+                return False
+            
+            # STEP 5: Wait for page transition, then loop automatically
+            time.sleep(0.3)
+        
+        return False
+```
+
+### 2.3 Why wait_for_result Was Removed
+
+The `wait_for_result` action type was previously used to explicitly wait for a child page to complete execution. With the new FlowManager architecture, this is no longer necessary:
+
+| Before (with wait_for_result) | After (FlowManager Auto-Handling) |
+| :--- | :--- |
+| Explicit callback after each navigation | Automatic page re-identification in next loop iteration |
+| Complex callback chains | Simple loop structure |
+| Manual state management | Automatic state detection |
+| Error-prone callback handling | Fail-fast on step execution failure |
+
+**How page transitions work now:**
+
+```
+Action executed (e.g., click)
+        │
+        ▼
+┌───────────────────┐
+│ Element Executor  │
+│ performs action   │
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐     ┌─────────────────┐
+│ App transitions   │────▶│ FlowManager     │
+│ to new page       │     │ loop continues  │
+└───────────────────┘     └────────┬────────┘
+                                   │
+                                   ▼
+                          ┌───────────────────┐
+                          │ identify_page()   │
+                          │ detects new page  │
+                          └─────────┬─────────┘
+                                    │
+                                    ▼
+                          ┌───────────────────┐
+                          │ Execute next step │
+                          │ on new page       │
+                          └───────────────────┘
+```
+
+### 2.4 Automatic Page Identification Mechanism
+
+FlowManager uses **selector-based matching** with `autodroid:fingerprint="true"` elements for reliable page identification:
+
+```python
+def _is_current_page_matched(self, page_id: str, page_info: PageInfo) -> bool:
+    """Check if current page matches expected page using fingerprint elements"""
+    
+    fingerprint_elements = page_info.fingerprint_elements
+    
+    if not fingerprint_elements:
+        return False
+    
+    # All fingerprint elements must be present for page to match
+    found_count = 0
+    total_count = len(fingerprint_elements)
+    
+    for fp_elem in fingerprint_elements:
+        # Try matching by resource-id, text, or content-desc
+        if fp_elem.resource_id:
+            selector = f'resourceId("{fp_elem.resource_id}")'
+            if self.device.check_element_exists(selector):
+                found_count += 1
+        elif fp_elem.text:
+            selector = f'text("{fp_elem.text}")'
+            if self.device.check_element_exists(selector):
+                found_count += 1
+        elif fp_elem.content_desc:
+            selector = f'description("{fp_elem.content_desc}")'
+            if self.device.check_element_exists(selector):
+                found_count += 1
+    
+    # Page matches only if ALL fingerprint elements are found
+    return found_count == total_count
+```
+
+**Page Matching Algorithm:**
+
+```
+FlowManager.identify_page()
+        │
+        ▼
+For each known page_id in page_infos:
+        │
+        ▼
+    _is_current_page_matched(page_id, page_info)
+        │
+        ▼
+    Check all fingerprint elements (resource-id → text → content-desc)
+        │
+        ▼
+    If ALL fingerprint elements found: RETURN page_id
+        │
+        ▼
+If no page matches: RETURN None
+```
+
+### 2.5 XML Element Definition Guidelines
+
+With the new architecture, elements in XML files should use standard actions:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy>
+    
+    <!-- Page fingerprint: Unique element that identifies this page -->
+    <node
+        text="网格交易"
+        resource-id="com.tdx.androidCCZQ:id/title"
+        autodroid:fingerprint="true" />
+    
+    <!-- Action 1: Click to search stock -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/search_icon"
+        autodroid:step="1"
+        autodroid:action="click"
+        autodroid:desc="点击搜索图标" />
+    
+    <!-- Action 2: Input stock code -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/search_input"
+        autodroid:step="2"
+        autodroid:action="input"
+        autodroid:name="stock_code"
+        autodroid:desc="输入股票代码" />
+    
+    <!-- Action 3: Click confirm button (triggers page transition) -->
+    <node
+        resource-id="com.tdx.androidCCZQ:id/confirm_btn"
+        autodroid:step="3"
+        autodroid:action="click"
+        autodroid:desc="点击确认按钮" />
+        
+</hierarchy>
+```
+
+**Note:** The `autodroid:action="wait_for_result"` has been removed. Use `autodroid:action="click"` for all navigation actions. FlowManager will automatically detect the page transition in the next loop iteration.
+
+### 2.6 Execution Status Tracking
+
+FlowManager tracks execution progress automatically:
+
+```python
+def get_execution_status(self) -> Dict:
+    """Get current flow execution status"""
+    return {
+        "executed_steps": len(self._executed_steps),  # Steps already executed
+        "total_steps": self._total_steps,              # Total steps in flow
+        "completion_rate": len(self._executed_steps) / self._total_steps,
+        "is_complete": len(self._executed_steps) == self._total_steps
+    }
+```
+
+**Completion Criteria:**
+- `is_complete = True` when `executed_steps == total_steps`
+- Flow reports success only when end page is reached with all steps completed
+- Partial execution (some steps done but end page reached) reports warning
+
+## Dynamic Workflow Routing and Lightweight State Navigation
 
 The main entry point for executing test scenarios.
 
@@ -838,11 +1100,7 @@ import time
 import json
 import os
 import subprocess
-from appium import webdriver
-from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+import uiautomator2 as u2
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 from core.tradescript.adb_driver import ADBManager

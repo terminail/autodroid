@@ -57,7 +57,7 @@ class Apk(BaseModel):
 
 class Device(BaseModel):
     """设备模型"""
-    serialno = CharField(primary_key=True)  # 设备序列号，与adb devices和Appium保持一致
+    serialno = CharField(primary_key=True)  # 设备序列号，与adb devices和Uiautomator2保持一致
     udid = CharField(null=True)  # 设备UDID，保留用于兼容性
     user = ForeignKeyField(User, backref='devices', null=True, on_delete='SET NULL')
     name = CharField(default='Unknown Device',null=True)  # 设备名称

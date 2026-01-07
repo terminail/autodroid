@@ -175,15 +175,14 @@ flowchart TD
 连接建立后，你就可以编写自动化脚本了。以下是使用Python语言和`uiautomator2`驱动的一个核心示例，展示了如何启动APK并执行点击操作。
 
 ```python
-from appium import webdriver
-from appium.webdriver.common.touch_action import TouchAction
+import uiautomator2 as u2
 
 # 1. 定义设备与APP的关键参数
 desired_caps = {
     'platformName': 'Android',          # 测试平台
     'platformVersion': '10',            # 手机安卓系统版本
     'deviceName': 'your_device_id',     # 通过`adb devices`获取的设备ID
-    'automationName': 'UiAutomator2',   # 自动化驱动
+    'automationName': 'UiAutomator2',   # 自动化驱动 (通过Appium服务器使用Uiautomator2)
     'appPackage': 'com.example.targetapp',  # 待测APK的包名
     'appActivity': '.MainActivity',          # 启动时的主界面
     'noReset': True                     # 是否在测试前重置APP状态

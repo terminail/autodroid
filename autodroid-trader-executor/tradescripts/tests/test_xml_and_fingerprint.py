@@ -121,7 +121,7 @@ def test_page_fingerprinting():
         print(f"\n📊 已加载的页面数量: {len(flow_manager._page_infos)}")
         for page_id, page_info in flow_manager._page_infos.items():
             print(f"\n  📄 页面ID: {page_id}")
-            print(f"     - Action元素数量: {len(page_info.action_elements)}")
+            print(f"     - Action元素数量: {len(page_info.steps)}")
             print(f"     - Fingerprint元素数量: {len(page_info.fingerprint_elements)}")
             
             if page_info.fingerprint_elements:
@@ -144,7 +144,7 @@ def test_page_fingerprinting():
             if page_id in flow_manager._page_infos:
                 page_info = flow_manager._page_infos[page_id]
                 print(f"\n   页面详细信息:")
-                print(f"   - Action元素数量: {len(page_info.action_elements)}")
+                print(f"   - Action元素数量: {len(page_info.steps)}")
                 print(f"   - Fingerprint元素数量: {len(page_info.fingerprint_elements)}")
         else:
             print("\n❌ 页面识别失败")

@@ -1,9 +1,0 @@
-﻿<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<hierarchy rotation="0">
-  <node index="0" text="" resource-id="com.tdx.androidCCZQ:id/outbox" class="android.widget.FrameLayout">
-    <node index="1" text="川财APP首页" resource-id="com.tdx.androidCCZQ:id/title" class="android.widget.TextView"/>
-    <node index="2" text="&#xe6ee;" resource-id="com.tdx.androidCCZQ:id/icon" class="android.widget.TextView"/>
-    <node index="3" text="自选股" resource-id="com.tdx.androidCCZQ:id/tab1" class="android.widget.TextView"/>
-    <node index="4" text="市场行情" resource-id="com.tdx.androidCCZQ:id/tab2" class="android.widget.TextView"/>
-  </node>
-</hierarchy>

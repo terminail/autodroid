@@ -9,12 +9,12 @@ Autodroid Trader Server 是 Autodroid Android 自动化系统的服务端组件�
 
 - Python 3.13+
 - pip 22.0+
-- Node.js 18+ (Appium 需要)
+- Node.js 18+ (Uiautomator2 需要)
 - Java 11+ (Android SDK 需要)
 
 ## 安装
 
-### 1. 安装 Node.js (Appium 依赖)
+### 1. 安装 Node.js (Uiautomator2 依赖)
 
 #### Windows:
 ```bash
@@ -34,13 +34,11 @@ sudo apt-get install -y nodejs
 brew install node@18
 ```
 
-### 2. 安装 Appium
+### 2. 安装 Uiautomator2
 
 ```bash
-# 全局安装 Appium
+# 安装 Android 驱动 (通过 Appium)
 npm install -g appium
-
-# 安装 Android 驱动
 appium driver install uiautomator2
 
 # 验证安装
@@ -238,18 +236,16 @@ autodroid-trader-server/
 │   │   └── device_manager.py  # 设备管理器
 │   ├── workflow/        # 工作脚本引擎
 │   └── scheduling/      # 调度器
-├── workscripts/         # Appium 测试脚本
+├── workscripts/         # Uiautomator2 测试脚本
 │   ├── Dockerfile       # Docker 容器配置
 │   └── com.example.app/ # 示例测试脚本
 ├── pyproject.toml       # 项目配置和依赖
 └── README.md            # 项目说明文档
 ```
 
-### Appium 测试脚本开发
-
-Appium 测试脚本位于 `workscripts/` 目录下，使用 Python 编写。主要特点：
-
-1. **基于 Appium 框架**：使用 Appium Python Client 进行设备操作
+### Uiautomator2 测试脚本开发
+Uiautomator2 测试脚本位于 `workscripts/` 目录下，使用 Python 编写。主要特点：
+1. **基于 Uiautomator2 框架**：使用 Appium Python Client 进行设备操作（通过 Uiautomator2 驱动）
 2. **多种定位策略**：支持 ID、XPath、Android UIAutomator 等多种元素定位方式
 3. **图像识别支持**：集成 Airtest 图像识别功能，适配加固应用
 4. **异常处理**：完善的错误捕获和截图保存机制
@@ -258,6 +254,7 @@ Appium 测试脚本位于 `workscripts/` 目录下，使用 Python 编写。主�
 
 ```python
 import pytest
+import uiautomator2 as u2
 
 # 设备配置
 DESIRED_CAPS = {
@@ -268,9 +265,8 @@ DESIRED_CAPS = {
     'appActivity': '.MainActivity',
 }
 
-# 使用 ADB 执行操作
+# 使用 AppiumBy 执行操作
 element = driver.find_element(AppiumBy.ID, 'com.example.app:id/button')
-element.click()
 ```
 
 替换为更简洁的 ADB 方式。

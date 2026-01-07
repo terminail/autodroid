@@ -42,12 +42,9 @@ class FingerprintElement(BaseModel):
 class PageInfo(BaseModel):
     """页面信息类型化类"""
     page_id: str
-    action_elements: List[ElementInfo] = []
+    steps: List['ElementInfo'] = []  # 页面内的步骤
     # 指纹元素（用于选择器方案）
     fingerprint_elements: List[FingerprintElement] = []  # 标记为autodroid:fingerprint="true"的元素
-
-
-
 
 
 def preprocess_xml_for_parsing(xml_content: str) -> str:
@@ -262,10 +259,10 @@ def build_page_info(root: ET.Element, page_id: str) -> PageInfo:
     action_elements.sort(key=lambda x: int(x.step) if isinstance(x.step, int) else 0)
 
     return PageInfo(
-        page_id=page_id,
-        action_elements=action_elements,
-        fingerprint_elements=fingerprint_elements,
-    )
+            page_id=page_id,
+            steps=action_elements,
+            fingerprint_elements=fingerprint_elements,
+        )
 
 
 def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
@@ -330,13 +327,358 @@ def _find_element_by_selector(device: U2Device, elem_info: ElementInfo):
         else:
             print(f"  ✗ 未找到元素: {selector}")
 
+    # 如果有bounds信息，优先检查元素是否在屏幕内，如果是则优先使用bounds定位
+    bounds = elem_info.bounds.strip()
+    if bounds:
+        print(f"  🔍 检查bounds是否在屏幕内: {bounds}")
+        try:
+            bounds_parsed = ScreenUtils.parse_bounds(bounds)
+            if bounds_parsed:
+                x1, y1, x2, y2 = bounds_parsed
+                screen_width = device.d.info.get('displayWidth', 1080)
+                screen_height = device.d.info.get('displayHeight', 1920)
+                
+                # 检查元素是否在屏幕可见区域内（允许一定边界的缓冲）
+                margin = 50  # 边界缓冲
+                if (-margin <= x1 <= screen_width + margin and 
+                    -margin <= x2 <= screen_width + margin and 
+                    -margin <= y1 <= screen_height + margin and 
+                    -margin <= y2 <= screen_height + margin):
+                    
+                    # 元素在屏幕内，优先使用bounds定位
+                    print(f"  🎯 元素在屏幕内，优先使用bounds定位: {bounds}")
+                    live_xml = device.dump_hierarchy()
+                    live_root = ET.fromstring(live_xml.encode('utf-8'))
+                    
+                    for elem in live_root.iter():
+                        if elem.get("bounds") == bounds:
+                            # 找到匹配bounds的元素，尝试通过resource-id、text等属性进一步确认
+                            elem_resource_id = elem.get("resource-id", "")
+                            elem_text = elem.get("text", "")
+                            elem_content_desc = elem.get("content-desc", "")
+                            
+                            # 尝试构建uiautomator2元素对象
+                            if elem_resource_id:
+                                u2_elem = device.d(resourceId=elem_resource_id)
+                            elif elem_text:
+                                u2_elem = device.d(text=elem_text)
+                            elif elem_content_desc:
+                                u2_elem = device.d(description=elem_content_desc)
+                            else:
+                                # 如果实时元素也没有其他可识别的属性，使用bounds进行匹配
+                                bounds_parsed = ScreenUtils.parse_bounds(bounds)
+                                if bounds_parsed:
+                                    x1, y1, x2, y2 = bounds_parsed
+                                    center_x = (x1 + x2) // 2
+                                    center_y = (y1 + y2) // 2
+                                    
+                                    # 遍历live XML查找匹配的元素
+                                    matched_element = None
+                                    for potential_elem in live_root.iter():
+                                        potential_bounds = potential_elem.get('bounds', '')
+                                        if potential_bounds == bounds:  # 精确bounds匹配
+                                            matched_element = potential_elem
+                                            break
+                                        elif potential_bounds:  # 尝试近似匹配
+                                            potential_parsed = ScreenUtils.parse_bounds(potential_bounds)
+                                            if potential_parsed:
+                                                px1, py1, px2, py2 = potential_parsed
+                                                # 检查bounds是否足够接近
+                                                if (abs(px1 - x1) <= 10 and abs(py1 - y1) <= 10 and 
+                                                    abs(px2 - x2) <= 10 and abs(py2 - y2) <= 10):
+                                                    matched_element = potential_elem
+                                                    break
+                                    
+                                    if matched_element is not None:
+                                        # 尝试通过匹配元素的其他属性获取uiautomator2元素
+                                        matched_rid = matched_element.get('resource-id', '')
+                                        matched_text = matched_element.get('text', '')
+                                        matched_desc = matched_element.get('content-desc', '')
+                                        
+                                        if matched_rid:
+                                            u2_elem = device.d(resourceId=matched_rid)
+                                        elif matched_text:
+                                            u2_elem = device.d(text=matched_text)
+                                        elif matched_desc:
+                                            u2_elem = device.d(description=matched_desc)
+                                        else:
+                                            # 如果还是无法获取具体元素，创建一个基于坐标的代理对象
+                                            class BoundsElement:
+                                                def __init__(self, device, center_x, center_y):
+                                                    self.device = device
+                                                    self.center_x = center_x
+                                                    self.center_y = center_y
+                                                    self._exists = True
+                                                
+                                                def click(self):
+                                                    return self.device.d.click(self.center_x, self.center_y)
+                                                
+                                                @property
+                                                def info(self):
+                                                    # 返回一个模拟的info结构，包含bounds信息
+                                                    return {'bounds': {'left': self.center_x-20, 'top': self.center_y-20, 
+                                                                      'right': self.center_x+20, 'bottom': self.center_y+20}}
+                                                
+                                                @property
+                                                def exists(self):
+                                                    return self._exists
+                                            
+                                            return BoundsElement(device, center_x, center_y)
+                                    else:
+                                        # 如果屏幕内bounds定位失败，继续使用传统的选择器定位
+                                        print(f"  ⚠️ 屏幕内bounds定位失败，继续使用选择器定位")
+                                else:
+                                    continue  # bounds格式无效，继续其他定位方式
+                            
+                            if u2_elem and hasattr(u2_elem, 'exists') and u2_elem.exists:
+                                print(f"  ✓ 通过bounds定位成功: {bounds}")
+                                return u2_elem
+        except Exception as e:
+            print(f"  ✗ bounds检测失败: {e}")
+
+    # 如果屏幕内bounds定位失败，或者元素在屏幕外，使用传统的选择器定位
+    # 优先使用resource-id定位
+    if resource_id:
+        selector = f'resourceId("{resource_id}")'
+        print(f"  🔍 尝试通过resource-id定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                return device.d(resourceId=resource_id)
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  💡 建议：使用更具体的选择器或通过其他属性区分元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    # 其次使用text定位
+    if text:
+        selector = f'text("{text}")'
+        print(f"  🔍 尝试通过text定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            print(f"  🔍 找到 {count} 个匹配元素")
+
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                return device.d(text=text)
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  💡 建议：使用更具体的选择器或通过其他属性区分元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    # 最后使用content-desc定位
+    if content_desc:
+        selector = f'description("{content_desc}")'
+        print(f"  🔍 尝试通过content-desc定位: {selector}")
+        if device.check_element_exists(selector):
+            count = device.get_element_count(selector)
+            if count == 1:
+                print(f"  ✓ 找到元素: {selector}")
+                return device.d(description=content_desc)
+            elif count > 1:
+                print(f"  ⚠️ 找到 {count} 个匹配元素，无法使用离线bounds定位（滚动会导致坐标变化）")
+                print(f"  💡 建议：使用更具体的选择器或通过其他属性区分元素")
+            else:
+                print(f"  ✗ 找到 {count} 个匹配元素，无法确定具体元素")
+        else:
+            print(f"  ✗ 未找到元素: {selector}")
+
+    # 如果前面的定位都失败，且没有用过bounds定位，尝试使用bounds定位
+    if bounds and not resource_id and not text and not content_desc:
+        print(f"  🔍 尝试通过bounds定位: {bounds}")
+        try:
+            # 获取当前页面的XML并查找具有指定bounds的元素
+            live_xml = device.dump_hierarchy()
+            live_root = ET.fromstring(live_xml.encode('utf-8'))
+            
+            for elem in live_root.iter():
+                if elem.get("bounds") == bounds:
+                    # 找到匹配bounds的元素，尝试通过resource-id、text等属性进一步确认
+                    elem_resource_id = elem.get("resource-id", "")
+                    elem_text = elem.get("text", "")
+                    elem_content_desc = elem.get("content-desc", "")
+                    
+                    # 尝试构建uiautomator2元素对象
+                    if elem_resource_id:
+                        u2_elem = device.d(resourceId=elem_resource_id)
+                    elif elem_text:
+                        u2_elem = device.d(text=elem_text)
+                    elif elem_content_desc:
+                        u2_elem = device.d(description=elem_content_desc)
+                    else:
+                        # 如果实时元素也没有其他可识别的属性，使用bounds进行匹配
+                        # 解析bounds并尝试通过XML匹配来定位元素
+                        bounds_parsed = ScreenUtils.parse_bounds(bounds)
+                        if bounds_parsed:
+                            x1, y1, x2, y2 = bounds_parsed
+                            center_x = (x1 + x2) // 2
+                            center_y = (y1 + y2) // 2
+                            
+                            # 遍历live XML查找匹配的元素
+                            matched_element = None
+                            for potential_elem in live_root.iter():
+                                potential_bounds = potential_elem.get('bounds', '')
+                                if potential_bounds == bounds:  # 精确bounds匹配
+                                    matched_element = potential_elem
+                                    break
+                                elif potential_bounds:  # 尝试近似匹配
+                                    potential_parsed = ScreenUtils.parse_bounds(potential_bounds)
+                                    if potential_parsed:
+                                        px1, py1, px2, py2 = potential_parsed
+                                        # 检查bounds是否足够接近
+                                        if (abs(px1 - x1) <= 10 and abs(py1 - y1) <= 10 and 
+                                            abs(px2 - x2) <= 10 and abs(py2 - y2) <= 10):
+                                            matched_element = potential_elem
+                                            break
+                            
+                            if matched_element is not None:
+                                # 尝试通过匹配元素的其他属性获取uiautomator2元素
+                                matched_rid = matched_element.get('resource-id', '')
+                                matched_text = matched_element.get('text', '')
+                                matched_desc = matched_element.get('content-desc', '')
+                                
+                                if matched_rid:
+                                    u2_elem = device.d(resourceId=matched_rid)
+                                elif matched_text:
+                                    u2_elem = device.d(text=matched_text)
+                                elif matched_desc:
+                                    u2_elem = device.d(description=matched_desc)
+                                else:
+                                    # 如果还是无法获取具体元素，创建一个基于坐标的代理对象
+                                    class BoundsElement:
+                                        def __init__(self, device, center_x, center_y):
+                                            self.device = device
+                                            self.center_x = center_x
+                                            self.center_y = center_y
+                                            self._exists = True
+                                        
+                                        def click(self):
+                                            return self.device.d.click(self.center_x, self.center_y)
+                                        
+                                        @property
+                                        def info(self):
+                                            # 返回一个模拟的info结构，包含bounds信息
+                                            return {'bounds': {'left': self.center_x-20, 'top': self.center_y-20, 
+                                                              'right': self.center_x+20, 'bottom': self.center_y+20}}
+                                        
+                                        @property
+                                        def exists(self):
+                                            return self._exists
+                                    
+                                    return BoundsElement(device, center_x, center_y)
+                            else:
+                                continue  # 未找到匹配元素，继续
+                        else:
+                            continue  # bounds格式无效，继续
+    
+                    if u2_elem and hasattr(u2_elem, 'exists') and u2_elem.exists:
+                        print(f"  ✓ 通过bounds定位成功: {bounds}")
+                        return u2_elem
+        except Exception as e:
+            print(f"  ✗ bounds定位失败: {e}")
+
+    # 如果元素的resource_id、text、content_desc都为空，尝试通过子元素定位父元素
+    if not resource_id and not text and not content_desc and elem_info.children:
+        print(f"  🔍 元素自身属性为空，尝试通过子元素定位父元素")
+        for child_text in elem_info.children:
+            child_text = child_text.strip()
+            if child_text:
+                selector = f'text("{child_text}")'
+                print(f"  🔍 尝试通过子元素text定位: {selector}")
+                if device.check_element_exists(selector):
+                    count = device.get_element_count(selector)
+                    print(f"  🔍 找到 {count} 个匹配子元素")
+
+                    if count == 1:
+                        child_elem = device.d(text=child_text)
+                        # Check if the element exists before accessing its properties
+                        if hasattr(child_elem, 'exists') and child_elem.exists:
+                            try:
+                                # Access parent element using uiautomator2's parent property
+                                parent_elem = child_elem.parent
+                                if parent_elem and hasattr(parent_elem, 'exists') and parent_elem.exists:
+                                    print(f"  ✓ 通过子元素找到父元素: {selector}")
+                                    return parent_elem
+                                else:
+                                    print(f"  ⚠️ 子元素存在但无法获取父元素")
+                            except Exception as e:
+                                print(f"  ⚠️ 获取父元素时出错: {e}")
+                                # Alternative: try to get parent by dumping live XML and searching for parent-child relationship
+                                print(f"  🔄 尝试通过XML结构查找父元素")
+                                try:
+                                    # Get live XML to find parent-child relationship
+                                    live_xml = device.dump_hierarchy()
+                                    live_root = ET.fromstring(live_xml.encode('utf-8'))
+                                    
+                                    # Find the element with the child text and get its parent
+                                    for elem in live_root.iter():
+                                        if elem.get('text') == child_text:
+                                            # Find the first parent that is clickable (the actionable element)
+                                            current = elem
+                                            while current is not None and current.tag != 'hierarchy':
+                                                parent = None
+                                                # Find the parent by iterating through the tree again
+                                                for potential_parent in live_root.iter():
+                                                    if potential_parent is not current:
+                                                        # Check if current element is a child of potential_parent
+                                                        for child in potential_parent.iter():
+                                                            if child is current and child is not potential_parent:
+                                                                parent = potential_parent
+                                                                break
+                                                if parent is not None:
+                                                    # Check if parent is clickable and should be the element to interact with
+                                                    if parent.get('clickable', 'false') == 'true':
+                                                        print(f"  ✓ 通过XML结构找到可点击父元素")
+                                                        # Create a temporary element object that can be used by the caller
+                                                        # Since we can't directly return XML element, we need to get the corresponding uiautomator2 element
+                                                        parent_resource_id = parent.get('resource-id', '')
+                                                        parent_text = parent.get('text', '')
+                                                        parent_content_desc = parent.get('content-desc', '')
+                                                        
+                                                        # Try to find the parent element using its attributes
+                                                        if parent_resource_id:
+                                                            found_parent = device.d(resourceId=parent_resource_id)
+                                                            if hasattr(found_parent, 'exists') and found_parent.exists:
+                                                                return found_parent
+                                                        elif parent_text:
+                                                            found_parent = device.d(text=parent_text)
+                                                            if hasattr(found_parent, 'exists') and found_parent.exists:
+                                                                return found_parent
+                                                        elif parent_content_desc:
+                                                            found_parent = device.d(description=parent_content_desc)
+                                                            if hasattr(found_parent, 'exists') and found_parent.exists:
+                                                                return found_parent
+                                                        break
+                                                current = parent
+                                    print(f"  ⚠️ 通过XML结构也未能找到父元素")
+                                except Exception as xml_e:
+                                    print(f"  ⚠️ 通过XML结构查找也失败: {xml_e}")
+                                # Fallback: return the child element if parent access fails completely
+                                print(f"  🔄 退回到子元素: {selector}")
+                                return child_elem
+                        else:
+                            print(f"  ⚠️ 子元素不存在或无法访问: {selector}")
+                    elif count > 1:
+                        print(f"  ⚠️ 找到 {count} 个匹配子元素，无法确定具体父元素")
+                    else:
+                        print(f"  ✗ 找到 {count} 个匹配子元素")
+                else:
+                    print(f"  ✗ 未找到子元素: {selector}")
+
     print(f"  ⚠️ 无法通过选择器定位元素: resource_id='{resource_id}', text='{text}', content_desc='{content_desc}'")
     return None
 
 
 class PageExecutor:
-    def __init__(self, page_matcher: 'PageMatcher'):
-        self._page_matcher = page_matcher
+    def __init__(self, page_matcher: 'PageMatcher' = None):
+        self._page_matcher = page_matcher  # 可选依赖，主要用于工具方法
         self._executed_steps_callback = None
         self._status_callback = None
         self._dump_dir = Path(__file__).parent / "dump-pages"
@@ -349,6 +691,102 @@ class PageExecutor:
     def set_status_callback(self, callback):
         """设置状态回调函数"""
         self._status_callback = callback
+
+    def has_more_steps(self, page_id: str) -> bool:
+        """检查页面是否还有未执行的步骤"""
+        if page_id not in self._page_matcher._page_infos:
+            return False
+        page_data = self._page_matcher._page_infos[page_id]
+        steps = page_data.steps
+        if not steps:
+            return False
+        return len(steps) > 0
+
+    def get_next_elem_info(self, page_id: str):
+        """获取页面的下一个未执行的元素信息"""
+        if page_id not in self._page_matcher._page_infos:
+            return None
+        page_data = self._page_matcher._page_infos[page_id]
+        steps = page_data.steps
+        if not steps:
+            return None
+        # 查找下一个未执行的步骤
+        for elem_info in steps:
+            if not elem_info.step_executed:
+                return elem_info
+        # 如果所有步骤都已执行，返回None
+        return None
+
+    def next_step(
+        self,
+        page_id: str,
+        page_data: 'PageInfo',  # 直接传入页面数据
+        executed_steps: set,    # 直接传入已执行步骤
+        execute_action: Callable,
+        device: U2Device,
+        refresh_page_callback: Optional[Callable[[], str]] = None
+    ) -> Tuple[bool, str, Optional[str]]:
+        """执行页面的下一步骤，返回 (成功标志, action类型, 目标页面)"""
+        if not page_data:
+            return False, "", None
+
+        steps = page_data.steps
+
+        if not steps:
+            return True, "", None
+
+        # 查找下一个未执行的步骤
+        next_elem_info = None
+        for elem_info in steps:
+            # 检查步骤是否已执行（使用新的step_executed属性）
+            if not elem_info.step_executed:
+                next_elem_info = elem_info
+                break
+
+        if next_elem_info is None:
+            # 所有步骤都已完成
+            return True, "", None
+
+        elem_info = next_elem_info
+        action = elem_info.action
+        value = elem_info.value
+
+        is_input_action = action == ActionType.INPUT.value
+        live_elem = self._make_live_elem_visible(device, elem_info, is_input=is_input_action)
+
+        if not live_elem:
+            return False, action, None
+
+        success = execute_action(1, action, elem_info, live_elem)
+
+        if not success:
+            return False, action, None
+
+        # 标记步骤为已执行（使用新的step_executed属性）
+        elem_info.step_executed = True
+
+        # 注意：现在不管理状态，状态管理由调用方负责
+        step_raw = elem_info.step
+        if isinstance(step_raw, int):
+            step_num = step_raw
+        elif isinstance(step_raw, str) and step_raw.isdigit():
+            step_num = int(step_raw)
+        else:
+            # 如果无法获取有效步骤号，使用在当前页面中的索引位置
+            # 找到当前元素在steps中的位置
+            for idx, element in enumerate(steps):
+                if element is elem_info:
+                    step_num = idx + 1
+                    break
+            else:
+                # 如果找不到元素（理论上不应该发生），使用默认值
+                step_num = 1
+
+        if self._executed_steps_callback:
+            self._executed_steps_callback(step_num, page_id)
+
+        target_page = value if action == ActionType.REDIRECT.value else None
+        return True, action, target_page
 
     def execute_steps(
         self,
@@ -363,10 +801,10 @@ class PageExecutor:
             return False
 
         page_data = self._page_matcher._page_infos[page_id]
-        action_elements = page_data.action_elements
-        total_steps = len(action_elements)
+        steps = page_data.steps
+        total_steps = len(steps)
 
-        if not action_elements:
+        if not steps:
             print(f"\n⚠️ 页面 {page_id} 已匹配，但无 autodroid:action 定义")
             return True
 
@@ -374,7 +812,7 @@ class PageExecutor:
         print(f"   步骤数: {total_steps}")
         print("-" * 40)
 
-        for idx, elem_info in enumerate(action_elements, 1):
+        for idx, elem_info in enumerate(steps, 1):
             # 使用类型化的属性访问，确保step是整数
             step_raw = elem_info.step
             # 确保step是整数类型
@@ -421,24 +859,19 @@ class PageExecutor:
         screen_width = device.d.info.get('displayWidth', 1080)
         screen_height = device.d.info.get('displayHeight', 1920)
 
-        # 通用逻辑：对所有操作类型都确保元素可见
-        # 首先尝试直接查找元素
         live_elem_obj = _find_element_by_selector(device, elem_info)
         
         if not live_elem_obj or not live_elem_obj.exists:
-            # 如果元素不存在，尝试滚动查找
             found = self._scroll_to_find_element(device, elem_info, screen_width, screen_height)
             if not found:
                 print(f"  ⚠️ 滚动查找未找到元素")
                 return None
             
-            # 重新查找元素
             live_elem_obj = _find_element_by_selector(device, elem_info)
             if not live_elem_obj or not live_elem_obj.exists:
                 print(f"  ⚠️ 未找到元素")
                 return None
-        
-        # 检查元素是否在可见区域，如果不在则滚动
+
         bounds = live_elem_obj.info.get('bounds')
         if bounds:
             center_x = (bounds['left'] + bounds['right']) // 2
@@ -446,20 +879,25 @@ class PageExecutor:
             
             # 如果元素不在可见区域（顶部200像素到底部200像素之间）
             if not (200 <= center_y <= (screen_height - 200)):
-                print(f"  🔄 元素不在可见区域，执行滚动")
+                print(f"  🔄 元素不在可见区域 (center_y={center_y})，执行滚动")
                 bounds_str = f"[{bounds['left']},{bounds['top']}][{bounds['right']},{bounds['bottom']}]"
                 
-                # 根据元素实际位置计算需要滚动的距离
-                center_y = (bounds['top'] + bounds['bottom']) // 2
-                safe_center_y = screen_height // 2  # 安全区域的中心位置
-                
-                # 计算需要滚动的距离（注意方向）
-                # 如果元素在屏幕下方（center_y > safe_center_y），需要向上滚动（负距离）
-                # 如果元素在屏幕上方（center_y < safe_center_y），需要向下滚动（正距离）
-                scroll_distance = safe_center_y - center_y
+                # 根据元素实际位置计算需要滚动的方向和距离
+                # 如果元素在屏幕上方（center_y < 200），需要向下滚动（正距离）
+                # 如果元素在屏幕下方（center_y > screen_height - 200），需要向上滚动（负距离）
+                if center_y < 200:
+                    # 元素在屏幕上方，向下滚动
+                    scroll_distance = min(400, 200 - center_y)  # 向下滚动，正值
+                elif center_y > screen_height - 200:
+                    # 元素在屏幕下方，向上滚动
+                    scroll_distance = max(-400, (screen_height - 200) - center_y)  # 向上滚动，负值
+                else:
+                    scroll_distance = 0
                 
                 # 执行精确滚动
                 device.scroll_by_distance(scroll_distance, screen_width, screen_height)
+                # 等待滚动动画完成和UI稳定
+                time.sleep(0.8)  # 增加等待时间确保滚动完成
                 
                 # 重新查找元素
                 live_elem_obj = _find_element_by_selector(device, elem_info)
@@ -473,12 +911,22 @@ class PageExecutor:
                             print(f"  ✅ 滚动后元素可见: center_y={center_y}")
                         else:
                             print(f"  ⚠️ 滚动后元素仍不可见: center_y={center_y}")
-                            # 如果滚动后仍不可见，继续滚动直到可见
+                            # 如果滚动后仍不可见, try a more aggressive approach
                             max_retries = 3
                             for retry in range(max_retries):
-                                # 再次计算滚动距离（注意方向）
-                                new_scroll_distance = safe_center_y - center_y
+                                # Calculate a more aggressive scroll distance based on how far the element is from the visible area
+                                if center_y < 200:
+                                    # Element is too high, scroll down more aggressively
+                                    new_scroll_distance = min(600, 200 - center_y)  # Scroll down, positive value
+                                elif center_y > screen_height - 200:
+                                    # Element is too low, scroll up more aggressively  
+                                    new_scroll_distance = max(-600, (screen_height - 200) - center_y)  # Scroll up, negative value
+                                else:
+                                    new_scroll_distance = 0
+                                
                                 device.scroll_by_distance(new_scroll_distance, screen_width, screen_height)
+                                # 等待滚动动画完成和UI稳定
+                                time.sleep(0.8)  # 增加等待时间确保滚动完成
                                 
                                 # 重新检查
                                 live_elem_obj = _find_element_by_selector(device, elem_info)
@@ -610,7 +1058,7 @@ class PageMatcher:
         """获取所有页面中action元素的总数"""
         total = 0
         for page_info in self._page_infos.values():
-            total += len(page_info.action_elements)
+            total += len(page_info.steps)
         return total
 
     def has_page_steps(self, page_id: str) -> bool:
@@ -618,7 +1066,7 @@ class PageMatcher:
         if page_id not in self._page_infos:
             return False
         page_info = self._page_infos[page_id]
-        return len(page_info.action_elements) > 0
+        return len(page_info.steps) > 0
 
 
 
@@ -635,17 +1083,17 @@ class PageMatcher:
         all_scores = []
 
         for page_id, page_info in self._page_infos.items():
-            if not page_info.action_elements:
+            if not page_info.steps:
                 continue
 
             # 计算选择器匹配度
             matched_count = 0
-            for elem_info in page_info.action_elements:
+            for elem_info in page_info.steps:
                 # 使用选择器方案检查元素是否存在
                 if self._check_element_exists_by_selector(device, elem_info):
                     matched_count += 1
 
-            score = matched_count / len(page_info.action_elements) if page_info.action_elements else 0.0
+            score = matched_count / len(page_info.steps) if page_info.steps else 0.0
             all_scores.append((page_id, score, {"method": "selector"}))
 
             if score > best_score:

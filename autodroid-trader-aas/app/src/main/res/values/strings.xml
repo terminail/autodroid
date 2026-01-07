@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Trader AAS</string>
+    <string name="accessibility_service_description">Accessibility service to record user interactions in Android apps and store control features in a database.</string>
+</resources>

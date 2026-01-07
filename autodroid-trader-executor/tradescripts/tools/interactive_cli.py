@@ -77,8 +77,8 @@ class InteractiveCLI:
                     if page_id:
                         print(f"\n📄 识别页面: {page_id} (选择器方案)")
                         print("-" * 60)
-                        # 使用选择器方案执行页面步骤
-                        self.flow_manager.execute_page_steps(page_id)
+                        # 执行一个步骤后暂停，等待用户确认
+                        self.flow_manager.run_flow_single_step(page_id)
                     else:
                         print("\n⚠️ 未能识别当前页面")
                         time.sleep(2)

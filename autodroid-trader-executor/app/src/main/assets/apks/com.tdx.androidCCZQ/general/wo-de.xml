@@ -1,896 +1,142 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<hierarchy rotation="0" xmlns:autodroid="https://autodroid.example.com">
-    <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-        package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-        clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-        long-clickable="false" password="false" selected="false" bounds="[0,0][1080,1812]">
-        <node index="0" text="" resource-id="" class="android.widget.LinearLayout"
-            package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-            clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-            long-clickable="false" password="false" selected="false" bounds="[0,0][1080,1812]">
-            <node index="0" text="" resource-id="android:id/content"
-                class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" content-desc=""
-                checkable="false" checked="false" clickable="false" enabled="true" focusable="false"
-                focused="false" scrollable="false" long-clickable="false" password="false"
-                selected="false" bounds="[0,0][1080,1812]">
-                <node index="0" text="" resource-id=""
-                    class="androidx.drawerlayout.widget.DrawerLayout" package="com.tdx.androidCCZQ"
-                    content-desc="" checkable="false" checked="false" clickable="false"
-                    enabled="true" focusable="false" focused="false" scrollable="false"
-                    long-clickable="false" password="false" selected="false"
-                    bounds="[0,0][1080,1812]">
-                    <node index="0" text="" resource-id="" class="android.widget.LinearLayout"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[0,0][1080,1812]">
-                        <node index="0" text="" resource-id="" class="android.widget.RelativeLayout"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="false" enabled="true" focusable="false"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[0,0][1080,1812]">
-                            <node index="1" text="" resource-id=""
-                                class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ"
-                                content-desc="" checkable="false" checked="false" clickable="false"
-                                enabled="true" focusable="false" focused="false" scrollable="false"
-                                long-clickable="false" password="false" selected="false"
-                                bounds="[0,0][1080,1676]">
-                                <node index="0" text=""
-                                    resource-id="com.tdx.androidCCZQ:id/mineScrollView"
-                                    class="android.widget.ScrollView" package="com.tdx.androidCCZQ"
-                                    content-desc="" checkable="false" checked="false"
-                                    clickable="false" enabled="true" focusable="true"
-                                    focused="false" scrollable="true" long-clickable="false"
-                                    password="false" selected="false" bounds="[0,0][1080,1676]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false" password="false"
-                                        selected="false" bounds="[0,0][1080,1676]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.RelativeLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[0,0][1080,732]">
-                                            <node index="0" text=""
-                                                resource-id="com.tdx.androidCCZQ:id/ll_mine_top_box"
-                                                class="android.widget.LinearLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="false"
-                                                enabled="true" focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[0,0][1080,732]">
-                                                <node index="0" text="" resource-id=""
-                                                    class="android.widget.RelativeLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[0,72][1080,222]">
-                                                    <node NAF="true" index="0" text=""
-                                                        resource-id="com.tdx.androidCCZQ:id/mine_iv_setting"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[840,110][906,184]" />
-                                                    <node NAF="true" index="1" text=""
-                                                        resource-id="com.tdx.androidCCZQ:id/mine_iv_service"
-                                                        class="android.widget.ImageView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false"
-                                                        bounds="[948,114][1014,180]" />
-                                                    <node index="2" text="3"
-                                                        resource-id="com.tdx.androidCCZQ:id/tv_unread"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[990,96][1038,138]" />
+<hierarchy rotation="0"
+    xmlns:autodroid="https://autodroid.example.com">
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,0][1080,1812]">
+        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,0][1080,1812]">
+            <node index="0" resource-id="android:id/content" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                <node index="0" class="androidx.drawerlayout.widget.DrawerLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,0][1080,1812]">
+                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                        <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                            <node index="1" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,0][1080,1676]">
+                                <node index="0" resource-id="com.tdx.androidCCZQ:id/mineScrollView" class="android.widget.ScrollView" package="com.tdx.androidCCZQ" enabled="true" focusable="true" scrollable="true" bounds="[0,0][1080,1676]">
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1676]">
+                                        <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,732]">
+                                            <node index="0" resource-id="com.tdx.androidCCZQ:id/ll_mine_top_box" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,732]">
+                                                <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,72][1080,222]">
+                                                    <node NAF="true" index="0" resource-id="com.tdx.androidCCZQ:id/mine_iv_setting" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[840,110][906,184]" />
+                                                    <node NAF="true" index="1" resource-id="com.tdx.androidCCZQ:id/mine_iv_service" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[948,114][1014,180]" />
+                                                    <node index="2" text="3" resource-id="com.tdx.androidCCZQ:id/tv_unread" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[990,96][1038,138]" />
                                                 </node>
-                                                <node index="1" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_ll_mine_login"
-                                                    class="android.widget.LinearLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[0,222][1080,416]">
-                                                    <node index="0" text=""
-                                                        resource-id="com.tdx.androidCCZQ:id/cczq_rl_user_info"
-                                                        class="android.widget.RelativeLayout"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[42,222][1080,416]">
-                                                        <node index="0" text=""
-                                                            resource-id="com.tdx.androidCCZQ:id/accountImage"
-                                                            class="android.widget.ImageView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="false"
-                                                            enabled="true" focusable="false"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[42,234][147,339]" />
-                                                        <node index="1" text="陈春*"
-                                                            resource-id="com.tdx.androidCCZQ:id/accountName"
-                                                            class="android.widget.TextView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="false"
-                                                            enabled="true" focusable="false"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[171,234][305,308]" />
-                                                        <node NAF="true" index="2" text=""
-                                                            resource-id="com.tdx.androidCCZQ:id/accountTypeImg"
-                                                            class="android.widget.ImageView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="true"
-                                                            enabled="true" focusable="true"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[329,257][395,308]" />
-                                                        <node index="3" text="95****85"
-                                                            resource-id="com.tdx.androidCCZQ:id/accountNo"
-                                                            class="android.widget.TextView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="false"
-                                                            enabled="true" focusable="false"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[171,314][355,404]" />
-                                                        <node index="4" text="积极型"
-                                                            resource-id="com.tdx.androidCCZQ:id/accountTypeName"
-                                                            class="android.widget.TextView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="false"
-                                                            enabled="true" focusable="false"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[370,314][511,404]" />
-                                                        <node NAF="true" index="5" text=""
-                                                            resource-id="com.tdx.androidCCZQ:id/cczq_asset_panorama"
-                                                            class="android.widget.ImageView"
-                                                            package="com.tdx.androidCCZQ"
-                                                            content-desc="" checkable="false"
-                                                            checked="false" clickable="true"
-                                                            enabled="true" focusable="true"
-                                                            focused="false" scrollable="false"
-                                                            long-clickable="false" password="false"
-                                                            selected="false"
-                                                            bounds="[630,269][1080,368]" />
+                                                <node index="1" resource-id="com.tdx.androidCCZQ:id/cczq_ll_mine_login" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,222][1080,416]">
+                                                    <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_rl_user_info" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[42,222][1080,416]">
+                                                        <node index="0" resource-id="com.tdx.androidCCZQ:id/accountImage" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[42,234][147,339]" />
+                                                        <node index="1" text="陈春*" resource-id="com.tdx.androidCCZQ:id/accountName" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[171,234][305,308]" />
+                                                        <node NAF="true" index="2" resource-id="com.tdx.androidCCZQ:id/accountTypeImg" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[329,257][395,308]" />
+                                                        <node index="3" text="95****85" resource-id="com.tdx.androidCCZQ:id/accountNo" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[171,314][355,404]" />
+                                                        <node index="4" text="积极型" resource-id="com.tdx.androidCCZQ:id/accountTypeName" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[370,314][511,404]" />
+                                                        <node NAF="true" index="5" resource-id="com.tdx.androidCCZQ:id/cczq_asset_panorama" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[630,269][1080,368]" />
                                                     </node>
                                                 </node>
-                                                <node index="2" text="" resource-id=""
-                                                    class="android.widget.RelativeLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[36,416][1044,720]">
-                                                    <node index="0" text="总资产 (元)"
-                                                        resource-id="com.tdx.androidCCZQ:id/totalDes"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[81,461][353,535]" />
-                                                    <node index="1" text="****"
-                                                        resource-id="com.tdx.androidCCZQ:id/totalAsset"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[81,535][999,675]" />
-                                                    <node NAF="true" index="2" text=""
-                                                        resource-id="com.tdx.androidCCZQ:id/showOrHide"
-                                                        class="android.widget.CheckBox"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="true"
-                                                        checked="true" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[398,467][638,550]" />
-                                                    <node index="3" text="银证转账"
-                                                        resource-id="com.tdx.androidCCZQ:id/openAccount"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="true"
-                                                        enabled="true" focusable="true"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[695,513][969,623]" />
+                                                <node index="2" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[36,416][1044,720]">
+                                                    <node index="0" text="总资产 (元)" resource-id="com.tdx.androidCCZQ:id/totalDes" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[81,461][353,535]" />
+                                                    <node index="1" text="****" resource-id="com.tdx.androidCCZQ:id/totalAsset" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[81,535][999,675]" />
+                                                    <node NAF="true" index="2" resource-id="com.tdx.androidCCZQ:id/showOrHide" class="android.widget.CheckBox" package="com.tdx.androidCCZQ" checkable="true" checked="true" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[398,467][638,550]" />
+                                                    <node index="3" text="银证转账" resource-id="com.tdx.androidCCZQ:id/openAccount" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[695,513][969,623]" />
                                                 </node>
                                             </node>
-                                            <node index="1" text="" resource-id=""
-                                                class="android.view.View"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="false"
-                                                enabled="true" focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[0,0][1080,660]" />
+                                            <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,660]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[0,732][1080,1202]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.LinearLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="false"
-                                                enabled="true" focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[0,732][1080,966]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cashLayout"
-                                                    class="android.widget.LinearLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="true" enabled="true" focusable="true"
-                                                    focused="false" scrollable="false"
-                                                    long-clickable="false" password="false"
-                                                    selected="false" bounds="[0,732][539,966]">
-                                                    <node index="0" text="现    金"
-                                                        resource-id="com.tdx.androidCCZQ:id/cashDes"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[51,783][235,866]" />
-                                                    <node index="1" text="****"
-                                                        resource-id="com.tdx.androidCCZQ:id/cashValue"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[51,866][147,915]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,732][1080,1202]">
+                                            <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,732][1080,966]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/cashLayout" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[0,732][539,966]">
+                                                    <node index="0" text="现    金" resource-id="com.tdx.androidCCZQ:id/cashDes" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[51,783][235,866]" />
+                                                    <node index="1" text="****" resource-id="com.tdx.androidCCZQ:id/cashValue" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[51,866][147,915]" />
                                                 </node>
-                                                <node index="1" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/line1"
-                                                    class="android.view.View"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[539,784][541,913]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/dayDayIncrescenceLayout"
-                                                    class="android.widget.RelativeLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="true" enabled="true" focusable="true"
-                                                    focused="false" scrollable="false"
-                                                    long-clickable="false" password="false"
-                                                    selected="false" bounds="[541,732][1080,966]">
-                                                    <node index="0" text="天天盈"
-                                                        resource-id="com.tdx.androidCCZQ:id/dayDayIncrescence"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[592,783][778,866]" />
-                                                    <node index="1" text="开通天天盈"
-                                                        resource-id="com.tdx.androidCCZQ:id/dayDayIncrescenceDes"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false" bounds="[592,866][867,915]" />
+                                                <node index="1" resource-id="com.tdx.androidCCZQ:id/line1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[539,784][541,913]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/dayDayIncrescenceLayout" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[541,732][1080,966]">
+                                                    <node index="0" text="天天盈" resource-id="com.tdx.androidCCZQ:id/dayDayIncrescence" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[592,783][778,866]" />
+                                                    <node index="1" text="开通天天盈" resource-id="com.tdx.androidCCZQ:id/dayDayIncrescenceDes" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[592,866][867,915]" />
                                                 </node>
                                             </node>
-                                            <node index="1" text="" resource-id=""
-                                                class="android.view.View"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="false"
-                                                enabled="true" focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[51,966][1029,968]" />
-                                            <node index="2" text="" resource-id=""
-                                                class="android.widget.LinearLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="false"
-                                                enabled="true" focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[0,968][1080,1202]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/stockLayout"
-                                                    class="android.widget.LinearLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="true" enabled="true" focusable="true"
-                                                    focused="false" scrollable="false"
-                                                    long-clickable="false" password="false"
-                                                    selected="false" bounds="[0,968][539,1202]">
-                                                    <node index="0" text="股    票"
-                                                        resource-id="com.tdx.androidCCZQ:id/stockDes"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false"
-                                                        bounds="[51,1019][235,1102]" />
-                                                    <node index="1" text="****"
-                                                        resource-id="com.tdx.androidCCZQ:id/stockValue"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false"
-                                                        bounds="[51,1102][147,1151]" />
+                                            <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[51,966][1029,968]" />
+                                            <node index="2" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,968][1080,1202]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/stockLayout" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[0,968][539,1202]">
+                                                    <node index="0" text="股    票" resource-id="com.tdx.androidCCZQ:id/stockDes" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[51,1019][235,1102]" />
+                                                    <node index="1" text="****" resource-id="com.tdx.androidCCZQ:id/stockValue" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[51,1102][147,1151]" />
                                                 </node>
-                                                <node index="1" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/line2"
-                                                    class="android.view.View"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[539,1020][541,1149]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/financingLayout"
-                                                    class="android.widget.LinearLayout"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="true" enabled="true" focusable="true"
-                                                    focused="false" scrollable="false"
-                                                    long-clickable="false" password="false"
-                                                    selected="false" bounds="[541,968][1080,1202]">
-                                                    <node index="0" text="理    财"
-                                                        resource-id="com.tdx.androidCCZQ:id/financingDes"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false"
-                                                        bounds="[592,1019][776,1102]" />
-                                                    <node index="1" text="****"
-                                                        resource-id="com.tdx.androidCCZQ:id/financingValue"
-                                                        class="android.widget.TextView"
-                                                        package="com.tdx.androidCCZQ"
-                                                        content-desc="" checkable="false"
-                                                        checked="false" clickable="false"
-                                                        enabled="true" focusable="false"
-                                                        focused="false" scrollable="false"
-                                                        long-clickable="false" password="false"
-                                                        selected="false"
-                                                        bounds="[592,1102][688,1151]" />
+                                                <node index="1" resource-id="com.tdx.androidCCZQ:id/line2" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[539,1020][541,1149]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/financingLayout" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[541,968][1080,1202]">
+                                                    <node index="0" text="理    财" resource-id="com.tdx.androidCCZQ:id/financingDes" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[592,1019][776,1102]" />
+                                                    <node index="1" text="****" resource-id="com.tdx.androidCCZQ:id/financingValue" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[592,1102][688,1151]" />
                                                 </node>
                                             </node>
                                         </node>
-                                        <node index="2" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[0,1202][1080,1411]">
-                                            <node index="0" text=""
-                                                resource-id="com.tdx.androidCCZQ:id/cczq_rl_dryk"
-                                                class="android.widget.RelativeLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="true"
-                                                enabled="true" focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[36,1202][540,1411]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_dryk"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[100,1276][160,1336]" />
-                                                <node index="1" text="持仓盈亏"
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_tv_dryk"
-                                                    class="android.widget.TextView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[175,1274][367,1339]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_dryk_new"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[367,1274][475,1334]" />
+                                        <node index="2" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,1202][1080,1411]">
+                                            <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_rl_dryk" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[36,1202][540,1411]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_iv_dryk" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[100,1276][160,1336]" />
+                                                <node index="1" text="持仓盈亏" resource-id="com.tdx.androidCCZQ:id/cczq_tv_dryk" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[175,1274][367,1339]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/cczq_iv_dryk_new" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[367,1274][475,1334]" />
                                             </node>
-                                            <node index="1" text=""
-                                                resource-id="com.tdx.androidCCZQ:id/cczq_rl_position_analyze"
-                                                class="android.widget.RelativeLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="true"
-                                                enabled="true" focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[576,1202][1044,1411]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_position_analyze"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[622,1276][682,1336]" />
-                                                <node index="1" text="持股分析"
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_tv_position_analyze"
-                                                    class="android.widget.TextView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[697,1274][889,1339]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_position_analyze_new"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[889,1274][997,1334]" />
+                                            <node index="1" resource-id="com.tdx.androidCCZQ:id/cczq_rl_position_analyze" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[576,1202][1044,1411]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_iv_position_analyze" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[622,1276][682,1336]" />
+                                                <node index="1" text="持股分析" resource-id="com.tdx.androidCCZQ:id/cczq_tv_position_analyze" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[697,1274][889,1339]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/cczq_iv_position_analyze_new" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[889,1274][997,1334]" />
                                             </node>
                                         </node>
-                                        <node index="3" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[0,1435][1080,1676]">
-                                            <node index="0" text=""
-                                                resource-id="com.tdx.androidCCZQ:id/cczq_rl_bond_analyze"
-                                                class="android.widget.RelativeLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="true"
-                                                enabled="true" focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[36,1435][540,1644]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_bond_analyze"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[100,1509][160,1569]" />
-                                                <node index="1" text="债券分析"
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_tv_bond_analyze"
-                                                    class="android.widget.TextView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[175,1507][367,1572]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_bond_analyze_new"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[367,1507][475,1567]" />
+                                        <node index="3" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,1435][1080,1676]">
+                                            <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_rl_bond_analyze" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[36,1435][540,1644]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_iv_bond_analyze" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[100,1509][160,1569]" />
+                                                <node index="1" text="债券分析" resource-id="com.tdx.androidCCZQ:id/cczq_tv_bond_analyze" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[175,1507][367,1572]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/cczq_iv_bond_analyze_new" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[367,1507][475,1567]" />
                                             </node>
-                                            <node index="1" text=""
-                                                resource-id="com.tdx.androidCCZQ:id/cczq_rl_account_bill"
-                                                class="android.widget.RelativeLayout"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false" clickable="true"
-                                                enabled="true" focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[576,1435][1044,1644]">
-                                                <node index="0" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_account_bill"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[622,1509][682,1569]" />
-                                                <node index="1" text="融资分析"
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_tv_account_bill"
-                                                    class="android.widget.TextView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[697,1507][889,1572]" />
-                                                <node index="2" text=""
-                                                    resource-id="com.tdx.androidCCZQ:id/cczq_iv_account_bill_new"
-                                                    class="android.widget.ImageView"
-                                                    package="com.tdx.androidCCZQ" content-desc=""
-                                                    checkable="false" checked="false"
-                                                    clickable="false" enabled="true"
-                                                    focusable="false" focused="false"
-                                                    scrollable="false" long-clickable="false"
-                                                    password="false" selected="false"
-                                                    bounds="[889,1507][997,1567]" />
+                                            <node index="1" resource-id="com.tdx.androidCCZQ:id/cczq_rl_account_bill" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[576,1435][1044,1644]">
+                                                <node index="0" resource-id="com.tdx.androidCCZQ:id/cczq_iv_account_bill" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[622,1509][682,1569]" />
+                                                <node index="1" text="融资分析" resource-id="com.tdx.androidCCZQ:id/cczq_tv_account_bill" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[697,1507][889,1572]" />
+                                                <node index="2" resource-id="com.tdx.androidCCZQ:id/cczq_iv_account_bill_new" class="android.widget.ImageView" package="com.tdx.androidCCZQ" enabled="true" bounds="[889,1507][997,1567]" />
                                             </node>
                                         </node>
                                     </node>
                                 </node>
                             </node>
-                            <node index="2" text="" resource-id=""
-                                class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ"
-                                content-desc="" checkable="false" checked="false" clickable="false"
-                                enabled="true" focusable="false" focused="false" scrollable="false"
-                                long-clickable="false" password="false" selected="false"
-                                bounds="[0,1676][1080,1812]">
-                                <node index="0" text="" resource-id=""
-                                    class="android.widget.LinearLayout"
-                                    package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                                    checked="false" clickable="false" enabled="true"
-                                    focusable="false" focused="false" scrollable="false"
-                                    long-clickable="false" password="false" selected="false"
-                                    bounds="[0,1676][1080,1812]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.FrameLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="true"
-                                        enabled="true" focusable="true" focused="false"
-                                        scrollable="false" long-clickable="false" password="false"
-                                        selected="false" bounds="[0,1676][216,1812]"
-                                        autodroid:action="click" />
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false"
-                                        password="false" selected="false"
-                                        bounds="[68,1676][148,1812]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[68,1676][148,1758]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.ImageButton"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[69,1678][147,1756]" />
+                            <node index="2" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,1676][1080,1812]">
+                                <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[0,1676][1080,1812]">
+                                    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[0,1676][216,1812]" autodroid:action="click" />
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[68,1676][148,1812]">
+                                        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[68,1676][148,1758]">
+                                            <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" enabled="true" focusable="true" bounds="[69,1678][147,1756]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[68,1758][148,1812]">
-                                            <node index="0" text="首页" resource-id=""
-                                                class="android.widget.TextView"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[68,1758][148,1812]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[68,1758][148,1812]">
+                                            <node index="0" text="首页" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[68,1758][148,1812]" />
                                         </node>
                                     </node>
                                 </node>
-                                <node index="1" text="" resource-id=""
-                                    class="android.widget.FrameLayout"
-                                    package="com.tdx.androidCCZQ" content-desc=""
-                                    checkable="false" checked="false" clickable="true"
-                                    enabled="true" focusable="true" focused="false"
-                                    scrollable="false" long-clickable="false" password="false"
-                                    selected="false" bounds="[216,1676][432,1812]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false"
-                                        password="false" selected="false"
-                                        bounds="[284,1676][364,1812]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[284,1676][364,1758]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.ImageButton"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[285,1678][363,1756]" />
+                                <node index="1" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[216,1676][432,1812]">
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[284,1676][364,1812]">
+                                        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[284,1676][364,1758]">
+                                            <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" enabled="true" focusable="true" bounds="[285,1678][363,1756]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[284,1758][364,1812]">
-                                            <node index="0" text="行情" resource-id=""
-                                                class="android.widget.TextView"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[284,1758][364,1812]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[284,1758][364,1812]">
+                                            <node index="0" text="行情" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[284,1758][364,1812]" />
                                         </node>
                                     </node>
                                 </node>
-                                <node index="2" text="" resource-id=""
-                                    class="android.widget.FrameLayout"
-                                    package="com.tdx.androidCCZQ" content-desc=""
-                                    checkable="false" checked="false" clickable="true"
-                                    enabled="true" focusable="true" focused="false"
-                                    scrollable="false" long-clickable="false" password="false"
-                                    selected="false" bounds="[432,1676][648,1812]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false"
-                                        password="false" selected="false"
-                                        bounds="[500,1676][580,1812]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[500,1676][580,1758]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.ImageButton"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[501,1678][579,1756]" />
+                                <node index="2" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[432,1676][648,1812]">
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[500,1676][580,1812]">
+                                        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[500,1676][580,1758]">
+                                            <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" enabled="true" focusable="true" bounds="[501,1678][579,1756]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[500,1758][580,1812]">
-                                            <node index="0" text="交易" resource-id=""
-                                                class="android.widget.TextView"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[500,1758][580,1812]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[500,1758][580,1812]">
+                                            <node index="0" text="交易" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[500,1758][580,1812]" />
                                         </node>
                                     </node>
                                 </node>
-                                <node index="3" text="" resource-id=""
-                                    class="android.widget.FrameLayout"
-                                    package="com.tdx.androidCCZQ" content-desc=""
-                                    checkable="false" checked="false" clickable="true"
-                                    enabled="true" focusable="true" focused="false"
-                                    scrollable="false" long-clickable="false" password="false"
-                                    selected="false" bounds="[648,1676][864,1812]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false"
-                                        password="false" selected="false"
-                                        bounds="[716,1676][796,1812]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[716,1676][796,1758]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.ImageButton"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[717,1678][795,1756]" />
+                                <node index="3" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[648,1676][864,1812]">
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[716,1676][796,1812]">
+                                        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[716,1676][796,1758]">
+                                            <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" enabled="true" focusable="true" bounds="[717,1678][795,1756]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[716,1758][796,1812]">
-                                            <node index="0" text="商城" resource-id=""
-                                                class="android.widget.TextView"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[716,1758][796,1812]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[716,1758][796,1812]">
+                                            <node index="0" text="商城" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[716,1758][796,1812]" />
                                         </node>
                                     </node>
                                 </node>
-                                <node index="4" text="" resource-id=""
-                                    class="android.widget.FrameLayout"
-                                    package="com.tdx.androidCCZQ" content-desc=""
-                                    checkable="false" checked="false" clickable="true"
-                                    enabled="true" focusable="true" focused="false"
-                                    scrollable="false" long-clickable="false" password="false"
-                                    selected="false" bounds="[864,1676][1080,1812]">
-                                    <node index="0" text="" resource-id=""
-                                        class="android.widget.LinearLayout"
-                                        package="com.tdx.androidCCZQ" content-desc=""
-                                        checkable="false" checked="false" clickable="false"
-                                        enabled="true" focusable="false" focused="false"
-                                        scrollable="false" long-clickable="false"
-                                        password="false" selected="false"
-                                        bounds="[932,1676][1012,1812]">
-                                        <node index="0" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[932,1676][1012,1758]">
-                                            <node index="0" text="" resource-id=""
-                                                class="android.widget.ImageButton"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="true" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[933,1678][1011,1756]" />
+                                <node index="4" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[864,1676][1080,1812]">
+                                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[932,1676][1012,1812]">
+                                        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[932,1676][1012,1758]">
+                                            <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" enabled="true" focusable="true" bounds="[933,1678][1011,1756]" />
                                         </node>
-                                        <node index="1" text="" resource-id=""
-                                            class="android.widget.LinearLayout"
-                                            package="com.tdx.androidCCZQ" content-desc=""
-                                            checkable="false" checked="false" clickable="false"
-                                            enabled="true" focusable="false" focused="false"
-                                            scrollable="false" long-clickable="false"
-                                            password="false" selected="false"
-                                            bounds="[932,1758][1012,1812]">
-                                            <node index="0" text="我的" resource-id=""
-                                                class="android.widget.TextView"
-                                                package="com.tdx.androidCCZQ" content-desc=""
-                                                checkable="false" checked="false"
-                                                clickable="false" enabled="true"
-                                                focusable="false" focused="false"
-                                                scrollable="false" long-clickable="false"
-                                                password="false" selected="false"
-                                                bounds="[932,1758][1012,1812]" />
+                                        <node index="1" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[932,1758][1012,1812]">
+                                            <node index="0" text="我的" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[932,1758][1012,1812]" />
                                         </node>
                                     </node>
                                 </node>

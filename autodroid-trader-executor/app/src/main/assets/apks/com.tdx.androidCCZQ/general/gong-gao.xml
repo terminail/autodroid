@@ -1,73 +1,20 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<hierarchy rotation="0" xmlns:autodroid="https://autodroid.example.com">
-    <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-        package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-        clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-        long-clickable="false" password="false" selected="false" bounds="[81,333][999,1551]">
-        <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-            package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-            clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-            long-clickable="false" password="false" selected="false" bounds="[81,333][999,1551]">
-            <node index="0" text="" resource-id="android:id/content"
-                class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" content-desc=""
-                checkable="false" checked="false" clickable="false" enabled="true" focusable="false"
-                focused="false" scrollable="false" long-clickable="false" password="false"
-                selected="false" bounds="[81,333][999,1551]">
-                <node index="0" text="" resource-id="" class="android.widget.LinearLayout"
-                    package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-                    clickable="false" enabled="true" focusable="false" focused="false"
-                    scrollable="false" long-clickable="false" password="false" selected="false"
-                    bounds="[81,333][999,1551]">
-                    <node index="0" text="" resource-id="" class="android.widget.RelativeLayout"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[81,333][999,497]">
-                        <node index="0" text="公 告" resource-id="" class="android.widget.TextView"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="false" enabled="true" focusable="false"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[81,333][999,497]" />
+<hierarchy rotation="0"
+    xmlns:autodroid="https://autodroid.example.com">
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[81,333][999,1551]">
+        <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[81,333][999,1551]">
+            <node index="0" resource-id="android:id/content" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,333][999,1551]">
+                <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,333][999,1551]">
+                    <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,333][999,497]">
+                        <node index="0" text="公 告" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,333][999,497]" />
                     </node>
-                    <node index="1" text="" resource-id="" class="android.widget.TextView"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[81,497][999,499]" />
-                    <node index="2"
-                        text="    关于“国晟科技(603778)”“中信保诚双盈 LOF(165517)”证券交易的风险提示&#13;&#10;尊敬的投资者:&#13;&#10;    “国晟科技”(603778)近期股价累计涨幅较大。公司发布风险提示公告称，公司股价短期上涨幅度较大，存在市场情绪过热、非理性炒作风险，已明显高于同期行业及上证指数涨幅;公司2025年前三季度归属于上市公司股东的扣除非经常性损益的净利润-15,171.09万元;公司2025年10月14日披露的对外投资事项存在项目推进风险、经济效益不达预期风险、尚未实际经营的风险、流动性风险;公司2025年11月25日披露的股权收购事项存在业务整合风险、无法按照约定实现业绩承诺的风险、大客户依赖的风险、商誉减值的风险; 公司控股股东股份质押比例较高。敬请广大投资者注意投资风险。我司再次提醒投资者持续关注以上股票交易风险，审慎做出投资决策，谨慎、合规参与交易。上海证券交易所将对上述股票上的异常交易行为进行从严认定，如投资者因参与以上股票交易发生异常交易行为，上海证券交易所将视情况从重采取列为重点监控账户、暂停投资者账户交易、限制投资者账户交易等自律管理措施。&#13;&#10;    “中信保诚双盈 LOF(165517)”基金管理人近日发布提示公告，基金二级市场交易价格明显高于基金份额净值，出现较大幅度溢价，请投资者关注二级市场交易价格溢价风险。深圳证券交易所将对上述基金上的异常交易行为进行从严认定，并视情况从重采取自律监管措施。我司再次提醒投资者持续关注以上基金交易风险，审慎做出投资决策，谨慎、合规参与交易。&#13;&#10;    川财证券有限责任公司&#13;&#10;    2025年12月26日"
-                        resource-id="" class="android.widget.TextView" package="com.tdx.androidCCZQ"
-                        content-desc="" checkable="false" checked="false" clickable="true"
-                        enabled="true" focusable="true" focused="false" scrollable="false"
-                        long-clickable="true" password="false" selected="false"
-                        bounds="[81,499][999,1402]" />
-                    <node index="3" text="" resource-id="" class="android.widget.TextView"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[81,1402][999,1404]" />
-                    <node index="4" text="" resource-id="" class="android.widget.LinearLayout"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[81,1404][999,1551]">
-                        <node index="0" text="今日不再提醒" resource-id="" class="android.widget.TextView"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="true" enabled="true" focusable="true"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[81,1404][538,1551]"
-                            autodroid:action="click" />
-                        <node index="1" text="" resource-id="" class="android.widget.TextView"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="false" enabled="true" focusable="false"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[539,1404][541,1551]" />
-                        <node index="2" text="确定" resource-id="" class="android.widget.TextView"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="true" enabled="true" focusable="true"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[541,1404][999,1551]"
-                        />
+                    <node index="1" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,497][999,499]" />
+                    <node index="2" text="    关于“国晟科技(603778)”“中信保诚双盈 LOF(165517)”证券交易的风险提示&#13;&#10;尊敬的投资者:&#13;&#10;    “国晟科技”(603778)近期股价累计涨幅较大。公司发布风险提示公告称，公司股价短期上涨幅度较大，存在市场情绪过热、非理性炒作风险，已明显高于同期行业及上证指数涨幅;公司2025年前三季度归属于上市公司股东的扣除非经常性损益的净利润-15,171.09万元;公司2025年10月14日披露的对外投资事项存在项目推进风险、经济效益不达预期风险、尚未实际经营的风险、流动性风险;公司2025年11月25日披露的股权收购事项存在业务整合风险、无法按照约定实现业绩承诺的风险、大客户依赖的风险、商誉减值的风险; 公司控股股东股份质押比例较高。敬请广大投资者注意投资风险。我司再次提醒投资者持续关注以上股票交易风险，审慎做出投资决策，谨慎、合规参与交易。上海证券交易所将对上述股票上的异常交易行为进行从严认定，如投资者因参与以上股票交易发生异常交易行为，上海证券交易所将视情况从重采取列为重点监控账户、暂停投资者账户交易、限制投资者账户交易等自律管理措施。&#13;&#10;    “中信保诚双盈 LOF(165517)”基金管理人近日发布提示公告，基金二级市场交易价格明显高于基金份额净值，出现较大幅度溢价，请投资者关注二级市场交易价格溢价风险。深圳证券交易所将对上述基金上的异常交易行为进行从严认定，并视情况从重采取自律监管措施。我司再次提醒投资者持续关注以上基金交易风险，审慎做出投资决策，谨慎、合规参与交易。&#13;&#10;    川财证券有限责任公司&#13;&#10;    2025年12月26日" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" long-clickable="true" bounds="[81,499][999,1402]" />
+                    <node index="3" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,1402][999,1404]" />
+                    <node index="4" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[81,1404][999,1551]">
+                        <node index="0" text="今日不再提醒" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[81,1404][538,1551]" autodroid:action="click" />
+                        <node index="1" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" bounds="[539,1404][541,1551]" />
+                        <node index="2" text="确定" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[541,1404][999,1551]" />
                     </node>
                 </node>
             </node>

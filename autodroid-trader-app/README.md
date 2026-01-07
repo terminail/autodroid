@@ -1,6 +1,6 @@
-# Autodroid App
+# Autodroid Trader App
 
-Autodroid App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和批准否决交易计划tradeplan的管理应用。
+Autodroid Trader App 是 Autodroid Android 自动化系统的客户端应用，用于发现服务器、注册测试设备和批准否决交易计划tradeplan的管理应用。
 
 主要与autodroid-trader-server交互，主要功能包括：
 1. 发现服务器：通过Manual Set or Scan QRCode to find Autodroid服务器
@@ -61,7 +61,7 @@ cd 'd:/git/autodroid/autodroid-trader-app'; adb install app/build/outputs/apk/de
 
 ### 3. 启动应用
 
-在设备上找到 Autodroid App 图标，点击启动应用。
+在设备上找到 Autodroid Trader App 图标，点击启动应用。
 
 ## 运行测试
 

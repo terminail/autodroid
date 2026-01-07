@@ -1,67 +1,17 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<hierarchy rotation="0" xmlns:autodroid="https://autodroid.example.com">
-    <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-        package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-        clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-        long-clickable="false" password="false" selected="false" bounds="[145,513][934,1370]">
-        <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-            package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-            clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
-            long-clickable="false" password="false" selected="false" bounds="[145,513][934,1370]">
-            <node index="0" text="" resource-id="android:id/content"
-                class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" content-desc=""
-                checkable="false" checked="false" clickable="false" enabled="true" focusable="false"
-                focused="false" scrollable="false" long-clickable="false" password="false"
-                selected="false" bounds="[145,513][934,1370]">
-                <node index="0" text="" resource-id="" class="android.widget.FrameLayout"
-                    package="com.tdx.androidCCZQ" content-desc="" checkable="false" checked="false"
-                    clickable="true" enabled="true" focusable="true" focused="false"
-                    scrollable="false" long-clickable="false" password="false" selected="false"
-                    bounds="[145,513][934,1370]">
-                    <node index="0" text="" resource-id="" class="android.widget.LinearLayout"
-                        package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                        checked="false" clickable="false" enabled="true" focusable="false"
-                        focused="false" scrollable="false" long-clickable="false" password="false"
-                        selected="false" bounds="[145,513][934,1370]">
-                        <node index="0"
-                            text="您是否通过本手机接收我司重要信息和通知（包括条件单通知、共盈宝调仓信息、股票基金重要公告提示等）？选择不接收将无法收到推送信息"
-                            resource-id="com.tdx.androidCCZQ:id/title"
-                            class="android.widget.TextView" package="com.tdx.androidCCZQ"
-                            content-desc="" checkable="false" checked="false" clickable="false"
-                            enabled="true" focusable="false" focused="false" scrollable="false"
-                            long-clickable="false" password="false" selected="false"
-                            bounds="[145,603][934,1124]" />
-                        <node index="2" text="" resource-id="" class="android.view.View"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="false" enabled="true" focusable="false"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[145,1214][934,1217]" />
-                        <node index="3" text="" resource-id="" class="android.widget.LinearLayout"
-                            package="com.tdx.androidCCZQ" content-desc="" checkable="false"
-                            checked="false" clickable="false" enabled="true" focusable="false"
-                            focused="false" scrollable="false" long-clickable="false"
-                            password="false" selected="false" bounds="[145,1217][934,1370]">
-                            <node index="0" text="不接收"
-                                resource-id="com.tdx.androidCCZQ:id/negativeButton"
-                                class="android.widget.TextView" package="com.tdx.androidCCZQ"
-                                content-desc="" checkable="false" checked="false" clickable="true"
-                                enabled="true" focusable="true" focused="false" scrollable="false"
-                                long-clickable="false" password="false" selected="false"
-                                bounds="[145,1217][538,1370]" />
-                            <node index="1" text=""
-                                resource-id="com.tdx.androidCCZQ:id/btmSplitLine"
-                                class="android.view.View" package="com.tdx.androidCCZQ"
-                                content-desc="" checkable="false" checked="false" clickable="false"
-                                enabled="true" focusable="false" focused="false" scrollable="false"
-                                long-clickable="false" password="false" selected="false"
-                                bounds="[538,1217][541,1370]" />
-                            <node index="2" text="接收"
-                                resource-id="com.tdx.androidCCZQ:id/positiveButton"
-                                class="android.widget.TextView" package="com.tdx.androidCCZQ"
-                                content-desc="" checkable="false" checked="false" clickable="true"
-                                enabled="true" focusable="true" focused="false" scrollable="false"
-                                long-clickable="false" password="false" selected="false"
-                                bounds="[541,1217][934,1370]" autodroid:action="click" />
+<hierarchy rotation="0"
+    xmlns:autodroid="https://autodroid.example.com">
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[145,513][934,1370]">
+        <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[145,513][934,1370]">
+            <node index="0" resource-id="android:id/content" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[145,513][934,1370]">
+                <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[145,513][934,1370]">
+                    <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[145,513][934,1370]">
+                        <node index="0" text="您是否通过本手机接收我司重要信息和通知（包括条件单通知、共盈宝调仓信息、股票基金重要公告提示等）？选择不接收将无法收到推送信息" resource-id="com.tdx.androidCCZQ:id/title" class="android.widget.TextView" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[145,603][934,1124]" />
+                        <node index="2" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[145,1214][934,1217]" />
+                        <node index="3" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[145,1217][934,1370]">
+                            <node index="0" text="不接收" resource-id="com.tdx.androidCCZQ:id/negativeButton" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[145,1217][538,1370]" />
+                            <node index="1" resource-id="com.tdx.androidCCZQ:id/btmSplitLine" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" scrollable="false" bounds="[538,1217][541,1370]" />
+                            <node index="2" text="接收" resource-id="com.tdx.androidCCZQ:id/positiveButton" class="android.widget.TextView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" scrollable="false" bounds="[541,1217][934,1370]" autodroid:action="click" />
                         </node>
                     </node>
                 </node>

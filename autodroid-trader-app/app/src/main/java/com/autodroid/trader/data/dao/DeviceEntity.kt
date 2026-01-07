@@ -7,13 +7,13 @@ import androidx.room.PrimaryKey
  * 设备信息实体类
  * 用于Room数据库持久化存储设备信息
  * 镜像服务器端Device模型 (core/database/models.py)
- * 使用设备序列号作为主键，与adb devices和Appium保持一致
+ * 使用设备序列号作为主键，与adb devices和Uiautomator2保持一致
  */
 @Entity(tableName = "devices")
 data class DeviceEntity(
     // 设备基本信息 - 与服务器端保持一致
     @PrimaryKey
-    val serialNo: String, // 设备序列号，与adb devices和Appium保持一致，作为主键
+    val serialNo: String, // 设备序列号，与adb devices和Uiautomator2保持一致，作为主键
     val udid: String?=null, // 备用设备标识符，用于向后兼容
     val userId: String? = null, // 对应服务器端的user_id
     val name: String = "Unknown Device", // 对应服务器端的name

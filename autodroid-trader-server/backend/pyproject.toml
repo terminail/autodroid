@@ -39,8 +39,8 @@ dependencies = [
     "pytest==7.4.4",
     "pytest-asyncio==0.23.3",
 
-    # Appium 自动化测试
-    "appium-python-client==2.11.1",
+    # Uiautomator2 自动化测试
+    "uiautomator2==2.16.23",
 
 ]
 [project.scripts]

@@ -6,11 +6,11 @@ import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 
-class AppiumXmlParser {
-    private val TAG = "AppiumXmlParser"
+class Uiautomator2XmlParser {
+    private val TAG = "Uiautomator2XmlParser"
     
     /**
-     * 解析Appium XML文件，提取控件信息
+     * 解析Uiautomator2 XML文件，提取控件信息
      */
     fun parseXml(inputStream: InputStream): List<ControlInfo> {
         val allControls = mutableListOf<ControlInfo>()

@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # Appium Server Service
-  appium-server:
+  # Uiautomator2 Server Service
+  uiautomator2-server:
     image: appium/appium:latest
-    container_name: autodroid-appium
+    container_name: autodroid-uiautomator2
     ports:
       - "4723:4723"
     privileged: true
@@ -26,9 +26,9 @@ services:
       dockerfile: Dockerfile
     container_name: autodroid-core
     depends_on:
-      - appium-server
+      - uiautomator2-server
     environment:
-      - APPIUM_URL=http://appium-server:4723
+      - APPIUM_URL=http://uiautomator2-server:4723
       - WORKFLOWS_DIR=/app/workflows
       - MAX_CONCURRENT_TASKS=5
     ports:

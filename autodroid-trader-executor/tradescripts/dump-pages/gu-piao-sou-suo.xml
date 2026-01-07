@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+            <node index="0" resource-id="android:id/content" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                    <node index="0" resource-id="com.tdx.androidCCZQ:id/hqmainview" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                        <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                            <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                    <node index="0" class="android.webkit.WebView" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                        <node index="0" text="股票搜索" class="android.webkit.WebView" package="com.tdx.androidCCZQ" enabled="true" focusable="true" focused="true" scrollable="true" bounds="[0,0][1080,1812]">
+                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                <node index="0" resource-id="app" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                    <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                        <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,207]">
+                                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,72][1080,207]">
+                                                                <node NAF="true" index="0" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" bounds="[0,72][162,207]">
+                                                                    <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[66,111][123,168]" />
+                                                                </node>
+                                                                <node index="1" text="股票搜索" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[447,99][633,177]" />
+                                                            </node>
+                                                        </node>
+                                                        <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" scrollable="true" bounds="[0,0][1080,1812]">
+                                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" bounds="[69,231][1047,330]">
+                                                                <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" bounds="[69,243][117,315]">
+                                                                    <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[69,243][117,315]">
+                                                                        <node index="0" text="" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[69,243][117,315]" />
+                                                                    </node>
+                                                                </node>
+                                                                <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[126,243][1023,315]">
+                                                                    <node NAF="true" index="0" resource-id="searchBox" class="android.widget.EditText" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[126,243][1023,315]" />
+                                                                </node>
+                                                            </node>
+                                                            <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,357][1080,1812]">
+                                                                <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" scrollable="true" bounds="[0,357][1080,489]">
+                                                                    <node index="0" class="android.widget.TabWidget" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,357][1080,489]">
+                                                                        <node index="0" text="持仓股" resource-id="van-tabs-24-0" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" selected="true" bounds="[0,357][1080,489]" />
+                                                                        <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[516,480][564,489]" />
+                                                                    </node>
+                                                                </node>
+                                                                <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,486][1080,1812]">
+                                                                    <node index="0" text="持仓股" resource-id="van-tab-25" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[0,486][1080,1005]" />
+                                                                </node>
+                                                            </node>
+                                                        </node>
+                                                    </node>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </node>
+            </node>
+        </node>
+        <node index="1" resource-id="android:id/navigationBarBackground" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][0,0]" />
+    </node>
+</hierarchy>

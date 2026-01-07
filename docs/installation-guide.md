@@ -27,7 +27,7 @@ export ANDROID_HOME=$HOME/Android/Sdk
 export PATH=$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$PATH
 ```
 
-#### ADB Tools Installation (Appium-Free)
+#### ADB Tools Installation (Uiautomator2-Free)
 ```bash
 # Install Android platform tools (includes ADB)
 sdkmanager --install "platform-tools"
@@ -35,7 +35,7 @@ sdkmanager --install "platform-tools"
 # Verify ADB installation
 adb version
 
-# No Appium installation required - pure ADB automation!
+# No Uiautomator2 installation required - pure ADB automation!
 ```
 
 ### 1.2 Device Configuration
@@ -66,7 +66,7 @@ selected_app = selector.interactive_select()
 
 ### 2.2 Element Location Analysis
 
-#### Using ADB UIAutomator (Appium-Free)
+#### Using ADB UIAutomator (Uiautomator2-Free)
 1. Get UI hierarchy dump:
 ```bash
 adb shell uiautomator dump /sdcard/ui_dump.xml

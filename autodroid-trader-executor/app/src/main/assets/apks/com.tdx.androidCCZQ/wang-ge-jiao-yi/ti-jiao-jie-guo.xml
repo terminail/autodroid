@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0"
+    xmlns:autodroid="https://autodroid.example.com">
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+        <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+            <node index="0" resource-id="android:id/content" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                    <node index="0" resource-id="com.tdx.androidCCZQ:id/hqmainview" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                        <node index="0" class="android.widget.RelativeLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                            <node index="0" class="android.widget.LinearLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                    <node index="0" class="android.webkit.WebView" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                        <node index="0" text="提交结果" class="android.webkit.WebView" package="com.tdx.androidCCZQ" enabled="true" focusable="true" focused="true" scrollable="true" bounds="[0,0][1080,1812]" autodroid:fingerprint="true">
+                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                <node index="0" resource-id="app" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                    <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,1812]">
+                                                        <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][1080,207]">
+                                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,72][1080,207]">
+                                                                <node NAF="true" index="0" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" bounds="[0,72][162,207]">
+                                                                    <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[66,111][123,168]" />
+                                                                </node>
+                                                                <node index="1" text="提交结果" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[447,99][633,177]" />
+                                                            </node>
+                                                        </node>
+                                                        <node index="1" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,204][1080,1812]">
+                                                            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[453,717][627,891]">
+                                                                <node index="0" text="" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[453,717][627,891]" />
+                                                            </node>
+                                                            <node index="1" text="条件单修改成功" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[357,927][723,1008]" />
+                                                            <node index="2" text='请前往客服中心"设置"处打开"条件单通知"订阅开关以便收到推送消息' class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[135,1041][945,1167]" />
+                                                        </node>
+                                                        <node index="2" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,1587][1080,1812]">
+                                                            <node index="0" text="前往查看" class="android.widget.Button" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" bounds="[57,1635][1023,1764]" />
+                                                        </node>
+                                                    </node>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </node>
+            </node>
+        </node>
+        <node index="1" resource-id="android:id/navigationBarBackground" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" bounds="[0,0][0,0]" />
+    </node>
+</hierarchy>

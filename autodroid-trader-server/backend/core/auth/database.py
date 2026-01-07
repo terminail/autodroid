@@ -79,8 +79,9 @@ class AuthDatabase(BaseDatabase):
         except Exception:
             return None
     
-    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+    def authenticate_user(self, email: str, password: str) -> Optional[dict]:
         """用户认证"""
+        from playhouse.shortcuts import model_to_dict
         try:
             # 获取用户信息
             user = User.get(User.email == email)
@@ -94,18 +95,18 @@ class AuthDatabase(BaseDatabase):
             user.save()
             
             # 返回用户对象
-            return user
-            
+            return model_to_dict(user)
         except DoesNotExist:
             return None
         except Exception:
             return None
     
-    def get_user_by_id(self, user_id: str) -> Optional[User]:
+    def get_user_by_id(self, user_id: str) -> Optional[dict]:
         """根据ID获取用户信息"""
+        from playhouse.shortcuts import model_to_dict
         try:
             user = User.get(User.id == user_id)
-            return user
+            return model_to_dict(user)
         except DoesNotExist:
             return None
         except Exception:
@@ -121,11 +122,12 @@ class AuthDatabase(BaseDatabase):
         except Exception:
             return None
     
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    def get_user_by_email(self, email: str) -> Optional[dict]:
         """根据邮箱获取用户信息"""
+        from playhouse.shortcuts import model_to_dict
         try:
             user = User.get(User.email == email)
-            return user
+            return model_to_dict(user)
         except DoesNotExist:
             return None
         except Exception:

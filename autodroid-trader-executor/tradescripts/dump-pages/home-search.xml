@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy rotation="0">
+  <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,0][1080,1920]">
+    <node index="0" class="android.widget.ImageButton" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" visibleToUser="true" bounds="[22,73][157,208]" />
+    <node index="0" text="股票代码/首字母/名称" class="android.widget.EditText" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" focused="true" long-clickable="true" editable="true" visibleToUser="true" bounds="[179,95][1058,185]" />
+    <node index="0" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" visibleToUser="true" bounds="[201,111][258,168]" />
+    <node index="0" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" visibleToUser="true" bounds="[979,111][1036,168]" />
+    <node index="0" class="android.widget.FrameLayout" package="com.tdx.androidCCZQ" enabled="true" focusable="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+      <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+        <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+          <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+            <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+              <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" scrollable="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+                <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+                  <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[0,209][1080,1812]">
+                    <node index="0" text="搜索历史
+清空搜索历史" class="android.widget.ImageView" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" visibleToUser="true" bounds="[0,209][1080,583]">
+                      <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[32,355][1048,428]">
+                        <node index="0" class="android.view.View" package="com.tdx.androidCCZQ" enabled="true" visibleToUser="true" bounds="[32,355][1048,428]">
+                          <node index="0" text="美瑞新材" class="android.view.View" package="com.tdx.androidCCZQ" clickable="true" enabled="true" focusable="true" visibleToUser="true" bounds="[32,355][252,428]" />
+                        </node>
+                      </node>
+                    </node>
+                  </node>
+                </node>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
+    </node>
+  </node>
+</hierarchy>

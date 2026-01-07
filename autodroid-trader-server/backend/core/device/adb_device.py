@@ -1,12 +1,12 @@
 """ADB-based device utilities for Android automation.
 
-This module provides basic ADB operations that Appium doesn't directly expose:
+This module provides basic ADB operations that Uiautomator2 doesn't directly expose:
 - Device discovery (adb devices)
 - Device information retrieval (getprop, wm, settings)
 - Debug status checking
 - App installation check
 
-For UI automation, use Appium WebDriver API instead.
+For UI automation, use Uiautomator2 API instead.
 """
 
 import subprocess

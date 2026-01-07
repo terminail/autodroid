@@ -9,6 +9,18 @@ from pydantic import BaseModel
 from u2device import U2Device, ScreenUtils, calculate_center
 
 
+@dataclass
+class StepInfo:
+    """步骤信息类"""
+    step: int
+    action: str
+    element: 'ElementInfo'
+    name: Optional[str] = None
+    value: Optional[str] = None
+    save_to: Optional[str] = None
+    desc: Optional[str] = None
+
+
 class ActionType(Enum):
     CLICK = "click"
     INPUT = "input"
@@ -17,6 +29,7 @@ class ActionType(Enum):
     SWIPE = "swipe"
     VERIFY = "verify"
     PRESS_KEY = "press_key"
+    REDIRECT = "redirect"
 
 
 class ElementInfo(BaseModel):
@@ -35,17 +48,8 @@ class ElementInfo(BaseModel):
     bounds: str = ""
     id: Optional[str] = None
     index: int = 0
+    step_executed: bool = False  # 步骤是否已执行
 
-
-@dataclass
-class StepInfo:
-    step: int
-    action: str
-    element: ElementInfo
-    name: Optional[str] = None
-    value: Optional[str] = None
-    save_to: Optional[str] = None
-    desc: Optional[str] = None
 
 
 def exact_match(live_root: ET.Element, elem_info: Union[Dict, ElementInfo]) -> Tuple[Optional[ET.Element], str]:
@@ -107,9 +111,10 @@ class ElementMatcher:
 
 
 class ElementExecutor:
-    def __init__(self, device: U2Device):
+    def __init__(self, device: U2Device, page_matcher=None):
         self.device = device
         self.matcher = ElementMatcher()
+        self._page_matcher = page_matcher
 
     def execute_action(self, step_info: StepInfo, live_elem_obj) -> bool:
         action = step_info.action
@@ -124,6 +129,8 @@ class ElementExecutor:
             return self._execute_press_key(elem_name, elem_info, live_elem_obj, step_info.value)
         elif action == ActionType.GET_TEXT.value:
             return self._execute_get_text(step_info, live_elem_obj)
+        elif action == ActionType.REDIRECT.value:
+            return self._execute_redirect(elem_name, elem_info, live_elem_obj, step_info.value)
         else:
             print(f"  ⚠️ 不支持的动作: {action}")
             return False
@@ -134,7 +141,14 @@ class ElementExecutor:
                 print(f"  ⚠️ 元素不存在")
                 return False
             
-            text = live_elem_obj.info.get('text', '')
+            # Handle case where info might be a property or method
+            if hasattr(live_elem_obj.info, 'get'):
+                # info is a dictionary-like object
+                text = live_elem_obj.info.get('text', '')
+            else:
+                # info might be a property that returns a dictionary
+                info_dict = live_elem_obj.info if callable(live_elem_obj.info) else live_elem_obj.info
+                text = info_dict.get('text', '') if hasattr(info_dict, 'get') else ''
             if step_info.save_to and runtime_context:
                 runtime_context[step_info.save_to] = text
                 print(f"  ✓ 获取文本: [{text}] -> {step_info.save_to}")
@@ -147,22 +161,74 @@ class ElementExecutor:
 
     def _execute_click(self, elem_name: str, elem_info: ElementInfo, live_elem_obj) -> bool:
         try:
+            previous_page_id = self._page_matcher._current_page_id if hasattr(self, '_page_matcher') and self._page_matcher and hasattr(self._page_matcher, '_current_page_id') else None
+            
+            # First, try the direct element click
             live_elem_obj.click()
             if elem_info.name:
                 print(f"  ✓ 点击 [{elem_info.name}] [{elem_name}]")
             else:
                 print(f"  ✓ 点击 [{elem_name}]")
+            
+            time.sleep(0.8)
+            
+            if previous_page_id and hasattr(self, '_page_matcher') and self._page_matcher:
+                current_page_id, _, _ = self._page_matcher.identify_page(self.device)
+                if current_page_id and current_page_id != previous_page_id:
+                    print(f"  ⚠️ 点击后页面已跳转: {previous_page_id} -> {current_page_id}")
+                    return False
+            
             return True
         except Exception as e:
-            print(f"  ⚠️ 点击失败: {e}")
-            return False
+            print(f"  ⚠️ 直接点击失败: {e}")
+            # Fallback: use live element's real-time bounds to click
+            try:
+                print(f"  🔄 尝试使用实时bounds坐标点击")
+                # Get the live element's bounds
+                # Handle case where info might be a property or method
+                if hasattr(live_elem_obj.info, 'get'):
+                    # info is a dictionary-like object
+                    bounds = live_elem_obj.info.get('bounds', {})
+                else:
+                    # info might be a property that returns a dictionary
+                    info_dict = live_elem_obj.info if callable(live_elem_obj.info) else live_elem_obj.info
+                    bounds = info_dict.get('bounds', {}) if hasattr(info_dict, 'get') else {}
+                
+                if bounds:
+                    # Calculate center coordinates from bounds
+                    x1, y1, x2, y2 = bounds['left'], bounds['top'], bounds['right'], bounds['bottom']
+                    center_x = (x1 + x2) // 2
+                    center_y = (y1 + y2) // 2
+                    
+                    # Click at the center of the element
+                    self.device.d.click(center_x, center_y)
+                    if elem_info.name:
+                        print(f"  ✓ 使用坐标点击成功 [{elem_info.name}] [{elem_name}]")
+                    else:
+                        print(f"  ✓ 使用坐标点击成功 [{elem_name}]")
+                    
+                    time.sleep(0.8)
+                    
+                    if previous_page_id and hasattr(self, '_page_matcher') and self._page_matcher:
+                        current_page_id, _, _ = self._page_matcher.identify_page(self.device)
+                        if current_page_id and current_page_id != previous_page_id:
+                            print(f"  ⚠️ 点击后页面已跳转: {previous_page_id} -> {current_page_id}")
+                            return False
+                    
+                    return True
+                else:
+                    print(f"  ⚠️ 无法获取元素bounds信息")
+                    return False
+            except Exception as fallback_e:
+                print(f"  ⚠️ 使用bounds坐标点击也失败: {fallback_e}")
+                return False
 
     def _execute_input(self, elem_name: str, elem_info: ElementInfo, live_elem_obj, value: str) -> bool:
-        # 只使用Appium IME方法，禁用其他fallback方法以避免对话框
+        # 只使用Uiautomator2 IME方法，禁用其他fallback方法以避免对话框
         try:
             return self._safe_input_using_appium_ime(elem_name, elem_info, live_elem_obj, value)
         except Exception as e:
-            print(f"  ⚠️ Appium IME输入失败: {e}")
+            print(f"  ⚠️ Uiautomator2 IME输入失败: {e}")
             # 不再尝试其他方法，直接返回失败
             return False
     
@@ -197,7 +263,7 @@ class ElementExecutor:
         return False
 
     def _encode_modified_utf7(self, text: str) -> str:
-        """将文本编码为Modified UTF-7格式（Appium Unicode IME要求）"""
+        """将文本编码为Modified UTF-7格式（Uiautomator2 Unicode IME要求）"""
         # Modified UTF-7编码规则：
         # - 可打印ASCII字符（0x20-0x7E）保持不变，除了'&'
         # - '&' 编码为 '&-' 
@@ -249,7 +315,7 @@ class ElementExecutor:
         return ''.join(result)
 
     def _safe_input_using_appium_ime(self, elem_name: str, elem_info: ElementInfo, live_elem_obj, value: str) -> bool:
-        """使用Appium Settings的Unicode IME进行安全文本输入"""
+        """使用Uiautomator2的Unicode IME进行安全文本输入"""
         try:
             # 首先确保编辑框获得焦点（使用温和的方式）
             if live_elem_obj.exists:
@@ -262,18 +328,17 @@ class ElementExecutor:
                     import time
                     time.sleep(0.5)  # 等待较短时间确保焦点稳定
             
-            # 方法1: 尝试直接使用Appium IME的set_text方法
-            # 由于系统默认输入法已经是Appium IME，直接输入应该安全
+            # 方法1: 尝试直接使用Uiautomator2 IME的set_text方法
+            # 由于系统默认输入法已经是Uiautomator2 IME，直接输入应该安全
             try:
                 live_elem_obj.set_text(value)
                 time.sleep(0.3)
                 actual_text = live_elem_obj.get_text()
-                # 更灵活的验证：允许应用自动格式化文本（如去掉小数点）
                 if actual_text == value or self._is_text_input_acceptable(actual_text, value):
                     if elem_info.name:
-                        print(f"  ✓ 使用Appium IME直接输入 [{elem_info.name}] [{elem_name}]: {value} -> {actual_text}")
+                        print(f"  ✓ 使用Uiautomator2 IME直接输入 [{elem_info.name}] [{elem_name}]: {value} -> {actual_text}")
                     else:
-                        print(f"  ✓ 使用Appium IME直接输入 [{elem_name}]: {value} -> {actual_text}")
+                        print(f"  ✓ 使用Uiautomator2 IME直接输入 [{elem_name}]: {value} -> {actual_text}")
                     return True
                 else:
                     print(f"  ⚠️ 直接输入验证失败: 期望 '{value}', 实际 '{actual_text}'")
@@ -281,17 +346,13 @@ class ElementExecutor:
                 print(f"  ⚠️ 直接输入失败: {e1}")
             
             # 方法2: 如果直接输入失败，尝试使用Modified UTF-7编码
-            # 将文本编码为Modified UTF-7格式
             encoded_text = self._encode_modified_utf7(value)
             
-            # 清除原有文本并输入编码后的文本
             live_elem_obj.clear_text()
             live_elem_obj.set_text(encoded_text)
             
-            # 验证文本是否成功输入
             time.sleep(0.3)
             actual_text = live_elem_obj.get_text()
-            # 更灵活的验证：允许应用自动格式化文本
             if actual_text == value or self._is_text_input_acceptable(actual_text, value):
                 if elem_info.name:
                     print(f"  ✓ 使用Modified UTF-7编码输入 [{elem_info.name}] [{elem_name}]: {value} -> {actual_text}")
@@ -303,8 +364,8 @@ class ElementExecutor:
                 return False
             
         except Exception as e:
-            print(f"  ⚠️ Appium IME输入失败: {e}")
-            # 如果Appium IME不可用，抛出异常让上层处理
+            print(f"  ⚠️ Uiautomator2 IME输入失败: {e}")
+            # 如果Uiautomator2 IME不可用，抛出异常让上层处理
             raise
 
     def _execute_press_key(self, elem_name: str, elem_info: ElementInfo, live_elem_obj, value: str) -> bool:
@@ -317,6 +378,50 @@ class ElementExecutor:
             return True
         except Exception as e:
             print(f"  ⚠️ 按键失败: {e}")
+            return False
+
+    def _execute_redirect(self, elem_name: str, elem_info: ElementInfo, live_elem_obj, target_page_id: str) -> bool:
+        """执行重定向操作：点击后等待目标页面"""
+        try:
+            previous_page_id = None
+            if hasattr(self, '_page_matcher') and self._page_matcher and hasattr(self._page_matcher, '_current_page_id'):
+                previous_page_id = self._page_matcher._current_page_id
+            
+            print(f"  ⟶ 开始重定向: {elem_name} -> 等待页面: {target_page_id}")
+            
+            live_elem_obj.click()
+            if elem_info.name:
+                print(f"  ✓ 点击重定向元素 [{elem_info.name}] [{elem_name}]")
+            else:
+                print(f"  ✓ 点击重定向元素 [{elem_name}]")
+            
+            timeout = 15.0
+            poll_interval = 0.5
+            elapsed = 0.0
+            
+            while elapsed < timeout:
+                time.sleep(poll_interval)
+                elapsed += poll_interval
+                
+                current_page_id, _, _ = self._page_matcher.identify_page(self.device)
+                if current_page_id == target_page_id:
+                    # 检查目标页面是否有待执行的步骤
+                    next_elem_info = self._page_matcher._page_executor.get_next_elem_info(target_page_id) if hasattr(self._page_matcher, '_page_executor') else None
+                    if next_elem_info:
+                        step_info = next_elem_info.step or "未知"
+                        print(f"  ✓ 成功到达目标页面: {target_page_id}，准备执行第{step_info}步")
+                    else:
+                        print(f"  ✓ 成功到达目标页面: {target_page_id}，无待执行步骤")
+                    return True
+                
+                if previous_page_id and current_page_id and current_page_id != previous_page_id and current_page_id != target_page_id:
+                    print(f"  ⚠️ 页面跳转到非预期页面: {current_page_id} (期望: {target_page_id})")
+                    return False
+            
+            print(f"  ⚠️ 超时未到达目标页面: {target_page_id}")
+            return False
+        except Exception as e:
+            print(f"  ⚠️ 重定向失败: {e}")
             return False
 
 
