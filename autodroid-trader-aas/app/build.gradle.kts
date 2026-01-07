@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.autodroid.aas"
+    namespace = "com.autodroid.trader.aas"
     compileSdk = 36
     
     defaultConfig {
-        applicationId = "com.autodroid.aas"
+        applicationId = "com.autodroid.trader.aas"
         minSdk = 26
         versionCode = 1
         versionName = "1.0"

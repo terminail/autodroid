@@ -1,0 +1,57 @@
+package com.autodroid.trader.app.ui.dashboard
+
+sealed class DashboardItem(val type: Int) {
+    data class ItemServer(
+        val status: String = "Discovering servers...",
+        val serverStatus: String = "Disconnected",
+        val apiEndpoint: String = "-",
+        val discoveryMethod: String = "Auto Discovery",
+        val serverName: String = "-",
+        val hostname: String = "-",
+        val platform: String = "-",
+        val serverDiscoveryStatus: String = "等待扫描..."
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_SERVER)
+
+    data class ItemWiFi(
+        val ssid: String = "Not connected",
+        val bssid: String = "Unknown",
+        val signalStrength: Int = 0,
+        val frequency: Int = 0,
+        val ipAddress: String = "-",
+        val linkSpeed: Int = 0,
+        val isConnected: Boolean = false
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_WIFI)
+
+    data class ItemDevice(
+        val serialNo: String = "KNT-AL10-1234567890",
+        val userId: String = "user001",
+        val name: String = "KNT-AL10",
+        val platform: String = "Android",
+        val deviceModel: String = "KNT-AL10",
+        val deviceStatus: String = "在线",
+        val latestRegisteredTime: String = "2024-01-01 00:00:00",
+        val updatedAt: String = "2024-01-01 00:00:00",
+        val usbDebugEnabled: Boolean = false,
+        val wifiDebugEnabled: Boolean = false,
+        val debugCheckStatus: String = "UNKNOWN",
+        val debugCheckMessage: String? = null,
+        val apps: List<String> = emptyList()
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_DEVICE)
+
+    data class ItemPortRange(
+        val ipStart: String = "192.168.1.1",
+        val ipEnd: String = "192.168.1.255",
+        val portStart: Int = 8000,
+        val portEnd: Int = 8080
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_PORT_RANGE)
+
+    data class ItemTradePlan(
+        val status: String = "Loading trade plans...",
+        val executionStatus: String = "IDLE",
+        val pendingCount: Int = 0,
+        val approvedCount: Int = 0,
+        val rejectedCount: Int = 0,
+        val executedSuccessCount: Int = 0,
+        val executedFailedCount: Int = 0
+    ) : DashboardItem(DashboardAdapter.Companion.TYPE_TRADE_PLAN)
+}

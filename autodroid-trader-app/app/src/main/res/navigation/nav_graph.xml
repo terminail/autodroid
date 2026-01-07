@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/nav_trade_plans"
-        android:name="com.autodroid.trader.ui.tradeplans.TradePlansFragment"
+        android:name="com.autodroid.trader.app.ui.tradeplans.TradePlansFragment"
         android:label="Trade Plans">
         <action
             android:id="@+id/action_nav_tradeplans_to_tradeplanDetailFragment"
@@ -15,7 +15,7 @@
 
     <fragment
         android:id="@+id/nav_orders"
-        android:name="com.autodroid.trader.ui.tradeorders.TradeOrdersFragment"
+        android:name="com.autodroid.trader.app.ui.tradeorders.TradeOrdersFragment"
         android:label="Orders">
         <action
             android:id="@+id/action_nav_orders_to_orderDetailFragment"
@@ -24,19 +24,19 @@
 
     <fragment
         android:id="@+id/nav_dashboard"
-        android:name="com.autodroid.trader.ui.dashboard.DashboardFragment"
+        android:name="com.autodroid.trader.app.ui.dashboard.DashboardFragment"
         android:label="Dashboard">
     </fragment>
 
     <fragment
         android:id="@+id/nav_my"
-        android:name="com.autodroid.trader.ui.my.MyFragment"
+        android:name="com.autodroid.trader.app.ui.my.MyFragment"
         android:label="My" />
 
 
     <fragment
         android:id="@+id/tradeplanDetailFragment"
-        android:name="com.autodroid.trader.ui.tradeplan.TradePlanFragment"
+        android:name="com.autodroid.trader.app.ui.tradeplan.TradePlanFragment"
         android:label="Trade Plan Details">
         <argument
             android:name="tradeplan_id"
@@ -49,7 +49,7 @@
 
     <fragment
         android:id="@+id/orderDetailFragment"
-        android:name="com.autodroid.trader.ui.tradeorders.TradeOrderFragment"
+        android:name="com.autodroid.trader.app.ui.tradeorders.TradeOrderFragment"
         android:label="Order Details">
         <argument
             android:name="order_id"

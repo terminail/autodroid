@@ -1,0 +1,47 @@
+// BaseFragment.kt
+package com.autodroid.trader.app.ui
+
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import com.autodroid.trader.app.AppViewModel
+import com.autodroid.trader.app.MyApplication
+
+/**
+ * 统一的Fragment基类，提供标准化的生命周期管理和ViewModel初始化
+ */
+abstract class BaseFragment : Fragment() {
+    protected lateinit var appViewModel: AppViewModel
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initializeViewModel()
+    }
+    
+    /**
+     * 初始化全局的AppViewModel
+     * 子类可以重写此方法来自定义ViewModel初始化逻辑
+     */
+    protected open fun initializeViewModel() {
+        Log.d("BaseFragment", "initializeViewModel: 开始初始化 AppViewModel")
+        appViewModel = (requireActivity().application as MyApplication).getAppViewModel()
+        Log.d("BaseFragment", "initializeViewModel: AppViewModel 初始化完成")
+    }
+    
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(getLayoutId(), container, false)
+    }
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initViews(view)
+        setupObservers()
+    }
+    
+    protected abstract fun getLayoutId(): Int
+    protected abstract fun initViews(view: View)
+    protected abstract fun setupObservers()
+}
