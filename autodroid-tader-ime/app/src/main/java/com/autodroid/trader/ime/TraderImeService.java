@@ -55,6 +55,9 @@ public class TraderImeService extends AccessibilityService {
                     dumpDir.mkdirs();
                 }
 
+                // 清理旧的 dump 文件，避免文件堆积
+                cleanupOldDumpFiles(dumpDir);
+
                 File dumpFile = new File(dumpDir, fileName);
                 FileWriter writer = new FileWriter(dumpFile);
                 writer.write(jsonString);
@@ -74,6 +77,23 @@ public class TraderImeService extends AccessibilityService {
             }
         } else {
             Log.w(TAG, "Could not get root node for accessibility dump");
+        }
+    }
+
+    private void cleanupOldDumpFiles(File dumpDir) {
+        // 获取目录中的所有文件
+        File[] files = dumpDir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // 删除所有 .json 文件，但保留当前正在使用的 trader_ime_dump.json
+                if (file.getName().endsWith(".json") && !file.getName().equals("trader_ime_dump.json")) {
+                    if (file.delete()) {
+                        Log.d(TAG, "Deleted old dump file: " + file.getName());
+                    } else {
+                        Log.w(TAG, "Failed to delete old dump file: " + file.getName());
+                    }
+                }
+            }
         }
     }
 

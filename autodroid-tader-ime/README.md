@@ -20,7 +20,7 @@ Finally , AutoDroid Trader IME will be integrated into AutoDroid Trader App.
 3. 在设备上启用输入法：
    - 设置 -> 系统和更新 -> 语言和输入法 -> 当前输入法 -> AutoDroid Trader IME
 4. 在设备上启用辅助功能服务：
-   - 设置 -> 辅助功能 -> AutoDroid Trader Accessibility Service
+   - 设置 -> 辅助功能 -> Trader IME
 
 ## 使用
 
@@ -39,7 +39,7 @@ adb shell am broadcast -a com.autodroid.trader.ACCESSIBILITY_DUMP_REQUEST -n com
 ### 获取导出的 UI 结构文件
 要获取导出的 UI 结构文件到本地机器，请使用以下 ADB 命令：
 ```
-adb pull /data/user/0/com.autodroid.trader.ime/files/autodroid_dumps/trader_ime_dump.json
+adb shell "run-as com.autodroid.trader.ime cat /data/user/0/com.autodroid.trader.ime/files/autodroid_dumps/trader_ime_dump.json" > trader_ime_dump.json
 ```
 
 ## 注意事项
