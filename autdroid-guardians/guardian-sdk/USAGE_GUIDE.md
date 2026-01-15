@@ -187,25 +187,6 @@ override fun onPause() {
 }
 ```
 
-## 扩展功能
-
-### 自定义设置项
-
-应用可以扩展 SDK 的设置项：
-
-```kotlin
-val settingRepository = SettingRepository(database.settingDao())
-
-// 添加自定义设置项
-settingRepository.putString("custom_setting", "value", "自定义设置", "custom")
-
-// 读取自定义设置项
-val value = settingRepository.getString("custom_setting")
-```
-
-### 界面定制
-
-SDK 的界面组件支持主题定制，应用可以通过修改主题来改变界面外观。
 
 ## 故障排除
 

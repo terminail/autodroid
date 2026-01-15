@@ -3,11 +3,11 @@ package com.autodroid.guardiansdk.ui.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.data.model.GuardianInfo
-import de.hdodenhof.circleimageview.CircleImageView
 
 /**
  * 监护人列表适配器 - 根据监护人数量动态调整视图类型
@@ -67,7 +67,7 @@ class GuardianAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // ViewHolder for large card view
     class LargeCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val nameText: TextView = itemView.findViewById(R.id.tv_guardian_name)
-        private val avatarImage: CircleImageView = itemView.findViewById(R.id.iv_avatar)
+        private val avatarImage: ImageView = itemView.findViewById(R.id.iv_avatar)
         private val lastContactText: TextView = itemView.findViewById(R.id.tv_last_contact_time)
         private val locationText: TextView = itemView.findViewById(R.id.tv_location)
         private val alarmMessageText: TextView = itemView.findViewById(R.id.tv_alarm_message)
@@ -86,7 +86,7 @@ class GuardianAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // ViewHolder for list view (like WeChat)
     class ListViewViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val nameText: TextView = itemView.findViewById(R.id.tv_guardian_name)
-        private val avatarImage: CircleImageView = itemView.findViewById(R.id.iv_avatar)
+        private val avatarImage: ImageView = itemView.findViewById(R.id.iv_avatar)
         private val lastContactText: TextView = itemView.findViewById(R.id.tv_last_contact_time)
         private val locationText: TextView = itemView.findViewById(R.id.tv_location)
         private val alarmMessageText: TextView = itemView.findViewById(R.id.tv_alarm_message)
