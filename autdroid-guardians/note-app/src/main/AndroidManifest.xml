@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 权限声明 -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:name=".NoteApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="记事本"
+        android:theme="@style/Theme.NoteApp">
+        
+        <!-- 记事本主界面 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- SDK提供的隐秘设置界面 -->
+        <activity
+            android:name="com.autodroid.guardiansdk.ui.SettingActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.DeviceDefault.Dialog" />
+
+        <!-- SDK提供的浮动窗口服务 -->
+        <service
+            android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
+            android:exported="false" />
+
+        <!-- SDK提供的紧急服务 -->
+        <service
+            android:name="com.autodroid.guardiansdk.service.EmergencyService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- SDK提供的无障碍服务 -->
+        <service
+            android:name="com.autodroid.guardiansdk.service.GuardianAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- SDK提供的短信接收器 -->
+        <receiver
+            android:name="com.autodroid.guardiansdk.receiver.SmsReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

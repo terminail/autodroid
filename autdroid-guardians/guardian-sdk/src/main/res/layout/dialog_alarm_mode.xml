@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择报警模式"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp" />
+
+    <RadioGroup
+        android:id="@+id/rgAlarmMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/rbSmsMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="短信报警" />
+
+        <RadioButton
+            android:id="@+id/rbCallMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="电话报警" />
+
+        <RadioButton
+            android:id="@+id/rbBothMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="短信+电话" />
+
+    </RadioGroup>
+
+</LinearLayout>

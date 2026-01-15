@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 图标 -->
+    <ImageView
+        android:id="@+id/iv_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_test_mode"
+        android:layout_marginEnd="16dp" />
+
+    <!-- 内容区域 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="测试模式"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black" />
+
+        <!-- 模式状态 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <!-- 当前模式 -->
+            <TextView
+                android:id="@+id/tv_current_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="实战模式"
+                android:textSize="12sp"
+                android:textColor="@android:color/holo_red_dark"
+                android:background="@drawable/bg_status_real"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp" />
+
+            <!-- 练习次数 -->
+            <TextView
+                android:id="@+id/tv_practice_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="练习15次"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- 最后练习时间 -->
+        <TextView
+            android:id="@+id/tv_last_practice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="最后练习：今天 10:20"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="4dp" />
+
+        <!-- 模式说明 -->
+        <TextView
+            android:id="@+id/tv_mode_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="当前为实战模式，操作将真实发送报警短信"
+            android:textSize="10sp"
+            android:textColor="@android:color/holo_red_dark"
+            android:layout_marginTop="4dp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+    </LinearLayout>
+
+    <!-- 右侧箭头 -->
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_arrow_right"
+        android:layout_gravity="center_vertical" />
+
+</LinearLayout>
