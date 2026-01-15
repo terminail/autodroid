@@ -23,6 +23,13 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
+        <Button
+            android:id="@+id/btnOpenSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="打开 Guardian SDK 设置" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewNotes"
             android:layout_width="match_parent"

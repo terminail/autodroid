@@ -14,6 +14,7 @@ import com.autodroid.note.data.database.NoteDatabase
 import com.autodroid.note.data.repository.NoteRepository
 import com.autodroid.note.model.Note
 import com.autodroid.note.ui.editor.NoteEditorActivity
+import android.widget.Button
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var noteAdapter: NoteAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var fabAddNote: FloatingActionButton
+    private lateinit var btnOpenSettings: Button
     private lateinit var noteRepository: NoteRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupViews() {
         recyclerView = findViewById(R.id.recyclerViewNotes)
         fabAddNote = findViewById(R.id.fabAddNote)
+        btnOpenSettings = findViewById(R.id.btnOpenSettings)
 
         noteAdapter = NoteAdapter(
             onNoteClick = { note ->
@@ -66,6 +69,11 @@ class MainActivity : AppCompatActivity() {
             // Open editor to create a new note
             val intent = Intent(this, NoteEditorActivity::class.java)
             startActivity(intent)
+        }
+
+        btnOpenSettings.setOnClickListener {
+            // Open Guardian SDK settings
+            GuardianSdk.getInstance().startSettingActivity()
         }
     }
 
