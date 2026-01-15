@@ -1,7 +1,10 @@
 package com.autodroid.guardiansdk
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.data.repository.SettingRepository
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +118,34 @@ class GuardianSdk private constructor(private val context: Context) {
      */
     fun getEmergencyContactsFragment(): androidx.fragment.app.Fragment {
         return com.autodroid.guardiansdk.ui.settings.SettingFragment.newInstance()
+    }
+    
+    /**
+     * 检查无障碍服务是否已启用
+     */
+    fun isAccessibilityServiceEnabled(): Boolean {
+        val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        
+        for (service in enabledServices) {
+            if (service.id.contains(context.packageName)) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    /**
+     * 打开无障碍服务设置页面
+     */
+    fun openAccessibilitySettings() {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
 

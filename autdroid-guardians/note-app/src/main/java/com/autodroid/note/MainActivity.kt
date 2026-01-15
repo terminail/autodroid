@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_CODE_OVERLAY_PERMISSION = 1001
+        private const val REQUEST_CODE_ACCESSIBILITY_SETTINGS = 1002
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,11 +93,20 @@ class MainActivity : AppCompatActivity() {
             if (!Settings.canDrawOverlays(this)) {
                 showOverlayPermissionDialog()
             } else {
-                // 已有权限，启动浮动窗口服务
-                GuardianSdk.getInstance().startFloatingWindowService()
+                // 已有权限，检查无障碍服务
+                checkAndRequestAccessibilityService()
             }
         } else {
-            // Android 6.0 以下不需要权限
+            // Android 6.0 以下不需要权限，检查无障碍服务
+            checkAndRequestAccessibilityService()
+        }
+    }
+
+    private fun checkAndRequestAccessibilityService() {
+        if (!GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+            showAccessibilityServiceDialog()
+        } else {
+            // 无障碍服务已启用，启动浮动窗口服务
             GuardianSdk.getInstance().startFloatingWindowService()
         }
     }
@@ -107,6 +117,18 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Guardian SDK 需要悬浮窗权限才能显示浮动报警按钮。请前往设置开启权限。")
             .setPositiveButton("去设置") { _, _ ->
                 openOverlayPermissionSettings()
+            }
+            .setNegativeButton("取消", null)
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showAccessibilityServiceDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要无障碍服务")
+            .setMessage("Guardian SDK 需要无障碍服务权限才能监听按键和屏幕事件。请前往设置开启无障碍服务。")
+            .setPositiveButton("去设置") { _, _ ->
+                openAccessibilitySettings()
             }
             .setNegativeButton("取消", null)
             .setCancelable(false)
@@ -127,17 +149,30 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
     }
 
+    private fun openAccessibilitySettings() {
+        GuardianSdk.getInstance().openAccessibilitySettings()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(this)) {
-                    // 用户已授权，启动浮动窗口服务
-                    GuardianSdk.getInstance().startFloatingWindowService()
+                    // 用户已授权，检查无障碍服务
+                    checkAndRequestAccessibilityService()
                 } else {
                     // 用户未授权，再次提示
                     showOverlayPermissionDialog()
                 }
+            }
+        } else if (requestCode == REQUEST_CODE_ACCESSIBILITY_SETTINGS) {
+            // 从无障碍设置返回，检查是否已启用
+            if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+                // 无障碍服务已启用，启动浮动窗口服务
+                GuardianSdk.getInstance().startFloatingWindowService()
+            } else {
+                // 用户未启用，再次提示
+                showAccessibilityServiceDialog()
             }
         }
     }
@@ -186,6 +221,14 @@ class MainActivity : AppCompatActivity() {
         // 检查悬浮窗权限，如果有权限但服务未启动，则启动服务
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Settings.canDrawOverlays(this)) {
+                // 检查无障碍服务
+                if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+                    GuardianSdk.getInstance().startFloatingWindowService()
+                }
+            }
+        } else {
+            // Android 6.0 以下不需要权限，检查无障碍服务
+            if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
                 GuardianSdk.getInstance().startFloatingWindowService()
             }
         }
