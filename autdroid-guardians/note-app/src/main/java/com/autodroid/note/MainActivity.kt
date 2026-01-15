@@ -34,6 +34,9 @@ class MainActivity : AppCompatActivity() {
         // 初始化 Guardian SDK
         GuardianSdk.initialize(this)
 
+        // 启动浮动窗口服务
+        GuardianSdk.getInstance().startFloatingWindowService()
+
         // Initialize database and repository
         val database = NoteDatabase.getDatabase(this)
         noteRepository = NoteRepository(database.noteDao())

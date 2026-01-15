@@ -67,18 +67,24 @@ class GuardianSdk private constructor(private val context: Context) {
      * 启动浮动窗口服务
      */
     fun startFloatingWindowService() {
-        // 启动浮动窗口服务
-        // val intent = Intent(context, FloatingWindowService::class.java)
-        // context.startService(intent)
+        try {
+            val intent = Intent(context, com.autodroid.guardiansdk.service.FloatingWindowService::class.java)
+            context.startService(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     /**
      * 停止浮动窗口服务
      */
     fun stopFloatingWindowService() {
-        // 停止浮动窗口服务
-        // val intent = Intent(context, FloatingWindowService::class.java)
-        // context.stopService(intent)
+        try {
+            val intent = Intent(context, com.autodroid.guardiansdk.service.FloatingWindowService::class.java)
+            context.stopService(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     /**
