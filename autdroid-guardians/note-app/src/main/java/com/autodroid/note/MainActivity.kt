@@ -31,6 +31,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenSettings: Button
     private lateinit var noteRepository: NoteRepository
 
+    private var overlayPermissionDialog: AlertDialog? = null
+    private var accessibilityServiceDialog: AlertDialog? = null
+
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -135,7 +138,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showOverlayPermissionDialog() {
-        AlertDialog.Builder(this)
+        overlayPermissionDialog?.dismiss()
+        overlayPermissionDialog = AlertDialog.Builder(this)
             .setTitle("需要悬浮窗权限")
             .setMessage("Guardian SDK 需要悬浮窗权限才能显示浮动报警按钮。请前往设置开启权限。")
             .setPositiveButton("去设置") { _, _ ->
@@ -147,7 +151,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAccessibilityServiceDialog() {
-        AlertDialog.Builder(this)
+        accessibilityServiceDialog?.dismiss()
+        accessibilityServiceDialog = AlertDialog.Builder(this)
             .setTitle("需要无障碍服务")
             .setMessage("Guardian SDK 需要无障碍服务权限才能监听按键和屏幕事件。请前往设置开启无障碍服务。")
             .setPositiveButton("去设置") { _, _ ->
