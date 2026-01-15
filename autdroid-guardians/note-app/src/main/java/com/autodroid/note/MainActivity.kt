@@ -180,8 +180,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openAccessibilitySettings() {
-        GuardianSdk.getInstance().openAccessibilitySettings()
-        accessibilitySettingsLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        accessibilitySettingsLauncher.launch(intent)
     }
 
     private fun loadNotes() {
