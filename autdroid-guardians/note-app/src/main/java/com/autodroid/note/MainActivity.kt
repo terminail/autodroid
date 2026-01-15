@@ -142,7 +142,8 @@ class MainActivity : AppCompatActivity() {
         overlayPermissionDialog = AlertDialog.Builder(this)
             .setTitle("需要悬浮窗权限")
             .setMessage("Guardian SDK 需要悬浮窗权限才能显示浮动报警按钮。请前往设置开启权限。")
-            .setPositiveButton("去设置") { _, _ ->
+            .setPositiveButton("去设置") { dialog, _ ->
+                dialog.dismiss()
                 openOverlayPermissionSettings()
             }
             .setNegativeButton("取消", null)
@@ -155,7 +156,8 @@ class MainActivity : AppCompatActivity() {
         accessibilityServiceDialog = AlertDialog.Builder(this)
             .setTitle("需要无障碍服务")
             .setMessage("Guardian SDK 需要无障碍服务权限才能监听按键和屏幕事件。请前往设置开启无障碍服务。")
-            .setPositiveButton("去设置") { _, _ ->
+            .setPositiveButton("去设置") { dialog, _ ->
+                dialog.dismiss()
                 openAccessibilitySettings()
             }
             .setNegativeButton("取消", null)
