@@ -43,6 +43,7 @@
         <service
             android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
             android:process=":guardian"
+            android:label="Guardians"
             android:exported="false" />
 
         <!-- SDK提供的紧急服务 -->
