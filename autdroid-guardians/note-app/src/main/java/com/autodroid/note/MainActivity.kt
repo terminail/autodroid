@@ -1,7 +1,10 @@
 package com.autodroid.note
 
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
@@ -27,6 +30,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenSettings: Button
     private lateinit var noteRepository: NoteRepository
 
+    companion object {
+        private const val REQUEST_CODE_OVERLAY_PERMISSION = 1001
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -34,8 +41,8 @@ class MainActivity : AppCompatActivity() {
         // 初始化 Guardian SDK
         GuardianSdk.initialize(this)
 
-        // 启动浮动窗口服务
-        GuardianSdk.getInstance().startFloatingWindowService()
+        // 检查并请求悬浮窗权限
+        checkAndRequestOverlayPermission()
 
         // Initialize database and repository
         val database = NoteDatabase.getDatabase(this)
@@ -80,6 +87,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun checkAndRequestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                showOverlayPermissionDialog()
+            } else {
+                // 已有权限，启动浮动窗口服务
+                GuardianSdk.getInstance().startFloatingWindowService()
+            }
+        } else {
+            // Android 6.0 以下不需要权限
+            GuardianSdk.getInstance().startFloatingWindowService()
+        }
+    }
+
+    private fun showOverlayPermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要悬浮窗权限")
+            .setMessage("Guardian SDK 需要悬浮窗权限才能显示浮动报警按钮。请前往设置开启权限。")
+            .setPositiveButton("去设置") { _, _ ->
+                openOverlayPermissionSettings()
+            }
+            .setNegativeButton("取消", null)
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun openOverlayPermissionSettings() {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+        } else {
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+        }
+        startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+                    // 用户已授权，启动浮动窗口服务
+                    GuardianSdk.getInstance().startFloatingWindowService()
+                } else {
+                    // 用户未授权，再次提示
+                    showOverlayPermissionDialog()
+                }
+            }
+        }
+    }
+
     private fun loadNotes() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -120,6 +182,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadNotes() // Reload notes when returning to main activity
+        
+        // 检查悬浮窗权限，如果有权限但服务未启动，则启动服务
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Settings.canDrawOverlays(this)) {
+                GuardianSdk.getInstance().startFloatingWindowService()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
