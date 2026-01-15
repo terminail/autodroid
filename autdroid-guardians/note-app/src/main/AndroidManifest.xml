@@ -42,6 +42,7 @@
         <!-- SDK提供的浮动窗口服务 -->
         <service
             android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
+            android:process=":guardian"
             android:exported="false" />
 
         <!-- SDK提供的紧急服务 -->
