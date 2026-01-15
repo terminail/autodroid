@@ -1,28 +1,17 @@
 package com.autodroid.guardiansdk
 
 import android.app.Application
-import android.content.Context
 import com.autodroid.guardiansdk.data.model.GuardianInfo
 
+/**
+ * Application class for Guardian SDK
+ * Used for initializing any global components
+ */
 class GuardianApplication : Application() {
-
-    companion object {
-        private var instance: GuardianApplication? = null
-
-        fun getInstance(): GuardianApplication {
-            return instance ?: throw IllegalStateException("GuardianApplication not initialized")
-        }
-
-        fun getContext(): Context {
-            return instance?.applicationContext
-                ?: throw IllegalStateException("GuardianApplication not initialized")
-        }
-    }
 
     override fun onCreate() {
         super.onCreate()
-        instance = this
-
+        
         // Initialize mock data for testing
         initializeMockData()
     }
