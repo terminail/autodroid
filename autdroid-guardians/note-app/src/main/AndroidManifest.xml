@@ -17,7 +17,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="记事本"
         android:theme="@style/Theme.NoteApp">
-        
+
         <!-- 记事本主界面 -->
         <activity
             android:name=".MainActivity"
@@ -27,6 +27,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 笔记编辑界面 -->
+        <activity
+            android:name=".ui.editor.NoteEditorActivity"
+            android:exported="false" />
 
         <!-- SDK提供的隐秘设置界面 -->
         <activity
