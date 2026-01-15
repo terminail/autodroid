@@ -221,6 +221,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        
+        // 关闭所有对话框
+        overlayPermissionDialog?.dismiss()
+        accessibilityServiceDialog?.dismiss()
+        
         loadNotes() // Reload notes when returning to main activity
         
         // 检查悬浮窗权限，如果有权限但服务未启动，则启动服务
