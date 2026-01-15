@@ -12,6 +12,7 @@ import com.autodroid.guardiansdk.GuardianSdk
 import com.autodroid.note.adapter.NoteAdapter
 import com.autodroid.note.data.database.NoteDatabase
 import com.autodroid.note.data.repository.NoteRepository
+import com.autodroid.note.model.Note
 import com.autodroid.note.ui.editor.NoteEditorActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
