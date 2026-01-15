@@ -4,16 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import androidx.fragment.app.Fragment
-import com.autodroid.guardiansdk.databinding.FragmentEmergencyContactDetailBinding
+import com.autodroid.guardiansdk.R
 
 /**
  * 紧急联系人详细设置页面
  */
 class EmergencyContactDetailFragment : Fragment() {
-
-    private var _binding: FragmentEmergencyContactDetailBinding? = null
-    private val binding get() = _binding!!
 
     companion object {
         fun newInstance() = EmergencyContactDetailFragment()
@@ -23,25 +21,27 @@ class EmergencyContactDetailFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentEmergencyContactDetailBinding.inflate(inflater, container, false)
-        return binding.root
+    ): View? {
+        return inflater.inflate(R.layout.guardian_fragment_emergency_contact_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        setupViews()
+        setupViews(view)
         loadContactData()
     }
 
-    private fun setupViews() {
-        binding.btnAddContact.setOnClickListener {
+    private fun setupViews(view: View) {
+        val btnAddContact = view.findViewById<Button>(R.id.btnAddContact)
+        val btnSyncPasswordBook = view.findViewById<Button>(R.id.btnSyncPasswordBook)
+        
+        btnAddContact.setOnClickListener {
             // 打开添加联系人对话框
             showAddContactDialog()
         }
         
-        binding.btnSyncPasswordBook.setOnClickListener {
+        btnSyncPasswordBook.setOnClickListener {
             // 同步密码本
             syncPasswordBook()
         }
@@ -61,6 +61,5 @@ class EmergencyContactDetailFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
     }
 }

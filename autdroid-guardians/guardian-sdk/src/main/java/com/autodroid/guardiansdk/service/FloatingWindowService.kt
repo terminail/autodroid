@@ -68,7 +68,7 @@ class FloatingWindowService : Service() {
         }
         
         try {
-            floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_window, null)
+            floatingView = LayoutInflater.from(this).inflate(R.layout.guardian_layout_floating_window, null)
             floatingButton = floatingView?.findViewById(R.id.floatingButton)
             
             val params = WindowManager.LayoutParams(

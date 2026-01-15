@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <CheckBox
+        android:id="@+id/cb_door_passphrase_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启用短信开门密语功能"
+        android:layout_marginBottom="16dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:hint="短信开门密语（短信内容）">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_door_passphrase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="open_door" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="说明：当收到包含上述密语的短信时，应用将自动打开主界面。"
+        android:textSize="12sp"
+        android:textColor="@color/guardian_gray" />
+
+</LinearLayout>

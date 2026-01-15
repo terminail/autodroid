@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
-import com.autodroid.guardiansdk.databinding.FragmentSettingBinding
 import com.autodroid.guardiansdk.ui.settings.adapter.SettingAdapter
 import com.autodroid.guardiansdk.ui.settings.model.SettingItem
 
@@ -19,8 +19,7 @@ import com.autodroid.guardiansdk.ui.settings.model.SettingItem
  */
 class SettingFragment : Fragment() {
 
-    private var _binding: FragmentSettingBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var recyclerView: RecyclerView
     private lateinit var settingAdapter: SettingAdapter
 
     companion object {
@@ -31,22 +30,22 @@ class SettingFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentSettingBinding.inflate(inflater, container, false)
-        return binding.root
+    ): View? {
+        return inflater.inflate(R.layout.guardian_fragment_setting, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupRecyclerView()
+        setupRecyclerView(view)
         loadSettingItems()
     }
 
     /**
      * 设置RecyclerView
      */
-    private fun setupRecyclerView() {
+    private fun setupRecyclerView(view: View) {
+        recyclerView = view.findViewById(R.id.recyclerView)
         settingAdapter = SettingAdapter()
         settingAdapter.setOnItemClickListener(object : SettingAdapter.OnItemClickListener {
             override fun onMyGuardianClick(index: Int) {
@@ -86,7 +85,7 @@ class SettingFragment : Fragment() {
             }
         })
 
-        binding.recyclerView.apply {
+        recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = settingAdapter
         }
@@ -148,7 +147,7 @@ class SettingFragment : Fragment() {
      */
     private fun showMyGuardianDialog(index: Int) {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_my_guardian, null)
+            .inflate(R.layout.guardian_dialog_my_guardian, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("我的监护人${index}")
@@ -169,7 +168,7 @@ class SettingFragment : Fragment() {
      */
     private fun showVolumeKeyAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_volume_key_alarm_mode, null)
+            .inflate(R.layout.guardian_dialog_volume_key_alarm_mode, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("音量键报警模式设置")
@@ -190,7 +189,7 @@ class SettingFragment : Fragment() {
      */
     private fun showFloatingWindowAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_floating_window_alarm_mode, null)
+            .inflate(R.layout.guardian_dialog_floating_window_alarm_mode, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("浮动窗口报警模式设置")
@@ -211,7 +210,7 @@ class SettingFragment : Fragment() {
      */
     private fun showShakePhoneAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_shake_phone_alarm_mode, null)
+            .inflate(R.layout.guardian_dialog_shake_phone_alarm_mode, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("摇动手机报警模式设置")
@@ -232,7 +231,7 @@ class SettingFragment : Fragment() {
      */
     private fun showPasswordBookDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_password_book, null)
+            .inflate(R.layout.guardian_dialog_password_book, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("位置密码本设置")
@@ -253,7 +252,7 @@ class SettingFragment : Fragment() {
      */
     private fun showFloatingWindowDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_floating_window, null)
+            .inflate(R.layout.guardian_dialog_floating_window, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("浮动窗口设置")
@@ -274,7 +273,7 @@ class SettingFragment : Fragment() {
      */
     private fun showWipeAlarmInfoDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_wipe_alarm_info, null)
+            .inflate(R.layout.guardian_dialog_wipe_alarm_info, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("擦除报警信息设置")
@@ -291,17 +290,17 @@ class SettingFragment : Fragment() {
     }
 
     /**
-     * 显示开门密语设置对话框
+     * 显示短信开门密语设置对话框
      */
     private fun showDoorPassphraseDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_door_passphrase, null)
+            .inflate(R.layout.guardian_dialog_door_passphrase, null)
 
         AlertDialog.Builder(requireContext())
-            .setTitle("开门密语设置")
+            .setTitle("短信开门密语设置")
             .setView(dialogView)
             .setPositiveButton("保存") { dialog, _ ->
-                // 保存开门密语设置
+                // 保存短信开门密语设置
                 saveDoorPassphraseSettings(dialogView)
                 dialog.dismiss()
             }
@@ -316,7 +315,7 @@ class SettingFragment : Fragment() {
      */
     private fun showTestModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_test_mode, null)
+            .inflate(R.layout.guardian_dialog_test_mode, null)
 
         AlertDialog.Builder(requireContext())
             .setTitle("测试模式设置")
@@ -345,6 +344,5 @@ class SettingFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
     }
 }

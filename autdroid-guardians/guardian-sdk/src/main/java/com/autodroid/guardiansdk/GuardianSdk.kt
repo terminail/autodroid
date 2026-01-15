@@ -61,7 +61,7 @@ class GuardianSdk private constructor(private val context: Context) {
      * 启动设置界面
      */
     fun startSettingActivity() {
-        val intent = Intent(context, com.autodroid.guardiansdk.ui.SettingActivity::class.java)
+        val intent = Intent(context, com.autodroid.guardiansdk.ui.GuardianActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     }

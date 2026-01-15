@@ -74,47 +74,47 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             TYPE_MY_GUARDIAN -> {
-                val view = inflater.inflate(R.layout.item_my_guardian, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_my_guardian, parent, false)
                 MyGuardianViewHolder(view)
             }
             TYPE_VOLUME_KEY_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.item_volume_key_alarm_mode, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_volume_key_alarm_mode, parent, false)
                 VolumeKeyAlarmModeViewHolder(view)
             }
             TYPE_FLOATING_WINDOW_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.item_floating_window_alarm_mode, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_floating_window_alarm_mode, parent, false)
                 FloatingWindowAlarmModeViewHolder(view)
             }
             TYPE_SHAKE_PHONE_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.item_shake_phone_alarm_mode, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_shake_phone_alarm_mode, parent, false)
                 ShakePhoneAlarmModeViewHolder(view)
             }
             TYPE_PASSWORD_BOOK -> {
-                val view = inflater.inflate(R.layout.item_password_book, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_password_book, parent, false)
                 PasswordBookViewHolder(view)
             }
             TYPE_FLOATING_WINDOW -> {
-                val view = inflater.inflate(R.layout.item_floating_window, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_floating_window, parent, false)
                 FloatingWindowViewHolder(view)
             }
             TYPE_WIPE_ALARM_INFO -> {
-                val view = inflater.inflate(R.layout.item_wipe_alarm_info, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_wipe_alarm_info, parent, false)
                 WipeAlarmInfoViewHolder(view)
             }
             TYPE_DOOR_PASSPHRASE -> {
-                val view = inflater.inflate(R.layout.item_door_passphrase, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_door_passphrase, parent, false)
                 DoorPassphraseViewHolder(view)
             }
             TYPE_TEST_MODE -> {
-                val view = inflater.inflate(R.layout.item_test_mode, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_test_mode, parent, false)
                 TestModeViewHolder(view)
             }
             TYPE_ALARM_HISTORY -> {
-                val view = inflater.inflate(R.layout.item_alarm_history, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_alarm_history, parent, false)
                 AlarmHistoryViewHolder(view)
             }
             TYPE_GUARDIAN_QUERY_HISTORY -> {
-                val view = inflater.inflate(R.layout.item_guardian_query_history, parent, false)
+                val view = inflater.inflate(R.layout.guardian_item_guardian_query_history, parent, false)
                 GuardianQueryHistoryViewHolder(view)
             }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
@@ -221,7 +221,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
 
         fun bind(item: SettingItem.DoorPassphrase, listener: OnItemClickListener?) {
-            textView.text = "开门密语"
+            textView.text = "短信开门密语"
             itemView.setOnClickListener {
                 listener?.onDoorPassphraseClick()
             }
@@ -229,10 +229,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class TestModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
         fun bind(item: SettingItem.TestMode, listener: OnItemClickListener?) {
-            textView.text = "测试模式"
             itemView.setOnClickListener {
                 listener?.onTestModeClick()
             }

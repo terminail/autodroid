@@ -10,7 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.autodroid.guardiansdk.ui.MainActivity
+import com.autodroid.guardiansdk.ui.GuardianActivity
 
 class GuardianAccessibilityService : AccessibilityService() {
 
@@ -65,7 +65,7 @@ class GuardianAccessibilityService : AccessibilityService() {
             return
         }
 
-        val intent = Intent(this, MainActivity::class.java).apply {
+        val intent = Intent(this, GuardianActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("FROM_ACCESSIBILITY", true)
         }

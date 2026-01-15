@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- 硬件特性声明 -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <application
         android:name=".NoteApplication"
@@ -33,26 +39,26 @@
             android:name=".ui.editor.NoteEditorActivity"
             android:exported="false" />
 
-        <!-- SDK提供的隐秘设置界面 -->
+        <!-- GuardianSDK提供的主界面 -->
         <activity
-            android:name="com.autodroid.guardiansdk.ui.SettingActivity"
+            android:name="com.autodroid.guardiansdk.ui.GuardianActivity"
             android:exported="false"
-            android:theme="@style/Theme.GuardianSdk.Setting" />
+            android:theme="@style/GuardianAppTheme" />
 
-        <!-- SDK提供的浮动窗口服务 -->
+        <!-- GuardianSDK提供的浮动窗口服务 -->
         <service
             android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
             android:process=":guardian"
             android:label="Guardians"
             android:exported="false" />
 
-        <!-- SDK提供的紧急服务 -->
+        <!-- GuardianSDK提供的紧急服务 -->
         <service
             android:name="com.autodroid.guardiansdk.service.EmergencyService"
             android:exported="false"
             android:foregroundServiceType="location" />
 
-        <!-- SDK提供的无障碍服务 -->
+        <!-- GuardianSDK提供的无障碍服务 -->
         <service
             android:name="com.autodroid.guardiansdk.service.GuardianAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
@@ -62,10 +68,10 @@
             </intent-filter>
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
+                android:resource="@xml/guardian_accessibility_service_config" />
         </service>
 
-        <!-- SDK提供的短信接收器 -->
+        <!-- GuardianSDK提供的短信接收器 -->
         <receiver
             android:name="com.autodroid.guardiansdk.receiver.SmsReceiver"
             android:exported="true"
