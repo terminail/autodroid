@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -30,9 +31,31 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenSettings: Button
     private lateinit var noteRepository: NoteRepository
 
-    companion object {
-        private const val REQUEST_CODE_OVERLAY_PERMISSION = 1001
-        private const val REQUEST_CODE_ACCESSIBILITY_SETTINGS = 1002
+    private val overlayPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Settings.canDrawOverlays(this)) {
+                // 用户已授权，检查无障碍服务
+                checkAndRequestAccessibilityService()
+            } else {
+                // 用户未授权，再次提示
+                showOverlayPermissionDialog()
+            }
+        }
+    }
+
+    private val accessibilitySettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        // 从无障碍设置返回，检查是否已启用
+        if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+            // 无障碍服务已启用，启动浮动窗口服务
+            GuardianSdk.getInstance().startFloatingWindowService()
+        } else {
+            // 用户未启用，再次提示
+            showAccessibilityServiceDialog()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,35 +169,12 @@ class MainActivity : AppCompatActivity() {
                 data = Uri.parse("package:$packageName")
             }
         }
-        startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION)
+        overlayPermissionLauncher.launch(intent)
     }
 
     private fun openAccessibilitySettings() {
         GuardianSdk.getInstance().openAccessibilitySettings()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    // 用户已授权，检查无障碍服务
-                    checkAndRequestAccessibilityService()
-                } else {
-                    // 用户未授权，再次提示
-                    showOverlayPermissionDialog()
-                }
-            }
-        } else if (requestCode == REQUEST_CODE_ACCESSIBILITY_SETTINGS) {
-            // 从无障碍设置返回，检查是否已启用
-            if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
-                // 无障碍服务已启用，启动浮动窗口服务
-                GuardianSdk.getInstance().startFloatingWindowService()
-            } else {
-                // 用户未启用，再次提示
-                showAccessibilityServiceDialog()
-            }
-        }
+        accessibilitySettingsLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
     private fun loadNotes() {
