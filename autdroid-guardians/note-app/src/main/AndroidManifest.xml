@@ -37,7 +37,7 @@
         <activity
             android:name="com.autodroid.guardiansdk.ui.SettingActivity"
             android:exported="false"
-            android:theme="@android:style/Theme.DeviceDefault.Dialog" />
+            android:theme="@style/Theme.GuardianSdk.Setting" />
 
         <!-- SDK提供的浮动窗口服务 -->
         <service
