@@ -14,31 +14,36 @@ import com.autodroid.guardiansdk.ui.settings.model.*
 class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
-        const val TYPE_MY_GUARDIAN = 0
-        const val TYPE_VOLUME_KEY_ALARM_MODE = 1
-        const val TYPE_FLOATING_WINDOW_ALARM_MODE = 2
-        const val TYPE_SHAKE_PHONE_ALARM_MODE = 3
-        const val TYPE_PASSWORD_BOOK = 4
-        const val TYPE_FLOATING_WINDOW = 5
-        const val TYPE_WIPE_ALARM_INFO = 6
-        const val TYPE_DOOR_PASSPHRASE = 7
-        const val TYPE_TEST_MODE = 8
-        const val TYPE_ALARM_HISTORY = 9
-        const val TYPE_GUARDIAN_QUERY_HISTORY = 10
+        const val TYPE_GUARDIAN_ITEM_1 = 0
+        const val TYPE_GUARDIAN_ITEM_2 = 1
+        const val TYPE_GUARDIAN_ITEM_3 = 2
+        const val TYPE_GUARDIAN_ITEM_4 = 3
+        const val TYPE_GUARDIAN_ITEM_5 = 4
+        const val TYPE_ALARM_MODE_VOLUME_KEY = 5
+        const val TYPE_ALARM_MODE_FLOATING_WINDOW = 6
+        const val TYPE_ALARM_MODE_SHAKE_PHONE = 7
+        const val TYPE_DOOR_PASSPHRASE = 11
+        const val TYPE_TEST_MODE = 12
+        const val TYPE_ALARM_HISTORY = 13
+        const val TYPE_GUARDIAN_QUERY_HISTORY = 14
+        const val TYPE_ALARM_MESSAGE = 15
     }
 
     private val items = mutableListOf<SettingItem>()
 
     interface OnItemClickListener {
-        fun onMyGuardianClick(index: Int)
+        fun onGuardian1Click()
+        fun onGuardian2Click()
+        fun onGuardian3Click()
+        fun onGuardian4Click()
+        fun onGuardian5Click()
         fun onVolumeKeyAlarmModeClick()
         fun onFloatingWindowAlarmModeClick()
         fun onShakePhoneAlarmModeClick()
         fun onPasswordBookClick()
-        fun onFloatingWindowClick()
-        fun onWipeAlarmInfoClick()
         fun onDoorPassphraseClick()
         fun onTestModeClick()
+        fun onAlarmMessageClick()
     }
 
     private var listener: OnItemClickListener? = null
@@ -54,53 +59,59 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (items[position]) {
-            is SettingItem.MyGuardian -> TYPE_MY_GUARDIAN
-            is SettingItem.VolumeKeyAlarmMode -> TYPE_VOLUME_KEY_ALARM_MODE
-            is SettingItem.FloatingWindowAlarmMode -> TYPE_FLOATING_WINDOW_ALARM_MODE
-            is SettingItem.ShakePhoneAlarmMode -> TYPE_SHAKE_PHONE_ALARM_MODE
-            is SettingItem.PasswordBook -> TYPE_PASSWORD_BOOK
-            is SettingItem.FloatingWindow -> TYPE_FLOATING_WINDOW
-            is SettingItem.WipeAlarmInfo -> TYPE_WIPE_ALARM_INFO
+        return when (val item = items[position]) {
+            is SettingItem.GuardianItem1 -> TYPE_GUARDIAN_ITEM_1
+            is SettingItem.GuardianItem2 -> TYPE_GUARDIAN_ITEM_2
+            is SettingItem.GuardianItem3 -> TYPE_GUARDIAN_ITEM_3
+            is SettingItem.GuardianItem4 -> TYPE_GUARDIAN_ITEM_4
+            is SettingItem.GuardianItem5 -> TYPE_GUARDIAN_ITEM_5
+            is SettingItem.VolumeKeyAlarmMode -> TYPE_ALARM_MODE_VOLUME_KEY
+            is SettingItem.FloatingWindowAlarmMode -> TYPE_ALARM_MODE_FLOATING_WINDOW
+            is SettingItem.ShakePhoneAlarmMode -> TYPE_ALARM_MODE_SHAKE_PHONE
             is SettingItem.DoorPassphrase -> TYPE_DOOR_PASSPHRASE
             is SettingItem.TestMode -> TYPE_TEST_MODE
             is SettingItem.AlarmHistory -> TYPE_ALARM_HISTORY
             is SettingItem.GuardianQueryHistory -> TYPE_GUARDIAN_QUERY_HISTORY
-            else -> throw IllegalArgumentException("Unknown item type at position $position")
+            is SettingItem.AlarmMessage -> TYPE_ALARM_MESSAGE
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            TYPE_MY_GUARDIAN -> {
-                val view = inflater.inflate(R.layout.guardian_item_my_guardian, parent, false)
-                MyGuardianViewHolder(view)
+            TYPE_GUARDIAN_ITEM_1 -> {
+                val view = inflater.inflate(R.layout.guardian_emergency_contact_item, parent, false)
+                GuardianItem1ViewHolder(view)
             }
-            TYPE_VOLUME_KEY_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.guardian_item_volume_key_alarm_mode, parent, false)
+            TYPE_GUARDIAN_ITEM_2 -> {
+                val view = inflater.inflate(R.layout.guardian_emergency_contact_item, parent, false)
+                GuardianItem2ViewHolder(view)
+            }
+            TYPE_GUARDIAN_ITEM_3 -> {
+                val view = inflater.inflate(R.layout.guardian_emergency_contact_item, parent, false)
+                GuardianItem3ViewHolder(view)
+            }
+            TYPE_GUARDIAN_ITEM_4 -> {
+                val view = inflater.inflate(R.layout.guardian_emergency_contact_item, parent, false)
+                GuardianItem4ViewHolder(view)
+            }
+            TYPE_GUARDIAN_ITEM_5 -> {
+                val view = inflater.inflate(R.layout.guardian_emergency_contact_item, parent, false)
+                GuardianItem5ViewHolder(view)
+            }
+            TYPE_ALARM_MODE_VOLUME_KEY -> {
+                val view = inflater.inflate(R.layout.guardian_alarm_mode_item_volume_key, parent, false)
                 VolumeKeyAlarmModeViewHolder(view)
             }
-            TYPE_FLOATING_WINDOW_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.guardian_item_floating_window_alarm_mode, parent, false)
+            TYPE_ALARM_MODE_FLOATING_WINDOW -> {
+                val view = inflater.inflate(R.layout.guardian_alarm_mode_item_floating_window, parent, false)
                 FloatingWindowAlarmModeViewHolder(view)
             }
-            TYPE_SHAKE_PHONE_ALARM_MODE -> {
-                val view = inflater.inflate(R.layout.guardian_item_shake_phone_alarm_mode, parent, false)
+            TYPE_ALARM_MODE_SHAKE_PHONE -> {
+                val view = inflater.inflate(R.layout.guardian_alarm_mode_item_shake_phone, parent, false)
                 ShakePhoneAlarmModeViewHolder(view)
             }
-            TYPE_PASSWORD_BOOK -> {
-                val view = inflater.inflate(R.layout.guardian_item_password_book, parent, false)
-                PasswordBookViewHolder(view)
-            }
-            TYPE_FLOATING_WINDOW -> {
-                val view = inflater.inflate(R.layout.guardian_item_floating_window, parent, false)
-                FloatingWindowViewHolder(view)
-            }
-            TYPE_WIPE_ALARM_INFO -> {
-                val view = inflater.inflate(R.layout.guardian_item_wipe_alarm_info, parent, false)
-                WipeAlarmInfoViewHolder(view)
-            }
+
             TYPE_DOOR_PASSPHRASE -> {
                 val view = inflater.inflate(R.layout.guardian_item_door_passphrase, parent, false)
                 DoorPassphraseViewHolder(view)
@@ -117,6 +128,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.guardian_item_guardian_query_history, parent, false)
                 GuardianQueryHistoryViewHolder(view)
             }
+            TYPE_ALARM_MESSAGE -> {
+                val view = inflater.inflate(R.layout.guardian_alarm_message_item, parent, false)
+                AlarmMessageViewHolder(view)
+            }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -124,38 +139,33 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
         when (holder) {
-            is MyGuardianViewHolder -> holder.bind(item as SettingItem.MyGuardian, listener)
+            is GuardianItem1ViewHolder -> holder.bind(item as SettingItem.GuardianItem1, listener)
+            is GuardianItem2ViewHolder -> holder.bind(item as SettingItem.GuardianItem2, listener)
+            is GuardianItem3ViewHolder -> holder.bind(item as SettingItem.GuardianItem3, listener)
+            is GuardianItem4ViewHolder -> holder.bind(item as SettingItem.GuardianItem4, listener)
+            is GuardianItem5ViewHolder -> holder.bind(item as SettingItem.GuardianItem5, listener)
             is VolumeKeyAlarmModeViewHolder -> holder.bind(item as SettingItem.VolumeKeyAlarmMode, listener)
             is FloatingWindowAlarmModeViewHolder -> holder.bind(item as SettingItem.FloatingWindowAlarmMode, listener)
             is ShakePhoneAlarmModeViewHolder -> holder.bind(item as SettingItem.ShakePhoneAlarmMode, listener)
-            is PasswordBookViewHolder -> holder.bind(item as SettingItem.PasswordBook, listener)
-            is FloatingWindowViewHolder -> holder.bind(item as SettingItem.FloatingWindow, listener)
-            is WipeAlarmInfoViewHolder -> holder.bind(item as SettingItem.WipeAlarmInfo, listener)
             is DoorPassphraseViewHolder -> holder.bind(item as SettingItem.DoorPassphrase, listener)
             is TestModeViewHolder -> holder.bind(item as SettingItem.TestMode, listener)
             is AlarmHistoryViewHolder -> holder.bind(item as SettingItem.AlarmHistory)
             is GuardianQueryHistoryViewHolder -> holder.bind(item as SettingItem.GuardianQueryHistory)
+            is AlarmMessageViewHolder -> holder.bind(item as SettingItem.AlarmMessage, listener)
         }
     }
 
     override fun getItemCount(): Int = items.size
 
-    inner class MyGuardianViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
-        fun bind(item: SettingItem.MyGuardian, listener: OnItemClickListener?) {
-            textView.text = "我的监护人${item.index}"
-            itemView.setOnClickListener {
-                listener?.onMyGuardianClick(item.index)
-            }
-        }
-    }
-
     inner class VolumeKeyAlarmModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvAlarmModeTitle: TextView = itemView.findViewById(R.id.tv_alarm_mode_title)
+        private val tvAlarmModeInfo: TextView = itemView.findViewById(R.id.tv_alarm_mode_info)
 
         fun bind(item: SettingItem.VolumeKeyAlarmMode, listener: OnItemClickListener?) {
-            textView.text = "音量键报警模式"
+            tvAlarmModeTitle.text = "报警模式1"
+            val enabledText = if (item.enabled) "☑️" else "□"
+            tvAlarmModeInfo.text = "音量键$enabledText，普通报警：${item.normalHoldTime}秒，紧急报警：${item.emergencyHoldTime}秒"
+            
             itemView.setOnClickListener {
                 listener?.onVolumeKeyAlarmModeClick()
             }
@@ -163,10 +173,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class FloatingWindowAlarmModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvAlarmModeTitle: TextView = itemView.findViewById(R.id.tv_alarm_mode_title)
+        private val tvAlarmModeInfo: TextView = itemView.findViewById(R.id.tv_alarm_mode_info)
 
         fun bind(item: SettingItem.FloatingWindowAlarmMode, listener: OnItemClickListener?) {
-            textView.text = "浮动窗口报警模式"
+            tvAlarmModeTitle.text = "报警模式2"
+            val enabledText = if (item.enabled) "☑️" else "□"
+            tvAlarmModeInfo.text = "浮动窗口$enabledText，普通报警：${item.normalHoldTime}秒/${item.normalOpacity}%，紧急报警：${item.emergencyHoldTime}秒/${item.emergencyOpacity}%"
+            
             itemView.setOnClickListener {
                 listener?.onFloatingWindowAlarmModeClick()
             }
@@ -174,45 +188,16 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class ShakePhoneAlarmModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvAlarmModeTitle: TextView = itemView.findViewById(R.id.tv_alarm_mode_title)
+        private val tvAlarmModeInfo: TextView = itemView.findViewById(R.id.tv_alarm_mode_info)
 
         fun bind(item: SettingItem.ShakePhoneAlarmMode, listener: OnItemClickListener?) {
-            textView.text = "摇动手机报警模式"
+            tvAlarmModeTitle.text = "报警模式3"
+            val enabledText = if (item.enabled) "☑️" else "□"
+            tvAlarmModeInfo.text = "摇动手机$enabledText，普通报警：灵敏度${item.normalSensitivity}，紧急报警：灵敏度${item.emergencySensitivity}"
+            
             itemView.setOnClickListener {
                 listener?.onShakePhoneAlarmModeClick()
-            }
-        }
-    }
-
-    inner class PasswordBookViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
-        fun bind(item: SettingItem.PasswordBook, listener: OnItemClickListener?) {
-            textView.text = "我的位置密码本"
-            itemView.setOnClickListener {
-                listener?.onPasswordBookClick()
-            }
-        }
-    }
-
-    inner class FloatingWindowViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
-        fun bind(item: SettingItem.FloatingWindow, listener: OnItemClickListener?) {
-            textView.text = "浮动窗口"
-            itemView.setOnClickListener {
-                listener?.onFloatingWindowClick()
-            }
-        }
-    }
-
-    inner class WipeAlarmInfoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
-        fun bind(item: SettingItem.WipeAlarmInfo, listener: OnItemClickListener?) {
-            textView.text = "擦除报警信息"
-            itemView.setOnClickListener {
-                listener?.onWipeAlarmInfoClick()
             }
         }
     }
@@ -257,6 +242,73 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             queryText.text = "${item.guardianName}查询：${item.queryContent}"
             responseText.text = "回复信息：${item.responseContent}"
             // History items are not clickable
+        }
+    }
+
+    inner class AlarmMessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+
+        fun bind(item: SettingItem.AlarmMessage, listener: OnItemClickListener?) {
+            textView.text = "报警信息密码"
+            itemView.setOnClickListener {
+                listener?.onAlarmMessageClick()
+            }
+        }
+    }
+
+    // 报警联系人ViewHolder
+    inner class GuardianItem1ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        fun bind(item: SettingItem.GuardianItem1, listener: OnItemClickListener?) {
+            val displayText = if (item.name.isEmpty()) "报警联系人1" else "报警联系人1: ${item.name}"
+            textView.text = displayText
+            itemView.setOnClickListener {
+                listener?.onGuardian1Click()
+            }
+        }
+    }
+
+    inner class GuardianItem2ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        fun bind(item: SettingItem.GuardianItem2, listener: OnItemClickListener?) {
+            val displayText = if (item.name.isEmpty()) "报警联系人2" else "报警联系人2: ${item.name}"
+            textView.text = displayText
+            itemView.setOnClickListener {
+                listener?.onGuardian2Click()
+            }
+        }
+    }
+
+    inner class GuardianItem3ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        fun bind(item: SettingItem.GuardianItem3, listener: OnItemClickListener?) {
+            val displayText = if (item.name.isEmpty()) "报警联系人3" else "报警联系人3: ${item.name}"
+            textView.text = displayText
+            itemView.setOnClickListener {
+                listener?.onGuardian3Click()
+            }
+        }
+    }
+
+    inner class GuardianItem4ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        fun bind(item: SettingItem.GuardianItem4, listener: OnItemClickListener?) {
+            val displayText = if (item.name.isEmpty()) "报警联系人4" else "报警联系人4: ${item.name}"
+            textView.text = displayText
+            itemView.setOnClickListener {
+                listener?.onGuardian4Click()
+            }
+        }
+    }
+
+    inner class GuardianItem5ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        fun bind(item: SettingItem.GuardianItem5, listener: OnItemClickListener?) {
+            val displayText = if (item.name.isEmpty()) "报警联系人5" else "报警联系人5: ${item.name}"
+            textView.text = displayText
+            itemView.setOnClickListener {
+                listener?.onGuardian5Click()
+            }
         }
     }
 }

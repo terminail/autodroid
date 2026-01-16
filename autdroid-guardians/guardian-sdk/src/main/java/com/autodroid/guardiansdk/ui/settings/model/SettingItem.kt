@@ -1,44 +1,55 @@
 package com.autodroid.guardiansdk.ui.settings.model
 
 sealed class SettingItem {
-    data class MyGuardian(
-        val index: Int,
+    // 报警联系人1-5，每个最多5个报警联系人
+    data class GuardianItem1(
+        val phoneNumber: String = "",
         val name: String = "",
-        val phone: String = "",
-        val isAdded: Boolean = false
+        val isPrimary: Boolean = false
+    ) : SettingItem()
+
+    data class GuardianItem2(
+        val phoneNumber: String = "",
+        val name: String = "",
+        val isPrimary: Boolean = false
+    ) : SettingItem()
+
+    data class GuardianItem3(
+        val phoneNumber: String = "",
+        val name: String = "",
+        val isPrimary: Boolean = false
+    ) : SettingItem()
+
+    data class GuardianItem4(
+        val phoneNumber: String = "",
+        val name: String = "",
+        val isPrimary: Boolean = false
+    ) : SettingItem()
+
+    data class GuardianItem5(
+        val phoneNumber: String = "",
+        val name: String = "",
+        val isPrimary: Boolean = false
     ) : SettingItem()
 
     data class VolumeKeyAlarmMode(
-        val isEnabled: Boolean = true,
-        val holdTime: Int = 5
+        val enabled: Boolean = true,
+        val normalHoldTime: Int = 5,
+        val emergencyHoldTime: Int = 10
     ) : SettingItem()
 
     data class FloatingWindowAlarmMode(
-        val isEnabled: Boolean = true,
-        val holdTime: Int = 5
+        val enabled: Boolean = true,
+        val normalHoldTime: Int = 5,
+        val normalOpacity: Int = 50,
+        val emergencyHoldTime: Int = 10,
+        val emergencyOpacity: Int = 80
     ) : SettingItem()
 
     data class ShakePhoneAlarmMode(
-        val isEnabled: Boolean = true,
-        val sensitivity: Int = 3
-    ) : SettingItem()
-
-    data class PasswordBook(
-        val isEnabled: Boolean = true,
-        val passwordMap: Map<String, String> = emptyMap(),
-        val lastSyncTime: String = ""
-    ) : SettingItem()
-
-    data class FloatingWindow(
-        val isEnabled: Boolean = true,
-        val size: Int = 10,
-        val opacity: Int = 10,
-        val positionX: Int = 100,
-        val positionY: Int = 100
-    ) : SettingItem()
-
-    data class WipeAlarmInfo(
-        val isEnabled: Boolean = false
+        val enabled: Boolean = true,
+        val normalSensitivity: Int = 5,
+        val emergencySensitivity: Int = 8
     ) : SettingItem()
 
     data class DoorPassphrase(
@@ -63,5 +74,11 @@ sealed class SettingItem {
         val guardianName: String,
         val queryContent: String,
         val responseContent: String
+    ) : SettingItem()
+
+    data class AlarmMessage(
+        val normalMessage: String = "准备去麦当劳",
+        val emergencyMessage: String = "准备去肯德基",
+        val isEnabled: Boolean = true
     ) : SettingItem()
 }

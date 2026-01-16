@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <CheckBox
+        android:id="@+id/cb_floating_window_alarm_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启用浮动窗口报警"
+        android:checked="true"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 普通报警设置 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="普通报警设置"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="长按时间（秒）"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <SeekBar
+        android:id="@+id/seek_bar_normal_hold_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="20"
+        android:progress="5"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_normal_hold_time_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="当前值: 5秒"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="浮动窗口透明度"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <SeekBar
+        android:id="@+id/seek_bar_normal_opacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="80"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tv_normal_opacity_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="当前值: 80%"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 紧急报警设置 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="紧急报警设置"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="长按时间（秒）"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <SeekBar
+        android:id="@+id/seek_bar_emergency_hold_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="30"
+        android:progress="10"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_emergency_hold_time_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="当前值: 10秒"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="浮动窗口透明度"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <SeekBar
+        android:id="@+id/seek_bar_emergency_opacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="90"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_emergency_opacity_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="当前值: 90%"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+</LinearLayout>

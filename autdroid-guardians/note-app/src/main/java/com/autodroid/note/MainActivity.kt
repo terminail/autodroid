@@ -153,16 +153,144 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAccessibilityServiceDialog() {
         accessibilityServiceDialog?.dismiss()
+        
+        // 构建详细的白名单引导信息
+        val message = buildString {
+            append("Guardian SDK 需要无障碍服务权限才能监听按键和屏幕事件。\n\n")
+            append("💡 为了防止服务被系统关闭，建议：\n")
+            append("• 开启无障碍服务后，将应用加入系统白名单（自启动/后台运行）\n")
+            append("• 关闭电池优化（设置 → 应用 → 特殊应用权限 → 电池优化）\n")
+            append("• 允许应用在后台运行\n\n")
+            append("请前往设置开启无障碍服务。")
+        }
+        
         accessibilityServiceDialog = AlertDialog.Builder(this)
             .setTitle("需要无障碍服务")
-            .setMessage("Guardian SDK 需要无障碍服务权限才能监听按键和屏幕事件。请前往设置开启无障碍服务。")
-            .setPositiveButton("去设置") { dialog, _ ->
+            .setMessage(message)
+            .setPositiveButton("无障碍设置") { dialog, _ ->
                 dialog.dismiss()
                 openAccessibilitySettings()
+            }
+            .setNeutralButton("更多设置") { dialog, _ ->
+                dialog.dismiss()
+                showAdditionalSettingsDialog()
             }
             .setNegativeButton("取消", null)
             .setCancelable(false)
             .show()
+    }
+    
+    private fun showAdditionalSettingsDialog() {
+        val items = arrayOf("系统白名单（自启动/后台运行）", "电池优化", "应用详情")
+        
+        AlertDialog.Builder(this)
+            .setTitle("其他系统设置")
+            .setItems(items) { dialog, which ->
+                when (which) {
+                    0 -> openSystemWhitelistSettings()
+                    1 -> openBatteryOptimizationSettings()
+                    2 -> openAppDetailsSettings()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("返回", null)
+            .show()
+    }
+    
+    private fun openBatteryOptimizationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            intent.data = android.net.Uri.parse("package:$packageName")
+            startActivity(intent)
+        } catch (e: Exception) {
+            // 如果无法打开电池优化设置，显示提示并引导到应用详情
+            AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("无法直接打开电池优化设置，请前往'应用详情' → '电池优化'进行设置。")
+                .setPositiveButton("应用详情") { dialog, _ ->
+                    dialog.dismiss()
+                    openAppDetailsSettings()
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
+    }
+    
+    private fun openAppDetailsSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = android.net.Uri.parse("package:$packageName")
+            startActivity(intent)
+        } catch (e: Exception) {
+            // 如果无法打开应用详情设置，显示提示
+            AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("无法打开应用详情页面，请在系统设置中手动找到本应用进行设置。")
+                .setPositiveButton("确定", null)
+                .show()
+        }
+    }
+    
+    private fun openSystemWhitelistSettings() {
+        try {
+            // 尝试不同的系统白名单设置路径
+            val intent = Intent()
+            
+            // 方法1：尝试打开自启动管理（华为、小米等）
+            try {
+                intent.setClassName("com.huawei.systemmanager", 
+                    "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity")
+                startActivity(intent)
+                return
+            } catch (e: Exception) {
+                // 继续尝试其他方法
+            }
+            
+            // 方法2：尝试小米自启动管理
+            try {
+                intent.setClassName("com.miui.securitycenter", 
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity")
+                startActivity(intent)
+                return
+            } catch (e: Exception) {
+                // 继续尝试其他方法
+            }
+            
+            // 方法3：尝试OPPO自启动管理
+            try {
+                intent.setClassName("com.coloros.safecenter", 
+                    "com.coloros.safecenter.permission.startup.StartupAppListActivity")
+                startActivity(intent)
+                return
+            } catch (e: Exception) {
+                // 继续尝试其他方法
+            }
+            
+            // 方法4：尝试VIVO自启动管理
+            try {
+                intent.setClassName("com.vivo.abe", 
+                    "com.vivo.applicationbehaviorengine.ui.ExcessivePowerManagerActivity")
+                startActivity(intent)
+                return
+            } catch (e: Exception) {
+                // 继续尝试其他方法
+            }
+            
+            // 方法5：通用方法，打开应用详情页面
+            openAppDetailsSettings()
+            
+        } catch (e: Exception) {
+            // 如果所有方法都失败，显示提示并引导到应用详情
+            AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("无法直接打开系统白名单设置，请前往'应用详情' → '自启动管理'或'后台运行权限'进行设置。")
+                .setPositiveButton("应用详情") { dialog, _ ->
+                    dialog.dismiss()
+                    openAppDetailsSettings()
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
     }
 
     private fun openOverlayPermissionSettings() {
@@ -225,19 +353,30 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         loadNotes() // Reload notes when returning to main activity
         
-        // 检查悬浮窗权限，如果有权限但服务未启动，则启动服务
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Settings.canDrawOverlays(this)) {
-                // 检查无障碍服务
-                if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
-                    GuardianSdk.getInstance().startFloatingWindowService()
-                }
-            }
+        // 重新检查权限和服务状态
+        checkPermissionsAndServices()
+        
+        // 如果无障碍服务已开启，重置提示计数
+        if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+            (application as? NoteApplication)?.resetAccessibilityPromptCount()
+        }
+    }
+    
+    private fun checkPermissionsAndServices() {
+        // 检查悬浮窗权限
+        val hasOverlayPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
         } else {
-            // Android 6.0 以下不需要权限，检查无障碍服务
-            if (GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
-                GuardianSdk.getInstance().startFloatingWindowService()
-            }
+            true // Android 6.0以下默认有权限
+        }
+        
+        if (!hasOverlayPermission) {
+            showOverlayPermissionDialog()
+        }
+        
+        // 检查无障碍服务
+        if (!GuardianSdk.getInstance().isAccessibilityServiceEnabled()) {
+            showAccessibilityServiceDialog()
         }
     }
 

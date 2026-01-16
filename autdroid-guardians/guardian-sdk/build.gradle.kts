@@ -1,7 +1,9 @@
 plugins {
     id("com.android.library")
     kotlin("android")
+    kotlin("plugin.parcelize")
     id("kotlin-kapt")
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -59,6 +61,7 @@ configurations.all {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.room.runtime)
@@ -66,5 +69,7 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.cardview:cardview:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     kapt("androidx.room:room-compiler:2.7.0")
 }

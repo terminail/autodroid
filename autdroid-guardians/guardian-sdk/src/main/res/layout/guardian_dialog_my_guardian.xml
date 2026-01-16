@@ -21,16 +21,28 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="4dp"
         android:hint="监护人电话">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_guardian_phone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="phone" />
+            android:inputType="phone"
+            android:maxLength="11"
+            android:digits="0123456789" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tv_phone_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="手机号格式错误！请输入11位手机号（如：13812345678）"
+        android:textColor="#FF0000"
+        android:textSize="12sp"
+        android:visibility="gone"
+        android:layout_marginBottom="16dp" />
 
     <CheckBox
         android:id="@+id/cb_guardian_primary"

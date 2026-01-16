@@ -3,10 +3,10 @@
     <item
         android:id="@+id/nav_guardians"
         android:icon="@drawable/guardian_ic_people"
-        android:title="被监护人" />
+        android:title="@string/guardian_people" />
     
     <item
         android:id="@+id/nav_settings"
         android:icon="@drawable/guardian_ic_settings"
-        android:title="我的设置" />
+        android:title="@string/guardian_settings" />
 </menu>

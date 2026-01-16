@@ -3,6 +3,7 @@ package com.autodroid.guardiansdk.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsMessage
 import android.util.Log
@@ -36,7 +37,12 @@ class SmsReceiver : BroadcastReceiver() {
             val pdus = bundle.get("pdus") as Array<*>?
             if (pdus != null) {
                 for (pdu in pdus) {
-                    val smsMessage = SmsMessage.createFromPdu(pdu as ByteArray)
+                    val smsMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        SmsMessage.createFromPdu(pdu as ByteArray, bundle.getString("format"))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        SmsMessage.createFromPdu(pdu as ByteArray)
+                    }
                     val messageBody = smsMessage.messageBody
                     val sender = smsMessage.originatingAddress
                     

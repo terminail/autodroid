@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="18dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="点击下方按钮随机生成16个不重复的中文字符"
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 4x4 网格布局 -->
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="4"
+        android:rowCount="4"
+        android:layout_marginBottom="16dp">
+
+        <!-- 第1行：digit1, digit2, digit3, digit4 -->
+        <TextView
+            android:id="@+id/tv_digit_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="一"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="二"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="三"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="四"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <!-- 第2行：digit5, digit6, digit7, digit8 -->
+        <TextView
+            android:id="@+id/tv_digit_5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="五"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="六"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="七"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_digit_8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="八"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <!-- 第3行：digit9, comma, alarm0, alarm1 -->
+        <TextView
+            android:id="@+id/tv_digit_9"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="九"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_comma"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="逗"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_alarm_0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="去"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_alarm_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="肯"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <!-- 第4行：digit0, reserve0, reserve1, reserve2 -->
+        <TextView
+            android:id="@+id/tv_digit_0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="零"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_reserve_0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="空"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_reserve_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="白"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/tv_reserve_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="佛"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_columnWeight="1"
+            android:layout_gravity="center|fill"
+            android:padding="12dp"
+            android:background="@android:color/darker_gray"/>
+
+    </GridLayout>
+
+    <!-- 操作按钮 -->
+    <Button
+        android:id="@+id/btn_generate_random"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="一键生成随机密码本"
+        android:textSize="16sp" />
+
+</LinearLayout>

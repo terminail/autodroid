@@ -86,7 +86,14 @@ class GuardianAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
-        
+        // 服务被中断时尝试重启
+        restartService()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 服务被销毁时尝试重启
+        scheduleRestart()
     }
 
     override fun onServiceConnected() {
@@ -100,6 +107,27 @@ class GuardianAccessibilityService : AccessibilityService() {
             notificationTimeout = 100
         }
         serviceInfo = info
+        
+        // 服务连接成功，记录日志
+        android.util.Log.d("GuardianAccessibilityService", "无障碍服务已连接")
+    }
+    
+    private fun restartService() {
+        android.util.Log.d("GuardianAccessibilityService", "无障碍服务被中断，尝试重启")
+        // 通过Intent尝试重启服务
+        val intent = Intent(this, GuardianAccessibilityService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+    
+    private fun scheduleRestart() {
+        android.util.Log.d("GuardianAccessibilityService", "无障碍服务被销毁，安排重启")
+        handler.postDelayed({
+            restartService()
+        }, 3000) // 3秒后重启
     }
 
     fun setOpenDoorPassword(password: String) {

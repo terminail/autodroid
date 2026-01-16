@@ -2,26 +2,34 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="56dp"
+    android:minHeight="72dp"
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:background="?android:attr/selectableItemBackground">
 
     <TextView
-        android:id="@+id/tv_item_title"
-        android:layout_width="0dp"
+        android:id="@+id/tv_contact_title"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_gravity="center_vertical"
+        android:textSize="14sp"
+        android:textColor="@color/guardian_gray"
+        android:text="报警联系人1" />
+
+    <TextView
+        android:id="@+id/tv_contact_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:textSize="16sp"
-        android:textColor="@color/guardian_black" />
+        android:textColor="@color/guardian_black"
+        android:layout_marginTop="2dp"
+        android:text="张三 (13800138000)" />
 
     <ImageView
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_gravity="center_vertical"
+        android:layout_gravity="end|center_vertical"
         android:src="@drawable/guardian_ic_arrow_right"
-        android:layout_marginStart="8dp" />
+        android:layout_marginTop="-36dp" />
 
 </LinearLayout>

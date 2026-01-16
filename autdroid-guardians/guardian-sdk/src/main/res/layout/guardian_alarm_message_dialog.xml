@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- 普通报警信息 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="普通报警信息"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_normal_alarm_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入普通报警信息，默认：准备去麦当劳"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 紧急报警信息 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="紧急报警信息"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_emergency_alarm_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入紧急报警信息，默认：准备去肯德基"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 位置密码本 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="位置密码本设置"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="设置11个字符分别对应0-9和."
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="8dp" />
+
+        <!-- 密码本字符输入 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0: "
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_0"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3: "
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="6: "
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="8: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="9: "
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=".: "
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp" />
+
+            <EditText
+                android:id="@+id/et_char_dot"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入字符"
+                android:textSize="14sp"
+                android:maxLength="1" />
+
+        </LinearLayout>
+
+        <!-- 一键生成按钮 -->
+        <Button
+            android:id="@+id/btn_generate_random_password_book"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="一键生成随机密码本"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>

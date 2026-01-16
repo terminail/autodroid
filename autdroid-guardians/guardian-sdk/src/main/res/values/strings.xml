@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="guardian_accessibility_service_label">监护人服务</string>
     <string name="guardian_accessibility_service_description">监护人无障碍服务，用于监控和保护被监护人</string>
+    <string name="guardian_people">监护</string>
+    <string name="guardian_settings">设置</string>
 </resources>
