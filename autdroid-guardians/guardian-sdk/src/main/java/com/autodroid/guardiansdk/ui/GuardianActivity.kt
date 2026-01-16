@@ -7,6 +7,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.ui.contacts.ContactFragment
 import com.autodroid.guardiansdk.ui.settings.SettingFragment
+import com.autodroid.guardiansdk.ui.why.WhyFragment
 
 class GuardianActivity : AppCompatActivity() {
 
@@ -33,6 +34,10 @@ class GuardianActivity : AppCompatActivity() {
             when (menuItem.itemId) {
                 R.id.nav_guardians -> {
                     loadFragment(ContactFragment.newInstance())
+                    true
+                }
+                R.id.nav_why -> {
+                    loadFragment(WhyFragment())
                     true
                 }
                 R.id.nav_settings -> {

@@ -3,5 +3,27 @@
     <string name="guardian_accessibility_service_label">监护人服务</string>
     <string name="guardian_accessibility_service_description">监护人无障碍服务，用于监控和保护被监护人</string>
     <string name="guardian_people">监护</string>
+    <string name="guardian_why">WHY</string>
     <string name="guardian_settings">设置</string>
+    
+    <!-- WHY Fragment Strings -->
+    <string name="why_title">为什么选择 Guardian SDK</string>
+    <string name="why_subtitle">安全、可靠、智能的监护人解决方案</string>
+    <string name="why_overview_title">产品概述</string>
+    <string name="why_overview_content">Guardian SDK 是一款专为安全监控设计的Android库，提供完整的监护人管理、紧急报警和安全保护功能。帮助开发者快速构建安全可靠的监护人应用。</string>
+    <string name="why_features_title">核心功能</string>
+    <string name="why_features_content">• 多类型监护人管理\n• 实时位置监控\n• 紧急报警系统\n• 智能安全检测\n• 离线模式支持\n• 隐私保护机制</string>
+    <string name="why_benefits_title">核心价值</string>
+    <string name="why_benefits_content">• 绝对隐蔽性：真实应用功能，不易被发现\n• 自动报警：无需手动操作即可触发报警\n• 多重触发机制：适应不同危险场景\n• 纯本地化：保护用户隐私，无服务器依赖\n• 离线可用：没有网络也能正常工作</string>
+    <string name="why_story1_title">真实案例：独居老人安全</string>
+    <string name="why_story1_content">张大爷独居在家，子女通过Guardian SDK实时监控老人状态。某天系统检测到异常活动，自动触发报警，及时通知家人，避免了潜在危险。</string>
+    <string name="why_statistics_title">数据统计</string>
+    <string name="why_statistics_content">我们的SDK已经在多个应用中使用，为用户提供可靠的安全保障</string>
+    <string name="why_stat_users">用户数量</string>
+    <string name="why_stat_alerts">成功报警</string>
+    <string name="why_stat_success">成功率</string>
+    <string name="why_story2_title">学生安全监控</string>
+    <string name="why_story2_content">某学校使用Guardian SDK监控学生安全，当学生离开安全区域时，系统自动通知家长和老师，确保学生安全。</string>
+    <string name="why_image_title">安全保障</string>
+    <string name="why_image_content">我们的SDK采用多重安全机制，确保用户数据安全和隐私保护</string>
 </resources>
