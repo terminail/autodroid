@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.data.entity.Setting
+import com.autodroid.guardiansdk.data.entity.Contact
+import com.autodroid.guardiansdk.data.entity.ContactType
 import com.autodroid.guardiansdk.ui.settings.model.SettingItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,38 +32,82 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
             try {
                 val settingItems = mutableListOf<SettingItem>()
                 
-                // 加载5个报警联系人数据
-                val guardian1Name = settingDao.getSetting("guardian1_name")?.value ?: ""
-                val guardian2Name = settingDao.getSetting("guardian2_name")?.value ?: ""
-                val guardian3Name = settingDao.getSetting("guardian3_name")?.value ?: ""
-                val guardian4Name = settingDao.getSetting("guardian4_name")?.value ?: ""
-                val guardian5Name = settingDao.getSetting("guardian5_name")?.value ?: ""
-
-                settingItems.add(SettingItem.GuardianItem1(
-                    phoneNumber = settingDao.getSetting("guardian1_phone")?.value ?: "",
-                    name = guardian1Name,
-                    isPrimary = settingDao.getSetting("guardian1_primary")?.value?.toBoolean() ?: false
-                ))
-                settingItems.add(SettingItem.GuardianItem2(
-                    phoneNumber = settingDao.getSetting("guardian2_phone")?.value ?: "",
-                    name = guardian2Name,
-                    isPrimary = settingDao.getSetting("guardian2_primary")?.value?.toBoolean() ?: false
-                ))
-                settingItems.add(SettingItem.GuardianItem3(
-                    phoneNumber = settingDao.getSetting("guardian3_phone")?.value ?: "",
-                    name = guardian3Name,
-                    isPrimary = settingDao.getSetting("guardian3_primary")?.value?.toBoolean() ?: false
-                ))
-                settingItems.add(SettingItem.GuardianItem4(
-                    phoneNumber = settingDao.getSetting("guardian4_phone")?.value ?: "",
-                    name = guardian4Name,
-                    isPrimary = settingDao.getSetting("guardian4_primary")?.value?.toBoolean() ?: false
-                ))
-                settingItems.add(SettingItem.GuardianItem5(
-                    phoneNumber = settingDao.getSetting("guardian5_phone")?.value ?: "",
-                    name = guardian5Name,
-                    isPrimary = settingDao.getSetting("guardian5_primary")?.value?.toBoolean() ?: false
-                ))
+                // 从Contact表加载5个报警联系人数据
+                val contactDao = database.contactDao()
+                val guardians = contactDao.getGuardians()
+                
+                // 生成5个报警联系人项，如果数据库中的联系人不足，用占位符
+                for (i in 1..5) {
+                    val guardian = guardians.find { it.orderIndex == i }
+                    if (guardian != null) {
+                        when (i) {
+                            1 -> settingItems.add(SettingItem.GuardianItem1(
+                                phoneNumber = guardian.phoneNumber,
+                                name = guardian.name,
+                                isPrimary = guardian.isPrimary,
+                                isPlaceholder = false
+                            ))
+                            2 -> settingItems.add(SettingItem.GuardianItem2(
+                                phoneNumber = guardian.phoneNumber,
+                                name = guardian.name,
+                                isPrimary = guardian.isPrimary,
+                                isPlaceholder = false
+                            ))
+                            3 -> settingItems.add(SettingItem.GuardianItem3(
+                                phoneNumber = guardian.phoneNumber,
+                                name = guardian.name,
+                                isPrimary = guardian.isPrimary,
+                                isPlaceholder = false
+                            ))
+                            4 -> settingItems.add(SettingItem.GuardianItem4(
+                                phoneNumber = guardian.phoneNumber,
+                                name = guardian.name,
+                                isPrimary = guardian.isPrimary,
+                                isPlaceholder = false
+                            ))
+                            5 -> settingItems.add(SettingItem.GuardianItem5(
+                                phoneNumber = guardian.phoneNumber,
+                                name = guardian.name,
+                                isPrimary = guardian.isPrimary,
+                                isPlaceholder = false
+                            ))
+                        }
+                    } else {
+                        // 使用占位符
+                        when (i) {
+                            1 -> settingItems.add(SettingItem.GuardianItem1(
+                                phoneNumber = "",
+                                name = "请设置报警联系人${i}",
+                                isPrimary = false,
+                                isPlaceholder = true
+                            ))
+                            2 -> settingItems.add(SettingItem.GuardianItem2(
+                                phoneNumber = "",
+                                name = "请设置报警联系人${i}",
+                                isPrimary = false,
+                                isPlaceholder = true
+                            ))
+                            3 -> settingItems.add(SettingItem.GuardianItem3(
+                                phoneNumber = "",
+                                name = "请设置报警联系人${i}",
+                                isPrimary = false,
+                                isPlaceholder = true
+                            ))
+                            4 -> settingItems.add(SettingItem.GuardianItem4(
+                                phoneNumber = "",
+                                name = "请设置报警联系人${i}",
+                                isPrimary = false,
+                                isPlaceholder = true
+                            ))
+                            5 -> settingItems.add(SettingItem.GuardianItem5(
+                                phoneNumber = "",
+                                name = "请设置报警联系人${i}",
+                                isPrimary = false,
+                                isPlaceholder = true
+                            ))
+                        }
+                    }
+                }
                 
                 // 添加报警模式相关设置，加载实际数据
                 settingItems.addAll(loadAlarmModeSettings())
@@ -326,30 +372,19 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     fun saveGuardianContact(index: Int, name: String, phoneNumber: String, isPrimary: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val settings = listOf(
-                    Setting(
-                        key = "guardian${index}_name",
-                        value = name,
-                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
-                        description = "报警联系人${index}姓名",
-                        category = "guardian"
-                    ),
-                    Setting(
-                        key = "guardian${index}_phone",
-                        value = phoneNumber,
-                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
-                        description = "报警联系人${index}电话",
-                        category = "guardian"
-                    ),
-                    Setting(
-                        key = "guardian${index}_primary",
-                        value = isPrimary.toString(),
-                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
-                        description = "报警联系人${index}是否主要联系人",
-                        category = "guardian"
-                    )
+                val contactDao = database.contactDao()
+                
+                // 创建或更新联系人
+                val contact = Contact(
+                    phoneNumber = phoneNumber,
+                    name = name,
+                    type = ContactType.GUARDIAN,
+                    relationship = "报警联系人",
+                    isPrimary = isPrimary,
+                    orderIndex = index
                 )
-                settingDao.insertOrUpdateAll(settings)
+                
+                contactDao.insertOrUpdate(contact)
 
                 // 重新加载设置项以更新UI
                 loadSettingItems()
@@ -363,20 +398,26 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
      * 获取报警联系人姓名
      */
     suspend fun getGuardianName(index: Int): String {
-        return settingDao.getSetting("guardian${index}_name")?.value ?: ""
+        val contactDao = database.contactDao()
+        val guardian = contactDao.getGuardianByOrderIndex(index)
+        return guardian?.name ?: ""
     }
 
     /**
      * 获取报警联系人电话
      */
     suspend fun getGuardianPhoneNumber(index: Int): String {
-        return settingDao.getSetting("guardian${index}_phone")?.value ?: ""
+        val contactDao = database.contactDao()
+        val guardian = contactDao.getGuardianByOrderIndex(index)
+        return guardian?.phoneNumber ?: ""
     }
 
     /**
      * 获取报警联系人是否主要
      */
     suspend fun getGuardianPrimary(index: Int): Boolean {
-        return settingDao.getSetting("guardian${index}_primary")?.value?.toBoolean() ?: false
+        val contactDao = database.contactDao()
+        val guardian = contactDao.getGuardianByOrderIndex(index)
+        return guardian?.isPrimary ?: false
     }
 }

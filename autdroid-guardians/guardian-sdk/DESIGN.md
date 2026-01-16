@@ -107,35 +107,33 @@ graph TB
 
 ## 3. 数据模型设计
 
-### 3.1 被监护人表（Ward）
+### 3.1 联系人表（Contact）
 | 字段名 | 数据类型 | 约束 | 描述 |
 |--------|----------|------|------|
 | phoneNumber | TEXT | PRIMARY KEY | 手机号（唯一标识） |
-| name | TEXT | NOT NULL | 被监护人姓名 |
-| relationship | TEXT | | 关系（如：社区居民、学生等） |
-| passwordBook | TEXT | NOT NULL | 密码本（Base64编码） |
-| lastAlarmTime | INTEGER | DEFAULT 0 | 最后报警时间 |
-| alarmCount | INTEGER | DEFAULT 0 | 报警次数 |
+| name | TEXT | NOT NULL | 联系人姓名 |
+| type | TEXT | NOT NULL | 联系人类型（WARD/ GUARDIAN） |
+| relationship | TEXT | | 关系（如：社区居民、学生、爸爸、妈妈等） |
+| passwordBook | TEXT | | 密码本（Base64编码） |
+| lastMessageTime | INTEGER | DEFAULT 0 | 最后消息时间戳 |
+| alarmCount | INTEGER | DEFAULT 0 | 报警次数（仅WARD类型有效） |
 | isActive | BOOLEAN | DEFAULT true | 是否活跃 |
 | createdAt | INTEGER | NOT NULL | 创建时间戳 |
 | updatedAt | INTEGER | NOT NULL | 更新时间戳 |
 
-### 3.2 紧急联系人表（EmergencyContact）
-| 字段名 | 数据类型 | 约束 | 描述 |
-|--------|----------|------|------|
-| phoneNumber | TEXT | PRIMARY KEY | 联系人手机号（唯一标识） |
-| wardPhoneNumber | TEXT | NOT NULL | 所属被监护人手机号 |
-| name | TEXT | NOT NULL | 联系人姓名 |
-| relationship | TEXT | | 关系（如：爸爸、妈妈、朋友等） |
-| isPrimary | BOOLEAN | DEFAULT false | 是否主要联系人 |
-| orderIndex | INTEGER | DEFAULT 0 | 显示顺序 |
-| lastContactTime | INTEGER | DEFAULT 0 | 上次联系时间戳 |
-| createdAt | INTEGER | NOT NULL | 创建时间戳 |
-
 **设计说明**：
+- **统一联系人模型**：将原来分开的被监护人（Ward）和紧急联系人（Guardian）合并为统一的Contact表
+- **类型区分**：通过type字段区分被监护人（WARD）和紧急联系人（GUARDIAN）
 - **手机号作为主键**：纯短信方案中，手机号是唯一可靠的身份标识
-- **关系建立**：通过手机号关联被监护人和紧急联系人
-- **数量限制**：每个被监护人最多5个紧急联系人（应用层限制）
+- **灵活关系**：支持多种关系类型，适用于不同类型的联系人
+
+### 3.2 联系人类型枚举（ContactType）
+```kotlin
+enum class ContactType {
+    WARD,       // 被监护人
+    GUARDIAN    // 紧急联系人
+}
+```
 
 ### 3.3 应用设置表（Setting）
 | 字段名 | 数据类型 | 约束 | 描述 |
@@ -154,6 +152,44 @@ graph TB
 - **扩展性强**：支持多种数据类型和分类管理
 - **自动初始化**：SDK自动创建默认设置项
 - **统一管理**：所有设置项在数据库中统一管理
+
+### 3.4 数据库初始化机制
+
+#### 3.4.1 数据库版本管理
+- **版本号**：当前数据库版本为6
+- **升级策略**：使用 `fallbackToDestructiveMigration()` 确保版本升级时数据重置
+- **回调机制**：双保险机制确保测试数据正确插入
+  - `onCreate` 回调：首次创建数据库时插入测试数据
+  - `onOpen` 回调：数据库打开时检查并确保测试数据存在
+
+#### 3.4.2 测试数据初始化
+```kotlin
+// 测试数据示例
+val testGuardians = listOf(
+    Contact(
+        phoneNumber = "13800138001",
+        name = "张三",
+        type = ContactType.GUARDIAN,
+        relationship = "爸爸"
+    ),
+    Contact(
+        phoneNumber = "13800138002", 
+        name = "李四",
+        type = ContactType.GUARDIAN,
+        relationship = "妈妈"
+    )
+)
+
+val testWards = listOf(
+    Contact(
+        phoneNumber = "13800138003",
+        name = "王五",
+        type = ContactType.WARD,
+        relationship = "社区居民",
+        alarmCount = 3
+    )
+)
+```
 
 ### 3.4 报警记录表（AlarmRecord）
 | 字段名 | 数据类型 | 约束 | 描述 |
@@ -211,30 +247,40 @@ graph TB
 - 支持左右滑动切换Tab
 - 底部导航栏固定显示
 
-#### 4.1.2 被监护人界面
-**功能**：监护人查看被监护人信息
-**数据展示**：RecyclerView 异构布局
+#### 4.1.2 联系人界面（ContactFragment）
+**功能**：统一显示所有联系人（被监护人和紧急联系人）
+**数据展示**：RecyclerView 异构布局，支持大卡片和列表视图
 **展示内容**：
-- 被监护人基本信息（姓名、关系、手机号）
+- 联系人基本信息（姓名、手机号）
+- 联系人类型标签（被监护人/紧急联系人）
 - 上次联系时间
-- 最新位置
-- 最新报警信息
+- 最新位置信息
+- 最新报警信息（仅被监护人显示）
 
 **布局策略**：
-- **被监护人数量 ≤ 5**：大卡片形式展示更多信息
-  - 头像（大尺寸）
-  - 姓名
-  - 关系
-  - 手机号
+- **显示顺序**：紧急联系人显示在被监护人之前
+- **视觉区分**：
+  - **紧急联系人**：蓝色主题，显示"紧急联系人"标签
+  - **被监护人**：绿色主题，显示"被监护人"标签
+- **大卡片视图**：
+  - 头像（大尺寸，带颜色区分）
+  - 姓名（带颜色区分）
+  - 类型标签（带背景色区分）
   - 上次联系时间
-  - 最新位置
+  - 最新位置信息
   - 最新报警信息
-- **被监护人数量 > 5**：微信消息列表形式展示
-  - 头像（小尺寸）
-  - 名称
-  - 最新位置
+- **列表视图**：
+  - 头像（小尺寸，带颜色区分）
+  - 姓名（带颜色区分）
+  - 最新位置信息
   - 时间
   - 最新报警信息（单行摘要）
+
+**适配器逻辑**：
+- `ContactAdapter` 根据联系人类型动态选择对应布局
+- 紧急联系人使用蓝色主题布局文件
+- 被监护人使用绿色主题布局文件
+- 点击任意联系人进入详情页面
 
 #### 4.1.3 我的设置界面
 **功能**：管理个人报警设置和监护人配置
@@ -262,7 +308,16 @@ graph TB
 - 如果关闭主界面，后续需要继续发送短信密语才能再次打开
 - 只有自己的手机发给自己的短信，accessibility 才会判断密语并打开主界面
 
-#### 4.1.4 报警/查询记录界面
+#### 4.1.4 联系人详情界面（ContactDetailFragment）
+**功能**：显示单个联系人的详细信息
+**展示内容**：
+- 联系人基本信息（姓名、手机号、关系、类型）
+- 历史消息记录
+- 报警记录（仅被监护人）
+- 位置历史记录（仅被监护人）
+- 操作按钮（发送消息、查看详情等）
+
+### 4.1.5 报警/查询记录界面
 **功能**：展示报警和监护人查询记录
 **展示方式**：时间倒序列表
 **记录格式**：
@@ -288,10 +343,10 @@ graph TB
 - 紧急擦除
 
 #### 4.1.6 Fragment组件
-- `WardListFragment`：被监护人列表（大卡片/列表视图）
+- `ContactFragment`：统一联系人列表（大卡片/列表视图，支持监护人和被监护人）
+- `ContactDetailFragment`：联系人详情页面
 - `MySettingsFragment`：我的设置列表
 - `RecordListFragment`：报警/查询记录列表
-- `ContactFragment`：紧急联系人管理
 - `EmergencyModeFragment`：紧急模式设置
 - `AppSettingsFragment`：隐秘应用设置
 - `FloatingWindowFragment`：浮动窗口设置

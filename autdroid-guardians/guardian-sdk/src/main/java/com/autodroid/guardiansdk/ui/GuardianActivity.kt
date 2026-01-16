@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.autodroid.guardiansdk.R
-import com.autodroid.guardiansdk.ui.wards.WardFragment
+import com.autodroid.guardiansdk.ui.contacts.ContactFragment
 import com.autodroid.guardiansdk.ui.settings.SettingFragment
 
 class GuardianActivity : AppCompatActivity() {
@@ -20,7 +20,7 @@ class GuardianActivity : AppCompatActivity() {
         setupBottomNavigation()
 
         if (savedInstanceState == null) {
-            loadFragment(WardFragment.newInstance())
+            loadFragment(ContactFragment.newInstance())
         }
     }
 
@@ -32,7 +32,7 @@ class GuardianActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_guardians -> {
-                    loadFragment(WardFragment.newInstance())
+                    loadFragment(ContactFragment.newInstance())
                     true
                 }
                 R.id.nav_settings -> {

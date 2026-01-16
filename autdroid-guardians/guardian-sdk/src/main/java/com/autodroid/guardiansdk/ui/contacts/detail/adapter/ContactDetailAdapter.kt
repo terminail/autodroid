@@ -1,4 +1,4 @@
-package com.autodroid.guardiansdk.ui.wards.detail.adapter
+package com.autodroid.guardiansdk.ui.contacts.detail.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,11 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.data.entity.MessageContent
 import com.autodroid.guardiansdk.data.entity.MessageContentSerializer
-import com.autodroid.guardiansdk.ui.wards.detail.model.WardDetailItem
+import com.autodroid.guardiansdk.ui.contacts.detail.model.ContactDetailItem
 import java.text.SimpleDateFormat
 import java.util.*
 
-class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ContactDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -23,14 +23,14 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     }
 
-    private val items = mutableListOf<WardDetailItem>()
+    private val items = mutableListOf<ContactDetailItem>()
     private var currentUserPhoneNumber: String = "" // 当前用户手机号，用于判断消息方向
 
     fun setCurrentUserPhoneNumber(phoneNumber: String) {
         currentUserPhoneNumber = phoneNumber
     }
 
-    fun updateData(newItems: List<WardDetailItem>) {
+    fun updateData(newItems: List<ContactDetailItem>) {
         items.clear()
         items.addAll(newItems)
         notifyDataSetChanged()
@@ -39,8 +39,8 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun getItemViewType(position: Int): Int {
         val item = items[position]
         return when (item) {
-            is WardDetailItem.Header -> TYPE_HEADER
-            is WardDetailItem.MessageItem -> {
+            is ContactDetailItem.Header -> TYPE_HEADER
+            is ContactDetailItem.MessageItem -> {
                 // 判断消息方向
                 if (item.message.fromPhoneNumber == currentUserPhoneNumber) {
                     TYPE_SEND_MESSAGE
@@ -48,7 +48,7 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     TYPE_RECEIVE_MESSAGE
                 }
             }
-            is WardDetailItem.TimeDivider -> TYPE_TIME_DIVIDER
+            is ContactDetailItem.TimeDivider -> TYPE_TIME_DIVIDER
         }
     }
 
@@ -56,22 +56,22 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         return when (viewType) {
             TYPE_HEADER -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.guardian_ward_detail_header, parent, false)
+                    .inflate(R.layout.guardian_contact_detail_header, parent, false)
                 HeaderViewHolder(view)
             }
             TYPE_SEND_MESSAGE -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.guardian_ward_detail_message_send, parent, false)
+                    .inflate(R.layout.guardian_contact_detail_message_send, parent, false)
                 SendMessageViewHolder(view)
             }
             TYPE_RECEIVE_MESSAGE -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.guardian_ward_detail_message_receive, parent, false)
+                    .inflate(R.layout.guardian_contact_detail_message_receive, parent, false)
                 ReceiveMessageViewHolder(view)
             }
             TYPE_TIME_DIVIDER -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.guardian_ward_detail_time_divider, parent, false)
+                    .inflate(R.layout.guardian_contact_detail_time_divider, parent, false)
                 TimeDividerViewHolder(view)
             }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
@@ -81,19 +81,19 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is HeaderViewHolder -> {
-                val item = items[position] as WardDetailItem.Header
+                val item = items[position] as ContactDetailItem.Header
                 holder.bind(item)
             }
             is SendMessageViewHolder -> {
-                val item = items[position] as WardDetailItem.MessageItem
+                val item = items[position] as ContactDetailItem.MessageItem
                 holder.bind(item.message)
             }
             is ReceiveMessageViewHolder -> {
-                val item = items[position] as WardDetailItem.MessageItem
+                val item = items[position] as ContactDetailItem.MessageItem
                 holder.bind(item.message)
             }
             is TimeDividerViewHolder -> {
-                val item = items[position] as WardDetailItem.TimeDivider
+                val item = items[position] as ContactDetailItem.TimeDivider
                 holder.bind(item)
             }
         }
@@ -108,7 +108,7 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val tvAlarmCount: TextView = itemView.findViewById(R.id.tv_alarm_count)
         private val tvLastAlarmTime: TextView = itemView.findViewById(R.id.tv_last_alarm_time)
 
-        fun bind(item: WardDetailItem.Header) {
+        fun bind(item: ContactDetailItem.Header) {
             tvName.text = item.name
             tvPhone.text = "手机号: ${item.phoneNumber}"
             tvRelationship.text = "关系: ${item.relationship}"
@@ -162,7 +162,7 @@ class WardDetailAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     class TimeDividerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvTime: TextView = itemView.findViewById(R.id.tv_divider_time)
 
-        fun bind(item: WardDetailItem.TimeDivider) {
+        fun bind(item: ContactDetailItem.TimeDivider) {
             tvTime.text = formatDate(item.timestamp)
         }
 

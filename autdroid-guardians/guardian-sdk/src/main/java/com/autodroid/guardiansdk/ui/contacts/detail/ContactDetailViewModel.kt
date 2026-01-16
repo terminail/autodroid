@@ -1,13 +1,14 @@
-package com.autodroid.guardiansdk.ui.wards.detail
+package com.autodroid.guardiansdk.ui.contacts.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autodroid.guardiansdk.data.dao.MessageDao
-import com.autodroid.guardiansdk.data.dao.WardDao
+import com.autodroid.guardiansdk.data.dao.ContactDao
+import com.autodroid.guardiansdk.data.entity.ContactType
 import com.autodroid.guardiansdk.data.entity.Message
 import com.autodroid.guardiansdk.data.entity.MessageContent
 import com.autodroid.guardiansdk.data.entity.MessageContentSerializer
-import com.autodroid.guardiansdk.ui.wards.detail.model.WardDetailItem
+import com.autodroid.guardiansdk.ui.contacts.detail.model.ContactDetailItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,16 +17,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.*
 
-class WardDetailViewModel(
-    private val wardDao: WardDao,
+class ContactDetailViewModel(
+    private val contactDao: ContactDao,
     private val messageDao: MessageDao
 ) : ViewModel() {
 
     // 当前用户手机号（应该从配置或登录信息获取）
     private val currentUserPhoneNumber = "13800000000" // TODO: 从配置获取
 
-    private val _detailItems = MutableStateFlow<List<WardDetailItem>>(emptyList())
-    val detailItems: StateFlow<List<WardDetailItem>> = _detailItems.asStateFlow()
+    private val _detailItems = MutableStateFlow<List<ContactDetailItem>>(emptyList())
+    val detailItems: StateFlow<List<ContactDetailItem>> = _detailItems.asStateFlow()
 
     private var wardPhoneNumber: String = ""
 
@@ -36,18 +37,18 @@ class WardDetailViewModel(
         this.wardPhoneNumber = wardPhoneNumber
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val items = mutableListOf<WardDetailItem>()
+                val items = mutableListOf<ContactDetailItem>()
 
                 // 1. 加载被监护人基本信息（Header）
-                val ward = wardDao.getWardByPhoneNumber(wardPhoneNumber)
-                if (ward != null) {
+                val contact = contactDao.getContactByPhoneNumber(wardPhoneNumber)
+                if (contact != null && contact.type == ContactType.WARD) {
                     items.add(
-                        WardDetailItem.Header(
-                            phoneNumber = ward.phoneNumber,
-                            name = ward.name,
-                            relationship = ward.relationship,
-                            alarmCount = ward.alarmCount,
-                            lastAlarmTime = ward.lastAlarmTime
+                        ContactDetailItem.Header(
+                            phoneNumber = contact.phoneNumber,
+                            name = contact.name,
+                            relationship = contact.relationship,
+                            alarmCount = contact.alarmCount,
+                            lastAlarmTime = contact.lastMessageTime
                         )
                     )
                 }
@@ -61,11 +62,11 @@ class WardDetailViewModel(
                 // 4. 添加消息项（使用统一的MessageItem）
                 groupedMessages.forEach { (date, msgs) ->
                     // 添加时间分割线
-                    items.add(WardDetailItem.TimeDivider(date.time))
+                    items.add(ContactDetailItem.TimeDivider(date.time))
 
                     // 添加该日期的所有消息
                     msgs.forEach { message ->
-                        items.add(WardDetailItem.MessageItem(message))
+                        items.add(ContactDetailItem.MessageItem(message))
                     }
                 }
 

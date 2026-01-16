@@ -7,10 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autodroid.guardiansdk.data.dao.SettingDao
-import com.autodroid.guardiansdk.data.dao.WardDao
+import com.autodroid.guardiansdk.data.dao.ContactDao
 import com.autodroid.guardiansdk.data.dao.MessageDao
 import com.autodroid.guardiansdk.data.entity.Setting
-import com.autodroid.guardiansdk.data.entity.Ward
+import com.autodroid.guardiansdk.data.entity.Contact
+import com.autodroid.guardiansdk.data.entity.ContactType
 import com.autodroid.guardiansdk.data.entity.Message
 import com.autodroid.guardiansdk.data.entity.SettingTypeConverter
 import com.autodroid.guardiansdk.data.entity.MessageContent
@@ -24,8 +25,8 @@ import kotlinx.coroutines.launch
  * 包含所有数据实体和DAO
  */
 @Database(
-    entities = [Setting::class, Ward::class, Message::class],
-    version = 4,  // 升级版本号，强制重建数据库
+    entities = [Setting::class, Contact::class, Message::class],
+    version = 6,  // 升级版本号，强制重建数据库
     exportSchema = false
 )
 @TypeConverters(SettingTypeConverter::class)
@@ -37,9 +38,9 @@ abstract class GuardianDatabase : RoomDatabase() {
     abstract fun settingDao(): SettingDao
     
     /**
-     * 获取被监护人DAO
+     * 获取联系人DAO
      */
-    abstract fun wardDao(): WardDao
+    abstract fun contactDao(): ContactDao
     
     /**
      * 获取消息DAO
@@ -60,7 +61,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     GuardianDatabase::class.java,
                     "guardian_database"
                 )
-                    .fallbackToDestructiveMigrationOnDowngrade()
+                    .fallbackToDestructiveMigration()  // 强制删除旧数据库
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
@@ -77,6 +78,23 @@ abstract class GuardianDatabase : RoomDatabase() {
                         override fun onOpen(db: SupportSQLiteDatabase) {
                             super.onOpen(db)
                             android.util.Log.d("GuardianDatabase", "=== Database opened ===")
+                            // 确保数据存在，如果不存在则插入
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    // 使用db参数执行原始SQL查询来检查数据
+                                    val cursor = db.query("SELECT COUNT(*) FROM contacts WHERE type = 'WARD'")
+                                    val wardCount = if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                                    cursor.close()
+                                    
+                                    android.util.Log.d("GuardianDatabase", "=== Current ward count: $wardCount ===")
+                                    if (wardCount == 0) {
+                                        android.util.Log.d("GuardianDatabase", "=== No wards found, inserting test data ===")
+                                        insertTestDataWithSQL(db)
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("GuardianDatabase", "=== Error checking/inserting data ===", e)
+                                }
+                            }
                         }
                     })
                     .build()
@@ -92,20 +110,41 @@ abstract class GuardianDatabase : RoomDatabase() {
             try {
                 val currentTime = System.currentTimeMillis()
                 
-                // 插入被监护人数据
-                db.execSQL("INSERT INTO wards (phoneNumber, name, relationship, passwordBook, lastAlarmTime, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13812345678", "张三", "社区居民", "default_password_book", 
-                    (currentTime - 86400000).toString(), "3", "1", currentTime.toString(), currentTime.toString()
+                // 插入被监护人数据（WARD类型）
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13812345678", "张三", "WARD", "社区居民", "default_password_book",
+                    0, 0, currentTime - 86400000, 3, 3, 1, currentTime, currentTime
                 ))
                 
-                db.execSQL("INSERT INTO wards (phoneNumber, name, relationship, passwordBook, lastAlarmTime, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13987654321", "李四", "学生", "default_password_book",
-                    (currentTime - 172800000).toString(), "1", "1", currentTime.toString(), currentTime.toString()
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13987654321", "李四", "WARD", "学生", "default_password_book",
+                    0, 0, currentTime - 172800000, 2, 1, 1, currentTime, currentTime
                 ))
                 
-                db.execSQL("INSERT INTO wards (phoneNumber, name, relationship, passwordBook, lastAlarmTime, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13711112222", "王五", "社区居民", "default_password_book",
-                    (currentTime - 259200000).toString(), "5", "1", currentTime.toString(), currentTime.toString()
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13711112222", "王五", "WARD", "社区居民", "default_password_book",
+                    0, 0, currentTime - 259200000, 1, 5, 1, currentTime, currentTime
+                ))
+                
+                // 插入报警联系人数据（GUARDIAN类型）
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13811111111", "报警联系人1", "GUARDIAN", "家人", null, 1, 1, 0, 0, 0, 1, currentTime, currentTime
+                ))
+                
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13811111112", "报警联系人2", "GUARDIAN", "朋友", null, 0, 2, 0, 0, 0, 1, currentTime, currentTime
+                ))
+                
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13811111113", "报警联系人3", "GUARDIAN", "同事", null, 0, 3, 0, 0, 0, 1, currentTime, currentTime
+                ))
+                
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13811111114", "报警联系人4", "GUARDIAN", "邻居", null, 0, 4, 0, 0, 0, 1, currentTime, currentTime
+                ))
+                
+                db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+                    "13811111115", "报警联系人5", "GUARDIAN", "亲戚", null, 0, 5, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 // 插入消息数据 - 张三的消息
@@ -117,21 +156,21 @@ abstract class GuardianDatabase : RoomDatabase() {
                     )
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13812345678", "13800000000", zhangsanAlarmContent, (currentTime - 86400000).toString()
+                    "13812345678", "13800000000", zhangsanAlarmContent, currentTime - 86400000
                 ))
                 
                 val policeReply1Content = MessageContentSerializer.serialize(
                     MessageContent.TextMessage("收到报警，已派警员前往")
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13800000000", "13812345678", policeReply1Content, (currentTime - 86390000).toString()
+                    "13800000000", "13812345678", policeReply1Content, currentTime - 86390000
                 ))
                 
                 val zhangsanSafeContent = MessageContentSerializer.serialize(
                     MessageContent.TextMessage("感谢，已经安全")
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13812345678", "13800000000", zhangsanSafeContent, (currentTime - 86380000).toString()
+                    "13812345678", "13800000000", zhangsanSafeContent, currentTime - 86380000
                 ))
                 
                 // 李四的消息
@@ -139,14 +178,14 @@ abstract class GuardianDatabase : RoomDatabase() {
                     MessageContent.QueryMessage("查询今天的社区活动安排")
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13987654321", "13800000000", lisiQueryContent, (currentTime - 172800000).toString()
+                    "13987654321", "13800000000", lisiQueryContent, currentTime - 172800000
                 ))
                 
                 val policeReply2Content = MessageContentSerializer.serialize(
                     MessageContent.TextMessage("今天有社区安全知识讲座，下午2点开始")
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13800000000", "13987654321", policeReply2Content, (currentTime - 172790000).toString()
+                    "13800000000", "13987654321", policeReply2Content, currentTime - 172790000
                 ))
                 
                 // 王五的消息
@@ -158,7 +197,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     )
                 )
                 db.execSQL("INSERT INTO messages (fromPhoneNumber, toPhoneNumber, content, timestamp) VALUES (?, ?, ?, ?)", arrayOf(
-                    "13711112222", "13800000000", wangwuAlarmContent, (currentTime - 259200000).toString()
+                    "13711112222", "13800000000", wangwuAlarmContent, currentTime - 259200000
                 ))
                 
             } catch (e: Exception) {
@@ -171,42 +210,92 @@ abstract class GuardianDatabase : RoomDatabase() {
          */
         private suspend fun insertTestData(database: GuardianDatabase) {
             try {
-                // 测试用的被监护人数据
+                val currentTime = System.currentTimeMillis()
+                
+                // 测试用的被监护人数据（WARD类型）
                 val testWards = listOf(
-                    Ward(
+                    Contact(
                         phoneNumber = "13812345678",
                         name = "张三",
+                        type = ContactType.WARD,
                         relationship = "社区居民",
                         passwordBook = "default_password_book",
-                        lastAlarmTime = System.currentTimeMillis() - 86400000, // 1天前
                         alarmCount = 3,
                         isActive = true
                     ),
-                    Ward(
+                    Contact(
                         phoneNumber = "13987654321",
                         name = "李四",
+                        type = ContactType.WARD,
                         relationship = "学生",
                         passwordBook = "default_password_book",
-                        lastAlarmTime = System.currentTimeMillis() - 172800000, // 2天前
                         alarmCount = 1,
                         isActive = true
                     ),
-                    Ward(
+                    Contact(
                         phoneNumber = "13711112222",
                         name = "王五",
+                        type = ContactType.WARD,
                         relationship = "社区居民",
                         passwordBook = "default_password_book",
-                        lastAlarmTime = System.currentTimeMillis() - 259200000, // 3天前
                         alarmCount = 5,
                         isActive = true
                     )
                 )
                 
-                // 插入被监护人
-                database.wardDao().insertOrUpdateAllWards(testWards)
+                // 测试用的报警联系人数据（GUARDIAN类型）
+                val testGuardians = listOf(
+                    Contact(
+                        phoneNumber = "13811111111",
+                        name = "报警联系人1",
+                        type = ContactType.GUARDIAN,
+                        relationship = "家人",
+                        isPrimary = true,
+                        orderIndex = 1,
+                        isActive = true
+                    ),
+                    Contact(
+                        phoneNumber = "13811111112",
+                        name = "报警联系人2",
+                        type = ContactType.GUARDIAN,
+                        relationship = "朋友",
+                        isPrimary = false,
+                        orderIndex = 2,
+                        isActive = true
+                    ),
+                    Contact(
+                        phoneNumber = "13811111113",
+                        name = "报警联系人3",
+                        type = ContactType.GUARDIAN,
+                        relationship = "同事",
+                        isPrimary = false,
+                        orderIndex = 3,
+                        isActive = true
+                    ),
+                    Contact(
+                        phoneNumber = "13811111114",
+                        name = "报警联系人4",
+                        type = ContactType.GUARDIAN,
+                        relationship = "邻居",
+                        isPrimary = false,
+                        orderIndex = 4,
+                        isActive = true
+                    ),
+                    Contact(
+                        phoneNumber = "13811111115",
+                        name = "报警联系人5",
+                        type = ContactType.GUARDIAN,
+                        relationship = "亲戚",
+                        isPrimary = false,
+                        orderIndex = 5,
+                        isActive = true
+                    )
+                )
+                
+                // 插入数据
+                database.contactDao().insertOrUpdateAll(testWards + testGuardians)
                 
                 // 测试用的消息数据
-                val currentTime = System.currentTimeMillis()
                 val testMessages = listOf(
                     // 张三的消息
                     Message(

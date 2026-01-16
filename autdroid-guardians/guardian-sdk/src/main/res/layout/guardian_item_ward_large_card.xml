@@ -24,7 +24,7 @@
             android:layout_marginEnd="16dp"
             android:src="@drawable/guardian_ic_people"
             android:scaleType="centerCrop"
-            android:tint="@color/guardian_blue" />
+            android:tint="@color/guardian_green" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -40,23 +40,23 @@
                 android:layout_marginBottom="4dp">
 
                 <TextView
-                    android:id="@+id/tv_guardian_name"
+                    android:id="@+id/tv_ward_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="监护人姓名"
+                    android:text="被监护人姓名"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/guardian_blue" />
+                    android:textColor="@color/guardian_green" />
 
                 <TextView
                     android:id="@+id/tv_contact_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="紧急联系人"
+                    android:text="被监护人"
                     android:textSize="12sp"
                     android:textColor="@color/guardian_white"
-                    android:background="@drawable/guardian_bg_contact_type_blue"
+                    android:background="@drawable/guardian_bg_contact_type_green"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="2dp"
                     android:layout_gravity="center_vertical" />

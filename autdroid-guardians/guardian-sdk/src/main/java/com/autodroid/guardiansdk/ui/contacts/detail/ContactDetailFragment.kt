@@ -1,4 +1,4 @@
-package com.autodroid.guardiansdk.ui.wards.detail
+package com.autodroid.guardiansdk.ui.contacts.detail
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,25 +11,25 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
-import com.autodroid.guardiansdk.ui.wards.detail.adapter.WardDetailAdapter
+import com.autodroid.guardiansdk.ui.contacts.detail.adapter.ContactDetailAdapter
 import kotlinx.coroutines.launch
 
-class WardDetailFragment : Fragment() {
+class ContactDetailFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: WardDetailAdapter
+    private lateinit var adapter: ContactDetailAdapter
     
-    private val viewModel: WardDetailViewModel by viewModels {
+    private val viewModel: ContactDetailViewModel by viewModels {
         val database = GuardianDatabase.getDatabase(requireContext())
-        WardDetailViewModelFactory(database.wardDao(), database.messageDao())
+        ContactDetailViewModelFactory(database.contactDao(), database.messageDao())
     }
 
     companion object {
         private const val ARG_WARD_PHONE = "ward_phone_number"
         private const val ARG_WARD_NAME = "ward_name"
 
-        fun newInstance(wardPhoneNumber: String, wardName: String): WardDetailFragment {
-            val fragment = WardDetailFragment()
+        fun newInstance(wardPhoneNumber: String, wardName: String): ContactDetailFragment {
+            val fragment = ContactDetailFragment()
             val args = Bundle()
             args.putString(ARG_WARD_PHONE, wardPhoneNumber)
             args.putString(ARG_WARD_NAME, wardName)
@@ -43,7 +43,7 @@ class WardDetailFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.guardian_ward_detail_fragment, container, false)
+        return inflater.inflate(R.layout.guardian_contact_detail_fragment, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -64,12 +64,12 @@ class WardDetailFragment : Fragment() {
 
     private fun setupRecyclerView(view: View) {
         recyclerView = view.findViewById(R.id.recyclerView)
-        adapter = WardDetailAdapter()
+        adapter = ContactDetailAdapter()
         adapter.setCurrentUserPhoneNumber(viewModel.getCurrentUserPhoneNumber())
         
         recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = this@WardDetailFragment.adapter
+            adapter = this@ContactDetailFragment.adapter
         }
     }
 

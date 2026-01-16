@@ -260,8 +260,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     inner class GuardianItem1ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
         fun bind(item: SettingItem.GuardianItem1, listener: OnItemClickListener?) {
-            val displayText = if (item.name.isEmpty()) "报警联系人1" else "报警联系人1: ${item.name}"
+            val displayText = if (item.isPlaceholder) "报警联系人1: ${item.name}" else "报警联系人1: ${item.name}"
             textView.text = displayText
+            // 如果占位符，设置不同的样式
+            if (item.isPlaceholder) {
+                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+            } else {
+                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
             itemView.setOnClickListener {
                 listener?.onGuardian1Click()
             }
@@ -271,8 +277,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     inner class GuardianItem2ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
         fun bind(item: SettingItem.GuardianItem2, listener: OnItemClickListener?) {
-            val displayText = if (item.name.isEmpty()) "报警联系人2" else "报警联系人2: ${item.name}"
+            val displayText = if (item.isPlaceholder) "报警联系人2: ${item.name}" else "报警联系人2: ${item.name}"
             textView.text = displayText
+            // 如果占位符，设置不同的样式
+            if (item.isPlaceholder) {
+                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+            } else {
+                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
             itemView.setOnClickListener {
                 listener?.onGuardian2Click()
             }
@@ -282,8 +294,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     inner class GuardianItem3ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
         fun bind(item: SettingItem.GuardianItem3, listener: OnItemClickListener?) {
-            val displayText = if (item.name.isEmpty()) "报警联系人3" else "报警联系人3: ${item.name}"
+            val displayText = if (item.isPlaceholder) "报警联系人3: ${item.name}" else "报警联系人3: ${item.name}"
             textView.text = displayText
+            // 如果占位符，设置不同的样式
+            if (item.isPlaceholder) {
+                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+            } else {
+                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
             itemView.setOnClickListener {
                 listener?.onGuardian3Click()
             }
@@ -293,8 +311,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     inner class GuardianItem4ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
         fun bind(item: SettingItem.GuardianItem4, listener: OnItemClickListener?) {
-            val displayText = if (item.name.isEmpty()) "报警联系人4" else "报警联系人4: ${item.name}"
+            val displayText = if (item.isPlaceholder) "报警联系人4: ${item.name}" else "报警联系人4: ${item.name}"
             textView.text = displayText
+            // 如果占位符，设置不同的样式
+            if (item.isPlaceholder) {
+                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+            } else {
+                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
             itemView.setOnClickListener {
                 listener?.onGuardian4Click()
             }
@@ -304,8 +328,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     inner class GuardianItem5ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
         fun bind(item: SettingItem.GuardianItem5, listener: OnItemClickListener?) {
-            val displayText = if (item.name.isEmpty()) "报警联系人5" else "报警联系人5: ${item.name}"
+            val displayText = if (item.isPlaceholder) "报警联系人5: ${item.name}" else "报警联系人5: ${item.name}"
             textView.text = displayText
+            // 如果占位符，设置不同的样式
+            if (item.isPlaceholder) {
+                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+            } else {
+                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
             itemView.setOnClickListener {
                 listener?.onGuardian5Click()
             }

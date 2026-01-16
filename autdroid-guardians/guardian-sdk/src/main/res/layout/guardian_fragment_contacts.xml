@@ -5,13 +5,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="8dp"
-    tools:context=".ui.wards.WardFragment">
+    tools:context=".ui.contacts.ContactFragment">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="被监护人列表"
+        android:text="联系人"
         android:textSize="18sp"
         android:textStyle="bold"
         android:gravity="center" />

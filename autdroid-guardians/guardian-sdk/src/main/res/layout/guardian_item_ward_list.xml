@@ -16,7 +16,7 @@
         android:layout_marginEnd="16dp"
         android:src="@drawable/guardian_ic_people"
         android:scaleType="centerCrop"
-        android:tint="@color/guardian_blue" />
+        android:tint="@color/guardian_green" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -31,14 +31,14 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tv_guardian_name"
+                android:id="@+id/tv_ward_name"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="监护人姓名"
+                android:text="被监护人姓名"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/guardian_blue"
+                android:textColor="@color/guardian_green"
                 android:maxLines="1"
                 android:ellipsize="end" />
 

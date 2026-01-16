@@ -1,10 +1,11 @@
-package com.autodroid.guardiansdk.ui.wards
+package com.autodroid.guardiansdk.ui.contacts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autodroid.guardiansdk.data.dao.WardDao
+import com.autodroid.guardiansdk.data.dao.ContactDao
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
-import com.autodroid.guardiansdk.data.entity.Ward
+import com.autodroid.guardiansdk.data.entity.Contact
+import com.autodroid.guardiansdk.data.entity.ContactType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,13 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * 被监护人列表页面的ViewModel
- * 负责管理被监护人数据的增删改查
+ * 联系人列表页面的ViewModel
+ * 负责管理所有联系人数据（被监护人和紧急联系人）
  */
-class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
+class ContactViewModel(private val database: GuardianDatabase) : ViewModel() {
     
-    private val _wards = MutableStateFlow<List<Ward>>(emptyList())
-    val wards: StateFlow<List<Ward>> = _wards.asStateFlow()
+    private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
+    val contacts: StateFlow<List<Contact>> = _contacts.asStateFlow()
     
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -26,28 +27,41 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
     
-    private val wardDao: WardDao = database.wardDao()
+    private val contactDao: ContactDao = database.contactDao()
     
     companion object {
-        private const val MAX_GUARDIANS = 5 // 最多5个监护人
+        // 被监护人没有数量限制
     }
     
     init {
-        loadWards()
+        loadAllContacts()
     }
     
     /**
-     * 加载所有监护人
+     * 加载所有联系人（被监护人和紧急联系人）
      */
-    fun loadWards() {
+    fun loadAllContacts() {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val activeWards = wardDao.getActiveWards()
-                _wards.value = activeWards
+                val activeGuardians = contactDao.getActiveContactsByType(ContactType.GUARDIAN)
+                val activeWards = contactDao.getActiveContactsByType(ContactType.WARD)
+                
+                // 合并所有联系人，紧急联系人显示在被监护人之前
+                val allContacts = activeGuardians + activeWards
+                _contacts.value = allContacts
+                
+                android.util.Log.d("ContactViewModel", "=== 加载联系人完成，紧急联系人: ${activeGuardians.size}, 被监护人: ${activeWards.size}, 总数: ${allContacts.size} ===")
+                
+                // 记录每个联系人的详细信息
+                allContacts.forEach { contact ->
+                    android.util.Log.d("ContactViewModel", "=== 联系人: ${contact.name} (${contact.phoneNumber}) - 类型: ${contact.type} ===")
+                }
+                
                 _errorMessage.value = null
             } catch (e: Exception) {
-                _errorMessage.value = "加载监护人失败: ${e.message}"
+                android.util.Log.e("ContactViewModel", "=== 加载联系人失败 ===", e)
+                _errorMessage.value = "加载联系人失败: ${e.message}"
             } finally {
                 _loading.value = false
             }
@@ -55,7 +69,7 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 添加新监护人
+     * 添加新被监护人
      */
     fun addWard(name: String, phone: String, relationship: String) {
         if (name.isEmpty() || phone.isEmpty()) {
@@ -71,17 +85,9 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 检查是否已达到最大监护人数量
-                val currentCount = wardDao.getActiveWards().size
-                if (currentCount >= MAX_GUARDIANS) {
-                    _errorMessage.value = "已达到最大监护人数量限制(${MAX_GUARDIANS}个)"
-                    _loading.value = false
-                    return@launch
-                }
-                
                 // 检查手机号是否已存在
-                val existingWard = wardDao.getWardByPhoneNumber(phone)
-                if (existingWard != null && existingWard.isActive) {
+                val existingContact = contactDao.getContactByPhoneNumber(phone)
+                if (existingContact != null && existingContact.isActive && existingContact.type == ContactType.WARD) {
                     _errorMessage.value = "该手机号已存在"
                     _loading.value = false
                     return@launch
@@ -89,25 +95,28 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
                 
                 // 短信发送在Fragment中处理，ViewModel只负责数据操作
                 
-                // 创建新监护人
-                val newWard = Ward(
+                // 创建新被监护人
+                val newWard = Contact(
                     phoneNumber = phone,
                     name = name,
+                    type = ContactType.WARD,
                     relationship = relationship,
                     passwordBook = "",
-                    lastAlarmTime = 0,
                     alarmCount = 0,
                     isActive = true
                 )
                 
                 // 保存到数据库
-                wardDao.insertOrUpdateWard(newWard)
+                contactDao.insertOrUpdate(newWard)
+                
+                android.util.Log.d("ContactViewModel", "=== 添加被监护人成功: ${name} (${phone}) ===")
                 
                 // 重新加载数据
-                loadWards()
+                loadAllContacts()
                 
             } catch (e: Exception) {
-                _errorMessage.value = "添加监护人失败: ${e.message}"
+                android.util.Log.e("ContactViewModel", "=== 添加被监护人失败 ===", e)
+                _errorMessage.value = "添加被监护人失败: ${e.message}"
             } finally {
                 _loading.value = false
             }
@@ -115,9 +124,9 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 更新监护人信息
+     * 更新被监护人信息
      */
-    fun updateWard(ward: Ward, name: String, phone: String, relationship: String) {
+    fun updateWard(ward: Contact, name: String, phone: String, relationship: String) {
         if (name.isEmpty() || phone.isEmpty()) {
             _errorMessage.value = "姓名和手机号不能为空"
             return
@@ -131,29 +140,32 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 检查手机号是否与其他监护人重复（排除当前监护人）
-                val existingWard = wardDao.getWardByPhoneNumber(phone)
-                if (existingWard != null && existingWard.isActive && existingWard.phoneNumber != ward.phoneNumber) {
+                // 检查手机号是否与其他被监护人重复（排除当前被监护人）
+                val existingContact = contactDao.getContactByPhoneNumber(phone)
+                if (existingContact != null && existingContact.isActive && existingContact.phoneNumber != ward.phoneNumber) {
                     _errorMessage.value = "该手机号已存在"
                     _loading.value = false
                     return@launch
                 }
                 
-                // 更新监护人信息
-                val updatedWard = ward.copy(
+                // 更新被监护人信息
+                val updatedContact = ward.copy(
                     phoneNumber = phone,
                     name = name,
                     relationship = relationship
                 )
                 
                 // 保存到数据库
-                wardDao.insertOrUpdateWard(updatedWard)
+                contactDao.insertOrUpdate(updatedContact)
+                
+                android.util.Log.d("ContactViewModel", "=== 更新被监护人成功: ${name} (${phone}) ===")
                 
                 // 重新加载数据
-                loadWards()
+                loadAllContacts()
                 
             } catch (e: Exception) {
-                _errorMessage.value = "更新监护人失败: ${e.message}"
+                android.util.Log.e("ContactViewModel", "=== 更新被监护人失败 ===", e)
+                _errorMessage.value = "更新被监护人失败: ${e.message}"
             } finally {
                 _loading.value = false
             }
@@ -161,42 +173,30 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 删除监护人（软删除）
+     * 删除被监护人（软删除）
      */
-    fun deleteWard(ward: Ward) {
+    fun deleteWard(ward: Contact) {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // 软删除：将isActive设置为false
-                val deletedWard = ward.copy(isActive = false)
-                wardDao.insertOrUpdateWard(deletedWard)
+                val deletedContact = ward.copy(isActive = false)
+                contactDao.insertOrUpdate(deletedContact)
+                
+                android.util.Log.d("ContactViewModel", "=== 删除被监护人成功: ${ward.name} (${ward.phoneNumber}) ===")
                 
                 // 重新加载数据
-                loadWards()
+                loadAllContacts()
                 
             } catch (e: Exception) {
-                _errorMessage.value = "删除监护人失败: ${e.message}"
+                android.util.Log.e("ContactViewModel", "=== 删除被监护人失败 ===", e)
+                _errorMessage.value = "删除被监护人失败: ${e.message}"
             } finally {
                 _loading.value = false
             }
         }
     }
-    
-    /**
-     * 获取监护人统计信息
-     */
-    fun getWardStats(): WardStats {
-        val currentWards = _wards.value
-        val totalAlarms = currentWards.sumOf { it.alarmCount }
-        val lastAlarmTime = currentWards.maxOfOrNull { it.lastAlarmTime } ?: 0L
-        
-        return WardStats(
-            totalCount = currentWards.size,
-            totalAlarms = totalAlarms,
-            lastAlarmTime = lastAlarmTime
-        )
-    }
-    
+
     /**
      * 清除错误消息
      */
@@ -228,12 +228,3 @@ class WardViewModel(private val database: GuardianDatabase) : ViewModel() {
         return null
     }
 }
-
-/**
- * 监护人统计信息
- */
-data class WardStats(
-    val totalCount: Int,
-    val totalAlarms: Int,
-    val lastAlarmTime: Long
-)

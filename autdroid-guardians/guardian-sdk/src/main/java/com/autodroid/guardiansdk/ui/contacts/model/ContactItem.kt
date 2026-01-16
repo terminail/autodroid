@@ -1,29 +1,31 @@
-package com.autodroid.guardiansdk.ui.wards.model
+package com.autodroid.guardiansdk.ui.contacts.model
 
-sealed class WardItem {
-    data class WardCard(
+sealed class ContactItem {
+    data class ContactCard(
         val phoneNumber: String,
         val name: String,
+        val contactType: String = "",
         val avatar: String = "",
         val lastContactTime: String,
         val lastLocation: String,
         val lastAlarmMessage: String
-    ) : WardItem()
+    ) : ContactItem()
 
-    data class WardListItem(
+    data class ContactListItem(
         val phoneNumber: String,
         val name: String,
+        val contactType: String = "",
         val avatar: String = "",
         val lastContactTime: String,
         val lastLocation: String,
         val lastAlarmMessage: String
-    ) : WardItem()
+    ) : ContactItem()
 
-    data class AddWardButton(
+    data class AddContactButton(
         val index: Int
-    ) : WardItem()
+    ) : ContactItem()
 
     data class EmptyState(
-        val message: String = "还没有添加监护人"
-    ) : WardItem()
+        val message: String = "还没有添加联系人"
+    ) : ContactItem()
 }

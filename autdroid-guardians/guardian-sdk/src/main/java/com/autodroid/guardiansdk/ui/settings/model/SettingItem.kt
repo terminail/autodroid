@@ -5,31 +5,36 @@ sealed class SettingItem {
     data class GuardianItem1(
         val phoneNumber: String = "",
         val name: String = "",
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val isPlaceholder: Boolean = false
     ) : SettingItem()
 
     data class GuardianItem2(
         val phoneNumber: String = "",
         val name: String = "",
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val isPlaceholder: Boolean = false
     ) : SettingItem()
 
     data class GuardianItem3(
         val phoneNumber: String = "",
         val name: String = "",
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val isPlaceholder: Boolean = false
     ) : SettingItem()
 
     data class GuardianItem4(
         val phoneNumber: String = "",
         val name: String = "",
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val isPlaceholder: Boolean = false
     ) : SettingItem()
 
     data class GuardianItem5(
         val phoneNumber: String = "",
         val name: String = "",
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val isPlaceholder: Boolean = false
     ) : SettingItem()
 
     data class VolumeKeyAlarmMode(
