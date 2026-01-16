@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res/android-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
@@ -19,7 +19,7 @@
             android:layout_height="24dp"
             android:layout_marginEnd="16dp"
             android:src="@drawable/guardian_ic_star"
-            android:tint="?attr/colorPrimary" />
+            android:tint="#4CAF50" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="核心价值"
-                android:textColor="?attr/colorOnBackground"
+                android:textColor="#212121"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
                 android:layout_marginTop="4dp"
                 android:lineSpacingExtra="4dp"
                 android:text="• 绝对隐蔽性：真实应用功能，不易被发现\n• 自动报警：无需手动操作即可触发报警\n• 多重触发机制：适应不同危险场景\n• 纯本地化：保护用户隐私，无服务器依赖\n• 离线可用：没有网络也能正常工作"
-                android:textColor="?attr/colorOnBackground"
+                android:textColor="#212121"
                 android:textSize="14sp" />
 
         </LinearLayout>

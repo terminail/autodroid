@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.autodroid.guardiansdk.service.AudioRecordingService
 import com.autodroid.guardiansdk.util.PreferenceManager
+import java.io.File
 
 /**
  * 音频录音管理器
@@ -148,9 +149,6 @@ class AudioRecordingManager(private val context: Context) {
         return deletedCount
     }
 }
-
-// 文件操作扩展
-import java.io.File
 
 /**
  * 录音文件管理器

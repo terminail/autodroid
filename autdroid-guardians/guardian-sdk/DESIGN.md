@@ -298,12 +298,23 @@ val testWards = listOf(
 10. 录音模式
     - **触发时机**：报警时自动启动录音，无需人工干预
     - **录音时长**：默认5分钟，可配置（1-30分钟）
-    - **文件格式**：AAC编码，MP4容器，加密存储
-    - **存储位置**：应用私有目录，自动加密
+    - **分段录音**：每2分钟自动生成一段录音文件，避免大文件风险
+    - **文件格式**：AAC编码（64kbps），单声道，MP4容器，每段约1MB
+    - **存储位置**：应用私有目录，AES加密存储
+    - **邮件发送**：每录完一段自动加密并通过邮件发送到配置的邮箱
+    - **证据保护**：即使手机被损坏，已发送的录音文件安全保存在邮箱
     - **隐秘性**：无界面提示，后台静默录音
-    - **权限管理**：录音权限自动申请和检查
-11. 短信开门密语（短信密语配置）
-12. 测试模式
+    - **权限管理**：录音权限和网络权限自动申请和检查
+    - **邮箱安全**：邮箱凭据使用AES加密存储在本地数据库
+11. 邮件配置（邮箱配置设置）
+    - **邮箱地址**：发送录音附件的发件人邮箱
+    - **邮箱密码**：加密存储在本地，发送时自动解密
+    - **SMTP服务器**：配置SMTP主机和端口（如 smtp.gmail.com:587）
+    - **TLS加密**：支持TLS加密传输
+    - **自动发送**：每段录音完成后自动发送
+    - **网络状态**：检测网络可用性，网络不可用时本地保存
+12. 短信开门密语（短信密语配置）
+13. 测试模式
 
 **开门密语详细说明**：
 - 通过短信发送给自己手机
@@ -401,7 +412,80 @@ val testWards = listOf(
 - 监听长按事件
 - 触发紧急报警
 
-#### 4.2.4 ServiceCoordinator
+#### 4.2.4 AudioRecordingService
+**功能**：隐秘录音服务
+**主要职责**：
+- 后台静默录音（无界面提示）
+- 分段录音：每2分钟生成一段录音文件
+- 自动加密：每段录音完成后使用AES加密
+- 邮件发送：通过EmailSender将加密录音发送到配置的邮箱
+- 音频配置：64kbps比特率，单声道，确保每段约1MB
+- 文件管理：自动管理录音文件的生命周期
+
+**录音流程**：
+1. 报警触发时启动录音服务
+2. 每段录音2分钟，文件命名格式：`audio_[触发类型]_seg[段号]_[时间戳].mp4`
+3. 录音完成后自动加密，生成 `encrypted_` 前缀文件
+4. 通过EmailSender发送加密文件到邮箱
+5. 自动开始下一段录音，直到达到总时长
+6. 即使手机被损坏，已发送的文件安全保存在邮箱
+
+**启动类型**：前台服务
+**技术特点**：
+- 使用MediaRecorder进行音频录制
+- AAC编码，MP4容器格式
+- 文件大小优化：64kbps + 单声道，每段约1MB
+- AES加密保护录音文件
+- 邮箱凭据加密存储（EmailConfigManager）
+
+#### 4.2.5 EmailSender
+**功能**：邮件发送服务
+**主要职责**：
+- 发送带附件的报警邮件
+- 邮箱凭据解密和管理
+- 支持TLS加密传输
+- 网络状态检测
+- 发送失败处理
+
+**邮件内容**：
+- **主题**：Guardian 紧急报警 - 现场录音
+- **正文**：包含报警时间、录音时长、文件名称等信息
+- **附件**：加密的录音文件（每段一个邮件）
+
+**邮箱配置**（EmailConfigManager）：
+- 邮箱地址：发件人邮箱
+- 邮箱密码：AES加密存储，发送时自动解密
+- SMTP服务器：如 smtp.gmail.com:587
+- TLS加密：支持TLS加密传输
+
+**安全特性**：
+- 邮箱凭据使用AES加密存储在SharedPreferences
+- 录音文件在发送前已AES加密
+- 支持自定义SMTP服务器配置
+- 后台线程发送，不阻塞录音流程
+
+#### 4.2.6 EmailConfigManager
+**功能**：邮箱配置管理器
+**主要职责**：
+- 邮箱配置的加密存储
+- 邮箱配置的读取和解密
+- 邮件发送功能的启用/禁用管理
+
+**配置项**：
+- `email_enabled`：是否启用邮件发送功能
+- `email_address`：邮箱地址（明文存储）
+- `email_password`：邮箱密码（AES加密存储）
+- `smtp_host`：SMTP服务器地址
+- `smtp_port`：SMTP服务器端口
+- `smtp_tls`：是否使用TLS加密
+
+**安全机制**：
+- 密码使用EncryptionUtils.encryptString()加密
+- 读取时使用EncryptionUtils.decryptString()解密
+- 配置存储在私有SharedPreferences中
+- 支持清除所有邮箱配置
+
+#### 4.2.7 ServiceCoordinator
 **功能**：服务协调器
 **主要职责**：
 - 管理多个应用的服务实例
@@ -425,7 +509,31 @@ val testWards = listOf(
 - 解析指令内容
 - 触发对应操作
 
-#### 4.3.3 LocationEncryptor
+#### 4.3.3 EmailSender
+**功能**：邮件发送管理器
+**主要职责**：
+- 发送带录音附件的报警邮件
+- 邮箱凭据管理（通过EmailConfigManager解密）
+- SMTP协议通信
+- TLS加密传输
+- 网络状态检测
+- 后台线程发送，不阻塞录音流程
+
+**邮件发送流程**：
+1. 从EmailConfigManager获取邮箱配置（自动解密密码）
+2. 创建JavaMail Session，配置SMTP参数
+3. 构建MimeMessage，包含正文和录音附件
+4. 在后台线程中发送邮件
+5. 记录发送日志（成功/失败）
+
+**技术实现**：
+- 使用JavaMail API（android-mail + android-activation）
+- 支持自定义SMTP服务器配置
+- 支持TLS加密传输
+- 支持大文件附件（录音文件约1MB）
+- 自动处理网络异常
+
+#### 4.3.4 LocationEncryptor
 **功能**：位置信息加密器
 **主要职责**：
 - 使用密码本加密GPS坐标
@@ -447,6 +555,30 @@ val testWards = listOf(
 - 统一数据访问接口
 - 缓存管理
 - 数据转换和验证
+
+#### 4.4.3 EmailConfigManager
+**功能**：邮箱配置管理器
+**主要职责**：
+- 邮箱配置的加密存储和读取
+- 邮件发送功能的启用/禁用管理
+- 邮箱凭据安全管理
+
+**配置存储**：
+- 存储位置：SharedPreferences（私有）
+- 加密方式：AES加密密码字段
+- 配置项：
+  - `email_enabled`：是否启用邮件发送功能
+  - `email_address`：邮箱地址（明文）
+  - `email_password`：邮箱密码（AES加密）
+  - `smtp_host`：SMTP服务器地址
+  - `smtp_port`：SMTP服务器端口
+  - `smtp_tls`：是否使用TLS加密
+
+**安全机制**：
+- 密码使用EncryptionUtils加密存储
+- 读取时自动解密
+- 支持清除所有邮箱配置
+- 配置检查：发送邮件前验证配置完整性
 
 ### 4.5 位置服务
 
@@ -471,6 +603,9 @@ val testWards = listOf(
 | RECEIVE_BOOT_COMPLETED | 开机自启动 | 普通权限 |
 | FOREGROUND_SERVICE | 后台运行 | 普通权限 |
 | BIND_ACCESSIBILITY_SERVICE | 无障碍服务 | 特殊权限 |
+| INTERNET | 发送邮件（SMTP） | 普通权限 |
+| ACCESS_NETWORK_STATE | 检测网络状态 | 普通权限 |
+| RECORD_AUDIO | 隐秘录音 | 危险权限 |
 
 ### 5.2 权限声明
 在SDK的AndroidManifest.xml中声明所有权限：
@@ -483,6 +618,9 @@ val testWards = listOf(
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
 ```
 
 ## 6. SDK集成指南
@@ -495,6 +633,12 @@ dependencies {
     // 其他依赖...
 }
 ```
+
+**注意**：SDK内部已包含以下依赖，应用无需额外添加：
+- JavaMail API (android-mail:1.6.7)
+- JavaMail Activation (android-activation:1.6.7)
+
+如果需要使用邮件发送录音功能，需要确保网络连接和SMTP服务器配置。
 
 ### 6.2 组件注册
 在 `AndroidManifest.xml` 中注册SDK提供的组件：
@@ -529,6 +673,12 @@ dependencies {
 <service
     android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
     android:exported="false" />
+
+<!-- SDK提供的音频录音服务 -->
+<service
+    android:name="com.autodroid.guardiansdk.service.AudioRecordingService"
+    android:exported="false"
+    android:enabled="true" />
 
 <!-- SDK提供的短信监听服务 -->
 <receiver
@@ -586,6 +736,8 @@ AccessibilityService自动检测并匹配关键词
 ### 8.1 数据安全
 - **本地存储加密**：紧急联系人信息使用AES加密存储
 - **密码加密**：设置密码使用SHA-256加密
+- **邮箱凭据加密**：邮箱密码使用AES加密存储在SharedPreferences中
+- **录音文件加密**：每段录音完成后使用AES加密，确保本地存储安全
 - **数据隔离**：应用数据与报警系统配置、密码本、日志分开存储
 - **加密算法**：使用Android Keystore存储加密密钥
 
@@ -594,6 +746,8 @@ AccessibilityService自动检测并匹配关键词
 - **通知显示**：如需要推送通知，显示为普通应用通知
 - **短信记录自动删除**：发送的报警短信和收到的指令自动从短信记录中删除
 - **动态激活密语**：唯一的设置入口，确保只有授权用户能访问
+- **静默录音**：录音过程无任何界面提示或声音反馈
+- **静默邮件**：邮件发送在后台线程中执行，无用户感知
 
 ### 8.3 密码本系统
 - **动态密码本**：每个数字（0-9）、小数点、分隔符对应用户自定义汉字
@@ -613,6 +767,8 @@ AccessibilityService自动检测并匹配关键词
 - 报警记录日志
 - 所有设置配置
 - 已发送的报警短信记录
+- 邮箱配置（邮箱地址、密码、SMTP配置等）
+- 所有录音文件（加密和未加密）
 
 ### 9.2 触发方式
 - **本地触发**：长按隐秘设置界面中的"紧急擦除"按钮3秒
@@ -634,16 +790,21 @@ AccessibilityService自动检测并匹配关键词
 **通知栏模拟反馈**：
 - 触发报警操作后，在手机通知栏显示模拟报警信息
 - 不发送真实短信，不产生通信费用
+- 录音和邮件功能同样在测试模式下模拟执行
 - 展示内容格式：
   - `[测试模式] 已模拟发送报警短信`
   - `[测试模式] 报警信息：[报警内容]`
   - `[测试模式] 位置：[经度]，[纬度]`
+  - `[测试模式] 已模拟录音X分钟`
+  - `[测试模式] 已模拟发送邮件到[邮箱地址]`
 
 **示例通知**：
 ```
 [测试模式] 长按音量键报警 - 已模拟发送报警短信
 报警信息：有人打我
 位置：31.2304,121.4737
+[测试模式] 已模拟录音5分钟
+[测试模式] 已模拟发送邮件到user@example.com
 ```
 
 ### 10.3 技术实现

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res/android-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
@@ -17,9 +17,9 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="安全保障"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="18sp"
+                android:text="安全保障"
+                android:textColor="#212121"
+                android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
@@ -28,9 +28,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:lineSpacingExtra="4dp"
-            android:text="我们的SDK采用多重安全机制，确保用户数据安全和隐私保护"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="14sp" />
+                android:text="我们的SDK采用多重安全机制，确保用户数据安全和隐私保护"
+                android:textColor="#212121"
+                android:textSize="14sp" />
 
         <ImageView
             android:id="@+id/image"
