@@ -69,18 +69,6 @@ sealed class SettingItem {
         val isSimulateNotification: Boolean = true
     ) : SettingItem()
 
-    data class AlarmHistory(
-        val time: String,
-        val description: String
-    ) : SettingItem()
-
-    data class GuardianQueryHistory(
-        val time: String,
-        val guardianName: String,
-        val queryContent: String,
-        val responseContent: String
-    ) : SettingItem()
-
     data class AlarmMessage(
         val normalMessage: String = "准备去麦当劳",
         val emergencyMessage: String = "准备去肯德基",

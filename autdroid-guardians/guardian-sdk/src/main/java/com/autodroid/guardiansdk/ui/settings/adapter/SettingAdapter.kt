@@ -24,8 +24,6 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_ALARM_MODE_SHAKE_PHONE = 7
         const val TYPE_DOOR_PASSPHRASE = 11
         const val TYPE_TEST_MODE = 12
-        const val TYPE_ALARM_HISTORY = 13
-        const val TYPE_GUARDIAN_QUERY_HISTORY = 14
         const val TYPE_ALARM_MESSAGE = 15
     }
 
@@ -70,8 +68,6 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is SettingItem.ShakePhoneAlarmMode -> TYPE_ALARM_MODE_SHAKE_PHONE
             is SettingItem.DoorPassphrase -> TYPE_DOOR_PASSPHRASE
             is SettingItem.TestMode -> TYPE_TEST_MODE
-            is SettingItem.AlarmHistory -> TYPE_ALARM_HISTORY
-            is SettingItem.GuardianQueryHistory -> TYPE_GUARDIAN_QUERY_HISTORY
             is SettingItem.AlarmMessage -> TYPE_ALARM_MESSAGE
         }
     }
@@ -120,14 +116,6 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.guardian_item_test_mode, parent, false)
                 TestModeViewHolder(view)
             }
-            TYPE_ALARM_HISTORY -> {
-                val view = inflater.inflate(R.layout.guardian_item_alarm_history, parent, false)
-                AlarmHistoryViewHolder(view)
-            }
-            TYPE_GUARDIAN_QUERY_HISTORY -> {
-                val view = inflater.inflate(R.layout.guardian_item_guardian_query_history, parent, false)
-                GuardianQueryHistoryViewHolder(view)
-            }
             TYPE_ALARM_MESSAGE -> {
                 val view = inflater.inflate(R.layout.guardian_alarm_message_item, parent, false)
                 AlarmMessageViewHolder(view)
@@ -149,8 +137,6 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is ShakePhoneAlarmModeViewHolder -> holder.bind(item as SettingItem.ShakePhoneAlarmMode, listener)
             is DoorPassphraseViewHolder -> holder.bind(item as SettingItem.DoorPassphrase, listener)
             is TestModeViewHolder -> holder.bind(item as SettingItem.TestMode, listener)
-            is AlarmHistoryViewHolder -> holder.bind(item as SettingItem.AlarmHistory)
-            is GuardianQueryHistoryViewHolder -> holder.bind(item as SettingItem.GuardianQueryHistory)
             is AlarmMessageViewHolder -> holder.bind(item as SettingItem.AlarmMessage, listener)
         }
     }
@@ -218,30 +204,6 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             itemView.setOnClickListener {
                 listener?.onTestModeClick()
             }
-        }
-    }
-
-    inner class AlarmHistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val timeText: TextView = itemView.findViewById(R.id.tv_time)
-        private val descriptionText: TextView = itemView.findViewById(R.id.tv_description)
-
-        fun bind(item: SettingItem.AlarmHistory) {
-            timeText.text = item.time
-            descriptionText.text = item.description
-            // History items are not clickable
-        }
-    }
-
-    inner class GuardianQueryHistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val timeText: TextView = itemView.findViewById(R.id.tv_time)
-        private val queryText: TextView = itemView.findViewById(R.id.tv_query)
-        private val responseText: TextView = itemView.findViewById(R.id.tv_response)
-
-        fun bind(item: SettingItem.GuardianQueryHistory) {
-            timeText.text = item.time
-            queryText.text = "${item.guardianName}查询：${item.queryContent}"
-            responseText.text = "回复信息：${item.responseContent}"
-            // History items are not clickable
         }
     }
 

@@ -114,14 +114,11 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                 
                 // 添加报警信息密码
                 settingItems.add(SettingItem.AlarmMessage())
-                
+
                 // 添加其他常规设置
                 settingItems.add(SettingItem.DoorPassphrase())
                 settingItems.add(SettingItem.TestMode())
-                
-                // 添加历史记录（示例数据）
-                settingItems.addAll(loadHistoryItems())
-                
+
                 _settingItems.value = settingItems
                 
             } catch (e: Exception) {
@@ -179,35 +176,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
         
         return alarmModeSettings
     }
-    
-    /**
-     * 加载历史记录项
-     */
-    private fun loadHistoryItems(): List<SettingItem> {
-        return listOf(
-            SettingItem.AlarmHistory(
-                time = "12:34",
-                description = "长按音量键报警，报警信息：有人打我，位置xxxx，xxxx"
-            ),
-            SettingItem.GuardianQueryHistory(
-                time = "11:22",
-                guardianName = "爸爸",
-                queryContent = "在哪里",
-                responseContent = "我的位置xxxx，xxxx"
-            ),
-            SettingItem.AlarmHistory(
-                time = "09:15",
-                description = "摇动手机报警，报警信息：遇到危险，请帮助我，位置xxxx，xxxx"
-            ),
-            SettingItem.GuardianQueryHistory(
-                time = "08:45",
-                guardianName = "妈妈",
-                queryContent = "现在安全吗？",
-                responseContent = "目前安全，在公司"
-            )
-        )
-    }
-    
+
     /**
      * 更新音量键报警模式设置
      */
