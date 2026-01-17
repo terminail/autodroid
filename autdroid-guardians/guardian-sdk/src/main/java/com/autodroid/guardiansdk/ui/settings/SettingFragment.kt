@@ -503,6 +503,7 @@ class SettingFragment : Fragment() {
 
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
         val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val etEmailPassword = dialogView.findViewById<EditText>(R.id.et_email_password)
         val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
         val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
         val cbUseTls = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_tls)
@@ -514,6 +515,9 @@ class SettingFragment : Fragment() {
             }
             val emailAddressSetting = withContext(Dispatchers.IO) {
                 viewModel.getSetting("email_address")
+            }
+            val emailPasswordSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("email_password")
             }
             val smtpHostSetting = withContext(Dispatchers.IO) {
                 viewModel.getSetting("smtp_host")
@@ -527,6 +531,17 @@ class SettingFragment : Fragment() {
 
             cbEnabled.isChecked = enabledSetting?.value?.toBoolean() ?: false
             etEmailAddress.setText(emailAddressSetting?.value ?: "")
+            etEmailPassword.setText(
+                if (emailPasswordSetting?.value?.isNotEmpty() == true) {
+                    try {
+                        com.autodroid.guardiansdk.util.EncryptionUtils.decryptString(emailPasswordSetting.value)
+                    } catch (e: Exception) {
+                        ""
+                    }
+                } else {
+                    ""
+                }
+            )
             etSmtpHost.setText(smtpHostSetting?.value ?: "smtp.gmail.com")
             etSmtpPort.setText(smtpPortSetting?.value ?: "587")
             cbUseTls.isChecked = useTlsSetting?.value?.toBoolean() ?: true
@@ -1009,12 +1024,14 @@ class SettingFragment : Fragment() {
     private fun saveAlarmEmailSettings(dialogView: View) {
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
         val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val etEmailPassword = dialogView.findViewById<EditText>(R.id.et_email_password)
         val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
         val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
         val cbUseTls = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_tls)
         
         val isEnabled = cbEnabled.isChecked
         val emailAddress = etEmailAddress.text.toString().trim()
+        val emailPassword = etEmailPassword.text.toString().trim()
         val smtpHost = etSmtpHost.text.toString().trim()
         val smtpPort = etSmtpPort.text.toString().trim()
         val useTls = cbUseTls.isChecked
@@ -1030,6 +1047,13 @@ class SettingFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
+                // 加密密码
+                val encryptedPassword = if (emailPassword.isNotEmpty()) {
+                    com.autodroid.guardiansdk.util.EncryptionUtils.encryptString(emailPassword)
+                } else {
+                    ""
+                }
+                
                 // 保存设置到数据库
                 val settings = listOf(
                     com.autodroid.guardiansdk.data.entity.Setting(
@@ -1044,6 +1068,13 @@ class SettingFragment : Fragment() {
                         value = emailAddress,
                         type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
                         description = "报警邮件地址",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "email_password",
+                        value = encryptedPassword,
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
+                        description = "报警邮箱密码（加密存储）",
                         category = "alarm"
                     ),
                     com.autodroid.guardiansdk.data.entity.Setting(
