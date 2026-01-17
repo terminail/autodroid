@@ -10,7 +10,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/guardian_ic_hidden_secure_ui"
-        android:contentDescription="隐藏安全UI" />
+        android:contentDescription="隐秘界面设置" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -23,7 +23,7 @@
             android:id="@+id/tv_item_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="隐藏安全UI"
+            android:text="隐秘界面设置"
             android:textSize="16sp"
             android:textStyle="bold" />
 

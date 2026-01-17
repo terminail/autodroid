@@ -649,6 +649,7 @@ class SettingFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.guardian_dialog_hidden_secure_ui, null)
 
+        val tvHiddenUIStatus = dialogView.findViewById<TextView>(R.id.tv_hidden_ui_status)
         val switchHiddenUIEnabled = dialogView.findViewById<android.widget.Switch>(R.id.switch_hidden_ui_enabled)
         val etDoorPassphrase = dialogView.findViewById<EditText>(R.id.et_door_passphrase)
 
@@ -661,8 +662,15 @@ class SettingFragment : Fragment() {
                 viewModel.getSetting("door_passphrase")
             }
 
-            switchHiddenUIEnabled.isChecked = hiddenUIEnabledSetting?.value?.toBoolean() ?: false
+            val isEnabled = hiddenUIEnabledSetting?.value?.toBoolean() ?: false
+            switchHiddenUIEnabled.isChecked = isEnabled
+            tvHiddenUIStatus.text = if (isEnabled) "隐秘界面开启" else "隐秘界面关闭"
             etDoorPassphrase.setText(doorPassphraseSetting?.value ?: "小兔子乖乖把门开开")
+        }
+
+        // Switch状态改变时更新TextView文字
+        switchHiddenUIEnabled.setOnCheckedChangeListener { _, isChecked ->
+            tvHiddenUIStatus.text = if (isChecked) "隐秘界面开启" else "隐秘界面关闭"
         }
 
         AlertDialog.Builder(requireContext())
