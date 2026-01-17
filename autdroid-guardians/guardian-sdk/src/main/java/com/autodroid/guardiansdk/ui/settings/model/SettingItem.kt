@@ -81,9 +81,9 @@ sealed class SettingItem {
         val useTls: Boolean = true
     ) : SettingItem()
 
-    data class DoorPassphrase(
-        val isEnabled: Boolean = false,
-        val passphrase: String = "open_door"
+    data class HiddenSecureUI(
+        val enabled: Boolean = false,
+        val doorPassphrase: String = "小兔子乖乖把门开开"
     ) : SettingItem()
 
     data class TestMode(
@@ -92,5 +92,4 @@ sealed class SettingItem {
         val lastPracticeTime: String = "",
         val isSimulateNotification: Boolean = true
     ) : SettingItem()
-
 }

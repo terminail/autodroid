@@ -112,12 +112,12 @@ class SettingFragment : Fragment() {
                 showAlarmEmailSettingsDialog()
             }
 
-            override fun onPasswordBookClick() {
-                showPasswordBookDialog()
+            override fun onHiddenSecureUIClick() {
+                showHiddenSecureUIDialog()
             }
 
-            override fun onDoorPassphraseClick() {
-                showDoorPassphraseDialog()
+            override fun onPasswordBookClick() {
+                showPasswordBookDialog()
             }
 
             override fun onTestModeClick() {
@@ -643,18 +643,34 @@ class SettingFragment : Fragment() {
     }
 
     /**
-     * 显示门密码设置对话框
+     * 显示隐秘界面设置对话框
      */
-    private fun showDoorPassphraseDialog() {
+    private fun showHiddenSecureUIDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.guardian_dialog_door_passphrase, null)
+            .inflate(R.layout.guardian_dialog_hidden_secure_ui, null)
+
+        val switchHiddenUIEnabled = dialogView.findViewById<android.widget.Switch>(R.id.switch_hidden_ui_enabled)
+        val etDoorPassphrase = dialogView.findViewById<EditText>(R.id.et_door_passphrase)
+
+        // 加载已保存的设置
+        lifecycleScope.launch {
+            val hiddenUIEnabledSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("hidden_ui_enabled")
+            }
+            val doorPassphraseSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("door_passphrase")
+            }
+
+            switchHiddenUIEnabled.isChecked = hiddenUIEnabledSetting?.value?.toBoolean() ?: false
+            etDoorPassphrase.setText(doorPassphraseSetting?.value ?: "小兔子乖乖把门开开")
+        }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("门密码设置")
+            .setTitle("隐秘界面设置")
             .setView(dialogView)
             .setPositiveButton("保存") { dialog, _ ->
-                // 保存门密码设置
-                saveDoorPassphraseSettings(dialogView)
+                // 保存隐秘界面设置
+                saveHiddenSecureUISettings(dialogView)
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
@@ -1111,7 +1127,62 @@ class SettingFragment : Fragment() {
         }
     }
     
-    private fun saveDoorPassphraseSettings(dialogView: View) {}
+    private fun saveHiddenSecureUISettings(dialogView: View) {
+        val switchHiddenUIEnabled = dialogView.findViewById<android.widget.Switch>(R.id.switch_hidden_ui_enabled)
+        val etDoorPassphrase = dialogView.findViewById<EditText>(R.id.et_door_passphrase)
+        
+        val isHiddenUIEnabled = switchHiddenUIEnabled.isChecked
+        val doorPassphrase = etDoorPassphrase.text.toString().trim()
+        
+        if (doorPassphrase.isEmpty()) {
+            android.widget.Toast.makeText(
+                requireContext(),
+                "请输入开门密语",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        lifecycleScope.launch {
+            try {
+                // 保存设置到数据库
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "hidden_ui_enabled",
+                        value = isHiddenUIEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "隐秘界面启用状态",
+                        category = "security"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "door_passphrase",
+                        value = doorPassphrase,
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
+                        description = "短信开门密语",
+                        category = "security"
+                    )
+                )
+                
+                withContext(Dispatchers.IO) {
+                    viewModel.insertOrUpdateAllSettings(settings)
+                }
+                
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "隐秘界面设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
     private fun saveTestModeSettings(dialogView: View) {}
 
     /**

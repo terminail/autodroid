@@ -121,8 +121,10 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                 // 添加邮件配置
                 settingItems.add(SettingItem.AlarmEmailSettings())
                 
+                // 添加隐秘界面设置
+                settingItems.add(SettingItem.HiddenSecureUI())
+                
                 // 添加其他常规设置
-                settingItems.add(SettingItem.DoorPassphrase())
                 settingItems.add(SettingItem.TestMode())
 
                 _settingItems.value = settingItems

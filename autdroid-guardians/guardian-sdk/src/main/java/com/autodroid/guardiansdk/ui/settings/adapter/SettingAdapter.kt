@@ -26,7 +26,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_ALARM_MESSAGE_PASSWORD = 9
         const val TYPE_ALARM_RECORDING_MODE = 10
         const val TYPE_ALARM_EMAIL_SETTINGS = 11
-        const val TYPE_DOOR_PASSPHRASE = 12
+        const val TYPE_HIDDEN_SECURE_UI = 12
         const val TYPE_TEST_MODE = 13
     }
 
@@ -46,7 +46,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onAlarmRecordingModeClick()
         fun onAlarmEmailSettingsClick()
         fun onPasswordBookClick()
-        fun onDoorPassphraseClick()
+        fun onHiddenSecureUIClick()
         fun onTestModeClick()
     }
 
@@ -76,7 +76,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is SettingItem.AlarmMessagePassword -> TYPE_ALARM_MESSAGE_PASSWORD
             is SettingItem.AlarmRecordingMode -> TYPE_ALARM_RECORDING_MODE
             is SettingItem.AlarmEmailSettings -> TYPE_ALARM_EMAIL_SETTINGS
-            is SettingItem.DoorPassphrase -> TYPE_DOOR_PASSPHRASE
+            is SettingItem.HiddenSecureUI -> TYPE_HIDDEN_SECURE_UI
             is SettingItem.TestMode -> TYPE_TEST_MODE
         }
     }
@@ -132,9 +132,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.guardian_item_alarm_email_settings, parent, false)
                 AlarmEmailSettingsViewHolder(view)
             }
-            TYPE_DOOR_PASSPHRASE -> {
-                val view = inflater.inflate(R.layout.guardian_item_door_passphrase, parent, false)
-                DoorPassphraseViewHolder(view)
+            TYPE_HIDDEN_SECURE_UI -> {
+                val view = inflater.inflate(R.layout.guardian_item_hidden_secure_ui, parent, false)
+                HiddenSecureUIViewHolder(view)
             }
             TYPE_TEST_MODE -> {
                 val view = inflater.inflate(R.layout.guardian_item_test_mode, parent, false)
@@ -159,7 +159,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is AlarmMessagePasswordViewHolder -> holder.bind(item as SettingItem.AlarmMessagePassword, listener)
             is AlarmRecordingModeViewHolder -> holder.bind(item as SettingItem.AlarmRecordingMode, listener)
             is AlarmEmailSettingsViewHolder -> holder.bind(item as SettingItem.AlarmEmailSettings, listener)
-            is DoorPassphraseViewHolder -> holder.bind(item as SettingItem.DoorPassphrase, listener)
+            is HiddenSecureUIViewHolder -> holder.bind(item as SettingItem.HiddenSecureUI, listener)
             is TestModeViewHolder -> holder.bind(item as SettingItem.TestMode, listener)
         }
     }
@@ -250,13 +250,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
-    inner class DoorPassphraseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
-
-        fun bind(item: SettingItem.DoorPassphrase, listener: OnItemClickListener?) {
-            textView.text = "短信开门密语"
+    inner class HiddenSecureUIViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(item: SettingItem.HiddenSecureUI, listener: OnItemClickListener?) {
             itemView.setOnClickListener {
-                listener?.onDoorPassphraseClick()
+                listener?.onHiddenSecureUIClick()
             }
         }
     }
