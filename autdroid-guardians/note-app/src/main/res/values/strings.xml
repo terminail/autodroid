@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Note App</string>
-    <string name="guardian_accessibility_service_label">隐秘守卫</string>
 </resources>

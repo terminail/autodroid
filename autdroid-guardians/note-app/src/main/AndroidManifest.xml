@@ -39,53 +39,9 @@
             android:name=".ui.editor.NoteEditorActivity"
             android:exported="false" />
 
-        <!-- GuardianSDK提供的主界面 -->
-        <activity
-            android:name="com.autodroid.guardiansdk.ui.GuardianActivity"
-            android:exported="true"
-            android:theme="@style/GuardianAppTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-        </activity>
 
-        <!-- GuardianSDK提供的浮动窗口服务 -->
-        <service
-            android:name="com.autodroid.guardiansdk.service.FloatingWindowService"
-            android:process=":guardian"
-            android:label="Guardians"
-            android:exported="false" />
 
-        <!-- GuardianSDK提供的紧急服务 -->
-        <service
-            android:name="com.autodroid.guardiansdk.service.EmergencyService"
-            android:exported="false"
-            android:foregroundServiceType="location" />
 
-        <!-- GuardianSDK提供的无障碍服务 -->
-        <service
-            android:name="com.autodroid.guardiansdk.service.GuardianAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/guardian_accessibility_service_config" />
-        </service>
-
-        <!-- GuardianSDK提供的短信接收器 -->
-        <receiver
-            android:name="com.autodroid.guardiansdk.receiver.SmsReceiver"
-            android:exported="true"
-            android:enabled="true">
-            <intent-filter android:priority="1000">
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
 
     </application>
 

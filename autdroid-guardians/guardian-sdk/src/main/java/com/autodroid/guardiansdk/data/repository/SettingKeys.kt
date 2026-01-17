@@ -1,33 +1,17 @@
 package com.autodroid.guardiansdk.data.repository
 
 object SettingKeys {
-    const val KEY_GUARDIAN_CONTACTS = "guardian_contacts"
-    const val KEY_ALARM_MODE_VOLUME_KEY_TIME = "alarm_mode_volume_key_time"
-    const val KEY_ALARM_MODE_FLOATING_WINDOW_TIME = "alarm_mode_floating_window_time"
-    const val KEY_ALARM_MODE_SHAKE_SENSITIVITY = "alarm_mode_shake_sensitivity"
-    const val KEY_PASSWORD_BOOK_ENABLED = "password_book_enabled"
-    const val KEY_PASSWORD_BOOK_MAP = "password_book_map"
-    const val KEY_PASSWORD_BOOK_LAST_SYNC = "password_book_last_sync"
-    const val KEY_FLOATING_WINDOW_SIZE = "floating_window_size"
-    const val KEY_FLOATING_WINDOW_OPACITY = "floating_window_opacity"
-    const val KEY_FLOATING_WINDOW_POSITION_X = "floating_window_position_x"
-    const val KEY_FLOATING_WINDOW_POSITION_Y = "floating_window_position_y"
-    const val KEY_TEST_MODE_ENABLED = "test_mode_enabled"
-    const val KEY_TEST_MODE_PRACTICE_COUNT = "test_mode_practice_count"
-    const val KEY_TEST_MODE_LAST_PRACTICE = "test_mode_last_practice"
-    const val KEY_APP_NAME = "app_name"
-    const val KEY_APP_VERSION = "app_version"
+    // 统一设置项存储
+    const val SETTING_ITEMS = "setting_items"
     
-    const val ALARM_VOLUME_KEY_HOLD_TIME = "alarm_volume_key_hold_time"
-    const val ALARM_FLOATING_WINDOW_HOLD_TIME = "alarm_floating_window_hold_time"
-    const val ALARM_SHAKE_SENSITIVITY = "alarm_shake_sensitivity"
-    const val FLOATING_WINDOW_SIZE = "floating_window_size"
-    const val FLOATING_WINDOW_OPACITY = "floating_window_opacity"
-    const val FLOATING_WINDOW_POSITION_X = "floating_window_position_x"
-    const val FLOATING_WINDOW_POSITION_Y = "floating_window_position_y"
-    const val TEST_MODE_ENABLED = "test_mode_enabled"
-    const val TEST_MODE_PRACTICE_COUNT = "test_mode_practice_count"
-    const val PASSWORD_BOOK_ENABLED = "password_book_enabled"
+    // 必要的独立设置项
+    const val GUARDIAN_CONTACTS = "guardian_contacts"
+    const val PASSWORD_BOOK = "password_book"
     const val APP_NAME = "app_name"
     const val APP_VERSION = "app_version"
+    
+    // 测试模式相关
+    const val TEST_MODE_ENABLED = "test_mode_enabled"
+    const val TEST_MODE_PRACTICE_COUNT = "test_mode_practice_count"
+    const val TEST_MODE_LAST_PRACTICE = "test_mode_last_practice"
 }

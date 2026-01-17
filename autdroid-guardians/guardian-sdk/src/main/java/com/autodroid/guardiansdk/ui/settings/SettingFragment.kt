@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.ui.settings.adapter.SettingAdapter
+import com.autodroid.guardiansdk.ui.settings.model.SettingItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,6 +48,73 @@ class SettingFragment : Fragment() {
                 "${mins}分钟"
             }
         }
+        
+        /**
+         * 格式化时间，类似微信的时间显示格式
+         * 今天：显示时间（如：16:23）
+         * 昨天：显示"昨天"
+         * 一周内：显示星期几（如：周一）
+         * 更早：显示月日（如：12月3日）
+         */
+        fun formatWeChatStyleTime(timeString: String): String {
+            if (timeString.isEmpty()) {
+                return "从未练习"
+            }
+            
+            try {
+                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                val practiceTime = dateFormat.parse(timeString)
+                val now = java.util.Date()
+                val calendar = java.util.Calendar.getInstance()
+                calendar.time = now
+                
+                val practiceCalendar = java.util.Calendar.getInstance()
+                practiceCalendar.time = practiceTime
+                
+                // 计算时间差（毫秒）
+                val diff = now.time - practiceTime.time
+                val diffMinutes = diff / (60 * 1000)
+                val diffHours = diff / (60 * 60 * 1000)
+                val diffDays = diff / (24 * 60 * 60 * 1000)
+                
+                // 今天
+                if (practiceCalendar.get(java.util.Calendar.YEAR) == calendar.get(java.util.Calendar.YEAR) &&
+                    practiceCalendar.get(java.util.Calendar.DAY_OF_YEAR) == calendar.get(java.util.Calendar.DAY_OF_YEAR)) {
+                    val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                    return timeFormat.format(practiceTime)
+                }
+                
+                // 昨天
+                calendar.add(java.util.Calendar.DAY_OF_YEAR, -1)
+                if (practiceCalendar.get(java.util.Calendar.YEAR) == calendar.get(java.util.Calendar.YEAR) &&
+                    practiceCalendar.get(java.util.Calendar.DAY_OF_YEAR) == calendar.get(java.util.Calendar.DAY_OF_YEAR)) {
+                    return "昨天"
+                }
+                calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+                
+                // 一周内
+                if (diffDays < 7) {
+                    val dayOfWeek = practiceCalendar.get(java.util.Calendar.DAY_OF_WEEK)
+                    return when (dayOfWeek) {
+                        java.util.Calendar.SUNDAY -> "周日"
+                        java.util.Calendar.MONDAY -> "周一"
+                        java.util.Calendar.TUESDAY -> "周二"
+                        java.util.Calendar.WEDNESDAY -> "周三"
+                        java.util.Calendar.THURSDAY -> "周四"
+                        java.util.Calendar.FRIDAY -> "周五"
+                        java.util.Calendar.SATURDAY -> "周六"
+                        else -> ""
+                    }
+                }
+                
+                // 更早的时间
+                val monthDayFormat = java.text.SimpleDateFormat("M月d日", java.util.Locale.getDefault())
+                return monthDayFormat.format(practiceTime)
+                
+            } catch (e: Exception) {
+                return "时间格式错误"
+            }
+        }
     }
 
     override fun onCreateView(
@@ -62,9 +130,6 @@ class SettingFragment : Fragment() {
 
         setupRecyclerView(view)
         setupObservers()
-        
-        // 加载设置项
-        viewModel.loadSettingItems()
     }
 
     /**
@@ -149,9 +214,9 @@ class SettingFragment : Fragment() {
      * 设置观察者
      */
     private fun setupObservers() {
-        lifecycleScope.launch {
-            viewModel.settingItems.collect { settingItems ->
-                settingAdapter.updateItems(settingItems)
+        viewModel.settingItems.observe(viewLifecycleOwner) { settingItems ->
+            settingItems?.let {
+                settingAdapter.updateItems(it)
             }
         }
     }
@@ -740,7 +805,7 @@ class SettingFragment : Fragment() {
         // 加载已保存的设置
         lifecycleScope.launch {
             val hiddenUIEnabledSetting = withContext(Dispatchers.IO) {
-                viewModel.getSetting("hidden_ui_enabled")
+                viewModel.getSetting("hidden_secure_ui_enabled")
             }
             val doorPassphraseSetting = withContext(Dispatchers.IO) {
                 viewModel.getSetting("door_passphrase")
@@ -778,11 +843,20 @@ class SettingFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.guardian_dialog_test_mode, null)
 
+        val cbTestMode = dialogView.findViewById<android.widget.CheckBox>(R.id.cbTestMode)
+
+        lifecycleScope.launch {
+            val isEnabled = withContext(Dispatchers.IO) {
+                viewModel.getBoolean("test_mode_enabled", false)
+            }
+
+            cbTestMode.isChecked = isEnabled
+        }
+
         AlertDialog.Builder(requireContext())
             .setTitle("测试模式设置")
             .setView(dialogView)
             .setPositiveButton("保存") { dialog, _ ->
-                // 保存测试模式设置
                 saveTestModeSettings(dialogView)
                 dialog.dismiss()
             }
@@ -828,9 +902,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateVolumeKeyAlarmMode(isEnabled, normalHoldTime, emergencyHoldTime)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -902,9 +974,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateFloatingWindowAlarmMode(isEnabled, normalHoldTime, normalOpacity, emergencyHoldTime, emergencyOpacity)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -958,9 +1028,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateShakePhoneAlarmMode(isEnabled, normalSensitivity, emergencySensitivity)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -1014,9 +1082,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateInactivityAlarmMode(isEnabled, normalTime, emergencyTime)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -1070,9 +1136,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateAlarmRecordingMode(isEnabled, duration, segmentDuration)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -1181,9 +1245,7 @@ class SettingFragment : Fragment() {
                     )
                 )
                 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                viewModel.updateAlarmEmailSettings(isEnabled, emailAddress, emailPassword, smtpHost, smtpPort, useTls)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -1265,27 +1327,8 @@ class SettingFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                // 保存设置到数据库
-                val settings = listOf(
-                    com.autodroid.guardiansdk.data.entity.Setting(
-                        key = "hidden_ui_enabled",
-                        value = isHiddenUIEnabled.toString(),
-                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
-                        description = "隐秘界面启用状态",
-                        category = "security"
-                    ),
-                    com.autodroid.guardiansdk.data.entity.Setting(
-                        key = "door_passphrase",
-                        value = doorPassphrase,
-                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
-                        description = "短信开门密语",
-                        category = "security"
-                    )
-                )
-                
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
+                // 使用ViewModel的更新方法
+                viewModel.updateHiddenSecureUI(isHiddenUIEnabled, doorPassphrase)
                 
                 android.widget.Toast.makeText(
                     requireContext(),
@@ -1303,7 +1346,39 @@ class SettingFragment : Fragment() {
         }
     }
 
-    private fun saveTestModeSettings(dialogView: View) {}
+    private fun saveTestModeSettings(dialogView: View) {
+        val cbTestMode = dialogView.findViewById<android.widget.CheckBox>(R.id.cbTestMode)
+        
+        val isEnabled = cbTestMode.isChecked
+        
+        lifecycleScope.launch {
+            try {
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "test_mode_enabled",
+                        value = isEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "测试模式启用状态",
+                        category = "test"
+                    )
+                )
+                
+                viewModel.updateTestMode(isEnabled)
+                
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "测试模式设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败: ${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     private fun showPingSettingsDialog() {
         val dialogView = LayoutInflater.from(requireContext())
@@ -1435,10 +1510,8 @@ class SettingFragment : Fragment() {
                     )
                 )
 
-                withContext(Dispatchers.IO) {
-                    viewModel.insertOrUpdateAllSettings(settings)
-                }
-
+                viewModel.updatePingSettings(isEnabled, checkInterval, emailRetryCount, emailTimeout, useSmsFallback)
+                
                 android.widget.Toast.makeText(
                     requireContext(),
                     "Ping响应设置已保存",
@@ -1467,15 +1540,74 @@ class SettingFragment : Fragment() {
         val cbPrimary = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_guardian_primary)
         val tvPhoneError = dialogView.findViewById<TextView>(R.id.tv_phone_error)
 
-        // 加载已有的联系人数据
+        // 加载已有的联系人数据 - 从当前设置项中获取，确保数据一致性
         lifecycleScope.launch {
-            val guardianName = viewModel.getGuardianName(index)
-            val guardianPhone = viewModel.getGuardianPhoneNumber(index)
-            val guardianPrimary = viewModel.getGuardianPrimary(index)
-
-            etGuardianName.setText(guardianName)
-            etGuardianPhone.setText(guardianPhone)
-            cbPrimary.isChecked = guardianPrimary
+            val currentItems = viewModel.settingItems.value ?: emptyList()
+            
+            // 使用单独的变量来存储数据
+            var name = ""
+            var phoneNumber = ""
+            var isPrimary = false
+            var isPlaceholder = true
+            
+            when (index) {
+                1 -> {
+                    val item = currentItems.find { it is SettingItem.GuardianItem1 } as? SettingItem.GuardianItem1
+                    if (item != null) {
+                        name = item.name
+                        phoneNumber = item.phoneNumber
+                        isPrimary = item.isPrimary
+                        isPlaceholder = item.isPlaceholder
+                    }
+                }
+                2 -> {
+                    val item = currentItems.find { it is SettingItem.GuardianItem2 } as? SettingItem.GuardianItem2
+                    if (item != null) {
+                        name = item.name
+                        phoneNumber = item.phoneNumber
+                        isPrimary = item.isPrimary
+                        isPlaceholder = item.isPlaceholder
+                    }
+                }
+                3 -> {
+                    val item = currentItems.find { it is SettingItem.GuardianItem3 } as? SettingItem.GuardianItem3
+                    if (item != null) {
+                        name = item.name
+                        phoneNumber = item.phoneNumber
+                        isPrimary = item.isPrimary
+                        isPlaceholder = item.isPlaceholder
+                    }
+                }
+                4 -> {
+                    val item = currentItems.find { it is SettingItem.GuardianItem4 } as? SettingItem.GuardianItem4
+                    if (item != null) {
+                        name = item.name
+                        phoneNumber = item.phoneNumber
+                        isPrimary = item.isPrimary
+                        isPlaceholder = item.isPlaceholder
+                    }
+                }
+                5 -> {
+                    val item = currentItems.find { it is SettingItem.GuardianItem5 } as? SettingItem.GuardianItem5
+                    if (item != null) {
+                        name = item.name
+                        phoneNumber = item.phoneNumber
+                        isPrimary = item.isPrimary
+                        isPlaceholder = item.isPlaceholder
+                    }
+                }
+            }
+            
+            if (!isPlaceholder) {
+                etGuardianName.setText(name)
+                etGuardianPhone.setText(phoneNumber)
+                cbPrimary.isChecked = isPrimary
+            } else {
+                // 如果是占位符，使用默认值
+                etGuardianName.setText("")
+                etGuardianPhone.setText("")
+                cbPrimary.isChecked = false
+            }
         }
 
         // 实时验证手机号格式

@@ -170,42 +170,12 @@ class SettingRepository(private val settingDao: SettingDao) {
      * 初始化默认设置项
      */
     suspend fun initializeDefaultSettings() {
-        // 报警触发模式默认设置
-        if (!contains(SettingKeys.ALARM_VOLUME_KEY_HOLD_TIME)) {
-            putInt(SettingKeys.ALARM_VOLUME_KEY_HOLD_TIME, 5, "音量键长按报警时间（秒）", "alarm")
-        }
-        if (!contains(SettingKeys.ALARM_FLOATING_WINDOW_HOLD_TIME)) {
-            putInt(SettingKeys.ALARM_FLOATING_WINDOW_HOLD_TIME, 5, "浮动窗口长按报警时间（秒）", "alarm")
-        }
-        if (!contains(SettingKeys.ALARM_SHAKE_SENSITIVITY)) {
-            putInt(SettingKeys.ALARM_SHAKE_SENSITIVITY, 3, "摇晃报警灵敏度", "alarm")
-        }
-
-        // 浮动窗口默认设置
-        if (!contains(SettingKeys.FLOATING_WINDOW_SIZE)) {
-            putInt(SettingKeys.FLOATING_WINDOW_SIZE, 10, "浮动窗口大小（像素）", "floating_window")
-        }
-        if (!contains(SettingKeys.FLOATING_WINDOW_OPACITY)) {
-            putInt(SettingKeys.FLOATING_WINDOW_OPACITY, 10, "浮动窗口透明度（%）", "floating_window")
-        }
-        if (!contains(SettingKeys.FLOATING_WINDOW_POSITION_X)) {
-            putInt(SettingKeys.FLOATING_WINDOW_POSITION_X, 100, "浮动窗口X坐标", "floating_window")
-        }
-        if (!contains(SettingKeys.FLOATING_WINDOW_POSITION_Y)) {
-            putInt(SettingKeys.FLOATING_WINDOW_POSITION_Y, 100, "浮动窗口Y坐标", "floating_window")
-        }
-
         // 测试模式默认设置
         if (!contains(SettingKeys.TEST_MODE_ENABLED)) {
             putBoolean(SettingKeys.TEST_MODE_ENABLED, false, "测试模式是否启用", "test_mode")
         }
         if (!contains(SettingKeys.TEST_MODE_PRACTICE_COUNT)) {
             putInt(SettingKeys.TEST_MODE_PRACTICE_COUNT, 0, "测试模式练习次数", "test_mode")
-        }
-
-        // 密码本默认设置
-        if (!contains(SettingKeys.PASSWORD_BOOK_ENABLED)) {
-            putBoolean(SettingKeys.PASSWORD_BOOK_ENABLED, true, "位置密码本是否启用", "password_book")
         }
 
         // 应用设置默认值

@@ -180,8 +180,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.VolumeKeyAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式1"
-            val enabledText = if (item.enabled) "☑️" else "□"
-            tvAlarmModeInfo.text = "音量键$enabledText，普通报警：${item.normalHoldTime}秒，紧急报警：${item.emergencyHoldTime}秒"
+            val enabledText = if (item.enabled) "☑️音量键已启用" else "❌音量键未启用"
+            tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalHoldTime}秒，紧急报警：${item.emergencyHoldTime}秒"
             
             itemView.setOnClickListener {
                 listener?.onVolumeKeyAlarmModeClick()
@@ -195,8 +195,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.FloatingWindowAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式2"
-            val enabledText = if (item.enabled) "☑️" else "□"
-            tvAlarmModeInfo.text = "浮动窗口$enabledText，普通报警：${item.normalHoldTime}秒/${item.normalOpacity}%，紧急报警：${item.emergencyHoldTime}秒/${item.emergencyOpacity}%"
+            val enabledText = if (item.enabled) "☑️浮动窗口已启用" else "❌浮动窗口未启用"
+            tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalHoldTime}秒/${item.normalOpacity}%，紧急报警：${item.emergencyHoldTime}秒/${item.emergencyOpacity}%"
             
             itemView.setOnClickListener {
                 listener?.onFloatingWindowAlarmModeClick()
@@ -210,8 +210,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.ShakePhoneAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式3"
-            val enabledText = if (item.enabled) "☑️" else "□"
-            tvAlarmModeInfo.text = "摇动手机$enabledText，普通报警：灵敏度${item.normalSensitivity}，紧急报警：灵敏度${item.emergencySensitivity}"
+            val enabledText = if (item.enabled) "☑️摇动手机已启用" else "❌摇动手机未启用"
+            tvAlarmModeInfo.text = "$enabledText，普通报警：灵敏度${item.normalSensitivity}，紧急报警：灵敏度${item.emergencySensitivity}"
             
             itemView.setOnClickListener {
                 listener?.onShakePhoneAlarmModeClick()
@@ -225,8 +225,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.InactivityAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式4"
-            val enabledText = if (item.enabled) "☑️" else "□"
-            tvAlarmModeInfo.text = "长时间未使用手机$enabledText，普通报警：${item.normalInactivityTime}分钟，紧急报警：${item.emergencyInactivityTime}分钟"
+            val enabledText = if (item.enabled) "☑️长时间未使用手机已启用" else "❌长时间未使用手机未启用"
+            tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalInactivityTime}分钟，紧急报警：${item.emergencyInactivityTime}分钟"
             
             itemView.setOnClickListener {
                 listener?.onInactivityAlarmModeClick()
@@ -240,8 +240,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.AlarmMessagePassword, listener: OnItemClickListener?) {
             tvItemTitle.text = "报警信息密码"
-            val passwordStatus = if (item.password.isNotEmpty()) "已设置" else "未设置"
-            tvItemSubtitle.text = "配置报警时的暗语密码 - $passwordStatus"
+            val passwordDisplay = if (item.password.isNotEmpty()) "${item.password}" else "未设置密码"
+            tvItemSubtitle.text = passwordDisplay
             
             itemView.setOnClickListener {
                 listener?.onAlarmMessagePasswordClick()
@@ -255,8 +255,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.AlarmRecordingMode, listener: OnItemClickListener?) {
             tvItemTitle.text = "报警录音模式"
-            val enabledText = if (item.enabled) "已启用" else "已禁用"
-            tvItemSubtitle.text = "录制报警时的音频 - $enabledText，时长：${item.duration}分钟"
+            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
+            tvItemSubtitle.text = "${enabledText}，录音总时长${item.duration}分钟，分段时长${item.segmentDuration}分钟"
             
             itemView.setOnClickListener {
                 listener?.onAlarmRecordingModeClick()
@@ -270,9 +270,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.AlarmEmailSettings, listener: OnItemClickListener?) {
             tvItemTitle.text = "报警邮件设置"
-            val enabledText = if (item.enabled) "已启用" else "已禁用"
+            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
             val emailInfo = if (item.emailAddress.isNotEmpty()) item.emailAddress else "未配置"
-            tvItemSubtitle.text = "配置邮件发送报警信息 - $enabledText，邮箱：$emailInfo"
+            tvItemSubtitle.text = "$enabledText，$emailInfo"
             
             itemView.setOnClickListener {
                 listener?.onAlarmEmailSettingsClick()
@@ -286,8 +286,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.HiddenSecureUI, listener: OnItemClickListener?) {
             tvItemTitle.text = "隐秘界面设置"
-            val enabledText = if (item.enabled) "已开启" else "已关闭"
-            tvItemSubtitle.text = "隐藏监护界面，防止被发现 - $enabledText"
+            val enabledText = if (item.enabled) "☑️已开启" else "❌已关闭"
+            tvItemSubtitle.text = "$enabledText，开门密语${item.doorPassphrase}"
             
             itemView.setOnClickListener {
                 listener?.onHiddenSecureUIClick()
@@ -301,9 +301,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.TestMode, listener: OnItemClickListener?) {
             tvItemTitle.text = "测试模式"
-            val enabledText = if (item.isEnabled) "已启用" else "已禁用"
-            val practiceInfo = "练习次数：${item.practiceCount}"
-            tvItemSubtitle.text = "练习报警操作 - $enabledText，$practiceInfo"
+            val enabledText = if (item.isEnabled) "☑️已启用" else "❌已禁用"
+            val lastPracticeTime = com.autodroid.guardiansdk.ui.settings.SettingFragment.formatWeChatStyleTime(item.lastPracticeTime)
+            tvItemSubtitle.text = "$enabledText 上次练习时间：$lastPracticeTime"
             
             itemView.setOnClickListener {
                 listener?.onTestModeClick()
@@ -317,9 +317,8 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.PingSettings, listener: OnItemClickListener?) {
             tvItemTitle.text = "Ping响应设置"
-            val enabledText = if (item.enabled) "已启用" else "已禁用"
-            val intervalInfo = "检查间隔：${item.checkInterval}分钟"
-            tvItemSubtitle.text = "响应监护人Ping请求 - $enabledText，$intervalInfo"
+            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
+            tvItemSubtitle.text = "$enabledText，检查间隔${item.checkInterval}分钟"
             
             itemView.setOnClickListener {
                 listener?.onPingSettingsClick()
@@ -329,15 +328,25 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     // 监护人ViewHolder
     inner class GuardianItem1ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
         fun bind(item: SettingItem.GuardianItem1, listener: OnItemClickListener?) {
-            val displayText = if (item.isPlaceholder) "监护人1: ${item.name}" else "监护人1: ${item.name}"
-            textView.text = displayText
+            // 第一行：监护人1：监护人姓名
+            val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
+            tvItemTitle.text = "监护人1：$name"
+            
+            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
+            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            tvItemSubtitle.text = secondLine
+            
             // 如果占位符，设置不同的样式
             if (item.isPlaceholder) {
-                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
             } else {
-                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.black))
             }
             itemView.setOnClickListener {
                 listener?.onGuardian1Click()
@@ -346,15 +355,25 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class GuardianItem2ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
         fun bind(item: SettingItem.GuardianItem2, listener: OnItemClickListener?) {
-            val displayText = if (item.isPlaceholder) "监护人2: ${item.name}" else "监护人2: ${item.name}"
-            textView.text = displayText
+            // 第一行：监护人2：监护人姓名
+            val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
+            tvItemTitle.text = "监护人2：$name"
+            
+            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
+            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            tvItemSubtitle.text = secondLine
+            
             // 如果占位符，设置不同的样式
             if (item.isPlaceholder) {
-                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
             } else {
-                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.black))
             }
             itemView.setOnClickListener {
                 listener?.onGuardian2Click()
@@ -363,15 +382,25 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class GuardianItem3ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
         fun bind(item: SettingItem.GuardianItem3, listener: OnItemClickListener?) {
-            val displayText = if (item.isPlaceholder) "监护人3: ${item.name}" else "监护人3: ${item.name}"
-            textView.text = displayText
+            // 第一行：监护人3：监护人姓名
+            val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
+            tvItemTitle.text = "监护人3：$name"
+            
+            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
+            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            tvItemSubtitle.text = secondLine
+            
             // 如果占位符，设置不同的样式
             if (item.isPlaceholder) {
-                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
             } else {
-                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.black))
             }
             itemView.setOnClickListener {
                 listener?.onGuardian3Click()
@@ -380,15 +409,25 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class GuardianItem4ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
         fun bind(item: SettingItem.GuardianItem4, listener: OnItemClickListener?) {
-            val displayText = if (item.isPlaceholder) "监护人4: ${item.name}" else "监护人4: ${item.name}"
-            textView.text = displayText
+            // 第一行：监护人4：监护人姓名
+            val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
+            tvItemTitle.text = "监护人4：$name"
+            
+            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
+            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            tvItemSubtitle.text = secondLine
+            
             // 如果占位符，设置不同的样式
             if (item.isPlaceholder) {
-                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
             } else {
-                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.black))
             }
             itemView.setOnClickListener {
                 listener?.onGuardian4Click()
@@ -397,15 +436,25 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class GuardianItem5ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
         fun bind(item: SettingItem.GuardianItem5, listener: OnItemClickListener?) {
-            val displayText = if (item.isPlaceholder) "监护人5: ${item.name}" else "监护人5: ${item.name}"
-            textView.text = displayText
+            // 第一行：监护人5：监护人姓名
+            val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
+            tvItemTitle.text = "监护人5：$name"
+            
+            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
+            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            tvItemSubtitle.text = secondLine
+            
             // 如果占位符，设置不同的样式
             if (item.isPlaceholder) {
-                textView.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.darker_gray))
             } else {
-                textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemTitle.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvItemSubtitle.setTextColor(itemView.context.getColor(android.R.color.black))
             }
             itemView.setOnClickListener {
                 listener?.onGuardian5Click()
