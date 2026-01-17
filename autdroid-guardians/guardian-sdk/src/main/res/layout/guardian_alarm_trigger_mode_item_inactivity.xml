@@ -2,26 +2,46 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="16dp"
     android:background="?android:attr/selectableItemBackground">
 
-    <TextView
-        android:id="@+id/tv_alarm_mode_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="报警触发模式4"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black" />
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/guardian_ic_inactivity"
+        android:contentDescription="长时间未使用手机报警" />
 
-    <TextView
-        android:id="@+id/tv_alarm_mode_info"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="长时间未使用手机"
-        android:textSize="14sp"
-        android:textColor="#666666"
-        android:layout_marginTop="4dp" />
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="16dp">
+
+        <TextView
+            android:id="@+id/tv_alarm_mode_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="报警触发模式4"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_alarm_mode_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="长时间未使用手机"
+            android:textSize="14sp"
+            android:textColor="#666666" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/guardian_ic_arrow_right"
+        android:contentDescription="更多"
+        android:layout_gravity="center_vertical" />
 
 </LinearLayout>

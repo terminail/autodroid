@@ -112,14 +112,14 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                 // 添加报警触发模式相关设置，加载实际数据
                 settingItems.addAll(loadAlarmModeSettings())
                 
-                // 添加报警信息密码
-                settingItems.add(SettingItem.AlarmMessagePassword())
-                
                 // 添加录音模式
                 settingItems.add(SettingItem.AlarmRecordingMode())
                 
                 // 添加邮件配置
                 settingItems.add(SettingItem.AlarmEmailSettings())
+                
+                // 添加报警信息密码
+                settingItems.add(SettingItem.AlarmMessagePassword())
                 
                 // 添加隐秘界面设置
                 settingItems.add(SettingItem.HiddenSecureUI())

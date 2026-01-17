@@ -227,7 +227,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class AlarmMessagePasswordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
+
         fun bind(item: SettingItem.AlarmMessagePassword, listener: OnItemClickListener?) {
+            tvItemTitle.text = "报警信息密码"
+            val passwordStatus = if (item.password.isNotEmpty()) "已设置" else "未设置"
+            tvItemSubtitle.text = "配置报警时的暗语密码 - $passwordStatus"
+            
             itemView.setOnClickListener {
                 listener?.onAlarmMessagePasswordClick()
             }
@@ -235,7 +242,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class AlarmRecordingModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
+
         fun bind(item: SettingItem.AlarmRecordingMode, listener: OnItemClickListener?) {
+            tvItemTitle.text = "报警录音模式"
+            val enabledText = if (item.enabled) "已启用" else "已禁用"
+            tvItemSubtitle.text = "录制报警时的音频 - $enabledText，时长：${item.duration}分钟"
+            
             itemView.setOnClickListener {
                 listener?.onAlarmRecordingModeClick()
             }
@@ -243,7 +257,15 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class AlarmEmailSettingsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
+
         fun bind(item: SettingItem.AlarmEmailSettings, listener: OnItemClickListener?) {
+            tvItemTitle.text = "报警邮件设置"
+            val enabledText = if (item.enabled) "已启用" else "已禁用"
+            val emailInfo = if (item.emailAddress.isNotEmpty()) item.emailAddress else "未配置"
+            tvItemSubtitle.text = "配置邮件发送报警信息 - $enabledText，邮箱：$emailInfo"
+            
             itemView.setOnClickListener {
                 listener?.onAlarmEmailSettingsClick()
             }
@@ -251,7 +273,14 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class HiddenSecureUIViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
+
         fun bind(item: SettingItem.HiddenSecureUI, listener: OnItemClickListener?) {
+            tvItemTitle.text = "隐秘界面设置"
+            val enabledText = if (item.enabled) "已开启" else "已关闭"
+            tvItemSubtitle.text = "隐藏监护界面，防止被发现 - $enabledText"
+            
             itemView.setOnClickListener {
                 listener?.onHiddenSecureUIClick()
             }
@@ -259,7 +288,15 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     inner class TestModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
+
         fun bind(item: SettingItem.TestMode, listener: OnItemClickListener?) {
+            tvItemTitle.text = "测试模式"
+            val enabledText = if (item.isEnabled) "已启用" else "已禁用"
+            val practiceInfo = "练习次数：${item.practiceCount}"
+            tvItemSubtitle.text = "练习报警操作 - $enabledText，$practiceInfo"
+            
             itemView.setOnClickListener {
                 listener?.onTestModeClick()
             }
