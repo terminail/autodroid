@@ -57,6 +57,30 @@ sealed class SettingItem {
         val emergencySensitivity: Int = 8
     ) : SettingItem()
 
+    data class InactivityAlarmMode(
+        val enabled: Boolean = true,
+        val normalInactivityTime: Int = 60,
+        val emergencyInactivityTime: Int = 30
+    ) : SettingItem()
+
+    data class AlarmMessagePassword(
+        val password: String = ""
+    ) : SettingItem()
+
+    data class AlarmRecordingMode(
+        val enabled: Boolean = true,
+        val duration: Int = 5,
+        val segmentDuration: Int = 2
+    ) : SettingItem()
+
+    data class AlarmEmailSettings(
+        val enabled: Boolean = false,
+        val emailAddress: String = "",
+        val smtpHost: String = "smtp.gmail.com",
+        val smtpPort: Int = 587,
+        val useTls: Boolean = true
+    ) : SettingItem()
+
     data class DoorPassphrase(
         val isEnabled: Boolean = false,
         val passphrase: String = "open_door"

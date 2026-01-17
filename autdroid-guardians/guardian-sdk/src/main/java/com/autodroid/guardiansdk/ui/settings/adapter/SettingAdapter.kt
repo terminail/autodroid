@@ -22,8 +22,12 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_ALARM_TRIGGER_MODE_VOLUME_KEY = 5
         const val TYPE_ALARM_TRIGGER_MODE_FLOATING_WINDOW = 6
         const val TYPE_ALARM_TRIGGER_MODE_SHAKE_PHONE = 7
-        const val TYPE_DOOR_PASSPHRASE = 11
-        const val TYPE_TEST_MODE = 12
+        const val TYPE_ALARM_TRIGGER_MODE_INACTIVITY = 8
+        const val TYPE_ALARM_MESSAGE_PASSWORD = 9
+        const val TYPE_ALARM_RECORDING_MODE = 10
+        const val TYPE_ALARM_EMAIL_SETTINGS = 11
+        const val TYPE_DOOR_PASSPHRASE = 12
+        const val TYPE_TEST_MODE = 13
     }
 
     private val items = mutableListOf<SettingItem>()
@@ -37,6 +41,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onVolumeKeyAlarmModeClick()
         fun onFloatingWindowAlarmModeClick()
         fun onShakePhoneAlarmModeClick()
+        fun onInactivityAlarmModeClick()
+        fun onAlarmMessagePasswordClick()
+        fun onAlarmRecordingModeClick()
+        fun onAlarmEmailSettingsClick()
         fun onPasswordBookClick()
         fun onDoorPassphraseClick()
         fun onTestModeClick()
@@ -64,6 +72,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is SettingItem.VolumeKeyAlarmMode -> TYPE_ALARM_TRIGGER_MODE_VOLUME_KEY
             is SettingItem.FloatingWindowAlarmMode -> TYPE_ALARM_TRIGGER_MODE_FLOATING_WINDOW
             is SettingItem.ShakePhoneAlarmMode -> TYPE_ALARM_TRIGGER_MODE_SHAKE_PHONE
+            is SettingItem.InactivityAlarmMode -> TYPE_ALARM_TRIGGER_MODE_INACTIVITY
+            is SettingItem.AlarmMessagePassword -> TYPE_ALARM_MESSAGE_PASSWORD
+            is SettingItem.AlarmRecordingMode -> TYPE_ALARM_RECORDING_MODE
+            is SettingItem.AlarmEmailSettings -> TYPE_ALARM_EMAIL_SETTINGS
             is SettingItem.DoorPassphrase -> TYPE_DOOR_PASSPHRASE
             is SettingItem.TestMode -> TYPE_TEST_MODE
         }
@@ -104,7 +116,22 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.guardian_alarm_trigger_mode_item_shake_phone, parent, false)
                 ShakePhoneAlarmModeViewHolder(view)
             }
-
+            TYPE_ALARM_TRIGGER_MODE_INACTIVITY -> {
+                val view = inflater.inflate(R.layout.guardian_alarm_trigger_mode_item_inactivity, parent, false)
+                InactivityAlarmModeViewHolder(view)
+            }
+            TYPE_ALARM_MESSAGE_PASSWORD -> {
+                val view = inflater.inflate(R.layout.guardian_item_alarm_message_password, parent, false)
+                AlarmMessagePasswordViewHolder(view)
+            }
+            TYPE_ALARM_RECORDING_MODE -> {
+                val view = inflater.inflate(R.layout.guardian_item_alarm_recording_mode, parent, false)
+                AlarmRecordingModeViewHolder(view)
+            }
+            TYPE_ALARM_EMAIL_SETTINGS -> {
+                val view = inflater.inflate(R.layout.guardian_item_alarm_email_settings, parent, false)
+                AlarmEmailSettingsViewHolder(view)
+            }
             TYPE_DOOR_PASSPHRASE -> {
                 val view = inflater.inflate(R.layout.guardian_item_door_passphrase, parent, false)
                 DoorPassphraseViewHolder(view)
@@ -128,6 +155,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is VolumeKeyAlarmModeViewHolder -> holder.bind(item as SettingItem.VolumeKeyAlarmMode, listener)
             is FloatingWindowAlarmModeViewHolder -> holder.bind(item as SettingItem.FloatingWindowAlarmMode, listener)
             is ShakePhoneAlarmModeViewHolder -> holder.bind(item as SettingItem.ShakePhoneAlarmMode, listener)
+            is InactivityAlarmModeViewHolder -> holder.bind(item as SettingItem.InactivityAlarmMode, listener)
+            is AlarmMessagePasswordViewHolder -> holder.bind(item as SettingItem.AlarmMessagePassword, listener)
+            is AlarmRecordingModeViewHolder -> holder.bind(item as SettingItem.AlarmRecordingMode, listener)
+            is AlarmEmailSettingsViewHolder -> holder.bind(item as SettingItem.AlarmEmailSettings, listener)
             is DoorPassphraseViewHolder -> holder.bind(item as SettingItem.DoorPassphrase, listener)
             is TestModeViewHolder -> holder.bind(item as SettingItem.TestMode, listener)
         }
@@ -176,6 +207,45 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             
             itemView.setOnClickListener {
                 listener?.onShakePhoneAlarmModeClick()
+            }
+        }
+    }
+
+    inner class InactivityAlarmModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvAlarmModeTitle: TextView = itemView.findViewById(R.id.tv_alarm_mode_title)
+        private val tvAlarmModeInfo: TextView = itemView.findViewById(R.id.tv_alarm_mode_info)
+
+        fun bind(item: SettingItem.InactivityAlarmMode, listener: OnItemClickListener?) {
+            tvAlarmModeTitle.text = "报警触发模式4"
+            val enabledText = if (item.enabled) "☑️" else "□"
+            tvAlarmModeInfo.text = "长时间未使用手机$enabledText，普通报警：${item.normalInactivityTime}分钟，紧急报警：${item.emergencyInactivityTime}分钟"
+            
+            itemView.setOnClickListener {
+                listener?.onInactivityAlarmModeClick()
+            }
+        }
+    }
+
+    inner class AlarmMessagePasswordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(item: SettingItem.AlarmMessagePassword, listener: OnItemClickListener?) {
+            itemView.setOnClickListener {
+                listener?.onAlarmMessagePasswordClick()
+            }
+        }
+    }
+
+    inner class AlarmRecordingModeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(item: SettingItem.AlarmRecordingMode, listener: OnItemClickListener?) {
+            itemView.setOnClickListener {
+                listener?.onAlarmRecordingModeClick()
+            }
+        }
+    }
+
+    inner class AlarmEmailSettingsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(item: SettingItem.AlarmEmailSettings, listener: OnItemClickListener?) {
+            itemView.setOnClickListener {
+                listener?.onAlarmEmailSettingsClick()
             }
         }
     }

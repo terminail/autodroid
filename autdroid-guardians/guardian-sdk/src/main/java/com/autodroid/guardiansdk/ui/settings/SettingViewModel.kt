@@ -112,6 +112,15 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                 // 添加报警触发模式相关设置，加载实际数据
                 settingItems.addAll(loadAlarmModeSettings())
                 
+                // 添加报警信息密码
+                settingItems.add(SettingItem.AlarmMessagePassword())
+                
+                // 添加录音模式
+                settingItems.add(SettingItem.AlarmRecordingMode())
+                
+                // 添加邮件配置
+                settingItems.add(SettingItem.AlarmEmailSettings())
+                
                 // 添加其他常规设置
                 settingItems.add(SettingItem.DoorPassphrase())
                 settingItems.add(SettingItem.TestMode())
@@ -170,6 +179,18 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
             emergencySensitivity = emergencySensitivity
         )
         alarmModeSettings.add(shakePhoneSetting)
+        
+        // 长时间未使用手机报警触发模式
+        val inactivityEnabled = settingDao.getSetting("inactivity_alarm_enabled")?.value?.toBoolean() ?: true
+        val normalInactivityTime = settingDao.getSetting("inactivity_normal_time")?.value?.toIntOrNull() ?: 60
+        val emergencyInactivityTime = settingDao.getSetting("inactivity_emergency_time")?.value?.toIntOrNull() ?: 30
+        
+        val inactivitySetting = SettingItem.InactivityAlarmMode(
+            enabled = inactivityEnabled,
+            normalInactivityTime = normalInactivityTime,
+            emergencyInactivityTime = emergencyInactivityTime
+        )
+        alarmModeSettings.add(inactivitySetting)
         
         return alarmModeSettings
     }

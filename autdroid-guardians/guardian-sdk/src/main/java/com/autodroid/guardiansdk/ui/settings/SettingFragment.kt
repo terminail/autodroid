@@ -96,6 +96,22 @@ class SettingFragment : Fragment() {
                 showShakePhoneAlarmModeDialog()
             }
 
+            override fun onInactivityAlarmModeClick() {
+                showInactivityAlarmModeDialog()
+            }
+
+            override fun onAlarmMessagePasswordClick() {
+                showPasswordBookDialog()
+            }
+
+            override fun onAlarmRecordingModeClick() {
+                showAlarmRecordingModeDialog()
+            }
+
+            override fun onAlarmEmailSettingsClick() {
+                showAlarmEmailSettingsDialog()
+            }
+
             override fun onPasswordBookClick() {
                 showPasswordBookDialog()
             }
@@ -344,6 +360,184 @@ class SettingFragment : Fragment() {
             .setPositiveButton("保存") { _, _ ->
                 // 保存报警触发模式-摇动手机设置
                 saveShakePhoneAlarmModeSettings(dialogView)
+            }
+            .setNegativeButton("取消", null)
+            .create()
+        dialog.show()
+    }
+
+    /**
+     * 显示报警触发模式-长时间未使用手机设置对话框
+     */
+    private fun showInactivityAlarmModeDialog() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.guardian_dialog_inactivity_alarm_mode, null)
+
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_inactivity_alarm_enabled)
+        val seekNormalTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_normal_inactivity_time)
+        val seekEmergencyTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_emergency_inactivity_time)
+        val tvNormalTime = dialogView.findViewById<android.widget.TextView>(R.id.tv_normal_inactivity_time_value)
+        val tvEmergencyTime = dialogView.findViewById<android.widget.TextView>(R.id.tv_emergency_inactivity_time_value)
+
+        // 加载已保存的设置
+        lifecycleScope.launch {
+            val enabledSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("inactivity_alarm_enabled")
+            }
+            val normalTimeSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("inactivity_normal_time")
+            }
+            val emergencyTimeSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("inactivity_emergency_time")
+            }
+
+            cbEnabled.isChecked = enabledSetting?.value?.toBoolean() ?: true
+            val normalTime = normalTimeSetting?.value?.toIntOrNull() ?: 60
+            val emergencyTime = emergencyTimeSetting?.value?.toIntOrNull() ?: 30
+
+            seekNormalTime.progress = normalTime
+            seekEmergencyTime.progress = emergencyTime
+            tvNormalTime.text = "当前值: ${normalTime}分钟"
+            tvEmergencyTime.text = "当前值: ${emergencyTime}分钟"
+        }
+
+        // 设置SeekBar监听器
+        seekNormalTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvNormalTime.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        seekEmergencyTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvEmergencyTime.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("报警触发模式-长时间未使用手机设置")
+            .setView(dialogView)
+            .setPositiveButton("保存") { _, _ ->
+                // 保存报警触发模式-长时间未使用手机设置
+                saveInactivityAlarmModeSettings(dialogView)
+            }
+            .setNegativeButton("取消", null)
+            .create()
+        dialog.show()
+    }
+
+    /**
+     * 显示报警录音模式设置对话框
+     */
+    private fun showAlarmRecordingModeDialog() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.guardian_dialog_alarm_recording_mode, null)
+
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_recording_enabled)
+        val seekDuration = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_recording_duration)
+        val seekSegmentDuration = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_segment_duration)
+        val tvDuration = dialogView.findViewById<android.widget.TextView>(R.id.tv_recording_duration_value)
+        val tvSegmentDuration = dialogView.findViewById<android.widget.TextView>(R.id.tv_segment_duration_value)
+
+        // 加载已保存的设置
+        lifecycleScope.launch {
+            val enabledSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("recording_enabled")
+            }
+            val durationSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("recording_duration")
+            }
+            val segmentDurationSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("recording_segment_duration")
+            }
+
+            cbEnabled.isChecked = enabledSetting?.value?.toBoolean() ?: true
+            val duration = durationSetting?.value?.toIntOrNull() ?: 5
+            val segmentDuration = segmentDurationSetting?.value?.toIntOrNull() ?: 2
+
+            seekDuration.progress = duration
+            seekSegmentDuration.progress = segmentDuration
+            tvDuration.text = "当前值: ${duration}分钟"
+            tvSegmentDuration.text = "当前值: ${segmentDuration}分钟"
+        }
+
+        // 设置SeekBar监听器
+        seekDuration.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvDuration.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        seekSegmentDuration.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvSegmentDuration.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("报警录音模式设置")
+            .setView(dialogView)
+            .setPositiveButton("保存") { _, _ ->
+                // 保存报警录音模式设置
+                saveAlarmRecordingModeSettings(dialogView)
+            }
+            .setNegativeButton("取消", null)
+            .create()
+        dialog.show()
+    }
+
+    /**
+     * 显示报警邮件设置对话框
+     */
+    private fun showAlarmEmailSettingsDialog() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.guardian_dialog_alarm_email_settings, null)
+
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
+        val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
+        val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
+        val cbUseTls = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_tls)
+
+        // 加载已保存的设置
+        lifecycleScope.launch {
+            val enabledSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("email_enabled")
+            }
+            val emailAddressSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("email_address")
+            }
+            val smtpHostSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("smtp_host")
+            }
+            val smtpPortSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("smtp_port")
+            }
+            val useTlsSetting = withContext(Dispatchers.IO) {
+                viewModel.getSetting("smtp_tls")
+            }
+
+            cbEnabled.isChecked = enabledSetting?.value?.toBoolean() ?: false
+            etEmailAddress.setText(emailAddressSetting?.value ?: "")
+            etSmtpHost.setText(smtpHostSetting?.value ?: "smtp.gmail.com")
+            etSmtpPort.setText(smtpPortSetting?.value ?: "587")
+            cbUseTls.isChecked = useTlsSetting?.value?.toBoolean() ?: true
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("报警邮件设置")
+            .setView(dialogView)
+            .setPositiveButton("保存") { _, _ ->
+                // 保存报警邮件设置
+                saveAlarmEmailSettings(dialogView)
             }
             .setNegativeButton("取消", null)
             .create()
@@ -663,6 +857,201 @@ class SettingFragment : Fragment() {
                 android.widget.Toast.makeText(
                     requireContext(),
                     "报警触发模式-摇动手机设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun saveInactivityAlarmModeSettings(dialogView: View) {
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_inactivity_alarm_enabled)
+        val seekNormalTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_normal_inactivity_time)
+        val seekEmergencyTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_emergency_inactivity_time)
+        
+        val isEnabled = cbEnabled.isChecked
+        val normalTime = seekNormalTime.progress
+        val emergencyTime = seekEmergencyTime.progress
+        
+        lifecycleScope.launch {
+            try {
+                // 保存设置到数据库
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "inactivity_alarm_enabled",
+                        value = isEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "长时间未使用手机报警启用状态",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "inactivity_normal_time",
+                        value = normalTime.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "长时间未使用手机普通报警时间阈值（分钟）",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "inactivity_emergency_time",
+                        value = emergencyTime.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "长时间未使用手机紧急报警时间阈值（分钟）",
+                        category = "alarm"
+                    )
+                )
+                
+                withContext(Dispatchers.IO) {
+                    viewModel.insertOrUpdateAllSettings(settings)
+                }
+                
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "报警触发模式-长时间未使用手机设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun saveAlarmRecordingModeSettings(dialogView: View) {
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_recording_enabled)
+        val seekDuration = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_recording_duration)
+        val seekSegmentDuration = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_segment_duration)
+        
+        val isEnabled = cbEnabled.isChecked
+        val duration = seekDuration.progress
+        val segmentDuration = seekSegmentDuration.progress
+        
+        lifecycleScope.launch {
+            try {
+                // 保存设置到数据库
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "recording_enabled",
+                        value = isEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "报警录音启用状态",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "recording_duration",
+                        value = duration.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "报警录音总时长（分钟）",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "recording_segment_duration",
+                        value = segmentDuration.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "报警录音分段时长（分钟）",
+                        category = "alarm"
+                    )
+                )
+                
+                withContext(Dispatchers.IO) {
+                    viewModel.insertOrUpdateAllSettings(settings)
+                }
+                
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "报警录音模式设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun saveAlarmEmailSettings(dialogView: View) {
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
+        val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
+        val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
+        val cbUseTls = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_tls)
+        
+        val isEnabled = cbEnabled.isChecked
+        val emailAddress = etEmailAddress.text.toString().trim()
+        val smtpHost = etSmtpHost.text.toString().trim()
+        val smtpPort = etSmtpPort.text.toString().trim()
+        val useTls = cbUseTls.isChecked
+        
+        if (isEnabled && emailAddress.isEmpty()) {
+            android.widget.Toast.makeText(
+                requireContext(),
+                "请填写邮箱地址",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        lifecycleScope.launch {
+            try {
+                // 保存设置到数据库
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "email_enabled",
+                        value = isEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "报警邮件启用状态",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "email_address",
+                        value = emailAddress,
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
+                        description = "报警邮件地址",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "smtp_host",
+                        value = smtpHost,
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
+                        description = "SMTP服务器地址",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "smtp_port",
+                        value = smtpPort,
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.STRING,
+                        description = "SMTP服务器端口",
+                        category = "alarm"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "smtp_tls",
+                        value = useTls.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "是否使用TLS加密",
+                        category = "alarm"
+                    )
+                )
+                
+                withContext(Dispatchers.IO) {
+                    viewModel.insertOrUpdateAllSettings(settings)
+                }
+                
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "报警邮件设置已保存",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 
