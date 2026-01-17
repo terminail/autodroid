@@ -42,8 +42,14 @@
         <!-- GuardianSDK提供的主界面 -->
         <activity
             android:name="com.autodroid.guardiansdk.ui.GuardianActivity"
-            android:exported="false"
-            android:theme="@style/GuardianAppTheme" />
+            android:exported="true"
+            android:theme="@style/GuardianAppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
 
         <!-- GuardianSDK提供的浮动窗口服务 -->
         <service

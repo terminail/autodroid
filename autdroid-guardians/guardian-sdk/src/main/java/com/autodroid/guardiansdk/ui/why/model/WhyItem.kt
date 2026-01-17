@@ -11,7 +11,9 @@ enum class WhyItemType : Parcelable {
     BENEFITS,
     SECURITY_STORY,
     STATISTICS,
-    IMAGE_CARD
+    IMAGE_CARD,
+    SHARE_GUARDIAN,
+    IMPORT_WARD
 }
 
 @Parcelize

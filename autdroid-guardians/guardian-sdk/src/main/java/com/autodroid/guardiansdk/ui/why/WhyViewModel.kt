@@ -33,6 +33,24 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             iconRes = R.drawable.guardian_ic_info
         ))
 
+        // Share Guardian - 分享信息给监护人
+        items.add(WhyItem(
+            id = 22,
+            type = WhyItemType.SHARE_GUARDIAN,
+            title = "分享信息给监护人",
+            content = "以后你就可以向监护人报告位置等安全守卫信息",
+            iconRes = R.drawable.guardian_ic_contact_guardian
+        ))
+
+        // Import Ward - 导入被监护人信息
+        items.add(WhyItem(
+            id = 23,
+            type = WhyItemType.IMPORT_WARD,
+            title = "导入被监护人信息",
+            content = "以后你就可以查询被监护人的位置等安全守卫信息",
+            iconRes = R.drawable.guardian_ic_people
+        ))
+
         // Features - 核心功能列表
         items.add(WhyItem(
             id = 3,

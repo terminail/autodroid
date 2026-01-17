@@ -28,6 +28,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         const val TYPE_ALARM_EMAIL_SETTINGS = 11
         const val TYPE_HIDDEN_SECURE_UI = 12
         const val TYPE_TEST_MODE = 13
+        const val TYPE_PING_SETTINGS = 14
     }
 
     private val items = mutableListOf<SettingItem>()
@@ -48,6 +49,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun onPasswordBookClick()
         fun onHiddenSecureUIClick()
         fun onTestModeClick()
+        fun onPingSettingsClick()
     }
 
     private var listener: OnItemClickListener? = null
@@ -78,6 +80,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is SettingItem.AlarmEmailSettings -> TYPE_ALARM_EMAIL_SETTINGS
             is SettingItem.HiddenSecureUI -> TYPE_HIDDEN_SECURE_UI
             is SettingItem.TestMode -> TYPE_TEST_MODE
+            is SettingItem.PingSettings -> TYPE_PING_SETTINGS
         }
     }
 
@@ -140,6 +143,10 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val view = inflater.inflate(R.layout.guardian_item_test_mode, parent, false)
                 TestModeViewHolder(view)
             }
+            TYPE_PING_SETTINGS -> {
+                val view = inflater.inflate(R.layout.guardian_item_ping_settings, parent, false)
+                PingSettingsViewHolder(view)
+            }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -161,6 +168,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is AlarmEmailSettingsViewHolder -> holder.bind(item as SettingItem.AlarmEmailSettings, listener)
             is HiddenSecureUIViewHolder -> holder.bind(item as SettingItem.HiddenSecureUI, listener)
             is TestModeViewHolder -> holder.bind(item as SettingItem.TestMode, listener)
+            is PingSettingsViewHolder -> holder.bind(item as SettingItem.PingSettings, listener)
         }
     }
 
@@ -303,7 +311,21 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
+    inner class PingSettingsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvItemTitle: TextView = itemView.findViewById(R.id.tv_item_title)
+        private val tvItemSubtitle: TextView = itemView.findViewById(R.id.tv_item_subtitle)
 
+        fun bind(item: SettingItem.PingSettings, listener: OnItemClickListener?) {
+            tvItemTitle.text = "Ping响应设置"
+            val enabledText = if (item.enabled) "已启用" else "已禁用"
+            val intervalInfo = "检查间隔：${item.checkInterval}分钟"
+            tvItemSubtitle.text = "响应监护人Ping请求 - $enabledText，$intervalInfo"
+            
+            itemView.setOnClickListener {
+                listener?.onPingSettingsClick()
+            }
+        }
+    }
 
     // 监护人ViewHolder
     inner class GuardianItem1ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

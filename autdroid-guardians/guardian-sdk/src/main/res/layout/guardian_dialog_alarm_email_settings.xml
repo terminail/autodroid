@@ -26,6 +26,16 @@
         android:layout_height="wrap_content"
         android:hint="请输入邮箱地址"
         android:inputType="textEmailAddress"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tv_email_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="邮箱格式不正确"
+        android:textSize="12sp"
+        android:textColor="#FF0000"
+        android:visibility="gone"
         android:layout_marginBottom="12dp" />
 
     <TextView

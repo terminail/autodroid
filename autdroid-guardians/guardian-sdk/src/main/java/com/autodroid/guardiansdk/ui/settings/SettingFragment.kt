@@ -37,6 +37,16 @@ class SettingFragment : Fragment() {
 
     companion object {
         fun newInstance() = SettingFragment()
+        
+        private fun formatMinutesToTime(minutes: Int): String {
+            val hours = minutes / 60
+            val mins = minutes % 60
+            return if (hours > 0) {
+                "${hours}小时${mins}分钟"
+            } else {
+                "${mins}分钟"
+            }
+        }
     }
 
     override fun onCreateView(
@@ -123,6 +133,10 @@ class SettingFragment : Fragment() {
             override fun onTestModeClick() {
                 showTestModeDialog()
             }
+
+            override fun onPingSettingsClick() {
+                showPingSettingsDialog()
+            }
         })
 
         recyclerView.apply {
@@ -181,6 +195,11 @@ class SettingFragment : Fragment() {
         seekNormalTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 tvNormalTime.text = "当前值: ${progress}秒"
+                if (fromUser) {
+                    val emergencyValue = (progress + 5).coerceAtMost(seekEmergencyTime.max)
+                    seekEmergencyTime.progress = emergencyValue
+                    tvEmergencyTime.text = "当前值: ${emergencyValue}秒"
+                }
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -188,7 +207,12 @@ class SettingFragment : Fragment() {
 
         seekEmergencyTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                tvEmergencyTime.text = "当前值: ${progress}秒"
+                val minValue = seekNormalTime.progress + 5
+                val adjustedProgress = if (progress < minValue) minValue else progress
+                if (adjustedProgress != progress) {
+                    seekEmergencyTime.progress = adjustedProgress
+                }
+                tvEmergencyTime.text = "当前值: ${adjustedProgress}秒"
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -261,6 +285,11 @@ class SettingFragment : Fragment() {
         seekNormalTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 tvNormalTime.text = "当前值: ${progress}秒"
+                if (fromUser) {
+                    val emergencyValue = (progress + 5).coerceAtMost(seekEmergencyTime.max)
+                    seekEmergencyTime.progress = emergencyValue
+                    tvEmergencyTime.text = "当前值: ${emergencyValue}秒"
+                }
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -276,7 +305,12 @@ class SettingFragment : Fragment() {
 
         seekEmergencyTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                tvEmergencyTime.text = "当前值: ${progress}秒"
+                val minValue = seekNormalTime.progress + 5
+                val adjustedProgress = if (progress < minValue) minValue else progress
+                if (adjustedProgress != progress) {
+                    seekEmergencyTime.progress = adjustedProgress
+                }
+                tvEmergencyTime.text = "当前值: ${adjustedProgress}秒"
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -341,6 +375,11 @@ class SettingFragment : Fragment() {
         seekNormalSensitivity.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 tvNormalSensitivity.text = "当前值: ${progress}级"
+                if (fromUser) {
+                    val emergencyValue = (progress + 5).coerceAtMost(seekEmergencySensitivity.max)
+                    seekEmergencySensitivity.progress = emergencyValue
+                    tvEmergencySensitivity.text = "当前值: ${emergencyValue}级"
+                }
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -348,7 +387,12 @@ class SettingFragment : Fragment() {
 
         seekEmergencySensitivity.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                tvEmergencySensitivity.text = "当前值: ${progress}级"
+                val minValue = seekNormalSensitivity.progress + 5
+                val adjustedProgress = if (progress < minValue) minValue else progress
+                if (adjustedProgress != progress) {
+                    seekEmergencySensitivity.progress = adjustedProgress
+                }
+                tvEmergencySensitivity.text = "当前值: ${adjustedProgress}级"
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -397,14 +441,19 @@ class SettingFragment : Fragment() {
 
             seekNormalTime.progress = normalTime
             seekEmergencyTime.progress = emergencyTime
-            tvNormalTime.text = "当前值: ${normalTime}分钟"
-            tvEmergencyTime.text = "当前值: ${emergencyTime}分钟"
+            tvNormalTime.text = "当前值: ${formatMinutesToTime(normalTime)}"
+            tvEmergencyTime.text = "当前值: ${formatMinutesToTime(emergencyTime)}"
         }
 
         // 设置SeekBar监听器
         seekNormalTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                tvNormalTime.text = "当前值: ${progress}分钟"
+                tvNormalTime.text = "当前值: ${formatMinutesToTime(progress)}"
+                if (fromUser) {
+                    val emergencyValue = (progress + 5).coerceAtMost(seekEmergencyTime.max)
+                    seekEmergencyTime.progress = emergencyValue
+                    tvEmergencyTime.text = "当前值: ${formatMinutesToTime(emergencyValue)}"
+                }
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -412,7 +461,12 @@ class SettingFragment : Fragment() {
 
         seekEmergencyTime.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                tvEmergencyTime.text = "当前值: ${progress}分钟"
+                val minValue = seekNormalTime.progress + 5
+                val adjustedProgress = if (progress < minValue) minValue else progress
+                if (adjustedProgress != progress) {
+                    seekEmergencyTime.progress = adjustedProgress
+                }
+                tvEmergencyTime.text = "当前值: ${formatMinutesToTime(adjustedProgress)}"
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -503,6 +557,7 @@ class SettingFragment : Fragment() {
 
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
         val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val tvEmailError = dialogView.findViewById<TextView>(R.id.tv_email_error)
         val etEmailPassword = dialogView.findViewById<EditText>(R.id.et_email_password)
         val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
         val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
@@ -546,6 +601,20 @@ class SettingFragment : Fragment() {
             etSmtpPort.setText(smtpPortSetting?.value ?: "587")
             cbUseTls.isChecked = useTlsSetting?.value?.toBoolean() ?: true
         }
+
+        // 实时验证邮箱格式
+        etEmailAddress.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val email = s?.toString()?.trim() ?: ""
+                if (email.isNotEmpty() && !isValidEmail(email)) {
+                    tvEmailError.visibility = View.VISIBLE
+                } else {
+                    tvEmailError.visibility = View.GONE
+                }
+            }
+        })
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle("报警邮件设置")
@@ -1024,6 +1093,7 @@ class SettingFragment : Fragment() {
     private fun saveAlarmEmailSettings(dialogView: View) {
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_email_enabled)
         val etEmailAddress = dialogView.findViewById<EditText>(R.id.et_email_address)
+        val tvEmailError = dialogView.findViewById<TextView>(R.id.tv_email_error)
         val etEmailPassword = dialogView.findViewById<EditText>(R.id.et_email_password)
         val etSmtpHost = dialogView.findViewById<EditText>(R.id.et_smtp_host)
         val etSmtpPort = dialogView.findViewById<EditText>(R.id.et_smtp_port)
@@ -1040,6 +1110,17 @@ class SettingFragment : Fragment() {
             android.widget.Toast.makeText(
                 requireContext(),
                 "请填写邮箱地址",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        // 验证邮箱格式
+        if (isEnabled && !isValidEmail(emailAddress)) {
+            tvEmailError.visibility = View.VISIBLE
+            android.widget.Toast.makeText(
+                requireContext(),
+                "邮箱格式不正确",
                 android.widget.Toast.LENGTH_SHORT
             ).show()
             return
@@ -1224,6 +1305,156 @@ class SettingFragment : Fragment() {
 
     private fun saveTestModeSettings(dialogView: View) {}
 
+    private fun showPingSettingsDialog() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.guardian_dialog_ping_settings, null)
+
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_ping_enabled)
+        val seekCheckInterval = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_check_interval)
+        val tvCheckIntervalValue = dialogView.findViewById<TextView>(R.id.tv_check_interval_value)
+        val seekEmailRetryCount = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_email_retry_count)
+        val tvEmailRetryCountValue = dialogView.findViewById<TextView>(R.id.tv_email_retry_count_value)
+        val seekEmailTimeout = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_email_timeout)
+        val tvEmailTimeoutValue = dialogView.findViewById<TextView>(R.id.tv_email_timeout_value)
+        val cbUseSmsFallback = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_sms_fallback)
+
+        lifecycleScope.launch {
+            val isEnabled = withContext(Dispatchers.IO) {
+                viewModel.getBoolean("ping_enabled", false)
+            }
+            val checkInterval = withContext(Dispatchers.IO) {
+                viewModel.getInt("ping_check_interval", 30)
+            }
+            val emailRetryCount = withContext(Dispatchers.IO) {
+                viewModel.getInt("ping_email_retry_count", 3)
+            }
+            val emailTimeout = withContext(Dispatchers.IO) {
+                viewModel.getInt("ping_email_timeout", 60)
+            }
+            val useSmsFallback = withContext(Dispatchers.IO) {
+                viewModel.getBoolean("ping_use_sms_fallback", true)
+            }
+
+            cbEnabled.isChecked = isEnabled
+            seekCheckInterval.progress = checkInterval
+            tvCheckIntervalValue.text = "当前值: ${checkInterval}分钟"
+            seekEmailRetryCount.progress = emailRetryCount
+            tvEmailRetryCountValue.text = "当前值: ${emailRetryCount}次"
+            seekEmailTimeout.progress = emailTimeout
+            tvEmailTimeoutValue.text = "当前值: ${emailTimeout}分钟"
+            cbUseSmsFallback.isChecked = useSmsFallback
+        }
+
+        seekCheckInterval.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvCheckIntervalValue.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        seekEmailRetryCount.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvEmailRetryCountValue.text = "当前值: ${progress}次"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        seekEmailTimeout.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                tvEmailTimeoutValue.text = "当前值: ${progress}分钟"
+            }
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Ping响应设置")
+            .setView(dialogView)
+            .setPositiveButton("保存") { dialog, _ ->
+                savePingSettingsSettings(dialogView)
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun savePingSettingsSettings(dialogView: View) {
+        val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_ping_enabled)
+        val seekCheckInterval = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_check_interval)
+        val seekEmailRetryCount = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_email_retry_count)
+        val seekEmailTimeout = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_email_timeout)
+        val cbUseSmsFallback = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_use_sms_fallback)
+
+        val isEnabled = cbEnabled.isChecked
+        val checkInterval = seekCheckInterval.progress
+        val emailRetryCount = seekEmailRetryCount.progress
+        val emailTimeout = seekEmailTimeout.progress
+        val useSmsFallback = cbUseSmsFallback.isChecked
+
+        lifecycleScope.launch {
+            try {
+                val settings = listOf(
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "ping_enabled",
+                        value = isEnabled.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "Ping响应启用状态",
+                        category = "ping"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "ping_check_interval",
+                        value = checkInterval.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "Ping检查间隔（分钟）",
+                        category = "ping"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "ping_email_retry_count",
+                        value = emailRetryCount.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "邮件重试次数",
+                        category = "ping"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "ping_email_timeout",
+                        value = emailTimeout.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.INT,
+                        description = "邮件超时时间（分钟）",
+                        category = "ping"
+                    ),
+                    com.autodroid.guardiansdk.data.entity.Setting(
+                        key = "ping_use_sms_fallback",
+                        value = useSmsFallback.toString(),
+                        type = com.autodroid.guardiansdk.data.entity.SettingType.BOOLEAN,
+                        description = "邮件失败时使用短信",
+                        category = "ping"
+                    )
+                )
+
+                withContext(Dispatchers.IO) {
+                    viewModel.insertOrUpdateAllSettings(settings)
+                }
+
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "Ping响应设置已保存",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
     /**
      * 显示监护人编辑对话框
      */
@@ -1310,6 +1541,11 @@ class SettingFragment : Fragment() {
 
     private fun isValidPhoneNumber(phone: String): Boolean {
         return phone.matches(Regex("^1[3-9]\\d{9}$"))
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        val emailRegex = Regex("^[A-Za-z0-9+._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        return emailRegex.matches(email)
     }
 
     /**

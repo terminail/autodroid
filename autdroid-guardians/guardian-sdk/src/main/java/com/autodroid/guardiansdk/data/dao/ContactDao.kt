@@ -145,6 +145,18 @@ interface ContactDao {
     suspend fun getWardsCount(): Int
 
     /**
+     * 获取被监护人（WARD类型），按orderIndex排序
+     */
+    @Query("SELECT * FROM contacts WHERE type = 'WARD' ORDER BY orderIndex ASC, createdAt ASC")
+    suspend fun getWards(): List<Contact>
+
+    /**
+     * 监听被监护人变化
+     */
+    @Query("SELECT * FROM contacts WHERE type = 'WARD' ORDER BY orderIndex ASC, createdAt ASC")
+    fun observeWards(): Flow<List<Contact>>
+
+    /**
      * 搜索联系人（模糊搜索姓名和手机号）
      */
     @Query("SELECT * FROM contacts WHERE (name LIKE '%' || :keyword || '%' OR phoneNumber LIKE '%' || :keyword || '%') AND type = :type")

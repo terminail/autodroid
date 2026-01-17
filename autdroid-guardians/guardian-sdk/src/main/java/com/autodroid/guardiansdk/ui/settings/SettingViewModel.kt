@@ -121,6 +121,9 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                 // 添加报警信息密码
                 settingItems.add(SettingItem.AlarmMessagePassword())
                 
+                // 添加Ping设置
+                settingItems.add(loadPingSettings())
+                
                 // 添加隐秘界面设置
                 settingItems.add(SettingItem.HiddenSecureUI())
                 
@@ -408,5 +411,38 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
         val contactDao = database.contactDao()
         val guardian = contactDao.getGuardianByOrderIndex(index)
         return guardian?.isPrimary ?: false
+    }
+
+    /**
+     * 加载Ping设置
+     */
+    private suspend fun loadPingSettings(): SettingItem.PingSettings {
+        val enabled = settingDao.getSetting("ping_enabled")?.value?.toBoolean() ?: false
+        val checkInterval = settingDao.getSetting("ping_check_interval")?.value?.toIntOrNull() ?: 30
+        val emailRetryCount = settingDao.getSetting("ping_email_retry_count")?.value?.toIntOrNull() ?: 3
+        val emailTimeout = settingDao.getSetting("ping_email_timeout")?.value?.toIntOrNull() ?: 60
+        val useSmsFallback = settingDao.getSetting("ping_use_sms_fallback")?.value?.toBoolean() ?: true
+
+        return SettingItem.PingSettings(
+            enabled = enabled,
+            checkInterval = checkInterval,
+            emailRetryCount = emailRetryCount,
+            emailTimeout = emailTimeout,
+            useSmsFallback = useSmsFallback
+        )
+    }
+
+    /**
+     * 获取布尔设置
+     */
+    suspend fun getBoolean(key: String, defaultValue: Boolean = false): Boolean {
+        return settingDao.getSetting(key)?.value?.toBooleanStrictOrNull() ?: defaultValue
+    }
+
+    /**
+     * 获取整数设置
+     */
+    suspend fun getInt(key: String, defaultValue: Int = 0): Int {
+        return settingDao.getSetting(key)?.value?.toIntOrNull() ?: defaultValue
     }
 }

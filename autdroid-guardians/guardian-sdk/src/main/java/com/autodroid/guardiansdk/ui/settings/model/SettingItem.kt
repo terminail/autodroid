@@ -92,4 +92,12 @@ sealed class SettingItem {
         val lastPracticeTime: String = "",
         val isSimulateNotification: Boolean = true
     ) : SettingItem()
+
+    data class PingSettings(
+        val enabled: Boolean = false,
+        val checkInterval: Int = 30,
+        val emailRetryCount: Int = 3,
+        val emailTimeout: Int = 60,
+        val useSmsFallback: Boolean = true
+    ) : SettingItem()
 }

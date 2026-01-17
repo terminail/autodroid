@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <CheckBox
+                android:id="@+id/cb_ping_enabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="启用Ping响应"
+                android:checked="false"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="检查间隔（分钟）"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <SeekBar
+                android:id="@+id/seek_bar_check_interval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="120"
+                android:progress="30"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tv_check_interval_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="当前值: 30分钟"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="邮件重试次数"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <SeekBar
+                android:id="@+id/seek_bar_email_retry_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10"
+                android:progress="3"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tv_email_retry_count_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="当前值: 3次"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="邮件超时时间（分钟）"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <SeekBar
+                android:id="@+id/seek_bar_email_timeout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="180"
+                android:progress="60"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tv_email_timeout_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="当前值: 60分钟"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp" />
+
+            <CheckBox
+                android:id="@+id/cb_use_sms_fallback"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="邮件失败时使用短信"
+                android:checked="true"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="说明：\n1. 启用后，系统会定期检查监护人发送的Ping请求\n2. 收到Ping请求后，自动回复位置信息等安全防卫信息\n3. 优先使用邮件，失败后自动切换到短信\n4. 建议检查间隔设置为30-60分钟以平衡实时性和耗电量"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:lineSpacingExtra="2dp" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</layout>
