@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.guardiansdk.R
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.ui.settings.adapter.SettingAdapter
-import com.autodroid.guardiansdk.ui.settings.model.SettingItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,7 +22,7 @@ import kotlinx.coroutines.withContext
 /**
  * 我的设置界面
  * 显示所有设置项的列表，点击弹出对应的修改对话框
- * 包括：报警模式、位置密码本等设置项和历史记录
+ * 包括：报警触发模式、位置密码本等设置项和历史记录
  */
 class SettingFragment : Fragment() {
 
@@ -108,10 +107,6 @@ class SettingFragment : Fragment() {
             override fun onTestModeClick() {
                 showTestModeDialog()
             }
-
-            override fun onAlarmMessageClick() {
-                showAlarmMessageDialog()
-            }
         })
 
         recyclerView.apply {
@@ -132,11 +127,11 @@ class SettingFragment : Fragment() {
     }
 
     /**
-     * 显示报警模式-音量键设置对话框
+     * 显示报警触发模式-音量键设置对话框
      */
     private fun showVolumeKeyAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.guardian_alarm_mode_dialog_volume_key, null)
+            .inflate(R.layout.guardian_alarm_trigger_mode_dialog_volume_key, null)
 
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_volume_key_alarm_enabled)
         val seekNormalTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_normal_hold_time)
@@ -184,10 +179,10 @@ class SettingFragment : Fragment() {
         })
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("报警模式-音量键设置")
+            .setTitle("报警触发模式-音量键设置")
             .setView(dialogView)
             .setPositiveButton("保存") { _, _ ->
-                // 保存报警模式-音量键设置
+                // 保存报警触发模式-音量键设置
                 saveVolumeKeyAlarmModeSettings(dialogView)
             }
             .setNegativeButton("取消", null)
@@ -196,11 +191,11 @@ class SettingFragment : Fragment() {
     }
 
     /**
-     * 显示报警模式-浮动窗口设置对话框
+     * 显示报警触发模式-浮动窗口设置对话框
      */
     private fun showFloatingWindowAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.guardian_alarm_mode_dialog_floating_window, null)
+            .inflate(R.layout.guardian_alarm_trigger_mode_dialog_floating_window, null)
 
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_floating_window_alarm_enabled)
         val seekNormalTime = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_normal_hold_time)
@@ -280,10 +275,10 @@ class SettingFragment : Fragment() {
         })
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("报警模式-浮动窗口设置")
+            .setTitle("报警触发模式-浮动窗口设置")
             .setView(dialogView)
             .setPositiveButton("保存") { _, _ ->
-                // 保存报警模式-浮动窗口设置
+                // 保存报警触发模式-浮动窗口设置
                 saveFloatingWindowAlarmModeSettings(dialogView)
             }
             .setNegativeButton("取消", null)
@@ -292,11 +287,11 @@ class SettingFragment : Fragment() {
     }
 
     /**
-     * 显示报警模式-摇动手机设置对话框
+     * 显示报警触发模式-摇动手机设置对话框
      */
     private fun showShakePhoneAlarmModeDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.guardian_alarm_mode_dialog_shake_phone, null)
+            .inflate(R.layout.guardian_alarm_trigger_mode_dialog_shake_phone, null)
 
         val cbEnabled = dialogView.findViewById<android.widget.CheckBox>(R.id.cb_shake_alarm_enabled)
         val seekNormalSensitivity = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_bar_normal_sensitivity)
@@ -344,10 +339,10 @@ class SettingFragment : Fragment() {
         })
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("报警模式-摇动手机设置")
+            .setTitle("报警触发模式-摇动手机设置")
             .setView(dialogView)
             .setPositiveButton("保存") { _, _ ->
-                // 保存报警模式-摇动手机设置
+                // 保存报警触发模式-摇动手机设置
                 saveShakePhoneAlarmModeSettings(dialogView)
             }
             .setNegativeButton("取消", null)
@@ -537,7 +532,7 @@ class SettingFragment : Fragment() {
                 
                 android.widget.Toast.makeText(
                     requireContext(),
-                    "报警模式-音量键设置已保存",
+                    "报警触发模式-音量键设置已保存",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 
@@ -611,7 +606,7 @@ class SettingFragment : Fragment() {
                 
                 android.widget.Toast.makeText(
                     requireContext(),
-                    "报警模式-浮动窗口设置已保存",
+                    "报警触发模式-浮动窗口设置已保存",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 
@@ -667,7 +662,7 @@ class SettingFragment : Fragment() {
                 
                 android.widget.Toast.makeText(
                     requireContext(),
-                    "报警模式-摇动手机设置已保存",
+                    "报警触发模式-摇动手机设置已保存",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 
@@ -727,12 +722,11 @@ class SettingFragment : Fragment() {
         }
     }
     
-    private fun saveWipeAlarmInfoSettings(dialogView: View) {}
     private fun saveDoorPassphraseSettings(dialogView: View) {}
     private fun saveTestModeSettings(dialogView: View) {}
 
     /**
-     * 显示报警联系人编辑对话框
+     * 显示监护人编辑对话框
      */
     private fun showGuardianDialog(index: Int) {
         val dialogView = LayoutInflater.from(requireContext())
@@ -769,7 +763,7 @@ class SettingFragment : Fragment() {
         })
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("报警联系人${index}")
+            .setTitle("监护人${index}")
             .setView(dialogView)
             .setPositiveButton("保存", null) // 先设置为null，后面手动处理
             .setNegativeButton("取消") { dialog, _ ->
@@ -804,7 +798,7 @@ class SettingFragment : Fragment() {
                     viewModel.saveGuardianContact(index, name, phone, isPrimary)
                     android.widget.Toast.makeText(
                         requireContext(),
-                        "报警联系人${index}已保存",
+                        "监护人${index}已保存",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                     dialog.dismiss()

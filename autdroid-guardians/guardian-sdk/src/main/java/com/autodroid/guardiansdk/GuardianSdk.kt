@@ -114,9 +114,9 @@ class GuardianSdk private constructor(private val context: Context) {
     }
     
     /**
-     * 获取隐秘设置界面
+     * 获取设置界面
      */
-    fun getEmergencyContactsFragment(): androidx.fragment.app.Fragment {
+    fun getSettingFragment(): androidx.fragment.app.Fragment {
         return com.autodroid.guardiansdk.ui.settings.SettingFragment.newInstance()
     }
     

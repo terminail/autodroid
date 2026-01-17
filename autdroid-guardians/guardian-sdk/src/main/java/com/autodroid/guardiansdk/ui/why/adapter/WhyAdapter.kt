@@ -5,7 +5,13 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.autodroid.guardiansdk.databinding.*
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemBenefitsBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemFeaturesBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemHeaderBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemImageCardBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemOverviewBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemSecurityStoryBinding
+import com.autodroid.guardiansdk.databinding.GuardianWhyItemStatisticsBinding
 import com.autodroid.guardiansdk.ui.why.model.WhyItem
 import com.autodroid.guardiansdk.ui.why.model.WhyItemType
 
@@ -37,25 +43,25 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             TYPE_HEADER -> HeaderViewHolder(
-                WhyItemHeaderBinding.inflate(inflater, parent, false)
+                GuardianWhyItemHeaderBinding.inflate(inflater, parent, false)
             )
             TYPE_OVERVIEW -> OverviewViewHolder(
-                WhyItemOverviewBinding.inflate(inflater, parent, false)
+                GuardianWhyItemOverviewBinding.inflate(inflater, parent, false)
             )
             TYPE_FEATURES -> FeaturesViewHolder(
-                WhyItemFeaturesBinding.inflate(inflater, parent, false)
+                GuardianWhyItemFeaturesBinding.inflate(inflater, parent, false)
             )
             TYPE_BENEFITS -> BenefitsViewHolder(
-                WhyItemBenefitsBinding.inflate(inflater, parent, false)
+                GuardianWhyItemBenefitsBinding.inflate(inflater, parent, false)
             )
             TYPE_SECURITY_STORY -> SecurityStoryViewHolder(
-                WhyItemSecurityStoryBinding.inflate(inflater, parent, false)
+                GuardianWhyItemSecurityStoryBinding.inflate(inflater, parent, false)
             )
             TYPE_STATISTICS -> StatisticsViewHolder(
-                WhyItemStatisticsBinding.inflate(inflater, parent, false)
+                GuardianWhyItemStatisticsBinding.inflate(inflater, parent, false)
             )
             TYPE_IMAGE_CARD -> ImageCardViewHolder(
-                WhyItemImageCardBinding.inflate(inflater, parent, false)
+                GuardianWhyItemImageCardBinding.inflate(inflater, parent, false)
             )
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
@@ -74,7 +80,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class HeaderViewHolder(private val binding: WhyItemHeaderBinding) :
+    inner class HeaderViewHolder(private val binding: GuardianWhyItemHeaderBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
@@ -82,7 +88,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class OverviewViewHolder(private val binding: WhyItemOverviewBinding) :
+    inner class OverviewViewHolder(private val binding: GuardianWhyItemOverviewBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
@@ -91,7 +97,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class FeaturesViewHolder(private val binding: WhyItemFeaturesBinding) :
+    inner class FeaturesViewHolder(private val binding: GuardianWhyItemFeaturesBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
@@ -100,7 +106,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class BenefitsViewHolder(private val binding: WhyItemBenefitsBinding) :
+    inner class BenefitsViewHolder(private val binding: GuardianWhyItemBenefitsBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
@@ -109,7 +115,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class SecurityStoryViewHolder(private val binding: WhyItemSecurityStoryBinding) :
+    inner class SecurityStoryViewHolder(private val binding: GuardianWhyItemSecurityStoryBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
@@ -118,22 +124,22 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class StatisticsViewHolder(private val binding: WhyItemStatisticsBinding) :
+    inner class StatisticsViewHolder(private val binding: GuardianWhyItemStatisticsBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title
             binding.content.text = item.content
-            
+
             // Bind statistics
             if (item.statistics.isNotEmpty()) {
                 binding.stat1Label.text = item.statistics.keys.firstOrNull() ?: ""
                 binding.stat1Value.text = item.statistics.values.firstOrNull() ?: ""
-                
+
                 if (item.statistics.size > 1) {
                     binding.stat2Label.text = item.statistics.keys.elementAtOrNull(1) ?: ""
                     binding.stat2Value.text = item.statistics.values.elementAtOrNull(1) ?: ""
                 }
-                
+
                 if (item.statistics.size > 2) {
                     binding.stat3Label.text = item.statistics.keys.elementAtOrNull(2) ?: ""
                     binding.stat3Value.text = item.statistics.values.elementAtOrNull(2) ?: ""
@@ -142,7 +148,7 @@ class WhyAdapter : ListAdapter<WhyItem, RecyclerView.ViewHolder>(WhyItemDiffCall
         }
     }
 
-    inner class ImageCardViewHolder(private val binding: WhyItemImageCardBinding) :
+    inner class ImageCardViewHolder(private val binding: GuardianWhyItemImageCardBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WhyItem) {
             binding.title.text = item.title

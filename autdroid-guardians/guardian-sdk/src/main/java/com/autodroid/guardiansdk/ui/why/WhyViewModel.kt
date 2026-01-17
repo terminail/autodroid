@@ -77,13 +77,13 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             iconRes = R.drawable.guardian_ic_shield
         ))
 
-        // Security Story 1.5 - 真实案例：王老板缅北脱险
+        // Security Story 1.5 - 真实案例：王老板缅甸脱险
         items.add(WhyItem(
             id = 8,
             type = WhyItemType.SECURITY_STORY,
-            title = "真实案例：缅北遇险，死命报警获救",
-            content = """王老板到缅北做建材生意，某天在一个偏僻地方谈生意时，突然发现情况不对劲，几个彪形大汉向他围过来。王老板立刻意识到危险，死命抓住手机，假装在看记事本里的合同。就在大汉们要夺走手机的前一刻，王老板拼尽全力长按了屏幕角落的透明小圆点（浮动窗口）15秒！就在手机被夺走的同时，紧急报警短信已经发送给了他的贴身保镖："老板遇到极度危险，GPS位置：缅北XXX"。保镖收到报警后立即带领武装力量火速赶往现场，大汉们还没来得及把王老板带走，保镖就冲了进来。王老板成功脱离危险！这15秒的拼命按住浮动窗口救了他一命！""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            title = "真实案例：缅甸遇险，死命报警获救",
+            content = """王老板到缅甸做建材生意，某天在一个偏僻地方谈生意时，突然发现情况不对劲，几个彪形大汉向他围过来。王老板立刻意识到危险，死命抓住手机，假装在看记事本里的合同。就在大汉们要夺走手机的前一刻，王老板拼尽全力长按了屏幕角落的透明小圆点（浮动窗口）15秒！就在手机被夺走的同时，紧急报警短信已经发送给了他的贴身保镖："老板遇到极度危险，GPS位置：缅甸XXX"。保镖收到报警后立即带领武装力量火速赶往现场，大汉们还没来得及把王老板带走，保镖就冲了进来。王老板成功脱离危险！这15秒的拼命按住浮动窗口救了他一命！""",
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 2 - 真实案例：小李遭遇霸凌
@@ -92,7 +92,7 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             type = WhyItemType.SECURITY_STORY,
             title = "真实案例：遭遇霸凌，录音存证维权",
             content = """小李在公园遇到几个大汉欺负人，情况危急。他口袋里按住手机音量键，触发了隐秘报警。系统立即开始分段录音，每录完2分钟就自动加密并通过邮件发送到小李的邮箱。整个过程中，不管手机是否被抢走或损坏，已经发送的录音证据都安全地保存在邮箱中。第二天，小李的家人查看邮箱，收到了8段完整的现场录音，总计16分钟的霸凌证据。有了这些铁证，警方很快抓获了霸凌者，受害人也获得了应有的赔偿。分段录音+邮件发送确保了即使手机被砸，证据也不会丢失。""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 3 - 真实案例：手机被收缴后自动报警
@@ -119,7 +119,7 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             type = WhyItemType.SECURITY_STORY,
             title = "真实案例：家暴现场，录音存证报警",
             content = """小芳长期遭受丈夫家暴，每次报警都被她丈夫发现并销毁证据。后来小芳的闺蜜给她推荐了植入了 Guardian SDK 的计算器应用。某天丈夫再次施暴时，小芳口袋里按住手机音量键，触发了隐秘报警。系统立即开始分段录音，每2分钟自动加密并通过邮件发送到小芳的备用邮箱。整个家暴过程持续了30分钟，但每段录音都安全地保存在邮箱里，丈夫完全不知道。第二天，小芳在闺蜜家打开邮箱，收到了15段完整的家暴录音证据，总计30分钟。警方根据这些录音证据立即逮捕了丈夫，小芳终于获得了人身自由和离婚支持！""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 6 - 真实案例：学生放学路上遇险
@@ -145,8 +145,8 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             id = 14,
             type = WhyItemType.SECURITY_STORY,
             title = "真实案例：旅游遇骗，手机被夺前一刻报警",
-            content = """退休老人王阿姨参加低价旅游团，被带到了缅北的诈骗团伙窝点。骗团伙没收了所有人的手机，但王阿姨反应最快，在手机被夺走的前一秒死命按住了浮动窗口20秒！就在手机被抢走的同时，一条报警短信已经发给了她的儿子："妈妈被骗到缅北，GPS位置XXX"。儿子收到短信后立即报警并联系大使馆。因为有了准确位置，警方在3天内成功端掉了这个诈骗团伙，解救了包括王阿姨在内的30多名受害者。王阿姨的这20秒拼命按住浮动窗口救了30多个人！""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            content = """退休老人王阿姨参加低价旅游团，被带到了缅甸的诈骗团伙窝点。骗团伙没收了所有人的手机，但王阿姨反应最快，在手机被夺走的前一秒死命按住了浮动窗口20秒！就在手机被抢走的同时，一条报警短信已经发给了她的儿子："妈妈被骗到缅甸，GPS位置XXX"。儿子收到短信后立即报警并联系大使馆。因为有了准确位置，警方在3天内成功端掉了这个诈骗团伙，解救了包括王阿姨在内的30多名受害者。王阿姨的这20秒拼命按住浮动窗口救了30多个人！""",
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 9 - 真实案例：夜跑遭遇袭击
@@ -164,7 +164,7 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             type = WhyItemType.SECURITY_STORY,
             title = "真实案例：网贷催收上门，录音存证报警",
             content = """小张因为网贷逾期，催收公司派人上门威胁恐吓。催收人员强行闯入他家，大吵大闹，威胁要打砸东西。小张趁他们不注意，悄悄按住手机音量键触发了隐秘报警。系统立即开始分段录音，每2分钟自动加密并通过邮件发送到小张的云盘邮箱。整个催收过程持续了40分钟，催收人员的所有威胁言论都被完整录音。第二天，小张带着这些证据去派出所报案，警方根据证据端掉了这个非法催收团伙，小张获得了法律保护，再也不用担心暴力威胁！""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 11 - 真实案例：耳聋老人迷路，短信查询定位
@@ -191,7 +191,7 @@ class WhyViewModel(private val context: Context) : ViewModel() {
             type = WhyItemType.SECURITY_STORY,
             title = "真实案例：独居老人摔倒，音量键隐秘求救",
             content = """78岁的张爷爷独居，儿女都在外地工作。某天他在卫生间滑倒摔骨折，躺在地上起不来，手机也掉在离他几米远的地方。张爷爷痛得叫不出声，但用脚尖慢慢把手机踢到身边。他捡起手机，发现是植入了 Guardian SDK 的记事本守卫。老人虽然不会用复杂功能，但他知道可以按音量键求救。张爷爷拼尽全力按住音量键10秒，隐秘报警立即触发！远在外地的女儿收到报警短信："爸爸遇到紧急情况，GPS位置XXX"。女儿立刻联系120急救和邻居破门进入，及时发现张爷爷并送医救治。医生说如果再晚半小时，老人可能有生命危险！""",
-            iconRes = R.drawable.guardian_ic_emergency_contact
+            iconRes = R.drawable.guardian_ic_contact_guardian
         ))
 
         // Security Story 14 - 真实案例：老人被骗离家，短信查询定位

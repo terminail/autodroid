@@ -126,25 +126,25 @@ abstract class GuardianDatabase : RoomDatabase() {
                     0, 0, currentTime - 259200000, 1, 5, 1, currentTime, currentTime
                 ))
                 
-                // 插入报警联系人数据（GUARDIAN类型）
+                // 插入监护人数据（GUARDIAN类型）
                 db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13811111111", "报警联系人1", "GUARDIAN", "家人", null, 1, 1, 0, 0, 0, 1, currentTime, currentTime
+                    "13811111111", "监护人1", "GUARDIAN", "家人", null, 1, 1, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13811111112", "报警联系人2", "GUARDIAN", "朋友", null, 0, 2, 0, 0, 0, 1, currentTime, currentTime
+                    "13811111112", "监护人2", "GUARDIAN", "朋友", null, 0, 2, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13811111113", "报警联系人3", "GUARDIAN", "同事", null, 0, 3, 0, 0, 0, 1, currentTime, currentTime
+                    "13811111113", "监护人3", "GUARDIAN", "同事", null, 0, 3, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13811111114", "报警联系人4", "GUARDIAN", "邻居", null, 0, 4, 0, 0, 0, 1, currentTime, currentTime
+                    "13811111114", "监护人4", "GUARDIAN", "邻居", null, 0, 4, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 db.execSQL("INSERT INTO contacts (phoneNumber, name, type, relationship, passwordBook, isPrimary, orderIndex, lastMessageTime, messageCount, alarmCount, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-                    "13811111115", "报警联系人5", "GUARDIAN", "亲戚", null, 0, 5, 0, 0, 0, 1, currentTime, currentTime
+                    "13811111115", "监护人5", "GUARDIAN", "亲戚", null, 0, 5, 0, 0, 0, 1, currentTime, currentTime
                 ))
                 
                 // 插入消息数据 - 张三的消息
@@ -243,11 +243,11 @@ abstract class GuardianDatabase : RoomDatabase() {
                     )
                 )
                 
-                // 测试用的报警联系人数据（GUARDIAN类型）
+                // 测试用的监护人数据（GUARDIAN类型）
                 val testGuardians = listOf(
                     Contact(
                         phoneNumber = "13811111111",
-                        name = "报警联系人1",
+                        name = "监护人1",
                         type = ContactType.GUARDIAN,
                         relationship = "家人",
                         isPrimary = true,
@@ -256,7 +256,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     ),
                     Contact(
                         phoneNumber = "13811111112",
-                        name = "报警联系人2",
+                        name = "监护人2",
                         type = ContactType.GUARDIAN,
                         relationship = "朋友",
                         isPrimary = false,
@@ -265,7 +265,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     ),
                     Contact(
                         phoneNumber = "13811111113",
-                        name = "报警联系人3",
+                        name = "监护人3",
                         type = ContactType.GUARDIAN,
                         relationship = "同事",
                         isPrimary = false,
@@ -274,7 +274,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     ),
                     Contact(
                         phoneNumber = "13811111114",
-                        name = "报警联系人4",
+                        name = "监护人4",
                         type = ContactType.GUARDIAN,
                         relationship = "邻居",
                         isPrimary = false,
@@ -283,7 +283,7 @@ abstract class GuardianDatabase : RoomDatabase() {
                     ),
                     Contact(
                         phoneNumber = "13811111115",
-                        name = "报警联系人5",
+                        name = "监护人5",
                         type = ContactType.GUARDIAN,
                         relationship = "亲戚",
                         isPrimary = false,

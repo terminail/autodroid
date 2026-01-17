@@ -24,7 +24,7 @@
             android:layout_marginEnd="16dp"
             android:src="@drawable/guardian_ic_people"
             android:scaleType="centerCrop"
-            android:tint="@color/guardian_blue" />
+            app:tint="@color/guardian_blue" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -53,7 +53,7 @@
                     android:id="@+id/tv_contact_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="紧急联系人"
+                    android:text="监护人"
                     android:textSize="12sp"
                     android:textColor="@color/guardian_white"
                     android:background="@drawable/guardian_bg_contact_type_blue"

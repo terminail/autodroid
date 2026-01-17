@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="选择报警模式"
+        android:text="选择报警触发模式"
         android:textSize="16sp"
         android:layout_marginBottom="16dp" />
 

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 /**
  * 联系人列表页面的ViewModel
- * 负责管理所有联系人数据（被监护人和紧急联系人）
+ * 负责管理所有联系人数据（被监护人和监护人）
  */
 class ContactViewModel(private val database: GuardianDatabase) : ViewModel() {
     
@@ -38,7 +38,7 @@ class ContactViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 加载所有联系人（被监护人和紧急联系人）
+     * 加载所有联系人（被监护人和监护人）
      */
     fun loadAllContacts() {
         _loading.value = true
@@ -46,12 +46,12 @@ class ContactViewModel(private val database: GuardianDatabase) : ViewModel() {
             try {
                 val activeGuardians = contactDao.getActiveContactsByType(ContactType.GUARDIAN)
                 val activeWards = contactDao.getActiveContactsByType(ContactType.WARD)
-                
-                // 合并所有联系人，紧急联系人显示在被监护人之前
+
+                // 合并所有联系人，监护人显示在被监护人之前
                 val allContacts = activeGuardians + activeWards
                 _contacts.value = allContacts
-                
-                android.util.Log.d("ContactViewModel", "=== 加载联系人完成，紧急联系人: ${activeGuardians.size}, 被监护人: ${activeWards.size}, 总数: ${allContacts.size} ===")
+
+                android.util.Log.d("ContactViewModel", "=== 加载联系人完成，监护人: ${activeGuardians.size}, 被监护人: ${activeWards.size}, 总数: ${allContacts.size} ===")
                 
                 // 记录每个联系人的详细信息
                 allContacts.forEach { contact ->

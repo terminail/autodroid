@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/etContactName"
+    <Button
+        android:id="@+id/btnAddContact"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="联系人姓名"
-        android:inputType="textPersonName"
-        android:layout_marginBottom="8dp" />
+        android:text="添加联系人"
+        android:layout_marginBottom="16dp" />
 
-    <EditText
-        android:id="@+id/etContactPhone"
+    <Button
+        android:id="@+id/btnSyncPasswordBook"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="联系人电话"
-        android:inputType="phone" />
+        android:text="同步密码本" />
 
 </LinearLayout>

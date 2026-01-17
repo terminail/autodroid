@@ -1,7 +1,7 @@
 package com.autodroid.guardiansdk.ui.settings.model
 
 sealed class SettingItem {
-    // 报警联系人1-5，每个最多5个报警联系人
+    // 监护人1-5，每个最多5个监护人
     data class GuardianItem1(
         val phoneNumber: String = "",
         val name: String = "",
@@ -69,9 +69,4 @@ sealed class SettingItem {
         val isSimulateNotification: Boolean = true
     ) : SettingItem()
 
-    data class AlarmMessage(
-        val normalMessage: String = "准备去麦当劳",
-        val emergencyMessage: String = "准备去肯德基",
-        val isEnabled: Boolean = true
-    ) : SettingItem()
 }

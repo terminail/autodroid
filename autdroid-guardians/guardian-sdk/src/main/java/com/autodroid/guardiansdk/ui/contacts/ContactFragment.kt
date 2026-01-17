@@ -84,7 +84,7 @@ class ContactFragment : Fragment() {
                     ContactItem.ContactCard(
                         phoneNumber = contact.phoneNumber,
                         name = contact.name,
-                        contactType = if (contact.type == ContactType.WARD) "被监护人" else "紧急联系人",
+                        contactType = if (contact.type == ContactType.WARD) "被监护人" else "监护人",
                         lastContactTime = getLastContactTime(contact), // 根据实际数据填充
                         lastLocation = getLastLocation(contact), // 根据实际数据填充
                         lastAlarmMessage = getLastAlarmMessage(contact) // 根据实际数据填充

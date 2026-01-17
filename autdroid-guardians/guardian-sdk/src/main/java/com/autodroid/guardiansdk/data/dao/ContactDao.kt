@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * 联系人DAO
- * 统一处理被监护人和报警联系人的数据访问
+ * 统一处理被监护人和监护人的数据访问
  */
 @Dao
 interface ContactDao {
@@ -109,31 +109,31 @@ interface ContactDao {
     suspend fun updateMessageStats(phoneNumber: String, messageTime: Long, updatedAt: Long = System.currentTimeMillis())
 
     /**
-     * 获取报警联系人（GUARDIAN类型），按orderIndex排序
+     * 获取监护人（GUARDIAN类型），按orderIndex排序
      */
     @Query("SELECT * FROM contacts WHERE type = 'GUARDIAN' ORDER BY orderIndex ASC, createdAt ASC")
     suspend fun getGuardians(): List<Contact>
 
     /**
-     * 监听报警联系人变化
+     * 监听监护人变化
      */
     @Query("SELECT * FROM contacts WHERE type = 'GUARDIAN' ORDER BY orderIndex ASC, createdAt ASC")
     fun observeGuardians(): Flow<List<Contact>>
 
     /**
-     * 获取指定索引的报警联系人
+     * 获取指定索引的监护人
      */
     @Query("SELECT * FROM contacts WHERE type = 'GUARDIAN' AND orderIndex = :orderIndex")
     suspend fun getGuardianByOrderIndex(orderIndex: Int): Contact?
 
     /**
-     * 更新报警联系人的主要状态
+     * 更新监护人的主要状态
      */
     @Query("UPDATE contacts SET isPrimary = :isPrimary, updatedAt = :updatedAt WHERE phoneNumber = :phoneNumber AND type = 'GUARDIAN'")
     suspend fun updateGuardianPrimaryStatus(phoneNumber: String, isPrimary: Boolean, updatedAt: Long = System.currentTimeMillis())
 
     /**
-     * 获取主要报警联系人
+     * 获取主要监护人
      */
     @Query("SELECT * FROM contacts WHERE type = 'GUARDIAN' AND isPrimary = 1")
     suspend fun getPrimaryGuardian(): Contact?

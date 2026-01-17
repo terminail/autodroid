@@ -38,7 +38,7 @@ enum class SettingType {
  * 设置项键名常量
  */
 object SettingKeys {
-    // 报警模式相关
+    // 报警触发模式相关
     const val ALARM_VOLUME_KEY_HOLD_TIME = "alarm_volume_key_hold_time"
     const val ALARM_FLOATING_WINDOW_HOLD_TIME = "alarm_floating_window_hold_time"
     const val ALARM_SHAKE_SENSITIVITY = "alarm_shake_sensitivity"
@@ -54,9 +54,9 @@ object SettingKeys {
     const val TEST_MODE_PRACTICE_COUNT = "test_mode_practice_count"
     const val TEST_MODE_LAST_PRACTICE_TIME = "test_mode_last_practice_time"
     
-    // 紧急联系人相关
-    const val EMERGENCY_CONTACT_COUNT = "emergency_contact_count"
-    const val EMERGENCY_CONTACT_LAST_SYNC = "emergency_contact_last_sync"
+    // 监护人相关
+    const val GUARDIAN_CONTACT_COUNT = "guardian_contact_count"
+    const val GUARDIAN_CONTACT_LAST_SYNC = "guardian_contact_last_sync"
     
     // 密码本相关
     const val PASSWORD_BOOK_ENABLED = "password_book_enabled"
@@ -70,7 +70,6 @@ object SettingKeys {
     const val APP_LAST_UPDATE = "app_last_update"
     
     // 安全相关
-    const val EMERGENCY_WIPE_TRIGGER_COUNT = "emergency_wipe_trigger_count"
     const val LAST_ALARM_TIME = "last_alarm_time"
     const val TOTAL_ALARM_COUNT = "total_alarm_count"
 }

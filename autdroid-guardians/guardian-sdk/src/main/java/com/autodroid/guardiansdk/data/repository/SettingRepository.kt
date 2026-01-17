@@ -170,7 +170,7 @@ class SettingRepository(private val settingDao: SettingDao) {
      * 初始化默认设置项
      */
     suspend fun initializeDefaultSettings() {
-        // 报警模式默认设置
+        // 报警触发模式默认设置
         if (!contains(SettingKeys.ALARM_VOLUME_KEY_HOLD_TIME)) {
             putInt(SettingKeys.ALARM_VOLUME_KEY_HOLD_TIME, 5, "音量键长按报警时间（秒）", "alarm")
         }

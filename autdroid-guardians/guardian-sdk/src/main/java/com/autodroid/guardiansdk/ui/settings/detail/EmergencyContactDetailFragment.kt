@@ -9,12 +9,12 @@ import androidx.fragment.app.Fragment
 import com.autodroid.guardiansdk.R
 
 /**
- * 紧急联系人详细设置页面
+ * 监护人详细设置页面
  */
-class EmergencyContactDetailFragment : Fragment() {
+class ContactGuardianDetailFragment : Fragment() {
 
     companion object {
-        fun newInstance() = EmergencyContactDetailFragment()
+        fun newInstance() = ContactGuardianDetailFragment()
     }
 
     override fun onCreateView(
@@ -22,7 +22,7 @@ class EmergencyContactDetailFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.guardian_fragment_emergency_contact_detail, container, false)
+        return inflater.inflate(R.layout.guardian_fragment_contact_guardian_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

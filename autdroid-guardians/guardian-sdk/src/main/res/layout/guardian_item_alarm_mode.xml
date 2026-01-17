@@ -10,7 +10,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/guardian_ic_alarm_mode"
-        android:contentDescription="报警模式" />
+        android:contentDescription="报警触发模式" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -23,7 +23,7 @@
             android:id="@+id/tv_item_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="报警模式"
+            android:text="报警触发模式"
             android:textSize="16sp"
             android:textStyle="bold" />
 

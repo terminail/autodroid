@@ -40,10 +40,10 @@ class ContactAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun getItemViewType(position: Int): Int {
         return when (val item = items[position]) {
             is ContactItem.ContactCard -> {
-                if (item.contactType == "紧急联系人") TYPE_GUARDIAN_CARD else TYPE_WARD_CARD
+                if (item.contactType == "监护人") TYPE_GUARDIAN_CARD else TYPE_WARD_CARD
             }
             is ContactItem.ContactListItem -> {
-                if (item.contactType == "紧急联系人") TYPE_GUARDIAN_LIST else TYPE_WARD_LIST
+                if (item.contactType == "监护人") TYPE_GUARDIAN_LIST else TYPE_WARD_LIST
             }
             is ContactItem.AddContactButton -> TYPE_ADD_BUTTON
             is ContactItem.EmptyState -> TYPE_EMPTY_STATE

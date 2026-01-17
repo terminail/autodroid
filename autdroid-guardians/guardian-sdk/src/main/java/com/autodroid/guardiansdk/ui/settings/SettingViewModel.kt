@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 /**
  * 设置页面的ViewModel
- * 负责加载和更新设置项数据（报警模式、报警密码等）
+ * 负责加载和更新设置项数据（报警触发模式、报警密码等）
  */
 class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     
@@ -32,11 +32,11 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
             try {
                 val settingItems = mutableListOf<SettingItem>()
                 
-                // 从Contact表加载5个报警联系人数据
+                // 从Contact表加载5个监护人数据
                 val contactDao = database.contactDao()
                 val guardians = contactDao.getGuardians()
                 
-                // 生成5个报警联系人项，如果数据库中的联系人不足，用占位符
+                // 生成5个监护人项，如果数据库中的联系人不足，用占位符
                 for (i in 1..5) {
                     val guardian = guardians.find { it.orderIndex == i }
                     if (guardian != null) {
@@ -77,31 +77,31 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                         when (i) {
                             1 -> settingItems.add(SettingItem.GuardianItem1(
                                 phoneNumber = "",
-                                name = "请设置报警联系人${i}",
+                                name = "请设置监护人${i}",
                                 isPrimary = false,
                                 isPlaceholder = true
                             ))
                             2 -> settingItems.add(SettingItem.GuardianItem2(
                                 phoneNumber = "",
-                                name = "请设置报警联系人${i}",
+                                name = "请设置监护人${i}",
                                 isPrimary = false,
                                 isPlaceholder = true
                             ))
                             3 -> settingItems.add(SettingItem.GuardianItem3(
                                 phoneNumber = "",
-                                name = "请设置报警联系人${i}",
+                                name = "请设置监护人${i}",
                                 isPrimary = false,
                                 isPlaceholder = true
                             ))
                             4 -> settingItems.add(SettingItem.GuardianItem4(
                                 phoneNumber = "",
-                                name = "请设置报警联系人${i}",
+                                name = "请设置监护人${i}",
                                 isPrimary = false,
                                 isPlaceholder = true
                             ))
                             5 -> settingItems.add(SettingItem.GuardianItem5(
                                 phoneNumber = "",
-                                name = "请设置报警联系人${i}",
+                                name = "请设置监护人${i}",
                                 isPrimary = false,
                                 isPlaceholder = true
                             ))
@@ -109,12 +109,9 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                     }
                 }
                 
-                // 添加报警模式相关设置，加载实际数据
+                // 添加报警触发模式相关设置，加载实际数据
                 settingItems.addAll(loadAlarmModeSettings())
                 
-                // 添加报警信息密码
-                settingItems.add(SettingItem.AlarmMessage())
-
                 // 添加其他常规设置
                 settingItems.add(SettingItem.DoorPassphrase())
                 settingItems.add(SettingItem.TestMode())
@@ -129,12 +126,12 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 加载报警模式设置项的实际数据
+     * 加载报警触发模式设置项的实际数据
      */
     private suspend fun loadAlarmModeSettings(): List<SettingItem> {
         val alarmModeSettings = mutableListOf<SettingItem>()
         
-        // 音量键报警模式
+        // 音量键报警触发模式
         val volumeKeyEnabled = settingDao.getSetting("volume_key_alarm_enabled")?.value?.toBoolean() ?: true
         val normalTime = settingDao.getSetting("volume_key_normal_hold_time")?.value?.toIntOrNull() ?: 5
         val emergencyTime = settingDao.getSetting("volume_key_emergency_hold_time")?.value?.toIntOrNull() ?: 10
@@ -146,7 +143,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
         )
         alarmModeSettings.add(volumeKeySetting)
         
-        // 浮动窗口报警模式
+        // 浮动窗口报警触发模式
         val floatingWindowEnabled = settingDao.getSetting("floating_window_alarm_enabled")?.value?.toBoolean() ?: true
         val floatingNormalTime = settingDao.getSetting("floating_window_normal_hold_time")?.value?.toIntOrNull() ?: 5
         val floatingNormalOpacity = settingDao.getSetting("floating_window_normal_opacity")?.value?.toIntOrNull() ?: 50
@@ -162,7 +159,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
         )
         alarmModeSettings.add(floatingWindowSetting)
         
-        // 摇动手机报警模式
+        // 摇动手机报警触发模式
         val shakeEnabled = settingDao.getSetting("shake_alarm_enabled")?.value?.toBoolean() ?: true
         val normalSensitivity = settingDao.getSetting("shake_normal_sensitivity")?.value?.toIntOrNull() ?: 5
         val emergencySensitivity = settingDao.getSetting("shake_emergency_sensitivity")?.value?.toIntOrNull() ?: 8
@@ -178,7 +175,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
 
     /**
-     * 更新音量键报警模式设置
+     * 更新音量键报警触发模式设置
      */
     fun updateVolumeKeyAlarmMode(enabled: Boolean, normalTime: Int, emergencyTime: Int) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -219,7 +216,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 更新浮动窗口报警模式设置
+     * 更新浮动窗口报警触发模式设置
      */
     fun updateFloatingWindowAlarmMode(enabled: Boolean, normalTime: Int, normalOpacity: Int, emergencyTime: Int, emergencyOpacity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -274,7 +271,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
     
     /**
-     * 更新摇动手机报警模式设置
+     * 更新摇动手机报警触发模式设置
      */
     fun updateShakePhoneAlarmMode(enabled: Boolean, normalSensitivity: Int, emergencySensitivity: Int) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -336,7 +333,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
 
     /**
-     * 保存报警联系人
+     * 保存监护人
      */
     fun saveGuardianContact(index: Int, name: String, phoneNumber: String, isPrimary: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -348,7 +345,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
                     phoneNumber = phoneNumber,
                     name = name,
                     type = ContactType.GUARDIAN,
-                    relationship = "报警联系人",
+                    relationship = "监护人",
                     isPrimary = isPrimary,
                     orderIndex = index
                 )
@@ -364,7 +361,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
 
     /**
-     * 获取报警联系人姓名
+     * 获取监护人姓名
      */
     suspend fun getGuardianName(index: Int): String {
         val contactDao = database.contactDao()
@@ -373,7 +370,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
 
     /**
-     * 获取报警联系人电话
+     * 获取监护人电话
      */
     suspend fun getGuardianPhoneNumber(index: Int): String {
         val contactDao = database.contactDao()
@@ -382,7 +379,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     }
 
     /**
-     * 获取报警联系人是否主要
+     * 获取监护人是否主要
      */
     suspend fun getGuardianPrimary(index: Int): Boolean {
         val contactDao = database.contactDao()

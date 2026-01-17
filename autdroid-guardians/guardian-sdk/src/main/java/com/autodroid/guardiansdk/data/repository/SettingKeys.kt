@@ -1,7 +1,7 @@
 package com.autodroid.guardiansdk.data.repository
 
 object SettingKeys {
-    const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
+    const val KEY_GUARDIAN_CONTACTS = "guardian_contacts"
     const val KEY_ALARM_MODE_VOLUME_KEY_TIME = "alarm_mode_volume_key_time"
     const val KEY_ALARM_MODE_FLOATING_WINDOW_TIME = "alarm_mode_floating_window_time"
     const val KEY_ALARM_MODE_SHAKE_SENSITIVITY = "alarm_mode_shake_sensitivity"
@@ -15,8 +15,6 @@ object SettingKeys {
     const val KEY_TEST_MODE_ENABLED = "test_mode_enabled"
     const val KEY_TEST_MODE_PRACTICE_COUNT = "test_mode_practice_count"
     const val KEY_TEST_MODE_LAST_PRACTICE = "test_mode_last_practice"
-    const val KEY_EMERGENCY_WIPE_CONFIRMED = "emergency_wipe_confirmed"
-    const val KEY_EMERGENCY_WIPE_TRIGGER_COUNT = "emergency_wipe_trigger_count"
     const val KEY_APP_NAME = "app_name"
     const val KEY_APP_VERSION = "app_version"
     

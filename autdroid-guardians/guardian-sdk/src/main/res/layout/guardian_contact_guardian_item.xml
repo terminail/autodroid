@@ -9,8 +9,8 @@
     <ImageView
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/guardian_ic_emergency_wipe"
-        android:contentDescription="紧急擦除" />
+        android:src="@drawable/guardian_ic_contact_guardian"
+        android:contentDescription="监护人" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -23,15 +23,14 @@
             android:id="@+id/tv_item_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="紧急擦除"
+            android:text="监护人"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FF0000" />
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="一键删除所有报警数据"
+            android:text="设置报警短信接收人"
             android:textSize="14sp"
             android:textColor="#666666" />
 

@@ -36,7 +36,7 @@ fun checkWardData(context: Context) {
             Log.d("CheckWardData", "=== GUARDIAN类型联系人数量: ${guardians.size} ===")
             
             guardians.forEach { contact ->
-                Log.d("CheckWardData", "=== 报警联系人: ${contact.name} (${contact.phoneNumber}) - 索引: ${contact.orderIndex} ===")
+                Log.d("CheckWardData", "=== 监护人: ${contact.name} (${contact.phoneNumber}) - 索引: ${contact.orderIndex} ===")
             }
             
         } catch (e: Exception) {

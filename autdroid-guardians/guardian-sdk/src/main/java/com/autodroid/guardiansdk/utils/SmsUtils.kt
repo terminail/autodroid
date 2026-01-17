@@ -2,6 +2,7 @@ package com.autodroid.guardiansdk.utils
 
 import android.content.Context
 import android.telephony.SmsManager
+import android.telephony.TelephonyManager
 import android.util.Log
 
 // 为不同Android版本提供兼容的SmsManager获取方式
@@ -9,8 +10,7 @@ import android.util.Log
 private fun Context.getCompatSmsManager(): SmsManager {
     return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
         // Android 12+ 使用新的API
-        getSystemService(Context.TELEPHONY_SERVICE) as? SmsManager 
-            ?: SmsManager.getDefault()
+        SmsManager.getSmsManagerForSubscriptionId(SmsManager.getDefaultSmsSubscriptionId())
     } else {
         // 旧版本使用getDefault()
         SmsManager.getDefault()
@@ -41,7 +41,7 @@ object SmsUtils {
     ): Boolean {
         return try {
             val smsManager = context.getCompatSmsManager()
-            val message = "你是报警联系人。被监护人：$wardName，手机号：$wardPhone"
+            val message = "你是监护人。被监护人：$wardName，手机号：$wardPhone"
             
             smsManager.sendTextMessage(phoneNumber, null, message, null, null)
             Log.d(TAG, "监护人确认短信已发送给: $phoneNumber")
