@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:text="启用报警邮件发送"
         android:checked="false"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:hint="请输入邮箱地址"
         android:inputType="textEmailAddress"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:hint="请输入邮箱密码（Gmail请使用应用专用密码）"
         android:inputType="textPassword"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -56,7 +56,7 @@
         android:layout_height="wrap_content"
         android:hint="smtp.gmail.com"
         android:inputType="textUri"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -71,7 +71,7 @@
         android:layout_height="wrap_content"
         android:hint="587"
         android:inputType="number"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <CheckBox
         android:id="@+id/cb_use_tls"
