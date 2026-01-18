@@ -1,0 +1,165 @@
+# Python 项目配置模板
+# 继承自全局配置，添加 Python 特定配置
+
+# 继承全局配置
+extends: "../config.yaml"
+
+# 项目类型
+project_type: "python"
+
+# Python 项目特定配置
+python_config:
+  # 构建命令
+  build_commands:
+    - "python -m pytest"
+    - "python -m pytest --cov"
+    - "python -m mypy"
+    - "python -m flake8"
+    - "python -m black --check"
+    - "python -m isort --check-only"
+    - "python -m pylint"
+  
+  # 测试模式
+  test_patterns:
+    - "**/test_*.py"
+    - "**/*_test.py"
+    - "**/tests/**/*.py"
+    - "**/test/**/*.py"
+  
+  # 源代码模式
+  source_patterns:
+    - "**/*.py"
+    - "**/src/**/*.py"
+  
+  # 关键文件路径
+  requirements_path: "requirements.txt"
+  setup_path: "setup.py"
+  pyproject_path: "pyproject.toml"
+  
+  # 代码质量检查
+  quality_checks:
+    - name: "Pytest"
+      command: "python -m pytest"
+      fail_on_error: true
+      severity: "high"
+    
+    - name: "Coverage"
+      command: "python -m pytest --cov"
+      fail_on_error: false
+      severity: "medium"
+    
+    - name: "MyPy"
+      command: "python -m mypy"
+      fail_on_error: false
+      severity: "medium"
+    
+    - name: "Flake8"
+      command: "python -m flake8"
+      fail_on_error: false
+      severity: "low"
+    
+    - name: "Black"
+      command: "python -m black --check"
+      fail_on_error: false
+      severity: "low"
+    
+    - name: "isort"
+      command: "python -m isort --check-only"
+      fail_on_error: false
+      severity: "low"
+    
+    - name: "Pylint"
+      command: "python -m pylint"
+      fail_on_error: false
+      severity: "medium"
+
+# Python 特定任务约束
+task_constraints:
+  max_duration_minutes: 5
+  max_files_per_task: 3
+  max_lines_per_task: 100
+  prefer_small_tasks: true
+  
+  # Python 特定约束
+  max_functions_per_task: 5
+  max_classes_per_task: 2
+
+# Python TDD 规则
+tdd_rules:
+  write_test_first: true
+  watch_test_fail: true
+  write_minimal_code: true
+  watch_test_pass: true
+  refactor_immediately: true
+  delete_code_without_tests: true
+  
+  # Python 特定规则
+  use_pytest_for_testing: true
+  use_mock_for_dependencies: true
+  use_fixtures_for_setup: true
+  follow_pep8_style: true
+
+# Python 代码审查标准
+review_standards:
+  check_spec_compliance: true
+  check_code_quality: true
+  check_test_coverage: true
+  check_documentation: true
+  critical_issues_block_progress: true
+  
+  # Python 特定标准
+  check_pep8_compliance: true
+  check_type_hints: true
+  check_docstrings: true
+  check_import_ordering: true
+  check_security_issues: true
+
+# Python 反模式
+anti_patterns:
+  - "writing-code-before-tests"
+  - "skipping-refactoring"
+  - "ignoring-test-failures"
+  - "over-engineering"
+  - "premature-optimization"
+  - "copy-paste-coding"
+  - "magic-numbers"
+  - "god-classes"
+  
+  # Python 特定反模式
+  - "using-bare-except"
+  - "shadowing-builtins"
+  - "mutable-default-arguments"
+  - "import-star"
+  - "unused-imports"
+  - "global-variables"
+  - "deep-nesting"
+  - "long-functions"
+  - "missing-docstrings"
+
+# Python 调试技术
+debugging_techniques:
+  - "root-cause-tracing"
+  - "defense-in-depth"
+  - "condition-based-waiting"
+  - "log-analysis"
+  - "breakpoint-debugging"
+  
+  # Python 特定技术
+  - "pdb-debugging"
+  - "print-debugging"
+  - "logging-debugging"
+  - "assert-debugging"
+  - "traceback-analysis"
+
+# Python 输出位置
+output_locations:
+  design_docs: ".superpowers/design/"
+  plans: ".superpowers/plans/"
+  reviews: ".superpowers/reviews/"
+  logs: ".superpowers/logs/"
+  worktrees: ".superpowers/worktrees/"
+  
+  # Python 特定输出
+  dist: ".superpowers/build/dist/"
+  test_reports: ".superpowers/build/test-reports/"
+  coverage_reports: ".superpowers/build/coverage/"

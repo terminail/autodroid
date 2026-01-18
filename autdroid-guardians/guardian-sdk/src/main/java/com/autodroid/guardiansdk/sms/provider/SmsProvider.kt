@@ -1,4 +1,4 @@
-package com.autodroid.sms.data.provider
+package com.autodroid.guardiansdk.sms.provider
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -8,8 +8,8 @@ import android.net.Uri
 import android.provider.Telephony
 import android.telephony.SmsManager
 import android.util.Log
-import com.autodroid.sms.data.model.SmsMessage
-import com.autodroid.sms.data.model.Conversation
+import com.autodroid.guardiansdk.sms.model.SmsMessage
+import com.autodroid.guardiansdk.sms.model.Conversation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Date
@@ -20,28 +20,19 @@ class SmsProvider(private val context: Context) {
     
     companion object {
         private const val TAG = "SmsProvider"
-        // SMS URI
         private val SMS_URI: Uri = Telephony.Sms.CONTENT_URI
         private val SMS_INBOX_URI: Uri = Telephony.Sms.Inbox.CONTENT_URI
         private val SMS_SENT_URI: Uri = Telephony.Sms.Sent.CONTENT_URI
         private val SMS_CONVERSATIONS_URI: Uri = Telephony.Sms.Conversations.CONTENT_URI
-        
-        // MMS URI
         private val MMS_URI: Uri = Telephony.Mms.CONTENT_URI
         private val MMS_INBOX_URI: Uri = Telephony.Mms.Inbox.CONTENT_URI
         private val MMS_SENT_URI: Uri = Telephony.Mms.Sent.CONTENT_URI
     }
     
-    /**
-     * 获取所有会话
-     */
     suspend fun getAllConversations(): List<Conversation> = withContext(Dispatchers.IO) {
         val conversations = mutableListOf<Conversation>()
         
-        Log.d(TAG, "开始获取会话列表")
-        
         try {
-            // 查询所有类型的短信：接收箱、发送箱、草稿箱、已发送、失败等
             val cursor: Cursor? = contentResolver.query(
                 SMS_URI,
                 null,
@@ -50,8 +41,6 @@ class SmsProvider(private val context: Context) {
                 Telephony.Sms.DEFAULT_SORT_ORDER
             )
             
-            Log.d(TAG, "Cursor: ${cursor != null}")
-            
             cursor?.use { c ->
                 val idIndex = c.getColumnIndex(Telephony.Sms._ID)
                 val threadIdIndex = c.getColumnIndex(Telephony.Sms.THREAD_ID)
@@ -59,9 +48,6 @@ class SmsProvider(private val context: Context) {
                 val bodyIndex = c.getColumnIndex(Telephony.Sms.BODY)
                 val dateIndex = c.getColumnIndex(Telephony.Sms.DATE)
                 val typeIndex = c.getColumnIndex(Telephony.Sms.TYPE)
-                
-                Log.d(TAG, "Column indices: id=$idIndex, threadId=$threadIdIndex, address=$addressIndex, body=$bodyIndex, date=$dateIndex, type=$typeIndex")
-                Log.d(TAG, "Cursor count: ${c.count}")
                 
                 val threadMap = mutableMapOf<Long, Conversation>()
                 
@@ -73,51 +59,38 @@ class SmsProvider(private val context: Context) {
                         val date = if (dateIndex >= 0) Date(c.getLong(dateIndex)) else Date()
                         val type = if (typeIndex >= 0) c.getInt(typeIndex) else 0
                         
-                        Log.d(TAG, "SMS: threadId=$threadId, address=$address, body=$body, type=$type")
+                        val conversationKey = if (threadId != 0L) threadId else address.hashCode().toLong()
                         
-                        if (threadId != 0L) {
-                            if (!threadMap.containsKey(threadId)) {
-                                try {
-                                    val conversation = Conversation(
-                                        threadId = threadId,
-                                        address = address ?: "",
-                                        snippet = body ?: "",
-                                        date = date,
-                                        messageCount = 1
-                                    )
-                                    threadMap[threadId] = conversation
-                                    Log.d(TAG, "New conversation: threadId=$threadId, address=$address, snippet=$body")
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error creating conversation: threadId=$threadId, address=$address, body=$body", e)
-                                }
-                            } else {
-                                val existing = threadMap[threadId]
-                                if (existing != null) {
-                                    Log.d(TAG, "Updating existing conversation: threadId=$threadId")
-                                    try {
-                                        existing.messageCount++
-                                        existing.snippet = body
-                                        existing.date = date
-                                        Log.d(TAG, "Conversation updated successfully")
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Error updating conversation", e)
-                                    }
-                                } else {
-                                    Log.e(TAG, "Existing conversation is null for threadId=$threadId")
-                                }
+                        if (!threadMap.containsKey(conversationKey)) {
+                            try {
+                                val conversation = Conversation(
+                                    threadId = conversationKey,
+                                    address = address ?: "",
+                                    snippet = body ?: "",
+                                    date = date,
+                                    messageCount = 1
+                                )
+                                threadMap[conversationKey] = conversation
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error creating conversation: threadId=$threadId, address=$address, body=$body", e)
                             }
                         } else {
-                            Log.d(TAG, "Skipping SMS with threadId=0: address=$address, body=$body, type=$type")
+                            val existing = threadMap[conversationKey]
+                            if (existing != null) {
+                                try {
+                                    existing.messageCount++
+                                    existing.snippet = body
+                                    existing.date = date
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error updating conversation", e)
+                                }
+                            }
                         }
                     }
-                } else {
-                    Log.d(TAG, "No SMS found")
                 }
                 
                 conversations.addAll(threadMap.values.sortedByDescending { it.date })
             }
-            
-            Log.d(TAG, "获取到 ${conversations.size} 个会话")
         } catch (e: Exception) {
             Log.e(TAG, "获取会话列表失败", e)
         }
@@ -125,9 +98,6 @@ class SmsProvider(private val context: Context) {
         conversations
     }
     
-    /**
-     * 获取指定会话的消息
-     */
     suspend fun getMessagesByThread(threadId: Long): List<SmsMessage> = withContext(Dispatchers.IO) {
         val messages = mutableListOf<SmsMessage>()
         
@@ -207,16 +177,10 @@ class SmsProvider(private val context: Context) {
         messages
     }
     
-    /**
-     * 发送短信
-     */
     suspend fun sendSms(address: String, body: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            // 使用SmsManager发送短信
             val smsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(address, null, body, null, null)
-            
-            // 短信发送后会自动添加到系统短信数据库
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -224,9 +188,6 @@ class SmsProvider(private val context: Context) {
         }
     }
     
-    /**
-     * 标记消息为已读
-     */
     suspend fun markMessageAsRead(messageId: Long): Boolean = withContext(Dispatchers.IO) {
         try {
             val values = ContentValues().apply {
@@ -243,9 +204,6 @@ class SmsProvider(private val context: Context) {
         }
     }
     
-    /**
-     * 标记会话为已读
-     */
     suspend fun markThreadAsRead(threadId: Long): Boolean = withContext(Dispatchers.IO) {
         try {
             val values = ContentValues().apply {
@@ -264,9 +222,6 @@ class SmsProvider(private val context: Context) {
         }
     }
     
-    /**
-     * 删除消息
-     */
     suspend fun deleteMessage(messageId: Long): Boolean = withContext(Dispatchers.IO) {
         try {
             val uri = Uri.withAppendedPath(SMS_URI, messageId.toString())
@@ -279,9 +234,6 @@ class SmsProvider(private val context: Context) {
         }
     }
     
-    /**
-     * 删除会话
-     */
     suspend fun deleteThread(threadId: Long): Boolean = withContext(Dispatchers.IO) {
         try {
             val selection = "${Telephony.Sms.THREAD_ID} = ?"

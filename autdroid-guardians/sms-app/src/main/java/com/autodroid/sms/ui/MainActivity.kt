@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.sms.R
 import com.autodroid.sms.SmsApplication
-import com.autodroid.sms.data.model.Conversation
+import com.autodroid.guardiansdk.sms.model.Conversation
 import com.autodroid.sms.ui.adapter.ConversationAdapter
 import com.autodroid.sms.ui.viewmodel.ConversationViewModel
 import com.autodroid.sms.ui.viewmodel.ConversationViewModelFactory

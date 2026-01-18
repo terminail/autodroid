@@ -14,13 +14,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.data.repository.SettingRepository
+import com.autodroid.guardiansdk.sms.repository.SmsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
  * 报警功能SDK主入口
- * 提供隐秘报警功能的集成接口和界面组件
+ * 提供隐秘报警功能和短信守卫功能的集成接口和界面组件
  */
 class GuardianSdk private constructor(private val context: Context) {
     
@@ -50,6 +51,7 @@ class GuardianSdk private constructor(private val context: Context) {
     }
     
     private lateinit var settingRepository: SettingRepository
+    private lateinit var smsRepository: SmsRepository
     
     /**
      * 初始化数据库
@@ -57,6 +59,7 @@ class GuardianSdk private constructor(private val context: Context) {
     private fun initializeDatabase() {
         val database = GuardianDatabase.getDatabase(context)
         settingRepository = SettingRepository(database.settingDao())
+        smsRepository = SmsRepository(context)
         
         // 初始化默认设置（异步执行）
         CoroutineScope(Dispatchers.IO).launch {
@@ -396,6 +399,35 @@ class GuardianSdk private constructor(private val context: Context) {
     private fun checkRecordAudioPermission(): Boolean {
         return ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
+    
+    /**
+     * 获取短信仓库
+     */
+    fun getSmsRepository(): SmsRepository {
+        return smsRepository
+    }
+    
+    /**
+     * 发送短信
+     */
+    suspend fun sendSms(address: String, body: String): Boolean {
+        return smsRepository.sendSms(address, body)
+    }
+    
+    /**
+     * 获取所有会话
+     */
+    fun getAllConversations() = smsRepository.getAllConversations()
+    
+    /**
+     * 获取指定会话的消息
+     */
+    fun getMessagesByThread(threadId: Long) = smsRepository.getMessagesByThread(threadId)
+    
+    /**
+     * 根据地址获取消息
+     */
+    fun getMessagesByAddress(address: String) = smsRepository.getMessagesByAddress(address)
 }
 
 /**

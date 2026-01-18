@@ -1,0 +1,173 @@
+# Android 项目配置模板
+# 继承自全局配置，添加 Android 特定配置
+
+# 继承全局配置
+extends: "../config.yaml"
+
+# 项目类型
+project_type: "android"
+
+# Android 项目特定配置
+android_config:
+  # 构建命令
+  build_commands:
+    - "./gradlew assembleDebug"
+    - "./gradlew assembleRelease"
+    - "./gradlew test"
+    - "./gradlew connectedAndroidTest"
+    - "./gradlew lint"
+    - "./gradlew detekt"
+    - "./gradlew ktlintCheck"
+  
+  # 测试模式
+  test_patterns:
+    - "**/*Test.kt"
+    - "**/*Test.java"
+    - "**/test/**/*"
+    - "**/androidTest/**/*"
+  
+  # 源代码模式
+  source_patterns:
+    - "**/src/main/java/**/*.kt"
+    - "**/src/main/java/**/*.java"
+    - "**/src/main/kotlin/**/*.kt"
+  
+  # 关键文件路径
+  manifest_path: "app/src/main/AndroidManifest.xml"
+  gradle_path: "build.gradle.kts"
+  settings_path: "settings.gradle.kts"
+  
+  # 代码质量检查
+  quality_checks:
+    - name: "Lint"
+      command: "./gradlew lint"
+      fail_on_error: false
+      severity: "medium"
+    
+    - name: "Detekt"
+      command: "./gradlew detekt"
+      fail_on_error: false
+      severity: "medium"
+    
+    - name: "KtLint"
+      command: "./gradlew ktlintCheck"
+      fail_on_error: false
+      severity: "low"
+    
+    - name: "Unit Tests"
+      command: "./gradlew test"
+      fail_on_error: true
+      severity: "high"
+    
+    - name: "Instrumented Tests"
+      command: "./gradlew connectedAndroidTest"
+      fail_on_error: true
+      severity: "high"
+  
+  # Android 特定权限检查
+  permission_checks:
+    - name: "Runtime Permissions"
+      check_command: "./gradlew checkRuntimePermissions"
+      fail_on_error: false
+    
+    - name: "Manifest Permissions"
+      check_command: "./gradlew checkManifestPermissions"
+      fail_on_error: false
+  
+  # 资源检查
+  resource_checks:
+    - name: "Missing Translations"
+      command: "./gradlew checkMissingTranslations"
+      fail_on_error: false
+    
+    - name: "Unused Resources"
+      command: "./gradlew lintUnusedResources"
+      fail_on_error: false
+
+# Android 特定任务约束
+task_constraints:
+  max_duration_minutes: 5
+  max_files_per_task: 3
+  max_lines_per_task: 100
+  prefer_small_tasks: true
+  
+  # Android 特定约束
+  max_layout_files_per_task: 2
+  max_resource_files_per_task: 3
+
+# Android TDD 规则
+tdd_rules:
+  write_test_first: true
+  watch_test_fail: true
+  write_minimal_code: true
+  watch_test_pass: true
+  refactor_immediately: true
+  delete_code_without_tests: true
+  
+  # Android 特定规则
+  use_robolectric_for_unit_tests: true
+  use_espresso_for_ui_tests: true
+  mock_android_dependencies: true
+
+# Android 代码审查标准
+review_standards:
+  check_spec_compliance: true
+  check_code_quality: true
+  check_test_coverage: true
+  check_documentation: true
+  critical_issues_block_progress: true
+  
+  # Android 特定标准
+  check_manifest_permissions: true
+  check_resource_usage: true
+  check_memory_leaks: true
+  check_thread_safety: true
+  check_lifecycle_compliance: true
+
+# Android 反模式
+anti_patterns:
+  - "writing-code-before-tests"
+  - "skipping-refactoring"
+  - "ignoring-test-failures"
+  - "over-engineering"
+  - "premature-optimization"
+  - "copy-paste-coding"
+  - "magic-numbers"
+  - "god-classes"
+  
+  # Android 特定反模式
+  - "leaking-context"
+  - "blocking-main-thread"
+  - "ignoring-lifecycle"
+  - "hardcoded-strings"
+  - "missing-null-checks"
+  - "ignoring-configuration-changes"
+  - "using-deprecated-apis"
+
+# Android 调试技术
+debugging_techniques:
+  - "root-cause-tracing"
+  - "defense-in-depth"
+  - "condition-based-waiting"
+  - "log-analysis"
+  - "breakpoint-debugging"
+  
+  # Android 特定技术
+  - "logcat-analysis"
+  - "strict-mode-checking"
+  - "leakcanary-analysis"
+  - "profiler-analysis"
+  - "layout-inspector"
+
+# Android 输出位置
+output_locations:
+  design_docs: ".superpowers/design/"
+  plans: ".superpowers/plans/"
+  reviews: ".superpowers/reviews/"
+  logs: ".superpowers/logs/"
+  worktrees: ".superpowers/worktrees/"
+  
+  # Android 特定输出
+  apks: ".superpowers/build/apks/"
+  test_reports: ".superpowers/build/test-reports/"
+  lint_reports: ".superpowers/build/lint-reports/"

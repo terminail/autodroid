@@ -1,4 +1,4 @@
-package com.autodroid.sms.receiver
+package com.autodroid.guardiansdk.sms.receiver
 
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.telephony.SmsManager
-import com.autodroid.sms.service.SmsSenderService
+import com.autodroid.guardiansdk.sms.service.SmsSenderService
 
 class SmsSentReceiver : BroadcastReceiver() {
     

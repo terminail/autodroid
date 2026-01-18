@@ -1,0 +1,277 @@
+# Superpowers 工作流配置
+# 适用于 Android 开发项目的 AI 工作流配置
+
+version: "1.0"
+project_type: "android"
+project_name: "autodroid-guardians"
+
+# 工作流阶段定义
+workflow:
+  phases:
+    - name: "brainstorming"
+      description: "设计细化阶段 - 通过问题澄清需求，探索替代方案，展示设计供验证"
+      triggers:
+        - "用户提出新功能需求"
+        - "用户要求添加新特性"
+        - "用户需要设计建议"
+      actions:
+        - "提出澄清问题"
+        - "探索多种解决方案"
+        - "展示设计选项"
+        - "等待用户确认"
+      outputs:
+        - "设计文档"
+        - "技术方案"
+        - "实施计划概要"
+      completion_criteria:
+        - "用户明确同意设计方案"
+        - "设计文档已保存"
+
+    - name: "using-git-worktrees"
+      description: "使用 Git worktree 创建独立工作空间"
+      triggers:
+        - "设计方案已批准"
+        - "开始实施新功能"
+      actions:
+        - "创建新的 feature 分支"
+        - "创建 git worktree"
+        - "验证项目设置"
+        - "运行测试基线"
+      outputs:
+        - "独立的工作目录"
+        - "干净的测试基线"
+      completion_criteria:
+        - "worktree 创建成功"
+        - "所有测试通过"
+
+    - name: "writing-plans"
+      description: "将工作分解为小任务（2-5分钟每个）"
+      triggers:
+        - "worktree 已创建"
+        - "设计方案已确认"
+      actions:
+        - "分解任务为小块"
+        - "为每个任务指定文件路径"
+        - "编写完整的代码示例"
+        - "定义验证步骤"
+      outputs:
+        - "详细的实施计划"
+        - "任务清单"
+      completion_criteria:
+        - "所有任务已定义"
+        - "每个任务都有验证步骤"
+        - "用户批准计划"
+
+    - name: "test-driven-development"
+      description: "TDD 循环 - RED-GREEN-REFACTOR"
+      triggers:
+        - "开始实施任务"
+        - "需要编写新功能"
+      actions:
+        - "编写失败的测试（RED）"
+        - "运行测试确认失败"
+        - "编写最小代码使测试通过（GREEN）"
+        - "运行测试确认通过"
+        - "重构代码（REFACTOR）"
+        - "运行测试确认仍然通过"
+      outputs:
+        - "通过的测试"
+        - "实现的功能代码"
+      completion_criteria:
+        - "所有测试通过"
+        - "代码已重构"
+        - "无测试反模式"
+
+    - name: "executing-plans"
+      description: "批量执行计划，设置人工检查点"
+      triggers:
+        - "实施计划已批准"
+        - "开始批量执行"
+      actions:
+        - "按批次执行任务"
+        - "在每个检查点暂停"
+        - "等待用户确认"
+        - "继续下一批次"
+      outputs:
+        - "已实现的功能"
+        - "进度报告"
+      completion_criteria:
+        - "所有任务完成"
+        - "用户确认每个检查点"
+
+    - name: "systematic-debugging"
+      description: "系统化调试 - 4 阶段根因分析"
+      triggers:
+        - "测试失败"
+        - "发现 bug"
+        - "功能不工作"
+      actions:
+        - "阶段1: 收集信息"
+        - "阶段2: 形成假设"
+        - "阶段3: 验证假设"
+        - "阶段4: 修复和验证"
+      outputs:
+        - "根因分析"
+        - "修复方案"
+        - "验证结果"
+      completion_criteria:
+        - "问题已解决"
+        - "测试通过"
+        - "修复已验证"
+
+    - name: "requesting-code-review"
+      description: "请求代码审查 - 对照计划审查"
+      triggers:
+        - "任务完成"
+        - "功能实现完成"
+        - "达到检查点"
+      actions:
+        - "对照实施计划审查"
+        - "检查代码质量"
+        - "按严重程度报告问题"
+        - "关键问题阻止进度"
+      outputs:
+        - "审查报告"
+        - "问题清单"
+      completion_criteria:
+        - "审查完成"
+        - "关键问题已解决"
+
+    - name: "finishing-a-development-branch"
+      description: "完成开发分支 - 验证、合并、清理"
+      triggers:
+        - "所有任务完成"
+        - "所有测试通过"
+        - "代码审查通过"
+      actions:
+        - "验证所有测试"
+        - "展示选项（合并/PR/保留/丢弃）"
+        - "清理 worktree"
+      outputs:
+        - "合并的代码"
+        - "清理的工作空间"
+      completion_criteria:
+        - "测试通过"
+        - "用户选择操作"
+        - "worktree 已清理"
+
+# Android 项目特定配置
+android_config:
+  build_commands:
+    - "./gradlew assembleDebug"
+    - "./gradlew test"
+    - "./gradlew connectedAndroidTest"
+    - "./gradlew lint"
+    - "./gradlew detekt"
+  
+  test_patterns:
+    - "**/*Test.kt"
+    - "**/*Test.java"
+    - "**/test/**/*"
+  
+  source_patterns:
+    - "**/src/main/java/**/*.kt"
+    - "**/src/main/java/**/*.java"
+  
+  manifest_path: "app/src/main/AndroidManifest.xml"
+  gradle_path: "build.gradle.kts"
+  
+  # 代码质量检查
+  quality_checks:
+    - name: "Lint"
+      command: "./gradlew lint"
+      fail_on_error: false
+    - name: "Detekt"
+      command: "./gradlew detekt"
+      fail_on_error: false
+    - name: "Unit Tests"
+      command: "./gradlew test"
+      fail_on_error: true
+    - name: "Instrumented Tests"
+      command: "./gradlew connectedAndroidTest"
+      fail_on_error: true
+
+# 任务大小限制
+task_constraints:
+  max_duration_minutes: 5
+  max_files_per_task: 3
+  max_lines_per_task: 100
+  prefer_small_tasks: true
+
+# 测试驱动开发规则
+tdd_rules:
+  write_test_first: true
+  watch_test_fail: true
+  write_minimal_code: true
+  watch_test_pass: true
+  refactor_immediately: true
+  delete_code_without_tests: true
+
+# 代码审查标准
+review_standards:
+  check_spec_compliance: true
+  check_code_quality: true
+  check_test_coverage: true
+  check_documentation: true
+  critical_issues_block_progress: true
+
+# 调试技术
+debugging_techniques:
+  - "root-cause-tracing"
+  - "defense-in-depth"
+  - "condition-based-waiting"
+  - "log-analysis"
+  - "breakpoint-debugging"
+
+# 反模式检测
+anti_patterns:
+  - "writing-code-before-tests"
+  - "skipping-refactoring"
+  - "ignoring-test-failures"
+  - "over-engineering"
+  - "premature-optimization"
+  - "copy-paste-coding"
+  - "magic-numbers"
+  - "god-classes"
+
+# 输出文件位置
+output_locations:
+  design_docs: ".superpowers/design/"
+  plans: ".superpowers/plans/"
+  reviews: ".superpowers/reviews/"
+  logs: ".superpowers/logs/"
+  worktrees: ".superpowers/worktrees/"
+
+# 通知设置
+notifications:
+  on_phase_start: true
+  on_phase_complete: true
+  on_task_complete: true
+  on_error: true
+  on_review_needed: true
+
+# 人工检查点
+checkpoints:
+  - after: "writing-plans"
+    require_approval: true
+  - after: "every-3-tasks"
+    require_approval: true
+  - after: "critical-changes"
+    require_approval: true
+  - after: "test-driven-development"
+    require_approval: false
+
+# 备份和恢复
+backup:
+  enabled: true
+  location: ".superpowers/backups/"
+  frequency: "after-each-task"
+  keep_last_n: 5
+
+# Git 配置
+git_config:
+  main_branch: "main"
+  feature_branch_prefix: "feature/"
+  worktree_location: ".superpowers/worktrees/"
+  auto_commit: true
+  commit_message_template: "[Superpowers] {phase}: {description}"

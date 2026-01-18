@@ -706,6 +706,223 @@ sequenceDiagram
 
 ### 4.3 通信模块
 
+#### 4.3.0 短信守卫模块（SMS Guard）
+
+##### 4.3.0.1 模块架构
+
+短信守卫模块是 Guardian SDK 的核心功能之一，为所有集成 SDK 的应用提供隐秘的短信远程控制能力。
+
+**模块组成**：
+```
+sms/
+├── model/              # 数据模型
+│   ├── SmsMessage.kt  # 短信消息模型
+│   └── Conversation.kt # 会话模型
+├── provider/           # 数据提供者
+│   └── SmsProvider.kt # 短信数据提供者
+├── repository/         # 数据仓库
+│   └── SmsRepository.kt # 短信仓库
+├── service/            # 服务层
+│   └── SmsSenderService.kt # 短信发送服务
+└── receiver/           # 接收器
+    └── SmsReceiver.kt # 短信接收器
+```
+
+##### 4.3.0.2 数据模型
+
+**SmsMessage**：短信消息数据模型
+```kotlin
+data class SmsMessage(
+    val id: Long,
+    val threadId: Long,
+    val address: String,
+    val body: String,
+    val date: Date,
+    val type: Int, // 1: 接收, 2: 发送, 3: 草稿
+    val read: Boolean = false,
+    val subject: String? = null,
+    val serviceCenter: String? = null,
+    var status: Int = -1, // -1: 失败, 0: 待发送, 1: 发送中, 2: 已发送, 3: 已送达
+    val errorCode: Int = 0,
+    val isMms: Boolean = false
+)
+```
+
+**Conversation**：会话数据模型
+```kotlin
+data class Conversation(
+    var threadId: Long,
+    var address: String,
+    var contactName: String? = null,
+    var snippet: String,
+    var date: Date,
+    var messageCount: Int,
+    var unreadCount: Int = 0,
+    var read: Boolean = true,
+    var archived: Boolean = false,
+    var blocked: Boolean = false,
+    var mute: Boolean = false
+)
+```
+
+##### 4.3.0.3 数据提供者（SmsProvider）
+
+**功能**：提供系统短信数据库的访问接口
+
+**主要方法**：
+- `getAllConversations()`: 获取所有会话
+- `getMessagesByThread(threadId)`: 获取指定会话的消息
+- `getMessagesByAddress(address)`: 根据地址获取消息
+- `sendSms(address, body)`: 发送短信
+- `markMessageAsRead(messageId)`: 标记消息为已读
+- `markThreadAsRead(threadId)`: 标记会话为已读
+- `deleteMessage(messageId)`: 删除消息
+- `deleteThread(threadId)`: 删除会话
+
+**技术实现**：
+- 使用 ContentResolver 访问系统短信数据库
+- 使用 Telephony.Sms API 进行短信操作
+- 使用 SmsManager 发送短信
+- 支持异步操作（withContext(Dispatchers.IO)）
+
+##### 4.3.0.4 数据仓库（SmsRepository）
+
+**功能**：统一管理短信数据的访问，提供 Flow API
+
+**主要方法**：
+- `getAllConversations()`: Flow<List<Conversation>> - 获取所有会话
+- `getActiveConversations()`: Flow<List<Conversation>> - 获取活跃会话
+- `getArchivedConversations()`: Flow<List<Conversation>> - 获取归档会话
+- `getUnreadConversationCount()`: Int - 获取未读会话数量
+- `getMessagesByThread(threadId)`: Flow<List<SmsMessage>> - 获取指定会话的消息
+- `getMessagesByAddress(address)`: Flow<List<SmsMessage>> - 根据地址获取消息
+- `getAllMessages()`: Flow<List<SmsMessage>> - 获取所有消息
+- `sendSms(address, body)`: Boolean - 发送短信
+- `markMessageAsRead(messageId)`: Boolean - 标记消息为已读
+- `markConversationAsRead(threadId)`: Boolean - 标记会话为已读
+- `deleteMessage(messageId)`: Boolean - 删除消息
+- `deleteConversation(threadId)`: Boolean - 删除会话
+
+##### 4.3.0.5 短信发送服务（SmsSenderService）
+
+**功能**：后台服务，负责发送短信并管理发送状态
+
+**主要职责**：
+- 接收发送短信请求
+- 保存短信到系统数据库（发送中状态）
+- 使用 SmsManager 发送短信
+- 监听发送状态和送达状态
+- 更新短信状态
+- 处理发送失败情况
+
+**工作流程**：
+1. 接收 ACTION_SEND_SMS 意图
+2. 保存短信到系统数据库（MESSAGE_TYPE_SENT）
+3. 创建发送和送达 PendingIntent
+4. 调用 SmsManager.sendTextMessage() 发送短信
+5. 监听发送状态，更新短信状态
+6. 发送广播通知发送结果
+
+**广播动作**：
+- `ACTION_SMS_SENT`: 短信发送完成
+- `ACTION_SMS_DELIVERED`: 短信送达完成
+
+**附加数据**：
+- `EXTRA_ADDRESS`: 收件人地址
+- `EXTRA_BODY`: 短信内容
+- `EXTRA_MESSAGE_ID`: 消息ID
+- `EXTRA_SEND_RESULT`: 发送结果（RESULT_SUCCESS/RESULT_ERROR）
+
+##### 4.3.0.6 短信接收器（SmsReceiver）
+
+**功能**：接收系统短信通知并广播到 SDK
+
+**主要职责**：
+- 监听 SMS_DELIVER_ACTION 意图
+- 提取短信内容和发送者信息
+- 广播短信到 SDK 内部
+- 支持短信指令处理
+
+**工作流程**：
+1. 接收系统短信通知
+2. 使用 Telephony.Sms.Intents.getMessagesFromIntent() 解析短信
+3. 提取短信内容、发送者、时间戳等信息
+4. 发送内部广播（ACTION_SMS_RECEIVED）
+5. GuardianAccessibilityService 接收广播并处理短信指令
+
+**广播动作**：
+- `ACTION_SMS_RECEIVED`: SDK 内部短信广播
+
+**附加数据**：
+- `EXTRA_ADDRESS`: 发送者地址
+- `EXTRA_BODY`: 短信内容
+- `EXTRA_TIMESTAMP`: 时间戳
+
+##### 4.3.0.7 SDK API 接口
+
+**GuardianSdk 提供的短信守卫 API**：
+
+```kotlin
+/**
+ * 获取短信仓库
+ */
+fun getSmsRepository(): SmsRepository
+
+/**
+ * 发送短信
+ */
+suspend fun sendSms(address: String, body: String): Boolean
+
+/**
+ * 获取所有会话
+ */
+fun getAllConversations()
+
+/**
+ * 获取指定会话的消息
+ */
+fun getMessagesByThread(threadId: Long)
+
+/**
+ * 根据地址获取消息
+ */
+fun getMessagesByAddress(address: String)
+```
+
+##### 4.3.0.8 集成方式
+
+**应用集成短信守卫功能**：
+
+1. **注册组件**：在 AndroidManifest.xml 中注册短信接收器和服务
+2. **初始化 SDK**：在 Application 中初始化 GuardianSdk
+3. **使用 API**：通过 GuardianSdk 访问短信守卫功能
+
+**零代码集成**：
+- 应用只需注册 SDK 组件
+- SDK 自动处理短信接收和发送
+- GuardianAccessibilityService 自动处理短信指令
+- 应用无需编写任何短信相关代码
+
+##### 4.3.0.9 安全机制
+
+**权限管理**：
+- SEND_SMS：发送短信权限
+- RECEIVE_SMS：接收短信权限
+- READ_SMS：读取短信权限
+- SDK 自动检查和请求权限
+
+**隐私保护**：
+- 短信数据存储在系统数据库
+- SDK 不保存敏感短信内容
+- 支持自动删除指令短信
+- 短信指令使用密语验证
+
+**指令验证**：
+- 发送者验证：检查发送者是否在联系人列表
+- 密语匹配：验证短信内容是否匹配配置的密语
+- 密码本验证：使用密码本加密验证，防止伪造
+- 时间窗口：限制指令的有效时间窗口
+
 #### 4.3.1 SmsManager
 **功能**：短信发送管理器
 **主要职责**：
@@ -1091,3 +1308,43 @@ interface EmergencyCallback {
   - 支持更多通信方式（邮件、网络）
   - 云端配置同步
   - 人工智能触发识别
+
+## 13. 故障排除（TROUBLESHOOTING）
+
+### 13.1 短信发送后不显示在列表中
+
+**问题描述**：
+- 在sms-app中发送短信后，短信列表中看不到发送的短信
+- 系统信息应用中可以看到发送的短信
+
+**问题根源**：
+sms-app 不是默认短信应用，所以无法写入SMS数据库。从Android 4.4开始，只有默认短信应用才能写入SMS数据库。
+
+**症状**：
+- messageId=0（插入失败）
+- 短信没有显示在列表中
+- 日志显示 "Is default SMS app: false"
+
+**解决方案**：
+
+请将 sms-app 设置为默认短信应用：
+
+**方法一：通过应用内设置**
+1. 打开sms-app
+2. 应该会弹出对话框提示"设为默认短信应用"
+3. 点击"立即设置"
+4. 在系统设置中选择sms-app作为默认短信应用
+
+**方法二：通过系统设置**
+1. 打开系统设置
+2. 进入"应用和通知" > "默认应用" > "短信应用"
+3. 选择"com.autodroid.sms"作为默认短信应用
+
+**验证方法**：
+设置完成后，再次发送短信，应该就能在列表中看到了！
+
+**技术说明**：
+- Android 4.4+ 引入了默认短信应用机制
+- 只有默认短信应用才能写入SMS数据库（content://sms）
+- 非默认短信应用只能读取SMS，无法写入
+- 这是Android系统的安全机制，防止多个应用同时修改SMS数据库

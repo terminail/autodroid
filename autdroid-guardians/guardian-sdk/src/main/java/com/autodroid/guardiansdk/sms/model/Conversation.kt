@@ -1,4 +1,4 @@
-package com.autodroid.sms.data.model
+package com.autodroid.guardiansdk.sms.model
 
 import java.util.Date
 

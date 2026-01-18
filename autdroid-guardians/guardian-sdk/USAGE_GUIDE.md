@@ -320,6 +320,39 @@ fun isAccessibilityServiceEnabled(): Boolean
  * 打开无障碍服务设置页面
  */
 fun openAccessibilitySettings()
+
+/**
+ * 获取短信仓库
+ */
+fun getSmsRepository(): SmsRepository
+
+/**
+ * 发送短信
+ * @param address 收件人手机号
+ * @param body 短信内容
+ * @return 是否发送成功
+ */
+suspend fun sendSms(address: String, body: String): Boolean
+
+/**
+ * 获取所有会话
+ * @return Flow<List<Conversation>> 会话列表
+ */
+fun getAllConversations()
+
+/**
+ * 获取指定会话的消息
+ * @param threadId 会话ID
+ * @return Flow<List<SmsMessage>> 消息列表
+ */
+fun getMessagesByThread(threadId: Long)
+
+/**
+ * 根据地址获取消息
+ * @param address 手机号
+ * @return Flow<List<SmsMessage>> 消息列表
+ */
+fun getMessagesByAddress(address: String)
 ```
 
 ### AlarmType（报警类型）

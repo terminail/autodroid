@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.autodroid.sms.R
-import com.autodroid.sms.service.SmsSenderService
+import com.autodroid.guardiansdk.sms.service.SmsSenderService
 
 class ComposeActivity : AppCompatActivity() {
     

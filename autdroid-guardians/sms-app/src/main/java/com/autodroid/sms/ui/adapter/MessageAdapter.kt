@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.sms.R
-import com.autodroid.sms.data.model.SmsMessage
+import com.autodroid.guardiansdk.sms.model.SmsMessage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

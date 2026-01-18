@@ -1,0 +1,78 @@
+{
+  "phase": "brainstorming",
+  "timestamp": "2026-01-18T12:00:00",
+  "requirement": "添加新的报警触发方式 - 通过摇动手机触发报警",
+  "clarifying_questions": [
+    "摇动的强度阈值是多少？",
+    "需要持续摇动多长时间？",
+    "如何避免误触发（如走路时）？",
+    "是否需要用户手动启用此功能？",
+    "触发后是否需要用户确认？"
+  ],
+  "alternatives": [
+    {
+      "name": "方案A：使用加速度传感器",
+      "pros": [
+        "响应快速",
+        "无需用户操作",
+        "可以精确检测摇动"
+      ],
+      "cons": [
+        "耗电较高",
+        "可能误触发",
+        "需要权限"
+      ]
+    },
+    {
+      "name": "方案B：使用陀螺仪",
+      "pros": [
+        "更精确的旋转检测",
+        "误触发较少"
+      ],
+      "cons": [
+        "耗电更高",
+        "不是所有设备都有"
+      ]
+    },
+    {
+      "name": "方案C：组合传感器",
+      "pros": [
+        "更准确",
+        "可以过滤误触发"
+      ],
+      "cons": [
+        "实现复杂",
+        "耗电最高"
+      ]
+    }
+  ],
+  "recommended_design": "方案A：使用加速度传感器",
+  "design_details": {
+    "sensor_type": "TYPE_ACCELEROMETER",
+    "threshold": "15.0",
+    "duration_ms": "1000",
+    "sampling_rate_us": "20000",
+    "permissions": [
+      "android.permission.BODY_SENSORS"
+    ],
+    "settings": {
+      "enabled": false,
+      "sensitivity": "medium",
+      "confirmation_required": true
+    }
+  },
+  "implementation_plan_outline": [
+    "创建 ShakeDetector 类处理传感器数据",
+    "实现摇动检测算法",
+    "创建 ShakeAlarmTriggerService 服务",
+    "更新 GuardianSdk 集成摇动触发",
+    "添加设置项到 GuardianActivity",
+    "实现权限请求",
+    "编写单元测试",
+    "编写集成测试",
+    "更新文档"
+  ],
+  "status": "approved",
+  "approved_by": "user",
+  "approved_at": "2026-01-18T12:30:00"
+}

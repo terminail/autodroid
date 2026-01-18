@@ -13,8 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.sms.R
-import com.autodroid.sms.data.model.SmsMessage
-import com.autodroid.sms.service.SmsSenderService
+import com.autodroid.guardiansdk.sms.model.SmsMessage
+import com.autodroid.guardiansdk.sms.service.SmsSenderService
 import com.autodroid.sms.ui.adapter.MessageAdapter
 import com.autodroid.sms.ui.viewmodel.ConversationViewModel
 import com.autodroid.sms.ui.viewmodel.ConversationViewModelFactory

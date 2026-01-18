@@ -9,13 +9,13 @@ import android.telephony.SmsMessage
 import android.util.Log
 
 /**
- * 短信监听接收器
- * 监听特定短信并触发相应操作
+ * 短信守卫接收器
+ * 监听特定关键词短信并触发报警
  */
-class SmsReceiver : BroadcastReceiver() {
+class SmsGuardReceiver : BroadcastReceiver() {
     
     companion object {
-        private const val TAG = "SmsReceiver"
+        private const val TAG = "SmsGuardReceiver"
         
         // 监控的短信关键词
         private val MONITOR_KEYWORDS = listOf(

@@ -1,0 +1,156 @@
+{
+  "phase": "writing-plans",
+  "timestamp": "2026-01-18T13:00:00",
+  "design_doc": ".superpowers/examples/brainstorming_example.json",
+  "feature_name": "shake-phone-alarm-trigger",
+  "tasks": [
+    {
+      "id": 1,
+      "description": "创建 ShakeDetector 类",
+      "estimated_minutes": 3,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/detector/ShakeDetector.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/detector/ShakeDetectorTest.kt",
+      "test_name": "ShakeDetectorTest.testInitialization",
+      "verification_steps": [
+        "ShakeDetector 类已创建",
+        "测试文件已创建",
+        "测试通过"
+      ],
+      "code_template": "class ShakeDetector {\n    private var lastShakeTime: Long = 0\n    private var shakeCount: Int = 0\n    \n    fun onSensorChanged(event: SensorEvent): Boolean {\n        // TODO: 实现摇动检测逻辑\n        return false\n    }\n}"
+    },
+    {
+      "id": 2,
+      "description": "实现摇动检测算法",
+      "estimated_minutes": 4,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/detector/ShakeDetector.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/detector/ShakeDetectorTest.kt",
+      "test_name": "ShakeDetectorTest.testShakeDetection",
+      "verification_steps": [
+        "摇动检测算法已实现",
+        "测试通过",
+        "算法符合设计要求"
+      ],
+      "dependencies": [1]
+    },
+    {
+      "id": 3,
+      "description": "创建 ShakeAlarmTriggerService 服务",
+      "estimated_minutes": 3,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/service/ShakeAlarmTriggerService.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/service/ShakeAlarmTriggerServiceTest.kt",
+      "test_name": "ShakeAlarmTriggerServiceTest.testServiceInitialization",
+      "verification_steps": [
+        "服务类已创建",
+        "测试文件已创建",
+        "测试通过"
+      ],
+      "code_template": "class ShakeAlarmTriggerService : Service() {\n    private lateinit var shakeDetector: ShakeDetector\n    \n    override fun onCreate() {\n        super.onCreate()\n        shakeDetector = ShakeDetector()\n    }\n    \n    override fun onBind(intent: Intent?): IBinder? {\n        return null\n    }\n}"
+    },
+    {
+      "id": 4,
+      "description": "集成 ShakeDetector 到服务",
+      "estimated_minutes": 4,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/service/ShakeAlarmTriggerService.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/service/ShakeAlarmTriggerServiceTest.kt",
+      "test_name": "ShakeAlarmTriggerServiceTest.testShakeDetectionIntegration",
+      "verification_steps": [
+        "ShakeDetector 已集成到服务",
+        "测试通过",
+        "服务正确响应摇动事件"
+      ],
+      "dependencies": [2, 3]
+    },
+    {
+      "id": 5,
+      "description": "更新 GuardianSdk 集成摇动触发",
+      "estimated_minutes": 3,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/GuardianSdk.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/GuardianSdkTest.kt",
+      "test_name": "GuardianSdkTest.testShakeTriggerIntegration",
+      "verification_steps": [
+        "GuardianSdk 已更新",
+        "测试通过",
+        "摇动触发功能已集成"
+      ],
+      "dependencies": [4]
+    },
+    {
+      "id": 6,
+      "description": "添加设置项到 GuardianActivity",
+      "estimated_minutes": 3,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/ui/GuardianActivity.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/ui/GuardianActivityTest.kt",
+      "test_name": "GuardianActivityTest.testShakeTriggerSettings",
+      "verification_steps": [
+        "设置项已添加",
+        "测试通过",
+        "UI 正确显示设置"
+      ],
+      "dependencies": [5]
+    },
+    {
+      "id": 7,
+      "description": "实现权限请求",
+      "estimated_minutes": 2,
+      "files": [
+        "src/main/java/com/autodroid/guardiansdk/GuardianSdk.kt"
+      ],
+      "test_file": "src/test/java/com/autodroid/guardiansdk/GuardianSdkTest.kt",
+      "test_name": "GuardianSdkTest.testPermissionRequest",
+      "verification_steps": [
+        "权限请求已实现",
+        "测试通过",
+        "权限正确请求"
+      ],
+      "dependencies": [6]
+    },
+    {
+      "id": 8,
+      "description": "编写集成测试",
+      "estimated_minutes": 5,
+      "files": [
+        "src/androidTest/java/com/autodroid/guardiansdk/ShakeAlarmTriggerIntegrationTest.kt"
+      ],
+      "test_file": "src/androidTest/java/com/autodroid/guardiansdk/ShakeAlarmTriggerIntegrationTest.kt",
+      "test_name": "ShakeAlarmTriggerIntegrationTest.testFullWorkflow",
+      "verification_steps": [
+        "集成测试已编写",
+        "测试通过",
+        "完整工作流正常"
+      ],
+      "dependencies": [7]
+    },
+    {
+      "id": 9,
+      "description": "更新文档",
+      "estimated_minutes": 2,
+      "files": [
+        "USAGE_GUIDE.md"
+      ],
+      "test_file": null,
+      "test_name": null,
+      "verification_steps": [
+        "文档已更新",
+        "文档包含新功能说明",
+        "文档包含使用示例"
+      ],
+      "dependencies": [8]
+    }
+  ],
+  "total_estimated_minutes": 29,
+  "status": "approved",
+  "approved_by": "user",
+  "approved_at": "2026-01-18T13:30:00"
+}

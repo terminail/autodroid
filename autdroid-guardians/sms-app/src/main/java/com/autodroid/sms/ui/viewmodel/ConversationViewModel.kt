@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.autodroid.sms.data.model.Conversation
-import com.autodroid.sms.data.model.SmsMessage
-import com.autodroid.sms.data.repository.SmsRepository
+import com.autodroid.guardiansdk.sms.model.Conversation
+import com.autodroid.guardiansdk.sms.model.SmsMessage
+import com.autodroid.guardiansdk.sms.repository.SmsRepository
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
