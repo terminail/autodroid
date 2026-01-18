@@ -3,21 +3,23 @@
 ## 1. SDK概述
 
 ### 1.1 SDK定位
-AutoDroid Guardian SDK 是一套完整的个人安全报警功能SDK，可集成到任意Android应用中，为应用提供隐秘的紧急报警功能。
+AutoDroid Guardian SDK 是一套完整的个人安全报警功能SDK，可集成到任意Android应用中，为应用提供隐秘的紧急报警功能和短信守卫功能。
 
 ### 1.2 核心特性
 - **零代码集成**：应用只需注册SDK组件，无需编写报警相关代码
 - **智能自动化**：所有报警功能自动管理和触发
+- **短信守卫**：自动监控和响应短信指令，提供隐秘的远程控制能力
 - **多应用协调**：自动处理多个应用同时使用SDK的冲突
 - **高度隐蔽**：后台静默运行，无任何视觉提示
 - **纯本地化**：所有数据本地存储，无服务器依赖
 
 ### 1.3 适用场景
-- 记事本应用 + Guardian SDK = 记事本守卫
-- 计算器应用 + Guardian SDK = 计算器守卫
-- 日历应用 + Guardian SDK = 日历守卫
-- 天气应用 + Guardian SDK = 天气守卫
-- 任意应用 + Guardian SDK = XX守卫
+- 记事本应用 + Guardian SDK = 记事本守卫（含短信守卫功能）
+- 计算器应用 + Guardian SDK = 计算器守卫（含短信守卫功能）
+- 日历应用 + Guardian SDK = 日历守卫（含短信守卫功能）
+- 天气应用 + Guardian SDK = 天气守卫（含短信守卫功能）
+- 短信应用 + Guardian SDK = 短信守卫（增强版短信应用）
+- 任意应用 + Guardian SDK = XX守卫（自动获得短信守卫功能）
 
 ## 2. 架构设计
 
@@ -33,6 +35,7 @@ graph TB
         F[数据管理<br/>数据库/Repository]
         G[通信模块<br/>SMS发送与接收]
         H[位置服务<br/>GPS定位获取]
+        I[短信守卫模块<br/>SMS Guard]
     end
     
     B --> C
@@ -41,10 +44,12 @@ graph TB
     B --> F
     B --> G
     B --> H
+    B --> I
     
-    E --> I[短信监控<br/>自动启动界面]
-    D --> J[自动触发<br/>报警逻辑]
-    G --> K[自动响应<br/>短信指令]
+    E --> J[短信监控<br/>自动启动界面]
+    D --> K[自动触发<br/>报警逻辑]
+    G --> L[自动响应<br/>短信指令]
+    I --> M[短信守卫<br/>远程控制]
     
 ```
 
@@ -232,6 +237,127 @@ val testWards = listOf(
 - **时间倒序展示**：前端直接按时间倒序查询展示
 
 ## 4. SDK组件设计
+
+### 4.0 短信守卫模块（SMS Guard）
+
+#### 4.0.1 模块概述
+**功能定位**：短信守卫模块是 Guardian SDK 的核心功能之一，为所有集成 SDK 的应用提供隐秘的短信远程控制能力。
+
+**核心特性**：
+- **自动集成**：任何应用集成 SDK 后自动获得短信守卫功能
+- **隐秘运行**：后台静默监听短信，无任何界面提示
+- **指令响应**：支持多种短信指令，实现远程控制
+- **安全验证**：通过密码本和密语验证确保安全性
+- **多应用兼容**：多个应用同时使用 SDK 时自动协调
+
+#### 4.0.2 短信指令系统
+
+**指令分类**：
+
+1. **开门指令**
+   - **功能**：打开隐秘主界面
+   - **格式**：`[开门密语]`
+   - **示例**：`开门`、`open`、`help`
+   - **触发条件**：只有自己的手机发给自己的短信才会触发
+   - **配置**：可在"我的设置"中自定义开门密语
+
+2. **查询指令**
+   - **功能**：查询被监护人位置信息
+   - **格式**：`[查询密语]`
+   - **示例**：`在哪里`、`位置`、`location`
+   - **响应**：自动回复加密的位置信息
+
+3. **报警指令**
+   - **功能**：远程触发报警
+   - **格式**：`[报警密语]`
+   - **示例**：`报警`、`sos`、`help`
+   - **响应**：立即发送报警短信给所有监护人
+
+4. **录音指令**
+   - **功能**：远程启动录音
+   - **格式**：`[录音密语]`
+   - **示例**：`录音`、`record`
+   - **响应**：开始录音并通过邮件发送
+
+5. **状态指令**
+   - **功能**：查询设备状态
+   - **格式**：`[状态密语]`
+   - **示例**：`状态`、`status`
+   - **响应**：回复电池、网络、位置等状态信息
+
+#### 4.0.3 短信守卫工作流程
+
+```mermaid
+sequenceDiagram
+    participant G as 监护人手机
+    participant SMS as 短信系统
+    participant A as AccessibilityService
+    participant V as 指令验证器
+    participant H as 指令处理器
+    participant DB as 数据库
+    participant S as 短信发送器
+    
+    G->>SMS: 发送指令短信
+    SMS->>A: 触发短信通知
+    A->>V: 提取短信内容
+    V->>DB: 查询密语配置
+    DB-->>V: 返回密语
+    V->>V: 验证指令和发送者
+    alt 验证成功
+        V->>H: 执行指令
+        H->>H: 处理业务逻辑
+        H->>S: 发送响应短信
+        S-->>G: 返回结果
+    else 验证失败
+        V->>V: 忽略指令
+    end
+```
+
+#### 4.0.4 安全机制
+
+**多层验证**：
+1. **发送者验证**：检查发送者手机号是否在联系人列表中
+2. **密语匹配**：验证短信内容是否匹配配置的密语
+3. **密码本验证**：使用密码本加密验证，防止伪造
+4. **时间窗口**：限制指令的有效时间窗口
+
+**隐私保护**：
+- 指令短信不显示在收件箱（可选）
+- 响应短信使用加密格式
+- 敏感信息使用密码本加密存储
+- 支持指令日志记录和审计
+
+#### 4.0.5 配置管理
+
+**密语配置**：
+- 开门密语：默认"开门"
+- 查询密语：默认"在哪里"
+- 报警密语：默认"报警"
+- 录音密语：默认"录音"
+- 状态密语：默认"状态"
+
+**安全设置**：
+- 启用/禁用短信守卫
+- 仅允许特定联系人发送指令
+- 指令执行确认（需要回复确认）
+- 指令频率限制
+
+#### 4.0.6 多应用协调
+
+**服务协调**：
+- AccessibilityService 单例模式
+- 多个应用共享同一个服务实例
+- 指令处理器统一管理
+
+**数据共享**：
+- 所有应用共享同一个数据库
+- 联系人和设置信息统一管理
+- 指令日志统一记录
+
+**冲突处理**：
+- 优先级机制：最后启动的应用优先
+- 配置同步：自动同步各应用的配置
+- 服务状态共享：避免重复启动服务
 
 ### 4.1 界面组件
 
@@ -448,22 +574,34 @@ val testWards = listOf(
 ### 4.2 后台服务组件
 
 #### 4.2.1 GuardianAccessibilityService
-**功能**：无障碍服务，监听系统通知
+**功能**：无障碍服务，监听系统通知和短信事件
 **主要职责**：
+- **短信守卫核心**：监听所有短信通知，匹配和执行短信指令
 - 监听短信通知，匹配激活密语
 - 监听家长指令短信
 - 自动触发设置界面
 - 自动响应家长指令
+- 指令验证和处理
+- 多应用协调和服务管理
+
+**短信守卫功能**：
+- 实时监听短信通知
+- 提取短信内容和发送者信息
+- 验证短信指令的有效性
+- 调用指令处理器执行相应操作
+- 发送响应短信
+- 记录指令日志
 
 **配置示例**：
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeNotificationStateChanged"
+    android:accessibilityEventTypes="typeNotificationStateChanged|typeAllMask"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagRequestTouchExplorationMode"
+    android:accessibilityFlags="flagRequestTouchExplorationMode|flagReportViewIds"
     android:canRetrieveWindowContent="true"
-    android:description="@string/accessibility_service_description" />
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="100" />
 ```
 
 #### 4.2.2 EmergencyService
