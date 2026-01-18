@@ -28,4 +28,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "autdroid-wards"
 include(":note-app")
+include(":sms-app")
 include(":guardian-sdk")
