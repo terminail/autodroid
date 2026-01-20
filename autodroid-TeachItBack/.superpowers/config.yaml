@@ -1,0 +1,10 @@
+# Superpowers 项目配置
+# 继承自全局配置
+
+project_type: "android"
+
+android_config:
+  build_commands:
+    - "./gradlew test"
+    - "./gradlew lint"
+
