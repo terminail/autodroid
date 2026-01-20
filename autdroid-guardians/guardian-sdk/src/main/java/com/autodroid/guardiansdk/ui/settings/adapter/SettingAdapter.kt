@@ -180,7 +180,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.VolumeKeyAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式1"
-            val enabledText = if (item.enabled) "☑️音量键已启用" else "❌音量键未启用"
+            val enabledText = if (item.enabled) "✓音量键已启用" else "✗音量键未启用"
             tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalHoldTime}秒，紧急报警：${item.emergencyHoldTime}秒"
             
             itemView.setOnClickListener {
@@ -195,7 +195,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.FloatingWindowAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式2"
-            val enabledText = if (item.enabled) "☑️浮动窗口已启用" else "❌浮动窗口未启用"
+            val enabledText = if (item.enabled) "✓浮动窗口已启用" else "✗浮动窗口未启用"
             tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalHoldTime}秒/${item.normalOpacity}%，紧急报警：${item.emergencyHoldTime}秒/${item.emergencyOpacity}%"
             
             itemView.setOnClickListener {
@@ -210,7 +210,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.ShakePhoneAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式3"
-            val enabledText = if (item.enabled) "☑️摇动手机已启用" else "❌摇动手机未启用"
+            val enabledText = if (item.enabled) "✓摇动手机已启用" else "✗摇动手机未启用"
             tvAlarmModeInfo.text = "$enabledText，普通报警：灵敏度${item.normalSensitivity}，紧急报警：灵敏度${item.emergencySensitivity}"
             
             itemView.setOnClickListener {
@@ -225,7 +225,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.InactivityAlarmMode, listener: OnItemClickListener?) {
             tvAlarmModeTitle.text = "报警触发模式4"
-            val enabledText = if (item.enabled) "☑️长时间未使用手机已启用" else "❌长时间未使用手机未启用"
+            val enabledText = if (item.enabled) "✓长时间未使用手机已启用" else "✗长时间未使用手机未启用"
             tvAlarmModeInfo.text = "$enabledText，普通报警：${item.normalInactivityTime}分钟，紧急报警：${item.emergencyInactivityTime}分钟"
             
             itemView.setOnClickListener {
@@ -255,7 +255,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.AlarmRecordingMode, listener: OnItemClickListener?) {
             tvItemTitle.text = "报警录音模式"
-            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
+            val enabledText = if (item.enabled) "✓已启用" else "✗已禁用"
             tvItemSubtitle.text = "${enabledText}，录音总时长${item.duration}分钟，分段时长${item.segmentDuration}分钟"
             
             itemView.setOnClickListener {
@@ -270,7 +270,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.AlarmEmailSettings, listener: OnItemClickListener?) {
             tvItemTitle.text = "报警邮件设置"
-            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
+            val enabledText = if (item.enabled) "✓已启用" else "✗已禁用"
             val emailInfo = if (item.emailAddress.isNotEmpty()) item.emailAddress else "未配置"
             tvItemSubtitle.text = "$enabledText，$emailInfo"
             
@@ -286,7 +286,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.HiddenSecureUI, listener: OnItemClickListener?) {
             tvItemTitle.text = "隐秘界面设置"
-            val enabledText = if (item.enabled) "☑️已开启" else "❌已关闭"
+            val enabledText = if (item.enabled) "✓已开启" else "✗已关闭"
             tvItemSubtitle.text = "$enabledText，开门密语${item.doorPassphrase}"
             
             itemView.setOnClickListener {
@@ -301,7 +301,7 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.TestMode, listener: OnItemClickListener?) {
             tvItemTitle.text = "测试模式"
-            val enabledText = if (item.isEnabled) "☑️已启用" else "❌已禁用"
+            val enabledText = if (item.isEnabled) "✓已启用" else "✗已禁用"
             val lastPracticeTime = com.autodroid.guardiansdk.ui.settings.SettingFragment.formatWeChatStyleTime(item.lastPracticeTime)
             tvItemSubtitle.text = "$enabledText 上次练习时间：$lastPracticeTime"
             
@@ -317,8 +317,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         fun bind(item: SettingItem.PingSettings, listener: OnItemClickListener?) {
             tvItemTitle.text = "Ping响应设置"
-            val enabledText = if (item.enabled) "☑️已启用" else "❌已禁用"
-            tvItemSubtitle.text = "$enabledText，检查间隔${item.checkInterval}分钟"
+            val enabledText = if (item.enabled) "✓已启用" else "✗已禁用"
+            val smsFallbackText = if (item.useSmsFallback) "，短信备用" else ""
+            tvItemSubtitle.text = "$enabledText，检查间隔${item.checkInterval}分钟，重试${item.emailRetryCount}次，超时${item.emailTimeout}分钟$smsFallbackText"
             
             itemView.setOnClickListener {
                 listener?.onPingSettingsClick()
@@ -335,9 +336,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
             tvItemTitle.text = "监护人1：$name"
             
-            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            // 第二行：✓主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
             val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
-            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            val secondLine = if (item.isPrimary) "✓主要监护人，$phoneText" else phoneText
             tvItemSubtitle.text = secondLine
             
             // 如果占位符，设置不同的样式
@@ -362,9 +363,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
             tvItemTitle.text = "监护人2：$name"
             
-            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            // 第二行：✓主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
             val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
-            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            val secondLine = if (item.isPrimary) "✓主要监护人，$phoneText" else phoneText
             tvItemSubtitle.text = secondLine
             
             // 如果占位符，设置不同的样式
@@ -389,9 +390,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
             tvItemTitle.text = "监护人3：$name"
             
-            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            // 第二行：✓主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
             val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
-            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            val secondLine = if (item.isPrimary) "✓主要监护人，$phoneText" else phoneText
             tvItemSubtitle.text = secondLine
             
             // 如果占位符，设置不同的样式
@@ -416,9 +417,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
             tvItemTitle.text = "监护人4：$name"
             
-            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            // 第二行：✓主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
             val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
-            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            val secondLine = if (item.isPrimary) "✓主要监护人，$phoneText" else phoneText
             tvItemSubtitle.text = secondLine
             
             // 如果占位符，设置不同的样式
@@ -443,9 +444,9 @@ class SettingAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val name = if (item.name.isNotEmpty()) item.name else "未设置姓名"
             tvItemTitle.text = "监护人5：$name"
             
-            // 第二行：☑️主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
+            // 第二行：✓主要监护人，13812345678 或者非主要监护人就直接13812345678电话号码
             val phoneText = if (item.phoneNumber.isNotEmpty()) item.phoneNumber else "未设置电话号码"
-            val secondLine = if (item.isPrimary) "☑️主要监护人，$phoneText" else phoneText
+            val secondLine = if (item.isPrimary) "✓主要监护人，$phoneText" else phoneText
             tvItemSubtitle.text = secondLine
             
             // 如果占位符，设置不同的样式

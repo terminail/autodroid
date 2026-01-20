@@ -49,7 +49,7 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
     /**
      * 构建设置项列表
      */
-    private fun buildSettingItems(guardians: List<Contact>, settings: List<Setting>): List<SettingItem> {
+    internal fun buildSettingItems(guardians: List<Contact>, settings: List<Setting>): List<SettingItem> {
         val settingItems = mutableListOf<SettingItem>()
         
         // 生成5个监护人项，如果数据库中的联系人不足，用占位符
@@ -174,7 +174,13 @@ class SettingViewModel(private val database: GuardianDatabase) : ViewModel() {
         
         // 添加测试模式设置
         val testModeEnabled = settings.find { it.key == "test_mode_enabled" }?.value?.toBoolean() ?: false
-        settingItems.add(SettingItem.TestMode(isEnabled = testModeEnabled))
+        val testModePracticeCount = settings.find { it.key == "test_mode_practice_count" }?.value?.toIntOrNull() ?: 0
+        val testModeLastPracticeTime = settings.find { it.key == "test_mode_last_practice_time" }?.value ?: ""
+        settingItems.add(SettingItem.TestMode(
+            isEnabled = testModeEnabled,
+            practiceCount = testModePracticeCount,
+            lastPracticeTime = testModeLastPracticeTime
+        ))
         
         return settingItems
     }

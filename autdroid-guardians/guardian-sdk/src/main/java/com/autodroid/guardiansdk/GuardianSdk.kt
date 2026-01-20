@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.autodroid.guardiansdk.data.database.GuardianDatabase
 import com.autodroid.guardiansdk.data.repository.SettingRepository
 import com.autodroid.guardiansdk.sms.repository.SmsRepository
+import com.autodroid.guardiansdk.util.GuardianSdkValidator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,6 +37,17 @@ class GuardianSdk private constructor(private val context: Context) {
             return instance ?: synchronized(this) {
                 instance ?: GuardianSdk(context.applicationContext).also { 
                     instance = it
+                    // 验证SDK集成
+                    val validationResult = GuardianSdkValidator.validate(context)
+                    if (!validationResult.isValid) {
+                        android.util.Log.e("GuardianSdk", "SDK集成验证失败:")
+                        validationResult.issues.forEach { issue ->
+                            android.util.Log.e("GuardianSdk", "  - $issue")
+                        }
+                    }
+                    validationResult.warnings.forEach { warning ->
+                        android.util.Log.w("GuardianSdk", "  - $warning")
+                    }
                     // 初始化数据库和默认设置
                     it.initializeDatabase()
                 }
@@ -428,6 +440,27 @@ class GuardianSdk private constructor(private val context: Context) {
      * 根据地址获取消息
      */
     fun getMessagesByAddress(address: String) = smsRepository.getMessagesByAddress(address)
+    
+    /**
+     * 验证SDK集成
+     */
+    fun validateIntegration(): com.autodroid.guardiansdk.util.ValidationResult {
+        return GuardianSdkValidator.validate(context)
+    }
+    
+    /**
+     * 检查缺失的权限
+     */
+    fun checkMissingPermissions(): List<String> {
+        return GuardianSdkValidator.checkPermissions(context)
+    }
+    
+    /**
+     * 检查悬浮窗权限是否授予
+     */
+    fun isOverlayPermissionGranted(): Boolean {
+        return GuardianSdkValidator.isOverlayPermissionGranted(context)
+    }
 }
 
 /**

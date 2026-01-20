@@ -7,7 +7,9 @@
 **发送给 AI 的 Prompt：**
 
 ```
-我想要为 Guardian SDK 添加新的传感器触发报警功能。
+我想要为 Guardian SDK 优化实现分享信息给监护人、导入被监护人信息配对功能，确保被监护人能够加入监护人的保护范围，能在监护人设置中查看和管理被监护人的信息，参看            WhyItemType.SHARE_GUARDIAN -> TYPE_SHARE_GUARDIAN
+            WhyItemType.IMPORT_WARD -> TYPE_IMPORT_WARD
+。
 
 请使用 Superpowers 工作流系统，从 "brainstorming" 阶段开始：
 1. 提出澄清问题
@@ -16,7 +18,8 @@
 4. 等待我确认
 
 项目类型：Android
-项目路径：d:/git/autodroid/autdroid-guardians
+SDK 项目路径：d:/git/autodroid/autdroid-guardians/guardian-sdk
+APP 项目路径：d:/git/autodroid/autdroid-guardians/note-app
 ```
 
 **AI 应该做什么：**
