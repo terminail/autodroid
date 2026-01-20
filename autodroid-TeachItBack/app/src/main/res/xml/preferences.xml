@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="用户设置">
+
+        <EditTextPreference
+            android:key="user_name"
+            android:title="用户名"
+            android:summary="请输入您的用户名"
+            android:dialogTitle="输入用户名"
+            android:defaultValue="User" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="AI 配置">
+
+        <EditTextPreference
+            android:key="ai_api_key"
+            android:title="AI API Key"
+            android:summary="输入您的 AI API 密钥"
+            android:dialogTitle="输入 API 密钥"
+            android:inputType="textPassword" />
+
+        <EditTextPreference
+            android:key="ai_model"
+            android:title="AI 模型"
+            android:summary="选择使用的 AI 模型"
+            android:dialogTitle="输入模型名称"
+            android:defaultValue="gpt-3.5-turbo" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="关于">
+
+        <Preference
+            android:key="about"
+            android:title="关于"
+            android:summary="Teach It Back v1.0" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
