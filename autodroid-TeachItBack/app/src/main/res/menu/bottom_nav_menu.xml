@@ -3,7 +3,7 @@
     <item
         android:id="@+id/navigation_topics"
         android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="主题" />
+        android:title="学习" />
 
     <item
         android:id="@+id/navigation_why"
