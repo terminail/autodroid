@@ -1,79 +1,166 @@
 {
-    "phase": "brainstorming",
-    "timestamp": "2026-01-20T10:00:00",
-    "project_type": "android",
-    "project_root": "d:/git/autodroid/autodroid-TeachItBack",
-    "requirement": "Teach It Back functionality for learning app",
-    "clarifying_questions": [
-        "What specific subjects or topics will the Teach It Back feature focus on?",
-        "Should the app support voice recording for explaining concepts, or only text input?",
-        "How should the AI provide feedback - through questions, corrections, or suggestions?",
-        "What level of interactivity is needed during the 'teaching back' session?",
-        "Should there be progress tracking and analytics for learning effectiveness?",
-        "What platforms should be supported - Android only or cross-platform?",
-        "How will user privacy be handled with respect to their learning content?"
-    ],
-    "alternatives": [
-        {
-            "name": "Simple Voice-to-Text Approach",
-            "description": "User speaks their explanation, app converts to text and analyzes with basic keyword matching",
-            "pros": [
-                "Easy to implement",
-                "Quick feedback cycle",
-                "Natural interaction"
-            ],
-            "cons": [
-                "Limited AI analysis",
-                "May miss nuances",
-                "Less effective learning validation"
-            ]
-        },
-        {
-            "name": "AI-Powered Socratic Method",
-            "description": "Advanced AI asks follow-up questions to probe understanding and uncover knowledge gaps",
-            "pros": [
-                "Deep learning validation",
-                "Personalized questioning",
-                "Reveals hidden misconceptions"
-            ],
-            "cons": [
-                "Requires sophisticated AI integration",
-                "Higher computational costs",
-                "Complex implementation"
-            ]
-        },
-        {
-            "name": "Hybrid Interactive Tutor",
-            "description": "Combines voice/text input with structured exercises and AI-guided questioning",
-            "pros": [
-                "Comprehensive learning approach",
-                "Multiple input modalities",
-                "Balanced implementation complexity"
-            ],
-            "cons": [
-                "More complex UI/UX",
-                "Requires more development time"
-            ]
-        }
-    ],
-    "recommended_design": {
-        "name": "AI-Powered Socratic Method",
-        "rationale": "Best aligns with the Teach It Back philosophy of revealing understanding gaps through questioning. Provides the most value for learning effectiveness."
+  "phase": "brainstorming",
+  "timestamp": "2026-01-20T21:15:00",
+  "project_type": "android",
+  "project_root": "d:/git/autodroid/autodroid-TeachItBack",
+  "requirement": "Teach It Back - AI驱动学习应用，基于苏格拉底教学法和费曼学习法",
+  
+  "clarifying_questions": [
+    "What specific subjects or topics will the Teach It Back feature focus on?",
+    "Should the app support voice recording for explaining concepts, or only text input?",
+    "How should the AI provide feedback - through questions, corrections, or suggestions?",
+    "What level of interactivity is needed during the 'teaching back' session?",
+    "Should there be progress tracking and analytics for learning effectiveness?",
+    "What platforms should be supported - Android only or cross-platform?",
+    "How will user privacy be handled with respect to their learning content?"
+  ],
+
+  "alternatives": [
+    {
+      "name": "Simple Voice-to-Text Approach",
+      "description": "User speaks their explanation, app converts to text and analyzes with basic keyword matching",
+      "pros": ["Easy to implement", "Quick feedback cycle", "Natural interaction"],
+      "cons": ["Limited AI analysis", "May miss nuances", "Less effective learning validation"]
     },
-    "implementation_plan_outline": {
-        "core_components": [
-            "Speech recognition for voice input",
-            "AI integration for question generation",
-            "Conversation flow management",
-            "Learning progress tracking",
-            "Topic management system"
-        ],
-        "technical_architecture": [
-            "Android front-end with Kotlin",
-            "AI service integration (OpenAI API or similar)",
-            "Local storage for learning progress",
-            "Offline capability for basic functions"
-        ]
+    {
+      "name": "AI-Powered Socratic Method",
+      "description": "Advanced AI asks follow-up questions to probe understanding and uncover knowledge gaps",
+      "pros": ["Deep learning validation", "Personalized questioning", "Reveals hidden misconceptions"],
+      "cons": ["Requires sophisticated AI integration", "Higher computational costs", "Complex implementation"]
     },
-    "status": "ready_for_review"
+    {
+      "name": "Hybrid Interactive Tutor",
+      "description": "Combines voice/text input with structured exercises and AI-guided questioning",
+      "pros": ["Comprehensive learning approach", "Multiple input modalities", "Balanced implementation complexity"],
+      "cons": ["More complex UI/UX", "Requires more development time"]
+    }
+  ],
+
+  "recommended_design": {
+    "name": "AI-Powered Socratic Method",
+    "rationale": "Best aligns with the Teach It Back philosophy of revealing understanding gaps through questioning. Provides the most value for learning effectiveness."
+  },
+
+  "architecture": {
+    "overall": {
+      "pattern": "MVVM with Repository Pattern",
+      "description": "UI Layer -> ViewModel -> Repository -> (Room Database / AI API / File Processor / Voice Processor)"
+    },
+    "design_principles": ["Local-First", "Observer Pattern", "Repository Pattern", "MVVM"]
+  },
+
+  "data_models": {
+    "topic": {
+      "id": "String (PK)",
+      "title": "String",
+      "description": "String",
+      "createdAt": "Long",
+      "lastAccessed": "Long",
+      "masteryLevel": "Int (0-100)",
+      "nextLearningGoal": "String",
+      "category": "String"
+    },
+    "message": {
+      "id": "String (PK)",
+      "topicId": "String (FK)",
+      "content": "String",
+      "senderType": "String (USER, AI)",
+      "messageType": "String (TEXT, AUDIO, FILE_CONTENT)",
+      "timestamp": "Long"
+    },
+    "file_attachment": {
+      "id": "String (PK)",
+      "messageId": "String (FK)",
+      "filePath": "String",
+      "extractedText": "String",
+      "fileType": "String"
+    }
+  },
+
+  "ui_components": {
+    "main_activity": {
+      "fragments": ["TOPICS", "WHY", "SETTINGS"]
+    },
+    "topics_fragment": {
+      "items": ["TopicCardItem", "ProgressCardItem", "RecentActivityItem"],
+      "description": "Topic management and learning entry point with progress cards"
+    },
+    "chat_fragment": {
+      "components": ["Message RecyclerView", "Input Controls"],
+      "features": ["Natural language progress query", "Voice input", "File upload"]
+    },
+    "why_fragment": {
+      "items": ["AppIntroItem", "UsageGuideItem", "FeaturePromoItem"],
+      "description": "App introduction and feature promotion"
+    },
+    "settings_fragment": {
+      "items": ["UserProfileItem", "AISettingsItem", "AppPreferenceItem"],
+      "description": "User settings and preferences"
+    }
+  },
+
+  "ai_integration": {
+    "interface": "AIService",
+    "implementations": ["OpenAIService", "CustomAIService"],
+    "methods": ["sendMessage()", "processFileContent()"]
+  },
+
+  "input_modalities": {
+    "text": "Direct text input",
+    "voice": "Speech recognition processor",
+    "pdf": "PDF extraction service using PdfBox",
+    "text_file": "File content reader"
+  },
+
+  "error_handling": {
+    "network_errors": "Use cached data, fallback to offline mode",
+    "ai_service_errors": "Show friendly prompts, implement retry mechanism",
+    "file_processing_errors": "Prompt re-upload, log errors",
+    "database_errors": "Data recovery mechanism, data integrity check"
+  },
+
+  "performance_optimization": {
+    "caching": "Cache check before network/AI requests",
+    "local_first": "Prioritize local database for instant response",
+    "async_operations": "Background AI requests with LiveData updates"
+  },
+
+  "implementation_plan_outline": {
+    "core_components": [
+      "Room Database with Topic and Message entities",
+      "Repository layer for data access abstraction",
+      "ViewModel with LiveData for state management",
+      "AI service integration (OpenAI API or custom)",
+      "File processing service for PDF/text extraction",
+      "Voice processing service for speech-to-text",
+      "MainActivity with three main fragments",
+      "ChatFragment for conversation flow",
+      "Multi-modal input handling (text, voice, files)",
+      "Progress tracking and analytics"
+    ],
+    "technical_architecture": [
+      "Android front-end with Kotlin",
+      "MVVM architecture with ViewModel and LiveData",
+      "Room database for local persistence",
+      "Repository pattern for data access",
+      "Coroutines for async operations",
+      "AI service integration (OpenAI API or similar)",
+      "Local storage for learning progress",
+      "Offline capability for basic functions",
+      "Material Design 3 UI components",
+      "RecyclerView with heterogeneous items"
+    ],
+    "development_phases": [
+      "Phase 1: Data layer - Database entities and DAOs",
+      "Phase 2: Repository layer - Data access and caching",
+      "Phase 3: ViewModel layer - State management and business logic",
+      "Phase 4: UI layer - Activities, Fragments, and layouts",
+      "Phase 5: AI integration - Service implementation",
+      "Phase 6: File processing - PDF and text extraction",
+      "Phase 7: Voice processing - Speech recognition",
+      "Phase 8: Testing and refinement"
+    ]
+  },
+
+  "status": "ready_for_planning"
 }

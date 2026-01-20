@@ -1,0 +1,199 @@
+{
+  "phase": "writing-plans",
+  "timestamp": "2026-01-20T21:12:17.429284",
+  "project_type": "android",
+  "project_root": "d:\\git\\autodroid\\autodroid-TeachItBack",
+  "design_doc": "autodroid-TeachItBack/.superpowers/design/brainstorming_TeachItBack_20260120_100000.json",
+  "status": "in_progress",
+  "tasks": [
+    {
+      "id": "1",
+      "title": "添加项目依赖到 build.gradle.kts",
+      "description": "在 app/build.gradle.kts 中添加 Room、ViewModel、LiveData、协程等依赖",
+      "file_path": "app/build.gradle.kts",
+      "estimated_time": "5",
+      "code_example": "implementation(\"androidx.room:room-runtime:2.6.0\")\nimplementation(\"androidx.room:room-ktx:2.6.0\")\nkapt(\"androidx.room:room-compiler:2.6.0\")",
+      "verification_steps": ["Gradle sync 成功", "没有编译错误"]
+    },
+    {
+      "id": "2",
+      "title": "创建 TopicEntity 数据库实体",
+      "description": "定义 Topic 数据表结构，包含 id, title, description, masteryLevel 等字段",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/model/TopicEntity.kt",
+      "estimated_time": "5",
+      "code_example": "@Entity(tableName = \"topics\")\ndata class TopicEntity(\n    @PrimaryKey val id: String = UUID.randomUUID().toString(),\n    val title: String,\n    val description: String,\n    val masteryLevel: Int = 0,\n    val createdAt: Long = System.currentTimeMillis(),\n    val lastAccessed: Long = System.currentTimeMillis(),\n    val nextLearningGoal: String? = null\n)",
+      "verification_steps": ["文件创建成功", "代码格式正确"]
+    },
+    {
+      "id": "3",
+      "title": "创建 MessageEntity 数据库实体",
+      "description": "定义 Message 数据表结构，包含 id, topicId, content, senderType 等字段",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/model/MessageEntity.kt",
+      "estimated_time": "5",
+      "code_example": "@Entity(tableName = \"messages\",\nforeignKeys = [ForeignKey(entity = TopicEntity::class, parentColumns = [\"id\"], childColumns = [\"topicId\"], onDelete = ForeignKey.CASCADE)])\ndata class MessageEntity(\n    @PrimaryKey val id: String = UUID.randomUUID().toString(),\n    val topicId: String,\n    val content: String,\n    val senderType: String, // USER or AI\n    val messageType: String, // TEXT, AUDIO, FILE_CONTENT\n    val timestamp: Long = System.currentTimeMillis()\n)",
+      "verification_steps": ["外键关系定义正确", "代码编译通过"]
+    },
+    {
+      "id": "4",
+      "title": "创建 TopicDao 数据访问对象",
+      "description": "定义 Topic 表的数据库操作接口",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/database/TopicDao.kt",
+      "estimated_time": "3",
+      "code_example": "@Dao\ninterface TopicDao {\n    @Query(\"SELECT * FROM topics ORDER BY lastAccessed DESC\")\n    fun getAllTopics(): Flow<List<TopicEntity>>\n    \n    @Insert(onConflict = OnConflictStrategy.REPLACE)\n    suspend fun insertTopic(topic: TopicEntity)\n    \n    @Update\n    suspend fun updateTopic(topic: TopicEntity)\n    \n    @Delete\n    suspend fun deleteTopic(topic: TopicEntity)\n}",
+      "verification_steps": ["所有 CRUD 方法定义完整", "Flow 返回类型正确"]
+    },
+    {
+      "id": "5",
+      "title": "创建 MessageDao 数据访问对象",
+      "description": "定义 Message 表的数据库操作接口",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/database/MessageDao.kt",
+      "estimated_time": "3",
+      "code_example": "@Dao\ninterface MessageDao {\n    @Query(\"SELECT * FROM messages WHERE topicId = :topicId ORDER BY timestamp ASC\")\n    fun getMessagesByTopic(topicId: String): Flow<List<MessageEntity>>\n    \n    @Insert(onConflict = OnConflictStrategy.REPLACE)\n    suspend fun insertMessage(message: MessageEntity)\n    \n    @Update\n    suspend fun updateMessage(message: MessageEntity)\n}",
+      "verification_steps": ["查询方法参数正确", "时间排序正确"]
+    },
+    {
+      "id": "6",
+      "title": "创建 AppDatabase 数据库类",
+      "description": "定义 Room 数据库，包含 Topic 和 Message 表",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/database/AppDatabase.kt",
+      "estimated_time": "5",
+      "code_example": "@Database(entities = [TopicEntity::class, MessageEntity::class], version = 1)\nabstract class AppDatabase : RoomDatabase() {\n    abstract fun topicDao(): TopicDao\n    abstract fun messageDao(): MessageDao\n    \n    companion object {\n        @Volatile private var INSTANCE: AppDatabase? = null\n        fun getDatabase(context: Context): AppDatabase =\n            INSTANCE ?: synchronized(this) {\n                Room.databaseBuilder(context, AppDatabase::class.java, \"teachitback_db\")\n                    .fallbackToDestructiveMigration()\n                    .build().also { INSTANCE = it }\n            }\n    }\n}",
+      "verification_steps": ["数据库实例单例模式正确", "版本号定义正确"]
+    },
+    {
+      "id": "7",
+      "title": "创建 TopicRepository 仓库类",
+      "description": "实现 Topic 数据访问的业务逻辑层",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/repository/TopicRepository.kt",
+      "estimated_time": "5",
+      "code_example": "class TopicRepository(private val topicDao: TopicDao) {\n    fun getAllTopics(): Flow<List<TopicEntity>> = topicDao.getAllTopics()\n    \n    suspend fun insertTopic(topic: TopicEntity) = topicDao.insertTopic(topic)\n    \n    suspend fun updateTopic(topic: TopicEntity) = topicDao.updateTopic(topic)\n    \n    suspend fun deleteTopic(topic: TopicEntity) = topicDao.deleteTopic(topic)\n    \n    fun getTopicById(id: String): Flow<TopicEntity?> = topicDao.getTopicById(id)\n}",
+      "verification_steps": ["所有方法调用正确的 DAO", "Flow 类型正确传递"]
+    },
+    {
+      "id": "8",
+      "title": "创建 MessageRepository 仓库类",
+      "description": "实现 Message 数据访问的业务逻辑层",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/repository/MessageRepository.kt",
+      "estimated_time": "5",
+      "code_example": "class MessageRepository(private val messageDao: MessageDao) {\n    fun getMessagesByTopic(topicId: String): Flow<List<MessageEntity>> = \n        messageDao.getMessagesByTopic(topicId)\n    \n    suspend fun insertMessage(message: MessageEntity) = messageDao.insertMessage(message)\n    \n    suspend fun updateMessage(message: MessageEntity) = messageDao.updateMessage(message)\n}",
+      "verification_steps": ["方法参数映射正确", "异步操作正确"]
+    },
+    {
+      "id": "9",
+      "title": "创建 AppViewModel 主视图模型",
+      "description": "实现应用的主 ViewModel，管理 UI 状态和业务逻辑",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/viewmodel/AppViewModel.kt",
+      "estimated_time": "5",
+      "code_example": "class AppViewModel(application: Application) : AndroidViewModel(application) {\n    private val database = AppDatabase.getDatabase(application)\n    private val topicRepository = TopicRepository(database.topicDao())\n    private val messageRepository = MessageRepository(database.messageDao())\n    \n    val topics: LiveData<List<TopicEntity>> = topicRepository.getAllTopics().asLiveData()\n    \n    fun insertTopic(title: String, description: String) = viewModelScope.launch {\n        topicRepository.insertTopic(TopicEntity(title = title, description = description))\n    }\n}",
+      "verification_steps": ["ViewModel 继承正确", "协程作用域使用正确"]
+    },
+    {
+      "id": "10",
+      "title": "创建 TopicsFragment",
+      "description": "实现话题列表界面，显示所有学习话题和进度",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/ui/TopicsFragment.kt",
+      "estimated_time": "5",
+      "code_example": "class TopicsFragment : Fragment() {\n    private var _binding: FragmentTopicsBinding? = null\n    private val binding get() = _binding!!\n    private lateinit var viewModel: AppViewModel\n    \n    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {\n        super.onViewCreated(view, savedInstanceState)\n        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]\n        \n        viewModel.topics.observe(viewLifecycleOwner) { topics ->\n            // Update RecyclerView\n        }\n    }\n}",
+      "verification_steps": ["Fragment 生命周期正确", "LiveData 观察设置正确"]
+    },
+    {
+      "id": "11",
+      "title": "创建 ChatFragment",
+      "description": "实现学习对话界面，显示消息历史和输入控件",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/ui/ChatFragment.kt",
+      "estimated_time": "5",
+      "code_example": "class ChatFragment : Fragment() {\n    private lateinit var viewModel: AppViewModel\n    private var topicId: String? = null\n    \n    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {\n        super.onViewCreated(view, savedInstanceState)\n        topicId = arguments?.getString(\"topicId\")\n        \n        viewModel.messages.observe(viewLifecycleOwner) { messages ->\n            // Update messages RecyclerView\n        }\n    }\n}",
+      "verification_steps": ["参数传递正确", "消息列表更新正确"]
+    },
+    {
+      "id": "12",
+      "title": "创建 SettingsFragment",
+      "description": "实现设置界面，包含用户资料和 AI 配置",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/ui/SettingsFragment.kt",
+      "estimated_time": "5",
+      "code_example": "class SettingsFragment : PreferenceFragmentCompat() {\n    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {\n        setPreferencesFromResource(R.xml.preferences, rootKey)\n        \n        val aiApiKey = findPreference<EditTextPreference>(\"ai_api_key\")\n        aiApiKey?.setOnPreferenceChangeListener { _, newValue ->\n            // Save API key securely\n            true\n        }\n    }\n}",
+      "verification_steps": ["Preference 绑定正确", "设置保存逻辑正确"]
+    },
+    {
+      "id": "13",
+      "title": "创建 AIService 接口",
+      "description": "定义 AI 服务的接口，支持多种 AI 实现",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/api/AIService.kt",
+      "estimated_time": "3",
+      "code_example": "interface AIService {\n    suspend fun sendMessage(messages: List<MessageEntity>, context: String): String\n    suspend fun processFileContent(content: String, context: String): String\n}",
+      "verification_steps": ["接口方法定义清晰", "参数类型正确"]
+    },
+    {
+      "id": "14",
+      "title": "创建 OpenAIService 实现",
+      "description": "实现 OpenAI API 集成，发送请求并接收响应",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/api/OpenAIService.kt",
+      "estimated_time": "5",
+      "code_example": "class OpenAIService(private val apiKey: String) : AIService {\n    override suspend fun sendMessage(messages: List<MessageEntity>, context: String): String {\n        val client = OkHttpClient()\n        val requestBody = createChatRequestBody(messages, context)\n        val request = Request.Builder()\n            .url(\"https://api.openai.com/v1/chat/completions\")\n            .post(requestBody)\n            .addHeader(\"Authorization\", \"Bearer $apiKey\")\n            .build()\n        \n        val response = client.newCall(request).execute()\n        return parseResponse(response)\n    }\n}",
+      "verification_steps": ["HTTP 请求正确", "响应解析正确"]
+    },
+    {
+      "id": "15",
+      "title": "创建 FileProcessor 文件处理服务",
+      "description": "实现 PDF 和文本文件的内容提取功能",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/service/FileProcessor.kt",
+      "estimated_time": "5",
+      "code_example": "class FileProcessor(private val context: Context) {\n    fun extractTextFromPdf(uri: Uri): String {\n        val inputStream = context.contentResolver.openInputStream(uri)\n        val loader = PDFLoader()\n        val document = loader.loadDocument(inputStream)\n        val stripper = PDFTextStripper()\n        return stripper.getText(document)\n    }\n    \n    fun extractTextFromTextFile(uri: Uri): String {\n        val inputStream = context.contentResolver.openInputStream(uri)\n        return inputStream.bufferedReader().use { it.readText() }\n    }\n}",
+      "verification_steps": ["文件读取权限正确", "文本提取准确"]
+    },
+    {
+      "id": "16",
+      "title": "创建 VoiceProcessor 语音处理服务",
+      "description": "实现语音识别功能，将语音转换为文本",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/service/VoiceProcessor.kt",
+      "estimated_time": "5",
+      "code_example": "class VoiceProcessor(private val context: Context) {\n    private val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)\n    \n    fun startListening(onResult: (String) -> Unit) {\n        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {\n            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)\n            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())\n        }\n        speechRecognizer.setRecognitionListener(object : RecognitionListener {\n            override fun onResults(results: Bundle?) {\n                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)\n                onResult(matches?.firstOrNull() ?: \"\")\n            }\n            // Other required methods...\n        })\n        speechRecognizer.startListening(intent)\n    }\n}",
+      "verification_steps": ["权限请求正确", "语音识别回调正确"]
+    },
+    {
+      "id": "17",
+      "title": "更新 AndroidManifest.xml 权限",
+      "description": "添加必要的权限：录音、存储、网络等",
+      "file_path": "app/src/main/AndroidManifest.xml",
+      "estimated_time": "3",
+      "code_example": "<uses-permission android:name=\"android.permission.RECORD_AUDIO\" />\n<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />\n<uses-permission android:name=\"android.permission.INTERNET\" />",
+      "verification_steps": ["所有必需权限已添加", "权限声明位置正确"]
+    },
+    {
+      "id": "18",
+      "title": "创建 RecyclerView Adapter for Topics",
+      "description": "实现话题列表的 RecyclerView 适配器",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/TopicsAdapter.kt",
+      "estimated_time": "5",
+      "code_example": "class TopicsAdapter(private val onClick: (TopicEntity) -> Unit) : \n    RecyclerView.Adapter<TopicsAdapter.TopicViewHolder>() {\n    \n    private var topics = listOf<TopicEntity>()\n    \n    fun submitList(newTopics: List<TopicEntity>) {\n        topics = newTopics\n        notifyDataSetChanged()\n    }\n    \n    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopicViewHolder {\n        val binding = ItemTopicBinding.inflate(LayoutInflater.from(parent.context), parent, false)\n        return TopicViewHolder(binding)\n    }\n    \n    override fun onBindViewHolder(holder: TopicViewHolder, position: Int) {\n        holder.bind(topics[position])\n    }\n    \n    class TopicViewHolder(private val binding: ItemTopicBinding) : \n        RecyclerView.ViewHolder(binding.root) {\n        fun bind(topic: TopicEntity) {\n            binding.titleText.text = topic.title\n            binding.progressText.text = \"Mastery: ${topic.masteryLevel}%\"\n            binding.root.setOnClickListener { onClick(topic) }\n        }\n    }\n}",
+      "verification_steps": ["ViewHolder 绑定正确", "点击事件传递正确"]
+    },
+    {
+      "id": "19",
+      "title": "创建 RecyclerView Adapter for Chat Messages",
+      "description": "实现消息列表的 RecyclerView 适配器",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/MessagesAdapter.kt",
+      "estimated_time": "5",
+      "code_example": "class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {\n    private val VIEW_TYPE_USER = 1\n    private val VIEW_TYPE_AI = 2\n    \n    private var messages = listOf<MessageEntity>()\n    \n    fun submitList(newMessages: List<MessageEntity>) {\n        messages = newMessages\n        notifyDataSetChanged()\n    }\n    \n    override fun getItemViewType(position: Int): Int {\n        return if (messages[position].senderType == \"USER\") VIEW_TYPE_USER else VIEW_TYPE_AI\n    }\n    \n    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {\n        val inflater = LayoutInflater.from(parent.context)\n        return if (viewType == VIEW_TYPE_USER) {\n            UserMessageViewHolder(ItemUserMessageBinding.inflate(inflater, parent, false))\n        } else {\n            AIMessageViewHolder(ItemAiMessageBinding.inflate(inflater, parent, false))\n        }\n    }\n}",
+      "verification_steps": ["ViewType 判断正确", "不同类型的 ViewHolder 创建正确"]
+    },
+    {
+      "id": "20",
+      "title": "更新 MainActivity 导航",
+      "description": "设置底部导航栏，切换三个主要 Fragment",
+      "file_path": "app/src/main/java/com/autodroid/teachitback/MainActivity.kt",
+      "estimated_time": "5",
+      "code_example": "class MainActivity : AppCompatActivity() {\n    private lateinit var binding: ActivityMainBinding\n    \n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        binding = ActivityMainBinding.inflate(layoutInflater)\n        setContentView(binding.root)\n        \n        setupBottomNavigation()\n    }\n    \n    private fun setupBottomNavigation() {\n        binding.bottomNavigation.setOnItemSelectedListener { item ->\n            val fragment = when (item.itemId) {\n                R.id.navigation_topics -> TopicsFragment()\n                R.id.navigation_why -> WhyFragment()\n                R.id.navigation_settings -> SettingsFragment()\n                else -> TopicsFragment()\n            }\n            supportFragmentManager.beginTransaction()\n                .replace(R.id.fragment_container, fragment)\n                .commit()\n            true\n        }\n    }\n}",
+      "verification_steps": ["导航切换正确", "Fragment 替换正确"]
+    },
+    {
+      "id": "21",
+      "title": "添加 kapt 插件到 build.gradle.kts",
+      "description": "配置 kapt 插件以支持 Room 注解处理器",
+      "file_path": "app/build.gradle.kts",
+      "estimated_time": "3",
+      "code_example": "plugins {\n    id(\"com.android.application\")\n    id(\"org.jetbrains.kotlin.android\")\n    id(\"org.jetbrains.kotlin.kapt\")\n}",
+      "verification_steps": ["kapt 插件应用成功", "Gradle sync 成功"]
+    }
+  ]
+}
