@@ -1,14 +1,20 @@
 package com.autodroid.teachitback.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentChatBinding
+import com.autodroid.teachitback.service.VoiceProcessor
 import com.autodroid.teachitback.viewmodel.AppViewModel
 
 class ChatFragment : Fragment() {
@@ -17,8 +23,20 @@ class ChatFragment : Fragment() {
 
     private lateinit var viewModel: AppViewModel
     private lateinit var messagesAdapter: MessagesAdapter
+    private lateinit var voiceProcessor: VoiceProcessor
+
     private var topicId: String? = null
     private var topicTitle: String? = null
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            startVoiceInput()
+        } else {
+            Toast.makeText(requireContext(), "需要录音权限", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,6 +54,8 @@ class ChatFragment : Fragment() {
         topicId = arguments?.getString("topicId")
         topicTitle = arguments?.getString("topicTitle")
 
+        voiceProcessor = VoiceProcessor(requireContext())
+
         setupUI()
         setupRecyclerView()
         observeMessages()
@@ -50,6 +70,10 @@ class ChatFragment : Fragment() {
 
         binding.sendButton.setOnClickListener {
             sendMessage()
+        }
+
+        binding.voiceButton.setOnClickListener {
+            requestOrStartVoiceInput()
         }
     }
 
@@ -94,8 +118,47 @@ class ChatFragment : Fragment() {
         }
     }
 
+    private fun requestOrStartVoiceInput() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                startVoiceInput()
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) -> {
+                Toast.makeText(requireContext(), "需要录音权限才能使用语音输入", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
+
+    private fun startVoiceInput() {
+        binding.voiceButton.isEnabled = false
+        binding.voiceInputProgress.visibility = View.VISIBLE
+
+        voiceProcessor.startListening(
+            onResult = { text ->
+                if (text.isNotEmpty()) {
+                    binding.messageInput.setText(text)
+                    sendMessage()
+                }
+                binding.voiceButton.isEnabled = true
+                binding.voiceInputProgress.visibility = View.GONE
+            },
+            onError = { error ->
+                Toast.makeText(requireContext(), "语音识别错误: $error", Toast.LENGTH_SHORT).show()
+                binding.voiceButton.isEnabled = true
+                binding.voiceInputProgress.visibility = View.GONE
+            }
+        )
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        voiceProcessor.destroy()
         _binding = null
     }
 }
