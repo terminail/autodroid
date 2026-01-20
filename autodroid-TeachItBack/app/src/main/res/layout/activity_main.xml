@@ -1,67 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/titleTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Teach It Back"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="24dp" />
-
-    <EditText
-        android:id="@+id/topicEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="输入您要学习的主题..."
-        android:layout_marginBottom="16dp" />
-
-    <Button
-        android:id="@+id/startButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="开始对话"
-        android:layout_marginBottom="16dp" />
-
-    <ScrollView
-        android:layout_width="match_parent"
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/chatContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-    </ScrollView>
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp">
+        android:background="?attr/colorSurface"
+        app:menu="@menu/bottom_nav_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <EditText
-            android:id="@+id/userInputEditText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="输入您的解释或回答..."
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/sendButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="发送" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

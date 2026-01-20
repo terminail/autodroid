@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.autodroid.teachitback.ui.TopicsFragment
+import com.autodroid.teachitback.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: AppViewModel
@@ -16,6 +19,16 @@ class MainActivity : AppCompatActivity() {
 
         // Initialize AI service from preferences
         initializeAI()
+
+        // Setup bottom navigation
+        setupBottomNavigation()
+
+        // Load initial fragment
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, TopicsFragment())
+                .commit()
+        }
     }
 
     private fun initializeAI() {
@@ -25,6 +38,22 @@ class MainActivity : AppCompatActivity() {
 
         if (apiKey.isNotBlank()) {
             viewModel.initializeAI(apiKey, model)
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.setOnItemSelectedListener { item ->
+            val fragment = when (item.itemId) {
+                R.id.navigation_topics -> TopicsFragment()
+                R.id.navigation_chat -> com.autodroid.teachitback.ui.ChatFragment()
+                R.id.navigation_settings -> SettingsFragment()
+                else -> TopicsFragment()
+            }
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit()
+            true
         }
     }
 }
