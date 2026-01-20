@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.autodroid.teachitback.ui.TopicsFragment
+import com.autodroid.teachitback.ui.WhyFragment
 import com.autodroid.teachitback.ui.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
                 R.id.navigation_topics -> TopicsFragment()
-                R.id.navigation_chat -> com.autodroid.teachitback.ui.ChatFragment()
+                R.id.navigation_why -> WhyFragment()
                 R.id.navigation_settings -> SettingsFragment()
                 else -> TopicsFragment()
             }

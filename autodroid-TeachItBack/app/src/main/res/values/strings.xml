@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Teach It Back</string>
+    <string name="app_description">Teach It Back 是一款基于苏格拉底教学法和费曼学习法的 AI 驱动学习应用。通过将所学知识"教回"给 AI，你可以深化理解并发现知识盲点。AI 会通过智能提问和反馈来检验和强化你的知识掌握情况。</string>
+    <string name="feiman_method">费曼学习法的核心理念是：如果你不能简单地解释它，你就没有真正理解它。通过用自己的话向别人讲解概念，你可以：\n• 发现理解中的漏洞\n• 强化记忆和长期保留\n• 提升逻辑思维能力\n• 加深对复杂概念的理解</string>
+    <string name="socratic_method">苏格拉底教学法通过提问的方式引导学生主动思考。在 Teach It Back 中，AI 扮演苏格拉底式的导师角色：\n• 引导你用自己理解的方式讲解\n• 通过提问挖掘深层理解\n• 指出理解中的偏差和错误\n• 鼓励深度思考而非机械记忆</string>
 </resources>

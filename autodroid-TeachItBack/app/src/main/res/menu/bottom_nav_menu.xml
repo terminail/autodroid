@@ -6,9 +6,9 @@
         android:title="主题" />
 
     <item
-        android:id="@+id/navigation_chat"
-        android:icon="@android:drawable/ic_menu_edit"
-        android:title="聊天" />
+        android:id="@+id/navigation_why"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="关于" />
 
     <item
         android:id="@+id/navigation_settings"
