@@ -80,6 +80,7 @@ class ChatFragment : Fragment() {
     private fun sendMessage() {
         val content = binding.messageInput.text.toString().trim()
         if (content.isNotEmpty() && topicId != null) {
+            // Save user message
             viewModel.insertMessage(
                 topicId = topicId!!,
                 content = content,
@@ -87,6 +88,9 @@ class ChatFragment : Fragment() {
                 messageType = "TEXT"
             )
             binding.messageInput.text?.clear()
+
+            // Send to AI and get response
+            viewModel.sendMessageToAI(topicId!!, topicTitle ?: "")
         }
     }
 
