@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_topics">
+
+    <!-- 主页面 -->
+    <fragment
+        android:id="@+id/nav_topics"
+        android:name="com.autodroid.teachitback.ui.TopicsFragment"
+        android:label="主题列表">
+        <action
+            android:id="@+id/action_nav_topics_to_chat"
+            app:destination="@id/nav_chat">
+            <argument
+                android:name="topicId"
+                app:argType="string" />
+            <argument
+                android:name="topicTitle"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_chat"
+        android:name="com.autodroid.teachitback.ui.ChatFragment"
+        android:label="聊天">
+        <argument
+            android:name="topicId"
+            app:argType="string" />
+        <argument
+            android:name="topicTitle"
+            app:argType="string" />
+    </fragment>
+
+    <!-- 设置相关页面 -->
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.autodroid.teachitback.ui.SettingsFragment"
+        android:label="设置">
+        <!-- 设置页面到各个子页面的导航 -->
+        <action
+            android:id="@+id/action_nav_settings_to_preferences"
+            app:destination="@id/nav_preferences" />
+        <action
+            android:id="@+id/action_nav_settings_to_about"
+            app:destination="@id/nav_about" />
+        <action
+            android:id="@+id/action_nav_settings_to_why"
+            app:destination="@id/nav_why" />
+        
+        <!-- AI服务设置页面导航 -->
+        <action
+            android:id="@+id/action_nav_settings_to_doubao"
+            app:destination="@id/nav_doubao_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_ernie"
+            app:destination="@id/nav_ernie_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_qwen"
+            app:destination="@id/nav_qwen_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_deepseek"
+            app:destination="@id/nav_deepseek_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_zhipu"
+            app:destination="@id/nav_zhipu_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_spark"
+            app:destination="@id/nav_spark_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_minimax"
+            app:destination="@id/nav_minimax_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_kimi"
+            app:destination="@id/nav_kimi_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_hunyuan"
+            app:destination="@id/nav_hunyuan_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_baichuan"
+            app:destination="@id/nav_baichuan_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_lingyi"
+            app:destination="@id/nav_lingyi_settings" />
+        <action
+            android:id="@+id/action_nav_settings_to_jieyue"
+            app:destination="@id/nav_jieyue_settings" />
+    </fragment>
+
+    <!-- 个人偏好设置 -->
+    <fragment
+        android:id="@+id/nav_preferences"
+        android:name="com.autodroid.teachitback.ui.PreferencesFragment"
+        android:label="个人偏好" />
+
+    <!-- 关于页面 -->
+    <fragment
+        android:id="@+id/nav_about"
+        android:name="com.autodroid.teachitback.ui.AboutFragment"
+        android:label="关于" />
+
+    <!-- 为什么页面 -->
+    <fragment
+        android:id="@+id/nav_why"
+        android:name="com.autodroid.teachitback.ui.WhyFragment"
+        android:label="为什么" />
+
+    <!-- AI服务详细设置页面 -->
+    <fragment
+        android:id="@+id/nav_doubao_settings"
+        android:name="com.autodroid.teachitback.ui.DoubaoAISettingsFragment"
+        android:label="豆包配置" />
+
+    <fragment
+        android:id="@+id/nav_ernie_settings"
+        android:name="com.autodroid.teachitback.ui.ErnieAISettingsFragment"
+        android:label="文心一言配置" />
+
+    <fragment
+        android:id="@+id/nav_qwen_settings"
+        android:name="com.autodroid.teachitback.ui.QwenAISettingsFragment"
+        android:label="通义千问配置" />
+
+    <fragment
+        android:id="@+id/nav_deepseek_settings"
+        android:name="com.autodroid.teachitback.ui.DeepSeekAISettingsFragment"
+        android:label="DeepSeek配置" />
+
+    <fragment
+        android:id="@+id/nav_zhipu_settings"
+        android:name="com.autodroid.teachitback.ui.ZhipuAISettingsFragment"
+        android:label="智谱AI配置" />
+
+    <fragment
+        android:id="@+id/nav_spark_settings"
+        android:name="com.autodroid.teachitback.ui.SparkAISettingsFragment"
+        android:label="讯飞星火配置" />
+
+    <fragment
+        android:id="@+id/nav_minimax_settings"
+        android:name="com.autodroid.teachitback.ui.MinimaxAISettingsFragment"
+        android:label="MiniMax配置" />
+
+    <fragment
+        android:id="@+id/nav_kimi_settings"
+        android:name="com.autodroid.teachitback.ui.KimiAISettingsFragment"
+        android:label="Kimi配置" />
+
+    <fragment
+        android:id="@+id/nav_hunyuan_settings"
+        android:name="com.autodroid.teachitback.ui.HunyuanAISettingsFragment"
+        android:label="混元大模型配置" />
+
+    <fragment
+        android:id="@+id/nav_baichuan_settings"
+        android:name="com.autodroid.teachitback.ui.BaichuanAISettingsFragment"
+        android:label="百川智能配置" />
+
+    <fragment
+        android:id="@+id/nav_lingyi_settings"
+        android:name="com.autodroid.teachitback.ui.LingyiAISettingsFragment"
+        android:label="零一万物配置" />
+
+    <fragment
+        android:id="@+id/nav_jieyue_settings"
+        android:name="com.autodroid.teachitback.ui.JieyueAISettingsFragment"
+        android:label="阶跃星辰配置" />
+
+</navigation>

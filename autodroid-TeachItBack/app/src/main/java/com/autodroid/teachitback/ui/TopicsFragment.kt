@@ -2,19 +2,21 @@ package com.autodroid.teachitback.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentTopicsBinding
-import com.autodroid.teachitback.databinding.ItemTopicBinding
 import com.autodroid.teachitback.model.TopicEntity
+import com.autodroid.teachitback.ui.adapter.TopicsAdapter
 import com.autodroid.teachitback.viewmodel.AppViewModel
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class TopicsFragment : Fragment() {
     private var _binding: FragmentTopicsBinding? = null
@@ -29,6 +31,7 @@ class TopicsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTopicsBinding.inflate(inflater, container, false)
+        setHasOptionsMenu(true)
         return binding.root
     }
 
@@ -37,33 +40,37 @@ class TopicsFragment : Fragment() {
         viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
 
         setupRecyclerView()
-        setupFab()
         observeTopics()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_topics, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_add_topic -> {
+                showAddTopicDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupRecyclerView() {
         topicsAdapter = TopicsAdapter { topic ->
-            val chatFragment = ChatFragment().apply {
-                arguments = Bundle().apply {
-                    putString("topicId", topic.id)
-                    putString("topicTitle", topic.title)
-                }
-            }
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, chatFragment)
-                .addToBackStack(null)
-                .commit()
+            // 导航到聊天页面，传递topic参数
+            val action = TopicsFragmentDirections.actionNavTopicsToChat(
+                topicId = topic.id,
+                topicTitle = topic.title
+            )
+            findNavController().navigate(action)
         }
 
         binding.topicsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = topicsAdapter
-        }
-    }
-
-    private fun setupFab() {
-        binding.addTopicFab.setOnClickListener {
-            showAddTopicDialog()
         }
     }
 
@@ -81,17 +88,11 @@ class TopicsFragment : Fragment() {
     }
 
     private fun showAddTopicDialog() {
-        val title = binding.newTopicTitle.text.toString().trim()
-        val description = binding.newTopicDescription.text.toString().trim()
-
-        if (title.isNotEmpty()) {
-            viewModel.insertTopic(title, description)
-            binding.newTopicTitle.text?.clear()
-            binding.newTopicDescription.text?.clear()
-            Toast.makeText(requireContext(), "主题已创建", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireContext(), "请输入主题名称", Toast.LENGTH_SHORT).show()
+        val dialog = AddTopicDialogFragment.newInstance()
+        dialog.setOnTopicAddedListener {
+            
         }
+        dialog.show(parentFragmentManager, "AddTopicDialog")
     }
 
     override fun onDestroyView() {

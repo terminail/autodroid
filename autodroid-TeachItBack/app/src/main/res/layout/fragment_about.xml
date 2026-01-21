@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F7F7F7">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="?attr/actionBarTheme"
+        android:elevation="4dp"
+        android:minHeight="?attr/actionBarSize"
+        android:navigationIcon="@drawable/ic_arrow_back" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 应用图标和名称 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@mipmap/ic_launcher"
+                    android:layout_marginEnd="16dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TeachItBack"
+                        android:textSize="20sp"
+                        android:textColor="#333333"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/app_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="版本 1.0.0"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:layout_marginTop="4dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 应用描述 -->
+            <TextView
+                android:id="@+id/app_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TeachItBack - 基于苏格拉底和费曼学习方法的AI学习助手\n\n帮助用户通过对话式学习掌握复杂概念，提升学习效率。"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="4dp"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 开发者信息 -->
+            <TextView
+                android:id="@+id/developer_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="开发者: Autodroid Team"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:gravity="center"
+                android:padding="16dp"
+                android:layout_marginTop="32dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

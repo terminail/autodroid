@@ -3,36 +3,37 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingRight="12dp"
     android:gravity="end">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:maxWidth="280dp"
-        android:orientation="vertical"
-        android:background="@android:drawable/btn_default"
-        android:padding="12dp"
-        android:backgroundTint="#E3F2FD">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/message_content"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxWidth="260dp"
             android:text="用户消息内容"
             android:textSize="15sp"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/white"
+            android:padding="10dp"
+            android:background="@drawable/msg_bubble_right" />
 
         <TextView
             android:id="@+id/message_time"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
             android:text="12:00"
             android:textSize="11sp"
-            android:textColor="@android:color/darker_gray"
-            android:gravity="end" />
+            android:textColor="#999999"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_gravity="end" />
 
     </LinearLayout>
 

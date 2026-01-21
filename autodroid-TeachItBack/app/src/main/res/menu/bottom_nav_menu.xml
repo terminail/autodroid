@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/navigation_topics"
+        android:id="@+id/nav_topics"
         android:icon="@android:drawable/ic_menu_sort_by_size"
         android:title="学习" />
 
     <item
-        android:id="@+id/navigation_why"
+        android:id="@+id/nav_why"
         android:icon="@android:drawable/ic_menu_info_details"
         android:title="关于" />
 
     <item
-        android:id="@+id/navigation_settings"
+        android:id="@+id/nav_settings"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="设置" />
 </menu>

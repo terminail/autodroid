@@ -17,7 +17,11 @@ class TopicsAdapter(
 
     fun submitList(newTopics: List<TopicEntity>) {
         topics = newTopics
-        notifyDataSetChanged()
+        try {
+            notifyDataSetChanged()
+        } catch (e: Exception) {
+            
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopicViewHolder {
@@ -26,7 +30,7 @@ class TopicsAdapter(
             parent,
             false
         )
-        return TopicViewHolder(binding)
+        return TopicViewHolder(binding, onClick)
     }
 
     override fun onBindViewHolder(holder: TopicViewHolder, position: Int) {
@@ -35,8 +39,10 @@ class TopicsAdapter(
 
     override fun getItemCount(): Int = topics.size
 
-    class TopicViewHolder(private val binding: ItemTopicBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    class TopicViewHolder(
+        private val binding: ItemTopicBinding,
+        private val onTopicClick: (TopicEntity) -> Unit
+    ) : RecyclerView.ViewHolder(binding.root) {
 
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -49,7 +55,7 @@ class TopicsAdapter(
             binding.dateText.text = dateFormat.format(date)
 
             binding.root.setOnClickListener {
-                onClick(topic)
+                onTopicClick(topic)
             }
         }
     }

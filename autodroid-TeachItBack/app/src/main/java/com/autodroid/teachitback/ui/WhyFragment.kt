@@ -27,7 +27,13 @@ class WhyFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // App introduction content is set in XML layout
+        // Add click listeners for interactive elements
+        setupCardInteractions()
+    }
+
+    private fun setupCardInteractions() {
+        // This method can be expanded to add interactive functionality
+        // For example, expanding/collapsing sections, showing more details, etc.
     }
 
     override fun onDestroyView() {

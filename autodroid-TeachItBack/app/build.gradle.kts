@@ -1,47 +1,17 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.kapt")
-}
-
-dependencies {
-    // Room Database
-    implementation("androidx.room:room-runtime:2.6.0")
-    implementation("androidx.room:room-ktx:2.6.0")
-    kapt("androidx.room:room-compiler:2.6.0")
-
-    // ViewModel and LiveData
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-    implementation("androidx.activity:activity-ktx:1.8.0")
-    implementation("androidx.fragment:fragment-ktx:1.6.0")
-
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-    // Material Design
-    implementation("com.google.android.material:material:1.11.0")
-
-    // ConstraintLayout
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-
-    // RecyclerView
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-
-    // Preference
-    implementation("androidx.preference:preference-ktx:1.2.1")
-
-    // OkHttp
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    id("kotlin-kapt")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
     namespace = "com.autodroid.teachitback"
-    compileSdk = 34
-
+    compileSdk = 36
+    
     defaultConfig {
         applicationId = "com.autodroid.teachitback"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -52,17 +22,80 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
+    
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
+    
+    buildFeatures {
+        viewBinding = true
+    }
+    
+    // Room schema export
+    kapt {
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
+    }
+    
+
+}
+
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.work:work-runtime:2.9.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    
+    // Kotlin
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    
+    // HTTP client
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    
+    // JSON parsing
+    implementation("com.google.code.gson:gson:2.13.2")
+    
+    // YAML parsing for configuration files
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2")
+    
+    // Room Database
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    
+    // Preference
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+    androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    testImplementation("org.mockito:mockito-core:5.7.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }

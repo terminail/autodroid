@@ -19,7 +19,11 @@ class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun submitList(newMessages: List<MessageEntity>) {
         messages = newMessages
-        notifyDataSetChanged()
+        try {
+            notifyDataSetChanged()
+        } catch (e: Exception) {
+            
+        }
     }
 
     override fun getItemViewType(position: Int): Int {

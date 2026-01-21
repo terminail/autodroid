@@ -43,7 +43,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Methodology Card -->
+        <!-- Application Value Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +60,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="学习方法"
+                    android:text="应用价值"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
@@ -68,16 +68,16 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="费曼学习法"
+                    android:text="基于CFP-Study的真实学习过程"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/holo_blue_dark"
+                    android:textColor="@android:color/holo_green_dark"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/feiman_method"
+                    android:text="Teach It Back通过模拟真实教学场景，帮助您深入理解复杂概念。基于CFP-Study的实际学习经验，本应用能够："
                     android:textSize="14sp"
                     android:lineSpacingExtra="3dp"
                     android:layout_marginBottom="12dp" />
@@ -85,18 +85,130 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="苏格拉底教学法"
+                    android:text="• 识别知识盲点，针对性强化学习"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 通过教学反馈，提升表达和逻辑能力"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 建立系统知识框架，避免碎片化学习"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 跟踪学习进度，量化掌握程度"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Real Results Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="真实学习成果"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="基于CFP-Study的实际应用效果"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/holo_blue_dark"
+                    android:textColor="@android:color/holo_orange_dark"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/socratic_method"
+                    android:text="在CFP考试准备过程中，Teach It Back帮助用户："
                     android:textSize="14sp"
-                    android:lineSpacingExtra="3dp" />
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 1031交换：从困惑到掌握平衡等式框架"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• IRA规则：清晰区分贡献资格与抵扣性"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 投资风险：理解R平方与系统性风险关系"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 学习进度：82%知识点掌握，3天倒计时"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/holo_green_dark" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="通过苏格拉底式提问和费曼解释方法，用户能够："
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 识别并解决概念混淆点"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 建立系统化的知识框架"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• 提升表达和解释能力"
+                    android:textSize="14sp" />
 
             </LinearLayout>
 
