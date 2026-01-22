@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import com.autodroid.teachitback.databinding.DialogAddTopicBinding
-import com.autodroid.teachitback.viewmodel.AppViewModel
+import com.autodroid.teachitback.viewmodel.TopicsViewModel
 import androidx.lifecycle.ViewModelProvider
 
 class AddTopicDialogFragment : DialogFragment() {
@@ -16,7 +16,7 @@ class AddTopicDialogFragment : DialogFragment() {
     private var _binding: DialogAddTopicBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: AppViewModel
+    private lateinit var viewModel: TopicsViewModel
     private var onTopicAdded: (() -> Unit)? = null
 
     fun setOnTopicAddedListener(listener: () -> Unit) {
@@ -40,7 +40,7 @@ class AddTopicDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
+        viewModel = ViewModelProvider(requireActivity())[TopicsViewModel::class.java]
 
         setupClickListeners()
     }

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="真实学习成果"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/subtitle_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="基于CFP-Study的实际应用效果"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/holo_orange_dark"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/description_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="在CFP考试准备过程中，Teach It Back帮助用户："
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/achievements_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• 1031交换：从困惑到掌握平衡等式框架\n• IRA规则：清晰区分贡献资格与抵扣性\n• 投资风险：理解R平方与系统性风险关系\n• 学习进度：82%知识点掌握，3天倒计时"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/testimonial_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Teach It Back让我真正理解了复杂的财务规划概念。通过向AI解释，我发现了很多自己以为懂但实际模糊的地方。"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:textColor="#666666"
+            android:lineSpacingExtra="3dp"
+            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

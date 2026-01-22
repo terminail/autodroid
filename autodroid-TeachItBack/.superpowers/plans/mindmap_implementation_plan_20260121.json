@@ -1,0 +1,256 @@
+{
+    "project": "Teach It Back - MindMap Integration",
+    "phase": "writing-plans",
+    "timestamp": "2026-01-21",
+    "branch": "feature/teach-it-back-dev",
+    "tasks": [
+        {
+            "id": "task-1",
+            "title": "完善MindMapNode实体和数据库表",
+            "description": "创建MindMapNode实体类，定义数据库表和索引",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/model/MindMapNode.kt",
+            "code_example": "@Entity(\n    tableName = \"mindmap_nodes\",\n    foreignKeys = [\n        ForeignKey(\n            entity = MindMapEntity::class,\n            parentColumns = [\"id\"],\n            childColumns = [\"mindMapId\"],\n            onDelete = ForeignKey.CASCADE\n        ),\n        ForeignKey(\n            entity = MindMapNode::class,\n            parentColumns = [\"id\"],\n            childColumns = [\"parentId\"],\n            onDelete = ForeignKey.CASCADE\n        )\n    ],\n    indices = [\n        Index(value = [\"mindMapId\"]),\n        Index(value = [\"parentId\"])\n    ]\n)\ndata class MindMapNode(\n    @PrimaryKey\n    val id: String = UUID.randomUUID().toString(),\n    val mindMapId: String,\n    val parentId: String? = null,\n    val title: String,\n    val description: String? = null,\n    val progress: Int = 0,\n    val nodeType: String = \"concept\",\n    val orderIndex: Int = 0,\n    val createdAt: Long = System.currentTimeMillis()\n)",
+            "validation_steps": [
+                "编译通过",
+                "数据库表创建成功"
+            ]
+        },
+        {
+            "id": "task-2",
+            "title": "创建MindMapDao数据库操作接口",
+            "description": "实现MindMap和MindMapNode的CRUD操作",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/database/MindMapDao.kt",
+            "code_example": "@Dao\ninterface MindMapDao {\n    @Insert\n    suspend fun insert(mindMap: MindMapEntity)\n    \n    @Query(\"SELECT * FROM mindmaps WHERE topicId = :topicId\")\n    suspend fun getByTopicId(topicId: String): MindMapEntity?\n    \n    @Insert\n    suspend fun insertNode(node: MindMapNode)\n    \n    @Query(\"SELECT * FROM mindmap_nodes WHERE mindMapId = :mindMapId ORDER BY parentId IS NULL DESC, orderIndex ASC\")\n    suspend fun getNodesByMindMap(mindMapId: String): List<MindMapNode>\n    \n    @Update\n    suspend fun updateNodeProgress(node: MindMapNode)\n    \n    @Query(\"SELECT * FROM mindmap_nodes WHERE parentId = :parentId ORDER BY orderIndex ASC\")\n    suspend fun getChildNodes(parentId: String): List<MindMapNode>\n    \n    @Query(\"DELETE FROM mindmap_nodes WHERE mindMapId = :mindMapId\")\n    suspend fun deleteNodesByMindMap(mindMapId: String)\n}",
+            "validation_steps": [
+                "编译通过",
+                "DAO方法可调用"
+            ]
+        },
+        {
+            "id": "task-3",
+            "title": "扩展AppDatabase添加MindMap表",
+            "description": "修改AppDatabase，添加MindMap相关的表",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/database/AppDatabase.kt",
+            "code_example": "@Database(\n    entities = [\n        TopicEntity::class,\n        MessageEntity::class,\n        MindMapEntity::class,\n        MindMapNode::class\n    ],\n    version = 2\n)\n@TypeConverters(Converters::class)\nabstract class AppDatabase : RoomDatabase() {\n    abstract fun topicDao(): TopicDao\n    abstract fun messageDao(): MessageDao\n    abstract fun mindMapDao(): MindMapDao\n    \n    companion object {\n        @Volatile\n        private var INSTANCE: AppDatabase? = null\n        \n        fun getDatabase(context: Context): AppDatabase {\n            return INSTANCE ?: synchronized(this) {\n                val instance = Room.databaseBuilder(\n                    context.applicationContext,\n                    AppDatabase::class.java,\n                    \"teachitback_database\"\n                ).fallbackToDestructiveMigration().build()\n                INSTANCE = instance\n                instance\n            }\n        }\n    }\n}",
+            "validation_steps": [
+                "数据库版本升级到2",
+                "编译通过"
+            ]
+        },
+        {
+            "id": "task-4",
+            "title": "创建MindMapItem适配器类",
+            "description": "实现RecyclerView的MindMapItem类型，支持树形显示",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/MindMapItem.kt",
+            "code_example": "data class MindMapItem(\n    val mindMap: MindMapEntity,\n    val nodes: List<MindMapNode>,\n    val isExpanded: Boolean = false\n) : RecyclerViewItem {\n    override val viewType: Int = R.layout.item_mindmap\n    \n    fun getRootNodes(): List<MindMapNode> = nodes.filter { it.parentId == null }\n    \n    fun getChildren(parentId: String): List<MindMapNode> = nodes.filter { it.parentId == parentId }\n    \n    fun getProgressColor(progress: Int): Int = when {\n        progress <= 30 -> Color.RED\n        progress <= 70 -> Color.YELLOW\n        else -> Color.GREEN\n    }\n    \n    fun getOverallProgress(): Int {\n        return if (nodes.isEmpty()) 0 else nodes.sumOf { it.progress } / nodes.size\n    }\n}",
+            "validation_steps": [
+                "编译通过",
+                "Item可正确显示颜色"
+            ]
+        },
+        {
+            "id": "task-5",
+            "title": "扩展MessagesAdapter支持MindMapItem",
+            "description": "修改现有适配器，添加MindMapItem类型的支持",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/MessagesAdapter.kt",
+            "code_example": "class MessagesAdapter : ListAdapter<RecyclerViewItem, RecyclerView.ViewHolder>(DIFF_CALLBACK) {\n    \n    override fun getItemViewType(position: Int): Int {\n        return when (val item = getItem(position)) {\n            is TextMessageItem -> R.layout.item_text_message\n            is AIResponseItem -> R.layout.item_ai_response\n            is MindMapItem -> R.layout.item_mindmap\n            else -> throw IllegalArgumentException(\"Unknown item type\")\n        }\n    }\n    \n    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {\n        return when (viewType) {\n            R.layout.item_mindmap -> MindMapViewHolder(\n                LayoutInflater.from(parent.context).inflate(R.layout.item_mindmap, parent, false)\n            )\n            R.layout.item_text_message -> TextMessageViewHolder(\n                LayoutInflater.from(parent.context).inflate(R.layout.item_text_message, parent, false)\n            )\n            R.layout.item_ai_response -> AIResponseViewHolder(\n                LayoutInflater.from(parent.context).inflate(R.layout.item_ai_response, parent, false)\n            )\n            else -> throw IllegalArgumentException(\"Unknown view type: $viewType\")\n        }\n    }\n    \n    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {\n        when (holder) {\n            is MindMapViewHolder -> holder.bind(getItem(position) as MindMapItem)\n            is TextMessageViewHolder -> holder.bind(getItem(position) as TextMessageItem)\n            is AIResponseViewHolder -> holder.bind(getItem(position) as AIResponseItem)\n        }\n    }\n}",
+            "validation_steps": [
+                "编译通过",
+                "适配器可正确绑定MindMapItem"
+            ]
+        },
+        {
+            "id": "task-6",
+            "title": "实现MindMapViewHolder",
+            "description": "创建MindMapItem对应的ViewHolder，处理树形显示逻辑",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/MindMapViewHolder.kt",
+            "code_example": "class MindMapViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {\n    private val mindMapContainer: LinearLayout = itemView.findViewById(R.id.mindmap_container)\n    private val mindMapTitle: TextView = itemView.findViewById(R.id.mindmap_title)\n    private val overallProgress: TextView = itemView.findViewById(R.id.overall_progress)\n    private val expandButton: ImageButton = itemView.findViewById(R.id.expand_button)\n    \n    fun bind(item: MindMapItem) {\n        mindMapTitle.text = item.mindMap.title\n        overallProgress.text = \"总体进度: ${item.getOverallProgress()}%\"\n        \n        mindMapContainer.removeAllViews()\n        if (item.isExpanded) {\n            renderNodes(item.getRootNodes(), item, 0)\n            expandButton.setImageResource(R.drawable.ic_collapse)\n        } else {\n            expandButton.setImageResource(R.drawable.ic_expand)\n        }\n        \n        expandButton.setOnClickListener {\n            // 处理展开/收起逻辑\n        }\n    }\n    \n    private fun renderNodes(nodes: List<MindMapNode>, item: MindMapItem, level: Int) {\n        nodes.forEach { node ->\n            val nodeView = createNodeView(node, item, level)\n            mindMapContainer.addView(nodeView)\n            \n            val children = item.getChildren(node.id)\n            if (children.isNotEmpty()) {\n                renderNodes(children, item, level + 1)\n            }\n        }\n    }\n    \n    private fun createNodeView(node: MindMapNode, item: MindMapItem, level: Int): View {\n        val inflater = LayoutInflater.from(itemView.context)\n        val nodeView = inflater.inflate(R.layout.item_mindmap_node, mindMapContainer, false)\n        \n        val nodeTitle: TextView = nodeView.findViewById(R.id.node_title)\n        val nodeProgress: TextView = nodeView.findViewById(R.id.node_progress)\n        val nodeColor: View = nodeView.findViewById(R.id.node_color)\n        \n        nodeTitle.text = node.title\n        nodeProgress.text = \"${node.progress}%\"\n        nodeColor.setBackgroundColor(item.getProgressColor(node.progress))\n        \n        // 设置缩进\n        val params = nodeView.layoutParams as? LinearLayout.LayoutParams\n        params?.marginStart = level * 40\n        \n        return nodeView\n    }\n}",
+            "validation_steps": [
+                "编译通过",
+                "ViewHolder可正确渲染树形结构"
+            ]
+        },
+        {
+            "id": "task-7",
+            "title": "创建MindMap布局文件",
+            "description": "创建item_mindmap.xml和item_mindmap_node.xml布局文件",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/res/layout/item_mindmap.xml",
+            "code_example": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"wrap_content\"\n    android:orientation=\"vertical\"\n    android:padding=\"16dp\">\n    \n    <LinearLayout\n        android:layout_width=\"match_parent\"\n        android:layout_height=\"wrap_content\"\n        android:orientation=\"horizontal\"\n        android:gravity=\"center_vertical\">\n        \n        <ImageButton\n            android:id=\"@+id/expand_button\"\n            android:layout_width=\"24dp\"\n            android:layout_height=\"24dp\"\n            android:background=\"@android:color/transparent\"\n            android:src=\"@drawable/ic_expand\" />\n        \n        <TextView\n            android:id=\"@+id/mindmap_title\"\n            android:layout_width=\"0dp\"\n            android:layout_height=\"wrap_content\"\n            android:layout_weight=\"1\"\n            android:textSize=\"18sp\"\n            android:textStyle=\"bold\"\n            android:layout_marginStart=\"8dp\" />\n        \n        <TextView\n            android:id=\"@+id/overall_progress\"\n            android:layout_width=\"wrap_content\"\n            android:layout_height=\"wrap_content\"\n            android:textSize=\"14sp\"\n            android:textColor=\"@color/green\" />\n    </LinearLayout>\n    \n    <LinearLayout\n        android:id=\"@+id/mindmap_container\"\n        android:layout_width=\"match_parent\"\n        android:layout_height=\"wrap_content\"\n        android:orientation=\"vertical\"\n        android:layout_marginTop=\"8dp\" />\n</LinearLayout>",
+            "validation_steps": [
+                "布局文件编译通过",
+                "预览显示正常"
+            ]
+        },
+        {
+            "id": "task-8",
+            "title": "创建MindMap节点布局文件",
+            "description": "创建item_mindmap_node.xml布局文件",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/res/layout/item_mindmap_node.xml",
+            "code_example": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"wrap_content\"\n    android:orientation=\"horizontal\"\n    android:gravity=\"center_vertical\"\n    android:layout_marginTop=\"4dp\">\n    \n    <View\n        android:id=\"@+id/node_color\"\n        android:layout_width=\"8dp\"\n        android:layout_height=\"8dp\"\n        android:layout_marginEnd=\"8dp\"\n        android:background=\"@color/red\" />\n    \n    <TextView\n        android:id=\"@+id/node_title\"\n        android:layout_width=\"0dp\"\n        android:layout_height=\"wrap_content\"\n        android:layout_weight=\"1\"\n        android:textSize=\"14sp\" />\n    \n    <TextView\n        android:id=\"@+id/node_progress\"\n        android:layout_width=\"wrap_content\"\n        android:layout_height=\"wrap_content\"\n        android:textSize=\"12sp\"\n        android:textColor=\"@color/gray\" />\n</LinearLayout>",
+            "validation_steps": [
+                "布局文件编译通过",
+                "预览显示正常"
+            ]
+        },
+        {
+            "id": "task-9",
+            "title": "扩展ChatFragment支持MindMap显示",
+            "description": "修改ChatFragment，添加MindMap显示逻辑",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/ChatFragment.kt",
+            "code_example": "class ChatFragment : Fragment() {\n    \n    private fun addMindMapToChat(mindMap: MindMapEntity, nodes: List<MindMapNode>) {\n        val mindMapItem = MindMapItem(mindMap, nodes)\n        val currentList = messagesAdapter.currentList.toMutableList()\n        currentList.add(mindMapItem)\n        messagesAdapter.submitList(currentList)\n        binding.recyclerView.scrollToPosition(currentList.size - 1)\n    }\n    \n    private suspend fun loadMindMapForTopic(topicId: String) {\n        val mindMap = database.mindMapDao().getByTopicId(topicId)\n        mindMap?.let { map ->\n            val nodes = database.mindMapDao().getNodesByMindMap(map.id)\n            addMindMapToChat(map, nodes)\n        }\n    }\n    \n    private fun handleAIResponseWithProgress(response: AIResponse) {\n        response.progressUpdates?.forEach { (nodeId, progress) ->\n            viewModelScope.launch {\n                val node = database.mindMapDao().getNodeById(nodeId)\n                node?.let {\n                    val updatedNode = it.copy(progress = progress)\n                    database.mindMapDao().updateNodeProgress(updatedNode)\n                }\n            }\n        }\n    }\n}",
+            "validation_steps": [
+                "编译通过",
+                "MindMap可正确显示在聊天界面"
+            ]
+        },
+        {
+            "id": "task-10",
+            "title": "扩展WhyFragment显示预置课程",
+            "description": "修改WhyFragment，显示预置课程列表",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/WhyFragment.kt",
+            "code_example": "class WhyFragment : Fragment() {\n    \n    private val presetTopics = listOf(\n        TopicEntity(\n            id = \"preset_biology\",\n            title = \"高中三年级生物\",\n            description = \"标准高中生物课程\",\n            isPreset = true\n        ),\n        TopicEntity(\n            id = \"preset_physics\",\n            title = \"高中物理\",\n            description = \"基础物理知识\",\n            isPreset = true\n        )\n    )\n    \n    private fun setupPresetTopics() {\n        val adapter = PresetTopicsAdapter(presetTopics) { topic ->\n            copyPresetTopic(topic)\n        }\n        binding.presetTopicsRecyclerView.adapter = adapter\n    }\n    \n    private fun copyPresetTopic(presetTopic: TopicEntity) {\n        val personalTopic = presetTopic.copy(\n            id = UUID.randomUUID().toString(),\n            isPreset = false\n        )\n        viewModelScope.launch {\n            database.topicDao().insert(personalTopic)\n            findNavController().navigate(R.id.action_whyFragment_to_chatFragment)\n        }\n    }\n}",
+            "validation_steps": [
+                "编译通过",
+                "预置课程列表显示正常"
+            ]
+        },
+        {
+            "id": "task-11",
+            "title": "创建预置课程适配器",
+            "description": "创建PresetTopicsAdapter用于显示预置课程",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/PresetTopicsAdapter.kt",
+            "code_example": "class PresetTopicsAdapter(\n    private val topics: List<TopicEntity>,\n    private val onTopicSelected: (TopicEntity) -> Unit\n) : RecyclerView.Adapter<PresetTopicsAdapter.ViewHolder>() {\n    \n    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {\n        val title: TextView = itemView.findViewById(R.id.topic_title)\n        val description: TextView = itemView.findViewById(R.id.topic_description)\n        val presetBadge: TextView = itemView.findViewById(R.id.preset_badge)\n    }\n    \n    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {\n        val view = LayoutInflater.from(parent.context)\n            .inflate(R.layout.item_preset_topic, parent, false)\n        return ViewHolder(view)\n    }\n    \n    override fun onBindViewHolder(holder: ViewHolder, position: Int) {\n        val topic = topics[position]\n        holder.title.text = topic.title\n        holder.description.text = topic.description\n        holder.presetBadge.visibility = if (topic.isPreset) View.VISIBLE else View.GONE\n        \n        holder.itemView.setOnClickListener {\n            onTopicSelected(topic)\n        }\n    }\n    \n    override fun getItemCount() = topics.size\n}",
+            "validation_steps": [
+                "编译通过",
+                "适配器可正确显示预置课程"
+            ]
+        },
+        {
+            "id": "task-12",
+            "title": "编写MindMap相关单元测试",
+            "description": "创建MindMapDao和MindMapItem的单元测试",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/test/java/com/autodroid/teachitback/database/MindMapDaoTest.kt",
+            "code_example": "@RunWith(AndroidJUnit4::class)\nclass MindMapDaoTest {\n    \n    private lateinit var database: AppDatabase\n    private lateinit var mindMapDao: MindMapDao\n    \n    @Before\n    fun createDb() {\n        val context = ApplicationProvider.getApplicationContext<Context>()\n        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()\n        mindMapDao = database.mindMapDao()\n    }\n    \n    @After\n    fun closeDb() {\n        database.close()\n    }\n    \n    @Test\n    fun testInsertAndRetrieveMindMap() = runTest {\n        val mindMap = MindMapEntity(topicId = \"test_topic\", title = \"Test MindMap\")\n        mindMapDao.insert(mindMap)\n        \n        val retrieved = mindMapDao.getByTopicId(\"test_topic\")\n        assertThat(retrieved).isNotNull()\n        assertThat(retrieved?.title).isEqualTo(\"Test MindMap\")\n    }\n}",
+            "validation_steps": [
+                "测试通过",
+                "覆盖率达标"
+            ]
+        },
+        {
+            "id": "task-13",
+            "title": "扩展DataInitializer添加MindMap演示数据",
+            "description": "修改DataInitializer，添加预置课程和MindMap演示数据",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/utils/DataInitializer.kt",
+            "code_example": "fun initializeMindMapDemoData() {\n    CoroutineScope(Dispatchers.IO).launch {\n        val database = AppDatabase.getDatabase(context)\n        \n        // 清除现有MindMap数据\n        database.mindMapDao().deleteAllMindMaps()\n        \n        // 创建预置课程MindMap\n        val presetTopics = listOf(\n            \"高中三年级生物\",\n            \"高中物理\",\n            \"高中化学\",\n            \"微积分基础\",\n            \"编程入门\"\n        )\n        \n        presetTopics.forEach { title ->\n            val topic = TopicEntity(\n                title = title,\n                description = \"标准${title}课程\",\n                isPreset = true\n            )\n            database.topicDao().insert(topic)\n            \n            // 创建对应的MindMap\n            val mindMap = MindMapEntity(\n                topicId = topic.id,\n                title = \"${title}学习路径\"\n            )\n            database.mindMapDao().insert(mindMap)\n            \n            // 为每个预置课程创建标准MindMap结构\n            when (title) {\n                \"高中三年级生物\" -> createBiologyMindMap(mindMap.id, database)\n                \"高中物理\" -> createPhysicsMindMap(mindMap.id, database)\n                \"高中化学\" -> createChemistryMindMap(mindMap.id, database)\n                \"微积分基础\" -> createCalculusMindMap(mindMap.id, database)\n                \"编程入门\" -> createProgrammingMindMap(mindMap.id, database)\n            }\n        }\n    }\n}\n\nprivate suspend fun createBiologyMindMap(mindMapId: String, database: AppDatabase) {\n    val nodes = listOf(\n        MindMapNode(mindMapId = mindMapId, title = \"细胞生物学\", progress = 0),\n        MindMapNode(mindMapId = mindMapId, title = \"遗传学\", progress = 0),\n        MindMapNode(mindMapId = mindMapId, title = \"生态学\", progress = 0),\n        MindMapNode(mindMapId = mindMapId, title = \"生物进化\", progress = 0),\n        MindMapNode(mindMapId = mindMapId, title = \"人体生理\", progress = 0)\n    )\n    nodes.forEach { database.mindMapDao().insertNode(it) }\n}",
+            "validation_steps": [
+                "演示数据创建成功",
+                "预置课程可正确显示"
+            ]
+        },
+        {
+            "id": "task-14",
+            "title": "创建预置课程详细MindMap结构",
+            "description": "为每个预置课程创建详细的树形MindMap结构",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/utils/PresetMindMapCreator.kt",
+            "code_example": "class PresetMindMapCreator(private val database: AppDatabase) {\n    \n    suspend fun createDetailedMindMapStructure(mindMapId: String, subject: String) {\n        when (subject) {\n            \"高中三年级生物\" -> createDetailedBiologyStructure(mindMapId)\n            \"高中物理\" -> createDetailedPhysicsStructure(mindMapId)\n            // ... 其他科目\n        }\n    }\n    \n    private suspend fun createDetailedBiologyStructure(mindMapId: String) {\n        // 创建根节点\n        val cellBiology = MindMapNode(mindMapId = mindMapId, title = \"细胞生物学\")\n        database.mindMapDao().insertNode(cellBiology)\n        \n        // 创建子节点\n        val cellStructure = MindMapNode(mindMapId = mindMapId, parentId = cellBiology.id, title = \"细胞结构\", progress = 0)\n        val cellFunction = MindMapNode(mindMapId = mindMapId, parentId = cellBiology.id, title = \"细胞功能\", progress = 0)\n        val cellDivision = MindMapNode(mindMapId = mindMapId, parentId = cellBiology.id, title = \"细胞分裂\", progress = 0)\n        \n        listOf(cellStructure, cellFunction, cellDivision).forEach { database.mindMapDao().insertNode(it) }\n        \n        // 创建孙子节点\n        val dnaStructure = MindMapNode(mindMapId = mindMapId, parentId = cellStructure.id, title = \"DNA结构\", progress = 0)\n        val rnaFunction = MindMapNode(mindMapId = mindMapId, parentId = cellFunction.id, title = \"RNA功能\", progress = 0)\n        val mitosis = MindMapNode(mindMapId = mindMapId, parentId = cellDivision.id, title = \"有丝分裂\", progress = 0)\n        val meiosis = MindMapNode(mindMapId = mindMapId, parentId = cellDivision.id, title = \"减数分裂\", progress = 0)\n        \n        listOf(dnaStructure, rnaFunction, mitosis, meiosis).forEach { database.mindMapDao().insertNode(it) }\n    }\n}",
+            "validation_steps": [
+                "树形结构创建成功",
+                "层级关系正确"
+            ]
+        },
+        {
+            "id": "task-15",
+            "title": "创建MindMap演示数据验证工具",
+            "description": "创建工具类用于验证MindMap演示数据的正确性",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/utils/MindMapDemoValidator.kt",
+            "code_example": "class MindMapDemoValidator(private val database: AppDatabase) {\n    \n    suspend fun validateDemoData(): ValidationResult {\n        val presetTopics = database.topicDao().getPresetTopics()\n        val errors = mutableListOf<String>()\n        \n        // 验证预置课程数量\n        if (presetTopics.isEmpty()) {\n            errors.add(\"未找到预置课程\")\n        }\n        \n        // 验证每个预置课程都有对应的MindMap\n        presetTopics.forEach { topic ->\n            val mindMap = database.mindMapDao().getByTopicId(topic.id)\n            if (mindMap == null) {\n                errors.add(\"${topic.title} 没有对应的MindMap\")\n            } else {\n                val nodes = database.mindMapDao().getNodesByMindMap(mindMap.id)\n                if (nodes.isEmpty()) {\n                    errors.add(\"${topic.title} 的MindMap为空\")\n                }\n            }\n        }\n        \n        return ValidationResult(\n            isValid = errors.isEmpty(),\n            errors = errors,\n            totalTopics = presetTopics.size\n        )\n    }\n    \n    data class ValidationResult(\n        val isValid: Boolean,\n        val errors: List<String>,\n        val totalTopics: Int\n    )\n}",
+            "validation_steps": [
+                "验证工具编译通过",
+                "能正确检测演示数据问题"
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "task-1": [
+                "task-2"
+            ]
+        },
+        {
+            "task-2": [
+                "task-3"
+            ]
+        },
+        {
+            "task-4": [
+                "task-5",
+                "task-6"
+            ]
+        },
+        {
+            "task-7": [
+                "task-8"
+            ]
+        },
+        {
+            "task-9": [
+                "task-4",
+                "task-5"
+            ]
+        },
+        {
+            "task-10": [
+                "task-11"
+            ]
+        },
+        {
+            "task-13": [
+                "task-1",
+                "task-2"
+            ]
+        },
+        {
+            "task-14": [
+                "task-13"
+            ]
+        },
+        {
+            "task-15": [
+                "task-13",
+                "task-14"
+            ]
+        }
+    ],
+    "priority_order": [
+        "task-1",
+        "task-2",
+        "task-3",
+        "task-7",
+        "task-8",
+        "task-4",
+        "task-5",
+        "task-6",
+        "task-9",
+        "task-10",
+        "task-11",
+        "task-12",
+        "task-13",
+        "task-14",
+        "task-15"
+    ]
+}

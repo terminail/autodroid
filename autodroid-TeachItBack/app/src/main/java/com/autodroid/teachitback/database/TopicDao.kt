@@ -28,4 +28,9 @@ interface TopicDao {
 
     @Query("DELETE FROM topics")
     suspend fun deleteAllTopics()
+    
+    // ===== 验证工具需要的额外方法 =====
+    
+    @Query("SELECT * FROM topics WHERE id = :id")
+    suspend fun getTopicByIdSync(id: String): TopicEntity?
 }

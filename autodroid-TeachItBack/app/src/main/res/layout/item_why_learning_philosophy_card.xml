@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="学习哲学：苏格拉底×费曼的完美结合"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/socratic_method_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="苏格拉底方法：深度提问引导思考\nAI通过精心设计的提问，帮助您发现知识盲点，培养批判性思维能力。"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginBottom="12dp"
+            android:padding="12dp"
+            android:background="#F0F8FF" />
+
+        <TextView
+            android:id="@+id/feynman_technique_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="费曼技巧：通过教学巩固知识\n'如果您不能简单地解释一个概念，说明您还没有真正理解它。' - 通过向AI解释，检验您的理解深度。"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginBottom="12dp"
+            android:padding="12dp"
+            android:background="#FFF8DC" />
+
+        <TextView
+            android:id="@+id/mindmap_integration_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MindMap可视化：学习路径一目了然\nAI将复杂知识分解为树状结构，实时显示学习进度，让您清晰看到自己的进步。"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:padding="12dp"
+            android:background="#F0FFF0" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

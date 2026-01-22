@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/node_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="4dp">
+
+    <!-- 缩进空间 -->
+    <Space
+        android:id="@+id/indent_space"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="0" />
+
+    <!-- 节点内容容器 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:background="@drawable/card_background"
+        android:padding="12dp"
+        android:layout_marginEnd="8dp">
+
+        <!-- 进度颜色指示器 -->
+        <View
+            android:id="@+id/progress_indicator"
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="8dp"
+            android:background="@color/red" />
+
+        <!-- 节点内容 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- 节点标题 -->
+            <TextView
+                android:id="@+id/node_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="节点标题"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- 节点描述 -->
+            <TextView
+                android:id="@+id/node_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="节点描述"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="2dp"
+                android:visibility="gone" />
+
+            <!-- 进度信息 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <!-- 进度文本 -->
+                <TextView
+                    android:id="@+id/progress_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0%"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray" />
+
+                <!-- 进度条 -->
+                <ProgressBar
+                    android:id="@+id/node_progress_bar"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="4dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:layout_gravity="center_vertical"
+                    android:progress="0"
+                    android:max="100"
+                    android:progressTint="@color/red" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 展开/收起按钮 -->
+        <ImageView
+            android:id="@+id/expand_collapse_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_arrow_back"
+            android:rotation="90"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>

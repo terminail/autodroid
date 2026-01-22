@@ -13,5 +13,6 @@ data class TopicEntity(
     val masteryLevel: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val lastAccessed: Long = System.currentTimeMillis(),
-    val nextLearningGoal: String? = null
+    val nextLearningGoal: String? = null,
+    val isPreset: Boolean = false
 )

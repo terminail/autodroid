@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/msg_bubble_left">
+
+    <!-- MindMap标题 -->
+    <TextView
+        android:id="@+id/mindmap_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="学习进度概览"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 进度统计 -->
+    <TextView
+        android:id="@+id/progress_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="总体进度: 0% | 红色(0) 黄色(0) 绿色(0)"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 展开/收起按钮 -->
+    <Button
+        android:id="@+id/expand_collapse_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="展开思维导图"
+        android:textSize="14sp"
+        android:background="@android:color/transparent"
+        android:textColor="@color/colorPrimary"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 树形结构容器（开始时隐藏） -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/mindmap_tree_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        android:nestedScrollingEnabled="false" />
+
+    <!-- 进度条显示 -->
+    <ProgressBar
+        android:id="@+id/overall_progress_bar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="8dp"
+        android:progress="0"
+        android:max="100"
+        android:progressTint="@color/colorPrimary" />
+
+    <!-- 节点数量统计 -->
+    <TextView
+        android:id="@+id/node_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="总节点数: 0"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginTop="4dp"
+        android:gravity="end" />
+
+</LinearLayout>

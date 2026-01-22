@@ -2,8 +2,15 @@ package com.autodroid.teachitback.utils
 
 import android.content.Context
 import com.autodroid.teachitback.database.AppDatabase
+import com.autodroid.teachitback.database.SettingDao
 import com.autodroid.teachitback.model.MessageEntity
+import com.autodroid.teachitback.model.MindMapEntity
+import com.autodroid.teachitback.model.MindMapNode
+import com.autodroid.teachitback.model.SettingEntity
 import com.autodroid.teachitback.model.TopicEntity
+import com.autodroid.teachitback.model.WhyEntity
+import com.autodroid.teachitback.ui.adapter.SettingsItem
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -11,181 +18,27 @@ import kotlinx.coroutines.launch
 
 import java.io.Serializable
 
-// 基础AI服务接口
-interface AIServiceProvider : Serializable {
-    val id: String
-    val name: String
-    val description: String
-    val baseUrl: String
-    val defaultModel: String
-    val freeQuota: String
-    val apiKeyUrl: String
-    val officialWebsite: String
-    val isEnabled: Boolean
-}
 
-// 各个AI服务的具体实现
-data class AIServiceDoubaoProvider(
-    override val id: String = "doubao",
-    override val name: String = "豆包",
-    override val description: String = "字节跳动AI助手，中文优化，MoE架构，多模态能力强",
-    override val baseUrl: String = "https://ark.cn-beijing.volces.com/api/v3",
-    override val defaultModel: String = "doubao-pro-32k",
-    override val freeQuota: String = "注册即送100万tokens；部分基础功能永久免费",
-    override val apiKeyUrl: String = "https://developer.doubao.com",
-    override val officialWebsite: String = "https://www.doubao.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceErnieProvider(
-    override val id: String = "ernie",
-    override val name: String = "文心一言",
-    override val description: String = "百度AI大模型，中文语义理解突出，适配国产芯片",
-    override val baseUrl: String = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1",
-    override val defaultModel: String = "ernie-bot-turbo",
-    override val freeQuota: String = "新用户免费额度100万tokens，有效期3个月",
-    override val apiKeyUrl: String = "https://console.bce.baidu.com/qianfan",
-    override val officialWebsite: String = "https://yiyan.baidu.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceQwenProvider(
-    override val id: String = "qwen",
-    override val name: String = "通义千问",
-    override val description: String = "阿里巴巴AI大模型，多模态性能优异，开源生态活跃",
-    override val baseUrl: String = "https://dashscope.aliyuncs.com/api/v1",
-    override val defaultModel: String = "qwen-turbo",
-    override val freeQuota: String = "新用户赠送100万tokens免费额度",
-    override val apiKeyUrl: String = "https://dashscope.aliyuncs.com",
-    override val officialWebsite: String = "https://tongyi.aliyun.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceDeepseekProvider(
-    override val id: String = "deepseek",
-    override val name: String = "DeepSeek",
-    override val description: String = "深度求索AI，支持长文本处理，数理推理与工程优化突出",
-    override val baseUrl: String = "https://api.deepseek.com/v1",
-    override val defaultModel: String = "deepseek-chat",
-    override val freeQuota: String = "注册赠送50万tokens；部分模型有短期免费调用次数",
-    override val apiKeyUrl: String = "https://platform.deepseek.com",
-    override val officialWebsite: String = "https://www.deepseek.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceZhipuProvider(
-    override val id: String = "zhipu",
-    override val name: String = "智谱AI",
-    override val description: String = "清华系AI大模型，代码生成能力强，开源生态完善",
-    override val baseUrl: String = "https://open.bigmodel.cn/api/paas/v3",
-    override val defaultModel: String = "chatglm_turbo",
-    override val freeQuota: String = "GLM-4.7-Flash免费调用；新用户初始额度50万tokens",
-    override val apiKeyUrl: String = "https://open.bigmodel.cn",
-    override val officialWebsite: String = "https://www.zhipuai.cn",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceSparkProvider(
-    override val id: String = "spark",
-    override val name: String = "讯飞星火",
-    override val description: String = "科大讯飞AI大模型，语音交互与方言识别能力突出",
-    override val baseUrl: String = "https://spark-api.xf-yun.com/v1.1",
-    override val defaultModel: String = "general",
-    override val freeQuota: String = "新用户免费额度60万tokens，语音功能有额外免费时长",
-    override val apiKeyUrl: String = "https://console.xfyun.cn/services/spark",
-    override val officialWebsite: String = "https://xinghuo.xfyun.cn",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceMinimaxProvider(
-    override val id: String = "minimax",
-    override val name: String = "MiniMax",
-    override val description: String = "稀宇科技，代码生成与Agent能力突出，M2开源且商用友好",
-    override val baseUrl: String = "https://api.minimax.chat/v1",
-    override val defaultModel: String = "abab5.5-chat",
-    override val freeQuota: String = "新用户注册送15元API余额；M2开源版可免费商用",
-    override val apiKeyUrl: String = "https://platform.minimaxi.com",
-    override val officialWebsite: String = "https://minimax.chat",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceKimiProvider(
-    override val id: String = "kimi",
-    override val name: String = "Kimi",
-    override val description: String = "月之暗面，20万汉字上下文窗口，长文档处理效率高",
-    override val baseUrl: String = "https://api.moonshot.cn/v1",
-    override val defaultModel: String = "moonshot-v1-8k",
-    override val freeQuota: String = "新用户免费额度80万tokens，部分基础功能无调用限制",
-    override val apiKeyUrl: String = "https://platform.moonshot.cn",
-    override val officialWebsite: String = "https://kimi.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceHunyuanProvider(
-    override val id: String = "hunyuan",
-    override val name: String = "混元大模型",
-    override val description: String = "腾讯AI大模型，支持100万字长文本，无缝对接微信生态",
-    override val baseUrl: String = "https://hunyuan.tencent.com",
-    override val defaultModel: String = "hunyuan-standard",
-    override val freeQuota: String = "新用户免费调用额度50万tokens，有效期1个月",
-    override val apiKeyUrl: String = "https://cloud.tencent.com/product/hunyuan",
-    override val officialWebsite: String = "https://混元.tencent.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceBaichuanProvider(
-    override val id: String = "baichuan",
-    override val name: String = "百川智能",
-    override val description: String = "中文理解与创作能力强，开源模型生态完善，适配中小企业",
-    override val baseUrl: String = "https://api.baichuan-ai.com",
-    override val defaultModel: String = "baichuan2-7b-chat",
-    override val freeQuota: String = "新用户免费额度50万tokens，开源版本可免费商用",
-    override val apiKeyUrl: String = "https://platform.baichuan-ai.com",
-    override val officialWebsite: String = "https://www.baichuan-ai.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceLingyiProvider(
-    override val id: String = "lingyi",
-    override val name: String = "零一万物",
-    override val description: String = "轻量化部署优势明显，多模态与小样本学习能力强",
-    override val baseUrl: String = "https://open.lingyiwanwu.com",
-    override val defaultModel: String = "yi-34b-chat",
-    override val freeQuota: String = "新用户免费额度30万tokens，部分轻量模型可免费商用",
-    override val apiKeyUrl: String = "https://open.lingyiwanwu.com",
-    override val officialWebsite: String = "https://www.lingyiwanwu.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
-
-data class AIServiceJieyueProvider(
-    override val id: String = "jieyue",
-    override val name: String = "阶跃星辰",
-    override val description: String = "高效推理与低延迟响应，适配工业互联网与物联网场景",
-    override val baseUrl: String = "https://open.jieyuesx.com",
-    override val defaultModel: String = "jieyue-standard",
-    override val freeQuota: String = "新用户免费额度30万tokens，特定垂类场景有额外试用权益",
-    override val apiKeyUrl: String = "https://open.jieyuesx.com",
-    override val officialWebsite: String = "https://www.jieyuesx.com",
-    override val isEnabled: Boolean = true
-) : AIServiceProvider
 
 class DataInitializer(private val context: Context) {
 
+    private val gson = Gson()
+
     companion object {
-        fun getAIServiceProviders(): List<AIServiceProvider> {
+        fun getAIServiceItems(): List<SettingsItem> {
             return listOf(
-                AIServiceDoubaoProvider(),
-                AIServiceErnieProvider(),
-                AIServiceQwenProvider(),
-                AIServiceDeepseekProvider(),
-                AIServiceZhipuProvider(),
-                AIServiceSparkProvider(),
-                AIServiceMinimaxProvider(),
-                AIServiceKimiProvider(),
-                AIServiceHunyuanProvider(),
-                AIServiceBaichuanProvider(),
-                AIServiceLingyiProvider(),
-                AIServiceJieyueProvider()
+                SettingsItem.DoubaoAIServiceItem(),
+                SettingsItem.ErnieAIServiceItem(),
+                SettingsItem.QwenAIServiceItem(),
+                SettingsItem.DeepSeekAIServiceItem(),
+                SettingsItem.ZhipuAIServiceItem(),
+                SettingsItem.SparkAIServiceItem(),
+                SettingsItem.MinimaxAIServiceItem(),
+                SettingsItem.KimiAIServiceItem(),
+                SettingsItem.HunyuanAIServiceItem(),
+                SettingsItem.BaichuanAIServiceItem(),
+                SettingsItem.LingyiAIServiceItem(),
+                SettingsItem.JieyueAIServiceItem()
             )
         }
     }
@@ -194,9 +47,13 @@ class DataInitializer(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(context)
             
-            // 清除现有数据并重新初始化
-            database.topicDao().deleteAllTopics()
-            database.messageDao().deleteAllMessages()
+            val existingTopics = database.topicDao().getAllTopics().first()
+            
+            if (existingTopics.isNotEmpty()) {
+                return@launch
+            }
+            
+            initializeAIServices(database)
 
             // Create demo topics based on real CFP Study progress
             val demoTopics = listOf(
@@ -233,6 +90,80 @@ class DataInitializer(private val context: Context) {
             )
 
             demoTopics.forEach { topic ->
+                database.topicDao().insertTopic(topic)
+            }
+
+            // Create preset topics for WhyFragment
+            val presetTopics = listOf(
+                TopicEntity(
+                    title = "CFP财务规划",
+                    description = "系统化学习CFP考试内容，掌握核心财务规划概念",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "投资组合管理",
+                    description = "掌握资产配置策略，理解风险与收益平衡",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "税务规划",
+                    description = "深入理解税务优化方法，学习税收规划策略",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中数学",
+                    description = "涵盖函数、几何、代数、概率统计等核心数学知识点",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中物理",
+                    description = "学习力学、电磁学、热学、光学等物理基础知识",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中化学",
+                    description = "掌握元素周期表、化学反应、有机化学等化学核心内容",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中生物",
+                    description = "了解细胞结构、遗传学、生态系统等生物学基础知识",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中英语",
+                    description = "提升听说读写能力，掌握语法、词汇和阅读理解技巧",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中历史",
+                    description = "学习中国历史和世界历史的重要事件和发展脉络",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中地理",
+                    description = "掌握自然地理和人文地理知识，理解地球环境与人类活动",
+                    masteryLevel = 0,
+                    isPreset = true
+                ),
+                TopicEntity(
+                    title = "高中政治",
+                    description = "学习马克思主义基本原理、中国特色社会主义理论体系",
+                    masteryLevel = 0,
+                    isPreset = true
+                )
+            )
+
+            presetTopics.forEach { topic ->
                 database.topicDao().insertTopic(topic)
             }
 
@@ -529,6 +460,321 @@ class DataInitializer(private val context: Context) {
             iraMessages.forEach { message ->
                 database.messageDao().insertMessage(message)
             }
+
+            // 初始化MindMap演示数据
+            initializeMindMapDemoData(database)
         }
+    }
+
+    private suspend fun initializeMindMapDemoData(database: AppDatabase) {
+        val existingMindMaps = database.mindMapDao().getAllMindMaps()
+        
+        if (existingMindMaps.isNotEmpty()) {
+            return
+        }
+        
+        // 获取所有话题
+        val topics = database.topicDao().getAllTopics().first()
+        
+        // 为每个话题创建对应的MindMap
+        topics.forEach { topic ->
+            val mindMap = MindMapEntity(
+                topicId = topic.id,
+                title = "${topic.title}学习路径",
+                structure = "{}"
+            )
+            database.mindMapDao().insert(mindMap)
+            
+            // 为每个话题创建标准MindMap结构
+            when {
+                topic.title.contains("CFP") -> createCFPStudyMindMap(mindMap.id, database)
+                topic.title.contains("1031") -> create1031ExchangeMindMap(mindMap.id, database)
+                topic.title.contains("Traditional IRA") -> createIRAMindMap(mindMap.id, database)
+                topic.title.contains("投资风险") -> createInvestmentRiskMindMap(mindMap.id, database)
+                topic.title.contains("退休计划") -> createRetirementPlanMindMap(mindMap.id, database)
+                else -> createDefaultMindMap(mindMap.id, topic.title, database)
+            }
+        }
+    }
+
+    private suspend fun createCFPStudyMindMap(mindMapId: String, database: AppDatabase) {
+        val nodes = listOf(
+            MindMapNode(mindMapId = mindMapId, title = "财务规划基础", progress = 95),
+            MindMapNode(mindMapId = mindMapId, title = "投资规划", progress = 88),
+            MindMapNode(mindMapId = mindMapId, title = "退休规划", progress = 85),
+            MindMapNode(mindMapId = mindMapId, title = "税务规划", progress = 78),
+            MindMapNode(mindMapId = mindMapId, title = "风险管理", progress = 82),
+            MindMapNode(mindMapId = mindMapId, title = "遗产规划", progress = 70)
+        )
+        nodes.forEach { database.mindMapDao().insertNode(it) }
+    }
+
+    private suspend fun create1031ExchangeMindMap(mindMapId: String, database: AppDatabase) {
+        val rootNode = MindMapNode(mindMapId = mindMapId, title = "1031同类交换", progress = 95)
+        database.mindMapDao().insertNode(rootNode)
+        
+        val childNodes = listOf(
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "平衡等式框架", progress = 95),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "Boot计算", progress = 90),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "成本基础计算", progress = 85),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "时间限制", progress = 80)
+        )
+        childNodes.forEach { database.mindMapDao().insertNode(it) }
+    }
+
+    /**
+     * 初始化 AI 服务设置到数据库
+     */
+    private suspend fun initializeAIServices(database: AppDatabase) {
+        val existingSettings = database.settingDao().getAllSettings().first()
+        
+        if (existingSettings.isNotEmpty()) {
+            return
+        }
+        
+        val aiServiceItems = getAIServiceItems()
+        
+        aiServiceItems.forEach { settingsItem ->
+            val id = when (settingsItem) {
+                is SettingsItem.DoubaoAIServiceItem -> settingsItem.id
+                is SettingsItem.ErnieAIServiceItem -> settingsItem.id
+                is SettingsItem.QwenAIServiceItem -> settingsItem.id
+                is SettingsItem.DeepSeekAIServiceItem -> settingsItem.id
+                is SettingsItem.ZhipuAIServiceItem -> settingsItem.id
+                is SettingsItem.SparkAIServiceItem -> settingsItem.id
+                is SettingsItem.MinimaxAIServiceItem -> settingsItem.id
+                is SettingsItem.KimiAIServiceItem -> settingsItem.id
+                is SettingsItem.HunyuanAIServiceItem -> settingsItem.id
+                is SettingsItem.BaichuanAIServiceItem -> settingsItem.id
+                is SettingsItem.LingyiAIServiceItem -> settingsItem.id
+                is SettingsItem.JieyueAIServiceItem -> settingsItem.id
+                else -> return@forEach
+            }
+            
+            val json = serializeSettingsItem(settingsItem)
+            val entity = SettingEntity(
+                key = "ai_$id",
+                value = json,
+                lastUpdated = System.currentTimeMillis()
+            )
+            database.settingDao().insertSetting(entity)
+        }
+        
+        // 初始化WhyFragment文案到数据库
+        initializeWhyFragmentContent(database)
+    }
+    
+    /**
+     * 初始化WhyFragment文案内容
+     */
+    private suspend fun initializeWhyFragmentContent(database: AppDatabase) {
+        val existingWhyContent = database.whyDao().getAllWhyContent().first()
+        
+        if (existingWhyContent.isNotEmpty()) {
+            return
+        }
+        
+        val whyContents = listOf(
+            WhyEntity(
+                id = "app_intro",
+                type = "app_intro_card",
+                title = "Teach It Back - 深度学习的智能伴侣",
+                content = """
+                    以目标为导向，智能分解可掌握的小目标，结合苏格拉底教学法和费曼学习法的AI驱动学习应用，帮助您通过'教回去'的方式真正掌握知识。
+                    
+                    学会的最高境界是教会别人
+                    
+                    主要特性：
+                    • 目标驱动学习：AI智能分解学习目标为可执行路径
+                    • 循循善诱：苏格拉底式提问引导深度思考
+                    • 主动教学：费曼技巧强化知识掌握
+                    • 可视化进度：MindMap实时跟踪学习进展
+                """.trimIndent(),
+                orderIndex = 1
+            ),
+            WhyEntity(
+                id = "application_value",
+                type = "application_value_card",
+                title = "应用价值",
+                content = """
+                    基于CFP-Study的真实学习过程
+                    
+                    Teach It Back通过模拟真实教学场景，帮助您深入理解复杂概念。基于CFP-Study的实际学习经验，本应用能够：
+                    
+                    • 识别知识盲点，针对性强化学习
+                    • 通过教学反馈，提升表达和逻辑能力
+                    • 建立系统知识框架，避免碎片化学习
+                    • 跟踪学习进度，量化掌握程度
+                """.trimIndent(),
+                orderIndex = 2
+            ),
+            WhyEntity(
+                id = "real_results",
+                type = "real_results_card",
+                title = "真实学习成果",
+                content = """
+                    基于CFP-Study的实际应用效果
+                    
+                    在CFP考试准备过程中，Teach It Back帮助用户：
+                    
+                    • 1031交换：从困惑到掌握平衡等式框架
+                    • IRA规则：清晰区分贡献资格与抵扣性
+                    • 投资风险：理解R平方与系统性风险关系
+                    • 学习进度：82%知识点掌握，3天倒计时
+                    
+                    通过苏格拉底式提问和费曼解释方法，用户能够：
+                    
+                    • 识别并解决概念混淆点
+                    • 建立系统化的知识框架
+                    • 提升表达和解释能力
+                    
+                    "Teach It Back让我真正理解了复杂的财务规划概念。通过向AI解释，我发现了很多自己以为懂但实际模糊的地方。"
+                """.trimIndent(),
+                orderIndex = 3
+            ),
+            WhyEntity(
+                id = "how_to_use",
+                type = "how_to_use_card",
+                title = "如何使用",
+                content = """
+                    1. 在「主题」页面创建学习主题
+                       输入您想要掌握的知识领域，AI会分析您的学习需求
+                    
+                    2. 选择主题进入对话页面
+                       设置自己的学习目标，AI会将你的目标分解为可管理的小目标，形成可视化学习路径
+                    
+                    3. 向AI讲解你的知识
+                       通过苏格拉底式对话和费曼教学法，在舒适的环境中深入学习
+                    
+                    4. AI提问并给出反馈
+                       MindMap实时更新学习进度，AI根据您的表现调整学习路径
+                    
+                    5. 持续加深理解，提升掌握度
+                       循环学习，直到完全掌握
+                """.trimIndent(),
+                orderIndex = 4
+            ),
+            WhyEntity(
+                id = "features",
+                type = "features_card",
+                title = "主要功能",
+                content = """
+                    • 多主题管理
+                    • AI 智能提问
+                    • 学习进度跟踪
+                    • 语音输入支持
+                    • 文件内容分析
+                    • 思维导图可视化
+                """.trimIndent(),
+                orderIndex = 6
+            ),
+            WhyEntity(
+                id = "learning_philosophy",
+                type = "learning_philosophy_card",
+                title = "学习哲学：苏格拉底×费曼的完美结合",
+                content = """
+                    苏格拉底方法：深度提问引导思考
+                    AI通过精心设计的提问，帮助您发现知识盲点，培养批判性思维能力。
+                    
+                    费曼技巧：通过教学巩固知识
+                    '如果您不能简单地解释一个概念，说明您还没有真正理解它。' - 通过向AI解释，检验您的理解深度。
+                    
+                    MindMap可视化：学习路径一目了然
+                    AI将复杂知识分解为树状结构，实时显示学习进度，让您清晰看到自己的进步。
+                """.trimIndent(),
+                orderIndex = 7
+            ),
+            WhyEntity(
+                id = "target_audience",
+                type = "target_audience_card",
+                title = "适合人群",
+                content = """
+                    学生群体
+                    备考各类考试，系统化掌握复杂概念
+                    
+                    职场人士
+                    快速掌握专业技能，提升工作效率
+                    
+                    终身学习者
+                    持续学习新知识，保持思维活跃
+                """.trimIndent(),
+                orderIndex = 8
+            )
+        )
+        
+        database.whyDao().insertAllWhyContent(whyContents)
+    }
+
+    /**
+     * 序列化 SettingsItem 为 JSON
+     */
+    private fun serializeSettingsItem(item: SettingsItem): String {
+        val type = when (item) {
+            is SettingsItem.DoubaoAIServiceItem -> "DoubaoAIServiceItem"
+            is SettingsItem.ErnieAIServiceItem -> "ErnieAIServiceItem"
+            is SettingsItem.QwenAIServiceItem -> "QwenAIServiceItem"
+            is SettingsItem.DeepSeekAIServiceItem -> "DeepSeekAIServiceItem"
+            is SettingsItem.ZhipuAIServiceItem -> "ZhipuAIServiceItem"
+            is SettingsItem.SparkAIServiceItem -> "SparkAIServiceItem"
+            is SettingsItem.MinimaxAIServiceItem -> "MinimaxAIServiceItem"
+            is SettingsItem.KimiAIServiceItem -> "KimiAIServiceItem"
+            is SettingsItem.HunyuanAIServiceItem -> "HunyuanAIServiceItem"
+            is SettingsItem.BaichuanAIServiceItem -> "BaichuanAIServiceItem"
+            is SettingsItem.LingyiAIServiceItem -> "LingyiAIServiceItem"
+            is SettingsItem.JieyueAIServiceItem -> "JieyueAIServiceItem"
+            else -> return ""
+        }
+        
+        val itemJson = gson.toJson(item)
+        return """{"type":"$type","data":$itemJson}"""
+    }
+
+    private suspend fun createIRAMindMap(mindMapId: String, database: AppDatabase) {
+        val rootNode = MindMapNode(mindMapId = mindMapId, title = "传统IRA规则", progress = 90)
+        database.mindMapDao().insertNode(rootNode)
+        
+        val childNodes = listOf(
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "贡献资格", progress = 90),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "抵扣限制", progress = 85),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "提款规则", progress = 80),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "与Roth IRA比较", progress = 75)
+        )
+        childNodes.forEach { database.mindMapDao().insertNode(it) }
+    }
+
+    private suspend fun createInvestmentRiskMindMap(mindMapId: String, database: AppDatabase) {
+        val rootNode = MindMapNode(mindMapId = mindMapId, title = "投资风险与相关性", progress = 88)
+        database.mindMapDao().insertNode(rootNode)
+        
+        val childNodes = listOf(
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "R平方概念", progress = 90),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "系统性风险", progress = 85),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "非系统性风险", progress = 80),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "多样化策略", progress = 75)
+        )
+        childNodes.forEach { database.mindMapDao().insertNode(it) }
+    }
+
+    private suspend fun createRetirementPlanMindMap(mindMapId: String, database: AppDatabase) {
+        val rootNode = MindMapNode(mindMapId = mindMapId, title = "退休计划分类", progress = 85)
+        database.mindMapDao().insertNode(rootNode)
+        
+        val childNodes = listOf(
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "Defined Contribution", progress = 85),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "Defined Benefit", progress = 80),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "401(k)计划", progress = 75),
+            MindMapNode(mindMapId = mindMapId, parentId = rootNode.id, title = "养老金计算", progress = 70)
+        )
+        childNodes.forEach { database.mindMapDao().insertNode(it) }
+    }
+
+    private suspend fun createDefaultMindMap(mindMapId: String, title: String, database: AppDatabase) {
+        val nodes = listOf(
+            MindMapNode(mindMapId = mindMapId, title = "基础知识", progress = 0),
+            MindMapNode(mindMapId = mindMapId, title = "核心概念", progress = 0),
+            MindMapNode(mindMapId = mindMapId, title = "应用实例", progress = 0),
+            MindMapNode(mindMapId = mindMapId, title = "疑难解答", progress = 0)
+        )
+        nodes.forEach { database.mindMapDao().insertNode(it) }
     }
 }

@@ -2,9 +2,58 @@
 
 ## 概述
 
-Teach It Back 是一款基于苏格拉底教学法和费曼学习法的AI驱动学习应用，用户通过APP直接向AI讲解知识，AI评估用户的理解程度来深化学习效果。用户将所学知识"教回"给AI，AI通过智能提问和反馈来检验和强化用户的知识掌握情况。
+**Teach It Back** 是一款革命性的AI驱动学习应用，通过"目标设定 → AI智能分解 → 可视化路径 → 交互学习"的完整闭环，帮助用户实现深度知识掌握。
+
+### 核心价值主张
+
+**目标导向的个性化学习路径**
+- **智能目标分解**：AI将用户设定的学习目标自动分解为可管理的WBS工作包
+- **可视化MindMap路径**：生成清晰的树状学习路线图，实时显示学习进度
+- **多模型AI支持**：支持14种主流AI大模型，用户可根据需求选择最适合的智能助手
+
+**科学的交互式学习体验**
+- **苏格拉底教学法**：AI通过精心设计的提问引导深度思考，发现知识盲点
+- **费曼学习技巧**：用户通过向AI讲解来检验理解深度，"学会的最高境界是教会别人"
+- **自适应学习路径**：AI根据用户表现实时调整难度和进度，确保最佳学习效果
+
+**真实场景验证**
+- **CFP备考案例**：帮助学员在复杂财务规划概念中实现从50%到95%的理解突破
+- **多领域适用**：适合学生备考、职场技能提升、终身学习等各类场景
+
+### 核心理念
+"Teach It Back"的核心思想是：**真正的学习发生在当您能够将知识清晰地教给他人时**。我们通过AI技术将这个理念转化为可操作的、高效的、个性化的学习体验。
 
 ## 核心交互流程
+
+### 学习目标设置与WBS分解
+
+```mermaid
+flowchart TD
+    A[用户设置学习目标] --> B[AI分析学习需求]
+    B --> C[AI分解为WBS工作包]
+    C --> D{学习路径选择}
+    D -->|预置课程| E[匹配标准化MindMap]
+    D -->|自定义目标| F[动态生成个性化MindMap]
+    E --> G[AI微调路径适配]
+    F --> G
+    G --> H[创建MindMap学习路径]
+    H --> I[开始苏格拉底+费曼学习]
+    
+    I --> J[用户向AI讲解概念]
+    J --> K[AI分析理解程度]
+    K --> L{理解评估结果}
+    L -->|掌握良好| M[AI提出深化问题]
+    L -->|存在误区| N[AI指出并引导纠正]
+    L -->|理解不足| O[AI提供补充信息]
+    M --> P[更新MindMap进度]
+    N --> P
+    O --> P
+    P --> Q{是否完成学习目标}
+    Q -->|否| I
+    Q -->|是| R[学习完成]
+```
+
+### 苏格拉底-费曼结合法详细流程
 
 ```mermaid
 graph TD
@@ -20,6 +69,296 @@ graph TD
     H --> B
     B --> I[用户继续讲解或回答]
     I --> D
+```
+
+## MindMap集成设计
+
+### 智能MindMap学习路径管理
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as App
+    participant AI as AI服务
+    participant M as MindMap
+    
+    U->>A: 选择学习主题
+    A->>AI: 请求生成学习路径
+    AI-->>A: 返回MindMap结构
+    A->>M: 创建MindMap并显示
+    
+    loop 学习过程
+        U->>A: 自然对话学习
+        A->>AI: 发送对话内容
+        AI->>AI: 分析知识点关联
+        AI->>AI: 评估学习效果
+        AI-->>A: 返回进度更新
+        A->>M: 更新MindMap进度
+        M-->>U: 实时显示学习进展
+    end
+```
+
+### 预置课程使用流程
+
+```mermaid
+graph TB
+    A[WHY Fragment] --> B[预置Topics列表]
+    B --> C[用户选择预置Topic]
+    C --> D[打开预置Topic详情页]
+    D --> E{是否已复制?}
+    E -->|否| F[显示复制按钮]
+    E -->|是| G[显示已复制状态]
+    F --> H[用户点击复制]
+    H --> I[复制为个人Topic]
+    I --> J[显示复制成功提示]
+    J --> K[按钮变为已复制状态]
+    G --> L[用户点击已复制的Topic]
+    K --> L
+    L --> M[跳转到ChatFragment]
+    M --> N[开始学习]
+    
+    subgraph "预置Topic属性"
+        O[标准MindMap结构]
+        P[基础学习目标]
+        Q[推荐学习路径]
+    end
+    
+    C --> O
+    C --> P
+    C --> Q
+    
+    I --> R[个人Topic副本]
+    R --> S[可自由修改]
+    S --> N
+```
+
+### 预置课程详情页设计
+
+#### 页面结构
+
+```mermaid
+graph TB
+    A[预置课程详情页] --> B[课程标题]
+    A --> C[课程描述]
+    A --> D[课程内容预览]
+    A --> E[操作按钮区域]
+    
+    D --> F[学习目标列表]
+    D --> G[知识点概览]
+    D --> H[推荐学习路径]
+    
+    E --> I{复制状态判断}
+    I -->|未复制| J[复制按钮]
+    I -->|已复制| K[已复制状态]
+    
+    J --> L[点击复制]
+    L --> M[执行复制操作]
+    M --> N[显示成功提示]
+    N --> K
+    
+    K --> O[点击进入学习]
+    O --> P[跳转ChatFragment]
+```
+
+#### UI组件设计
+
+**详情页布局：**
+
+| 组件 | 说明 | 交互行为 |
+|------|------|----------|
+| 标题栏 | 显示课程名称 | 返回按钮返回WHY Fragment |
+| 课程卡片 | 显示课程标题和描述 | 卡片样式，带阴影效果 |
+| 内容预览区 | 展示学习目标、知识点等 | 可滚动查看详细内容 |
+| 复制按钮 | 未复制时显示 | 点击复制课程到个人列表 |
+| 已复制状态 | 已复制时显示 | 点击跳转到学习页面 |
+| 学习入口 | 已复制后可用 | 直接进入ChatFragment |
+
+#### 复制状态管理
+
+```mermaid
+stateDiagram-v2
+    [*] --> 未复制 : 打开详情页
+    未复制 --> 复制中 : 点击复制按钮
+    复制中 --> 已复制 : 复制成功
+    复制中 --> 未复制 : 复制失败
+    已复制 --> 学习中 : 点击进入学习
+    学习中 --> 已复制 : 返回详情页
+```
+
+#### 数据流设计
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant WF as WhyFragment
+    participant PD as PresetDetailFragment
+    participant VM as WhyViewModel
+    participant DB as Database
+    
+    U->>WF: 点击预置Topic卡片
+    WF->>PD: 打开详情页，传递TopicEntity
+    PD->>VM: 检查复制状态
+    VM->>DB: 查询是否存在个人副本
+    DB-->>VM: 返回查询结果
+    VM-->>PD: 更新UI状态
+    
+    alt 未复制状态
+        PD->>U: 显示复制按钮
+        U->>PD: 点击复制按钮
+        PD->>VM: 请求复制Topic
+        VM->>DB: 创建个人副本
+        DB-->>VM: 返回新Topic ID
+        VM-->>PD: 返回复制成功
+        PD->>U: 显示成功提示，更新按钮状态
+    else 已复制状态
+        PD->>U: 显示已复制状态
+        U->>PD: 点击已复制状态
+        PD->>VM: 获取个人Topic ID
+        VM-->>PD: 返回Topic ID
+        PD->>U: 跳转到ChatFragment
+    end
+```
+
+#### 数据模型扩展
+
+**TopicEntity 扩展字段：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，话题唯一标识 |
+| title | String | 话题标题 |
+| description | String | 话题描述 |
+| createdAt | Long | 创建时间戳 |
+| lastAccessed | Long | 最后访问时间戳 |
+| masteryLevel | Int | 掌握程度 (0-100) |
+| nextLearningGoal | String | 下一步学习目标 |
+| category | String | 话题分类 |
+| isPreset | Boolean | 是否为预置课程 |
+| presetTopicId | String | 关联的预置课程ID（个人副本时使用） |
+
+**PresetTopicDetail 数据模型：**
+
+```kotlin
+data class PresetTopicDetail(
+    val topic: TopicEntity,
+    val isCopied: Boolean,
+    val personalTopicId: String?,
+    val learningGoals: List<String>,
+    val knowledgePoints: List<String>,
+    val recommendedPath: List<String>
+)
+```
+
+#### 状态管理
+
+**WhyViewModel 状态：**
+
+```kotlin
+class WhyViewModel(application: Application) : AndroidViewModel(application) {
+    
+    private val _presetDetail = MutableStateFlow<PresetTopicDetail?>(null)
+    val presetDetail: StateFlow<PresetTopicDetail?> = _presetDetail.asStateFlow()
+    
+    private val _copyInProgress = MutableStateFlow(false)
+    val copyInProgress: StateFlow<Boolean> = _copyInProgress.asStateFlow()
+    
+    fun loadPresetTopicDetail(presetTopic: TopicEntity) {
+        viewModelScope.launch {
+            val personalTopic = topicRepository.getPersonalCopy(presetTopic.id)
+            _presetDetail.value = PresetTopicDetail(
+                topic = presetTopic,
+                isCopied = personalTopic != null,
+                personalTopicId = personalTopic?.id,
+                learningGoals = extractLearningGoals(presetTopic),
+                knowledgePoints = extractKnowledgePoints(presetTopic),
+                recommendedPath = extractRecommendedPath(presetTopic)
+            )
+        }
+    }
+    
+    fun copyPresetTopic(presetTopic: TopicEntity, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _copyInProgress.value = true
+            try {
+                val personalTopic = presetTopic.copy(
+                    id = UUID.randomUUID().toString(),
+                    isPreset = false,
+                    presetTopicId = presetTopic.id,
+                    createdAt = System.currentTimeMillis()
+                )
+                topicRepository.insertTopic(personalTopic)
+                onComplete(true)
+            } catch (e: Exception) {
+                _errorMessage.value = "复制课程失败: ${e.message}"
+                onComplete(false)
+            } finally {
+                _copyInProgress.value = false
+            }
+        }
+    }
+}
+```
+
+#### Fragment交互设计
+
+**PresetDetailFragment 生命周期：**
+
+```mermaid
+stateDiagram-v2
+    [*] --> onViewCreated : Fragment创建
+    onViewCreated --> observeData : 观察ViewModel数据
+    observeData --> setupUI : 设置UI组件
+    setupUI --> ready : 准备就绪
+    
+    ready --> copyTopic : 用户点击复制
+    copyTopic --> copying : 复制中
+    copying --> copySuccess : 复制成功
+    copying --> copyFailed : 复制失败
+    copySuccess --> ready : 更新UI状态
+    copyFailed --> ready : 显示错误提示
+    
+    ready --> navigateToChat : 用户点击已复制状态
+    navigateToChat --> [*] : 跳转到ChatFragment
+```
+
+### ChatFragment异构Item扩展
+
+```mermaid
+graph LR
+    A[ChatFragment] --> B[RecyclerView]
+    B --> C[TextMessage Item]
+    B --> D[AIResponse Item]
+    B --> E[MindMap Item]
+    
+    E --> F[缩略MindMap]
+    E --> G[进度可视化整合]
+    E --> H[点击扩展]
+    
+    F --> I[节点颜色编码]
+    G --> J[整体进度统计]
+    H --> K[详细视图]
+```
+
+### AI集成与MindMap更新流程
+
+```mermaid
+flowchart TD
+    A[用户输入] --> B[构建Prompt]
+    B --> C[调用AI服务]
+    C --> D[解析响应]
+    D --> E{响应类型}
+    
+    E -->|学习评估| F[提取进度数据]
+    E -->|路径规划| G[生成MindMap结构]
+    E -->|提问引导| H[生成苏格拉底问题]
+    
+    F --> I[更新节点进度]
+    G --> J[创建/更新MindMap]
+    H --> K[返回引导问题]
+    
+    I --> L[UI更新]
+    J --> L
+    K --> L
 ```
 
 ## 学习方法论
@@ -201,7 +540,7 @@ classDiagram
 
 ### 核心实体关系图
 
-根据您的要求，我们采用简化的模型，将Topic视为持续对话：
+根据您的要求，我们采用简化的模型，将Topic视为持续对话，并集成了MindMap功能：
 
 ```mermaid
 erDiagram
@@ -213,6 +552,7 @@ erDiagram
         datetime last_accessed
         int mastery_level
         string next_learning_goal
+        boolean is_preset
     }
     
     MESSAGE {
@@ -224,7 +564,26 @@ erDiagram
         datetime timestamp
     }
     
-    TOPIC ||--o{ MESSAGE : "has_messages"
+    MINDMAP {
+        string id PK
+        string topic_id FK
+        string title
+        string structure_json
+    }
+    
+    MINDMAP_NODE {
+        string id PK
+        string mindmap_id FK
+        string parent_id FK
+        string title
+        int progress
+        string node_type
+    }
+    
+    TOPIC ||--|| MINDMAP : has_one
+    TOPIC ||--o{ MESSAGE : has_messages
+    MINDMAP ||--o{ MINDMAP_NODE : contains
+    MINDMAP_NODE ||--o{ MINDMAP_NODE : child_of
 ```
 
 ### 数据库实体定义
@@ -270,6 +629,7 @@ erDiagram
 | AppIntroItem | AppIntroData | 应用介绍卡片 |
 | UsageGuideItem | GuideData | 使用指南步骤 |
 | FeaturePromoItem | PromoData | 功能推广卡片 |
+| PresetTopicItem | TopicEntity | 预置课程卡片，用户可复制到自己的学习列表 |
 
 **SETTINGS Fragment 异构Items：**
 
@@ -331,7 +691,9 @@ sequenceDiagram
 
 ## AI 集成架构
 
-### 可切换AI服务设计
+### 多模型可切换AI服务设计
+
+应用支持多种AI大模型的无缝切换，用户可以根据需求选择最适合的AI服务：
 
 ```mermaid
 classDiagram
@@ -339,16 +701,85 @@ classDiagram
         <<interface>>
         +sendMessage()
         +processFileContent()
+        +getModelName()
+    }
+    
+    class DoubaoAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class DeepSeekAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class MinimaxAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class KimiAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
     }
     
     class OpenAIService {
         +sendMessage()
         +processFileContent()
+        +getModelName()
     }
     
-    class CustomAIService {
+    class ErnieAIService {
         +sendMessage()
         +processFileContent()
+        +getModelName()
+    }
+    
+    class QwenAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class ZhipuAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class SparkAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class HunyuanAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class BaichuanAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class LingyiAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    class JieyueAIService {
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
     }
     
     class AppViewModel {
@@ -357,9 +788,65 @@ classDiagram
         +sendUserMessage()
     }
     
+    AIService <|.. DoubaoAIService
+    AIService <|.. DeepSeekAIService
+    AIService <|.. MinimaxAIService
+    AIService <|.. KimiAIService
     AIService <|.. OpenAIService
-    AIService <|.. CustomAIService
+    AIService <|.. ErnieAIService
+    AIService <|.. QwenAIService
+    AIService <|.. ZhipuAIService
+    AIService <|.. SparkAIService
+    AIService <|.. HunyuanAIService
+    AIService <|.. BaichuanAIService
+    AIService <|.. LingyiAIService
+    AIService <|.. JieyueAIService
     AppViewModel --> AIService
+```
+
+#### 支持的AI模型列表
+
+应用支持以下14种主流AI大模型：
+
+| AI模型 | 厂商 | 特点 | 适用场景 |
+|--------|------|------|----------|
+| 豆包AI | 字节跳动 | 中文理解强，上下文长 | 日常对话、知识问答 |
+| DeepSeek | DeepSeek | 开源模型，免费使用 | 编程、技术问题 |
+| MiniMax | MiniMax | 多模态能力强 | 创意写作、图像理解 |
+| Kimi | 月之暗面 | 超长上下文支持 | 文档分析、长文本处理 |
+| OpenAI | OpenAI | 国际领先，通用性强 | 多语言、复杂推理 |
+| 文心一言 | 百度 | 中文优化，知识丰富 | 中文内容创作 |
+| 通义千问 | 阿里云 | 企业级服务 | 商业应用、数据分析 |
+| 智谱AI | 智谱华章 | 学术背景强 | 科研、学术写作 |
+| 讯飞星火 | 科大讯飞 | 语音交互优势 | 语音转文本场景 |
+| 混元AI | 腾讯 | 多模态融合 | 游戏、娱乐应用 |
+| 百川AI | 百川智能 | 开源模型 | 开发者、研究用途 |
+| 零一万物 | 零一万物 | 垂直领域优化 | 专业领域应用 |
+| 阶跃AI | 阶跃星辰 | 新兴模型 | 创新应用测试 |
+
+#### AI模型切换流程
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant SF as SettingsFragment
+    participant VM as AppViewModel
+    participant R as Repository
+    participant AI as 当前AI服务
+    
+    U->>SF: 进入设置界面
+    SF->>VM: 加载当前AI设置
+    VM-->>SF: 显示当前AI模型
+    
+    U->>SF: 选择新的AI模型
+    SF->>VM: 请求切换AI服务
+    VM->>R: 更新AI配置
+    R-->>VM: 确认配置更新
+    VM->>AI: 切换AI服务实例
+    VM-->>SF: 通知切换成功
+    SF-->>U: 显示切换结果
+    
+    Note over U,AI: 后续对话将使用新选择的AI模型
 ```
 
 ## UI 架构
@@ -557,9 +1044,6 @@ sequenceDiagram
 
 ```mermaid
 erDiagram
-    TOPIC ||--o{ MESSAGE : "hasMany"
-    MESSAGE ||--o{ FILE_ATTACHMENT : "optional"
-    
     TOPIC {
         string id PK "话题ID"
         string title "话题标题"
@@ -578,6 +1062,8 @@ erDiagram
         string message_type "消息类型"
         long timestamp "时间戳"
     }
+    
+    TOPIC ||--o{ MESSAGE : hasMany
     
     FILE_ATTACHMENT {
         string id PK "附件ID"
@@ -626,4 +1112,205 @@ graph LR
     F --> G
 ```
 
-这个设计文档涵盖了Teach It Back应用的核心架构，采用了MVVM模式、本地优先存储、多模态输入处理等关键技术，并使用mermaid图表清晰地表达了各个设计概念和组件关系。设计简化了原有的Session概念，使Topic成为持续的对话实体，更符合微信聊天式的用户体验。
+## MindMap集成设计
+
+### 智能学习路径管理
+
+Teach It Back集成了智能MindMap功能，为每个学习话题提供可视化的学习路径和进度跟踪。
+
+#### 数据模型关系
+
+```mermaid
+erDiagram
+    TOPIC {
+        string id PK
+        string title
+        string description
+        datetime created_at
+        datetime last_accessed
+        int mastery_level
+        string next_learning_goal
+
+        boolean is_preset
+    }
+    
+    MINDMAP {
+        string id PK
+        string topic_id FK
+        string title
+        string structure_json
+    }
+    
+    MINDMAP_NODE {
+        string id PK
+        string mindmap_id FK
+        string parent_id FK
+        string title
+        int progress
+        string node_type
+    }
+    
+    TOPIC ||--|| MINDMAP : has_one
+    MINDMAP ||--o{ MINDMAP_NODE : contains
+    MINDMAP_NODE ||--o{ MINDMAP_NODE : child_of
+```
+
+#### MindMap实体定义
+
+**MindMapEntity 实体结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，MindMap唯一标识 |
+| topicId | String | 外键，关联话题ID |
+| title | String | MindMap标题 |
+| structure | String | MindMap结构JSON |
+
+**MindMapNode 实体结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | String | 主键，节点唯一标识 |
+| mindMapId | String | 外键，关联MindMap ID |
+| parentId | String | 父节点ID（可为空） |
+| title | String | 节点标题 |
+| progress | Int | 学习进度 (0-100) |
+| nodeType | String | 节点类型（根节点、子节点等） |
+
+#### 预置课程系统
+
+应用提供预置课程系统，包含标准化的MindMap结构：
+
+```mermaid
+graph TB
+    A[预置课程分类] --> B[高中课程]
+    A --> C[大学基础课程]
+    A --> D[专业技能课程]
+    
+    B --> E[高中三年级生物]
+    B --> F[高中物理]
+    B --> G[高中化学]
+    
+    C --> H[微积分基础]
+    C --> I[编程入门]
+    C --> J[经济学原理]
+    
+    D --> K[项目管理]
+    D --> L[数据分析]
+    D --> M[沟通技巧]
+    
+    E --> N[标准MindMap结构]
+    F --> O[标准MindMap结构]
+    G --> P[标准MindMap结构]
+    
+    N --> Q[个性化学习路径]
+    O --> Q
+    P --> Q
+    Q --> R[开始智能学习]
+```
+
+#### ChatFragment异构Item扩展
+
+MindMap作为ChatFragment中的异构Item类型集成：
+
+```mermaid
+graph LR
+    A[ChatFragment] --> B[RecyclerView]
+    B --> C[TextMessage Item]
+    B --> D[AIResponse Item]
+    B --> E[MindMap Item]
+    
+    E --> F[缩略MindMap视图]
+    E --> G[进度可视化]
+    E --> H[点击展开功能]
+    
+    F --> I[节点颜色编码: 红黄绿]
+    G --> J[整体进度统计]
+    H --> K[详细树形结构]
+```
+
+#### AI驱动的进度评估
+
+AI服务根据用户对话内容自动评估学习进度并更新MindMap：
+
+```mermaid
+stateDiagram-v2
+    [*] --> 课程选择
+    课程选择 --> 预置路径 : 选择标准课程
+    课程选择 --> 自定义目标 : 输入个性化目标
+    
+    预置路径 --> 路径个性化 : AI根据目标微调
+    自定义目标 --> 路径生成 : AI分析生成
+    
+    路径个性化 --> 节点学习
+    路径生成 --> 节点学习
+    
+    节点学习 --> 对话评估 : 用户回答
+    对话评估 --> 进度更新 : AI评估
+    进度更新 --> 下一步决策 : 分析结果
+    
+    下一步决策 --> 深化学习 : 掌握不足
+    下一步决策 --> 新节点 : 掌握良好
+    下一步决策 --> 复习巩固 : 需要强化
+    
+    深化学习 --> 节点学习
+    新节点 --> 节点学习
+    复习巩固 --> 节点学习
+    
+    节点学习 --> [*] : 学习完成
+```
+
+#### 进度可视化设计
+
+```mermaid
+graph TD
+    A[用户回答] --> B[AI分析]
+    B --> C{理解程度}
+    
+    C -->|优秀 80-100%| D[标记为掌握]
+    C -->|良好 60-79%| E[建议深化]
+    C -->|一般 40-59%| F[指出误区]
+    C -->|不足 0-39%| G[重新讲解]
+    
+    D --> H[进度+20]
+    E --> I[进度+10]
+    F --> J[进度+5]
+    G --> K[进度不变]
+    
+    H --> L[更新MindMap]
+    I --> L
+    J --> L
+    K --> L
+```
+
+### 技术实现特性
+
+1. **树形结构支持**：支持多层嵌套的树形结构，最多可达4层深度
+2. **实时进度更新**：基于AI对话分析自动更新节点进度
+3. **颜色编码系统**：红黄绿颜色编码直观显示学习状态
+4. **预置课程库**：包含多个学科的标准化MindMap结构
+5. **交互式UI**：支持节点展开/折叠、点击学习等交互
+
+### 系统架构扩展
+
+```mermaid
+graph TB
+    A[UI Layer] --> B[ViewModel]
+    B --> C[Repository]
+    C --> D[Room Database]
+    C --> E[AI Service]
+    
+    subgraph "MindMap组件"
+        F[MindMap Manager]
+        G[Progress Tracker]
+        H[Learning Path Planner]
+    end
+    
+    B --> F
+    F --> G
+    F --> H
+    G --> D
+    H --> E
+```
+
+这个设计文档涵盖了Teach It Back应用的核心架构，包括MVVM模式、本地优先存储、多模态输入处理以及智能MindMap集成等关键技术，并使用mermaid图表清晰地表达了各个设计概念和组件关系。MindMap功能为学习过程提供了可视化的路径指导和进度跟踪，增强了用户的学习体验。

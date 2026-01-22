@@ -7,12 +7,23 @@
 
 ## 🌟 What is Teach It Back?
 
-**Teach It Back** is an intelligent learning companion that combines two timeless methods of mastering knowledge:
+**Teach It Back** is a revolutionary AI-powered learning platform that transforms how you master complex concepts through a complete **Goal → Decomposition → Visualization → Interaction** learning cycle.
 
-- **The Socratic Method** – Guided questioning to clarify your thinking  
-- **The Feynman Technique** – Learning by explaining in simple terms
+### 🎯 Goal-Driven Learning Path
+- **Smart Goal Breakdown**: AI automatically decomposes your learning objectives into manageable WBS work packages
+- **Visual MindMap Navigation**: Real-time progress tracking through interactive learning roadmaps
+- **Multi-AI Model Support**: Choose from 14 leading AI models to match your specific learning needs
 
-Instead of just passively consuming information, you engage in an interactive dialogue with an AI tutor that asks you probing, personalized questions — then guides you to **teach the concept back** in your own words.
+### 🧠 Scientific Learning Methodology
+- **Socratic Dialogue**: AI guides you through thoughtful questioning to uncover knowledge gaps
+- **Feynman Technique**: Reinforce understanding by teaching concepts back to AI in simple terms
+- **Adaptive Learning Path**: AI dynamically adjusts difficulty based on your performance
+
+### 📊 Real-World Success Stories
+- **CFP Certification Prep**: Achieved 50% to 95% understanding breakthroughs in complex financial planning concepts
+- **Multi-Domain Applicability**: Perfect for exam preparation, professional skill development, and lifelong learning
+
+**Core Philosophy**: "True mastery happens when you can clearly explain complex concepts to others." Teach It Back makes this achievable through personalized, AI-enhanced learning experiences.
 
 ---
 
@@ -72,10 +83,9 @@ Traditional learning apps give you answers. **Teach It Back helps you build unde
 
 ### For Developers (Self‑hosted / Contributing)
 ```bash
-git clone https://github.com/your-repo/teach-it-back.git
-cd teach-it-back
-npm install
-npm run dev
+git clone https://github.com/your-repo/autodroid-TeachItBack.git
+cd autodroid-TeachItBack
+./gradlew build
 ```
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup details and guidelines.
 
@@ -83,10 +93,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup details and guidelines.
 
 ## 📦 Tech Stack
 
-- **Frontend:** React Native (iOS & Android) / Expo
-- **Backend:** Node.js + Express
-- **AI Engine:** OpenAI GPT‑4 / Claude (configurable)
-- **Database:** PostgreSQL for user progress & content
+- **Platform:** Android (Kotlin)
+- **Architecture:** MVVM with Navigation Component
+- **Database:** Room (SQLite)
+- **AI Integration:** Multiple AI service providers (12+ services)
+- **UI Framework:** Material Design Components
 - **Audio:** Web Speech API for voice explanations
 - **Deployment:** Docker + AWS/Azure
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -21,10 +22,9 @@
         android:padding="8dp">
 
         <!-- 输入框和按钮行 -->
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content">
 
             <!-- 添加附件按钮（无文字时显示） -->
             <ImageView
@@ -32,32 +32,37 @@
                 android:layout_width="72dp"
                 android:layout_height="36dp"
                 android:src="@drawable/ic_add"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackground"
                 android:contentDescription="添加附件"
-                android:padding="6dp" />
+                android:padding="6dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
             <!-- 发送按钮（有文字时显示） -->
             <ImageView
                 android:id="@+id/send_button"
                 android:layout_width="72dp"
                 android:layout_height="36dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
                 android:src="@drawable/ic_send"
                 android:background="?attr/selectableItemBackground"
                 android:contentDescription="发送消息"
                 android:padding="6dp"
                 android:visibility="gone"
-                android:enabled="false" />
+                android:enabled="false"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
-            <!-- 输入框 -->
+            <!-- 输入框容器 -->
             <RelativeLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_toStartOf="@id/add_button"
-                android:layout_marginEnd="8dp">
+                android:layout_marginEnd="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/add_button"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
 
                 <EditText
                     android:id="@+id/message_input"
@@ -89,7 +94,7 @@
 
             </RelativeLayout>
 
-        </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- 附件功能icons（点击添加按钮时显示） -->
         <LinearLayout

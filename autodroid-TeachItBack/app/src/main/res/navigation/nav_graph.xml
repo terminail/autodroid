@@ -54,6 +54,9 @@
             android:id="@+id/action_nav_settings_to_doubao"
             app:destination="@id/nav_doubao_settings" />
         <action
+            android:id="@+id/action_nav_settings_to_openai"
+            app:destination="@id/nav_openai_settings" />
+        <action
             android:id="@+id/action_nav_settings_to_ernie"
             app:destination="@id/nav_ernie_settings" />
         <action
@@ -104,13 +107,29 @@
     <fragment
         android:id="@+id/nav_why"
         android:name="com.autodroid.teachitback.ui.WhyFragment"
-        android:label="为什么" />
+        android:label="为什么">
+        <action
+            android:id="@+id/action_whyFragment_to_chatFragment"
+            app:destination="@id/nav_chat">
+            <argument
+                android:name="topicId"
+                app:argType="string" />
+            <argument
+                android:name="topicTitle"
+                app:argType="string" />
+        </action>
+    </fragment>
 
     <!-- AI服务详细设置页面 -->
     <fragment
         android:id="@+id/nav_doubao_settings"
         android:name="com.autodroid.teachitback.ui.DoubaoAISettingsFragment"
         android:label="豆包配置" />
+
+    <fragment
+        android:id="@+id/nav_openai_settings"
+        android:name="com.autodroid.teachitback.ui.OpenAISettingsFragment"
+        android:label="OpenAI配置" />
 
     <fragment
         android:id="@+id/nav_ernie_settings"

@@ -12,21 +12,26 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.MainActivity
 import com.autodroid.teachitback.R
+import com.autodroid.teachitback.ui.adapter.ChatItem
 import com.autodroid.teachitback.databinding.FragmentChatBinding
+import com.autodroid.teachitback.model.MessageEntity
 import com.autodroid.teachitback.service.VoiceProcessor
-import com.autodroid.teachitback.ui.adapter.MessagesAdapter
-import com.autodroid.teachitback.viewmodel.AppViewModel
+import com.autodroid.teachitback.ui.adapter.ChatAdapter
+import com.autodroid.teachitback.viewmodel.ChatViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class ChatFragment : Fragment() {
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: AppViewModel
-    private lateinit var messagesAdapter: MessagesAdapter
+    private lateinit var viewModel: ChatViewModel
+    private lateinit var chatAdapter: ChatAdapter
     private lateinit var voiceProcessor: VoiceProcessor
 
     private val args: ChatFragmentArgs by navArgs()
@@ -52,19 +57,24 @@ class ChatFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
-
+        viewModel = ViewModelProvider(requireActivity())[ChatViewModel::class.java]
+        
         voiceProcessor = VoiceProcessor(requireContext())
 
         setupUI()
         setupRecyclerView()
-        observeMessages()
-        loadMessages()
+        observeViewModel()
+        loadTopicAndMessages()
     }
 
     private fun setupUI() {
         // Set toolbar title to topic name
         setToolbarTitle(args.topicTitle ?: "聊天")
+
+        // 初始化按钮状态：默认显示添加按钮，隐藏发送按钮
+        binding.addButton.visibility = View.VISIBLE
+        binding.sendButton.visibility = View.GONE
+        binding.sendButton.isEnabled = false
 
         // 监听输入框内容变化，控制发送按钮状态
         binding.messageInput.addTextChangedListener(object : android.text.TextWatcher {
@@ -125,6 +135,20 @@ class ChatFragment : Fragment() {
 
         // 设置附件功能图标的点击事件
         setupAttachmentIcons()
+        
+        // 设置MindMap按钮
+        setupMindMapButton()
+    }
+    
+    private fun setupMindMapButton() {
+        lifecycleScope.launch {
+            val mindMap = viewModel.mindMapRepository.getMindMapByTopicId(args.topicId)
+            if (mindMap != null) {
+                viewModel.loadMindMap(args.topicId)
+            } else {
+                viewModel.createMindMap(args.topicId, args.topicTitle ?: "学习主题")
+            }
+        }
     }
 
     private fun setToolbarTitle(title: String) {
@@ -208,41 +232,42 @@ class ChatFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        messagesAdapter = MessagesAdapter()
+        chatAdapter = ChatAdapter()
 
         binding.messagesRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext()).apply {
                 stackFromEnd = true
             }
-            adapter = messagesAdapter
+            adapter = chatAdapter
         }
     }
 
-    private fun observeMessages() {
-        viewModel.currentTopicMessages?.observe(viewLifecycleOwner) { messages ->
-            messagesAdapter.submitList(messages)
-            binding.messagesRecyclerView.scrollToPosition(messages.size - 1)
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.chatItems.collect { chatItems ->
+                chatAdapter.submitList(chatItems)
+                binding.messagesRecyclerView.scrollToPosition(chatItems.size - 1)
+            }
+        }
+        
+        lifecycleScope.launch {
+            viewModel.errorMessage.collect { error ->
+                error?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
-    private fun loadMessages() {
-        viewModel.loadMessagesForTopic(args.topicId)
+    private fun loadTopicAndMessages() {
+        viewModel.loadTopicAndMessages(args.topicId)
     }
 
     private fun sendMessage() {
         val content = binding.messageInput.text.toString().trim()
         if (content.isNotEmpty()) {
-            // Save user message
-            viewModel.insertMessage(
-                topicId = args.topicId,
-                content = content,
-                senderType = "USER",
-                messageType = "TEXT"
-            )
+            viewModel.sendUserMessage(content, args.topicId)
             binding.messageInput.text?.clear()
-
-            // Send to AI and get response
-            viewModel.sendMessageToAI(args.topicId, args.topicTitle ?: "")
         }
     }
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="如何使用"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/steps_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="1. 在「主题」页面创建学习主题\n   输入您想要掌握的知识领域\n\n2. 选择主题进入对话页面\n   开始与AI进行教学对话\n\n3. 向AI讲解你的知识\n   通过解释来检验理解程度\n\n4. AI提问并给出反馈\n   发现知识盲点，加深理解\n\n5. 持续加深理解，提升掌握度\n   循环学习，直到完全掌握"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

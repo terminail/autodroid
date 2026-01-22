@@ -16,13 +16,14 @@ import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentTopicsBinding
 import com.autodroid.teachitback.model.TopicEntity
 import com.autodroid.teachitback.ui.adapter.TopicsAdapter
-import com.autodroid.teachitback.viewmodel.AppViewModel
+import com.autodroid.teachitback.ui.adapter.TopicsItem
+import com.autodroid.teachitback.viewmodel.TopicsViewModel
 
 class TopicsFragment : Fragment() {
     private var _binding: FragmentTopicsBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: AppViewModel
+    private lateinit var viewModel: TopicsViewModel
     private lateinit var topicsAdapter: TopicsAdapter
 
     override fun onCreateView(
@@ -37,10 +38,11 @@ class TopicsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AppViewModel::class.java]
+        viewModel = ViewModelProvider(requireActivity())[TopicsViewModel::class.java]
 
+        setupUI()
         setupRecyclerView()
-        observeTopics()
+        observeViewModel()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -58,14 +60,12 @@ class TopicsFragment : Fragment() {
         }
     }
 
+    private fun setupUI() {
+    }
+
     private fun setupRecyclerView() {
-        topicsAdapter = TopicsAdapter { topic ->
-            // 导航到聊天页面，传递topic参数
-            val action = TopicsFragmentDirections.actionNavTopicsToChat(
-                topicId = topic.id,
-                topicTitle = topic.title
-            )
-            findNavController().navigate(action)
+        topicsAdapter = TopicsAdapter { topicItem ->
+            handleTopicItemClick(topicItem)
         }
 
         binding.topicsRecyclerView.apply {
@@ -74,29 +74,31 @@ class TopicsFragment : Fragment() {
         }
     }
 
-    private fun observeTopics() {
-        viewModel.topics.observe(viewLifecycleOwner) { topics ->
-            if (topics.isNullOrEmpty()) {
+    private fun handleTopicItemClick(topicItem: TopicsItem) {
+        if (topicItem is TopicsItem.TopicItem) {
+            val topic = topicItem.topic
+            val action = TopicsFragmentDirections.actionNavTopicsToChat(
+                topicId = topic.id,
+                topicTitle = topic.title
+            )
+            findNavController().navigate(action)
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.topicsItems.observe(viewLifecycleOwner) { items ->
+            if (items.isNullOrEmpty()) {
                 binding.emptyState.visibility = View.VISIBLE
                 binding.topicsRecyclerView.visibility = View.GONE
             } else {
                 binding.emptyState.visibility = View.GONE
                 binding.topicsRecyclerView.visibility = View.VISIBLE
-                topicsAdapter.submitList(topics)
+                topicsAdapter.submitList(items)
             }
         }
     }
 
     private fun showAddTopicDialog() {
-        val dialog = AddTopicDialogFragment.newInstance()
-        dialog.setOnTopicAddedListener {
-            
-        }
-        dialog.show(parentFragmentManager, "AddTopicDialog")
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        // TODO: 实现添加话题的对话框
     }
 }

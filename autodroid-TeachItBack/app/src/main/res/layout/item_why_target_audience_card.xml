@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="适合人群"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/groups_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="学生群体\n备考各类考试，系统化掌握复杂概念\n\n职场人士\n快速掌握专业技能，提升工作效率\n\n终身学习者\n持续学习新知识，保持思维活跃"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

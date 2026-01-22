@@ -5,16 +5,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentSettingsBinding
+import com.autodroid.teachitback.repository.SettingsRepository
 import com.autodroid.teachitback.ui.adapter.SettingsAdapter
-import com.autodroid.teachitback.utils.DataInitializer
+import com.autodroid.teachitback.viewmodel.SettingsViewModel
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+    
+    private lateinit var viewModel: SettingsViewModel
+    private lateinit var settingsAdapter: SettingsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,68 +32,105 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewModel = ViewModelProvider(requireActivity())[SettingsViewModel::class.java]
 
+        setupUI()
         setupRecyclerView()
+        observeViewModel()
+    }
+
+    private fun setupUI() {
     }
 
     private fun setupRecyclerView() {
-        val settingsAdapter = SettingsAdapter { item ->
-            when (item) {
-                is com.autodroid.teachitback.ui.adapter.SettingsItem.AIService -> {
-                    // 根据AI服务类型导航到对应的设置页面
-                    when (item.service.id) {
-                        "doubao" -> findNavController().navigate(R.id.action_nav_settings_to_doubao)
-                        "ernie" -> findNavController().navigate(R.id.action_nav_settings_to_ernie)
-                        "qwen" -> findNavController().navigate(R.id.action_nav_settings_to_qwen)
-                        "deepseek" -> findNavController().navigate(R.id.action_nav_settings_to_deepseek)
-                        "zhipu" -> findNavController().navigate(R.id.action_nav_settings_to_zhipu)
-                        "spark" -> findNavController().navigate(R.id.action_nav_settings_to_spark)
-                        "minimax" -> findNavController().navigate(R.id.action_nav_settings_to_minimax)
-                        "kimi" -> findNavController().navigate(R.id.action_nav_settings_to_kimi)
-                        "hunyuan" -> findNavController().navigate(R.id.action_nav_settings_to_hunyuan)
-                        "baichuan" -> findNavController().navigate(R.id.action_nav_settings_to_baichuan)
-                        "lingyi" -> findNavController().navigate(R.id.action_nav_settings_to_lingyi)
-                        "jieyue" -> findNavController().navigate(R.id.action_nav_settings_to_jieyue)
-                        else -> {
-                            // 其他AI服务的通用设置页面
-                            // 暂时使用默认导航，后续可以添加通用设置页面
-                            findNavController().navigate(R.id.action_nav_settings_to_doubao)
-                        }
-                    }
-                }
-                is com.autodroid.teachitback.ui.adapter.SettingsItem.OtherSetting -> {
-                    when (item.type) {
-                        "about" -> findNavController().navigate(R.id.action_nav_settings_to_about)
-                        "preferences" -> findNavController().navigate(R.id.action_nav_settings_to_preferences)
-                        else -> {}
-                    }
-                }
-                else -> {}
-            }
+        settingsAdapter = SettingsAdapter { item ->
+            handleSettingsItemClick(item)
         }
-
-        // 创建设置项列表
-        val items = mutableListOf<com.autodroid.teachitback.ui.adapter.SettingsItem>()
-        
-        // AI服务提供商
-        items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.Header("AI 服务"))
-        DataInitializer.getAIServiceProviders().forEach { service ->
-            items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.AIService(service))
-        }
-        
-        items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.Divider)
-        
-        // 其他设置
-        items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.Header("其他"))
-        items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.OtherSetting("关于", "应用信息、版本号和帮助", "about"))
-        items.add(com.autodroid.teachitback.ui.adapter.SettingsItem.OtherSetting("个人偏好", "界面主题、语言设置等", "preferences"))
 
         binding.settingsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = settingsAdapter
         }
-        
-        settingsAdapter.submitList(items)
+    }
+
+    private fun handleSettingsItemClick(item: com.autodroid.teachitback.ui.adapter.SettingsItem) {
+        when (item) {
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.DoubaoAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_doubao)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.DeepSeekAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_deepseek)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.MinimaxAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_minimax)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.KimiAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_kimi)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.OpenAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_openai)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.ErnieAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_ernie)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.QwenAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_qwen)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.ZhipuAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_zhipu)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.SparkAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_spark)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.HunyuanAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_hunyuan)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.BaichuanAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_baichuan)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.LingyiAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_lingyi)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.JieyueAIServiceItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_jieyue)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.DarkModeSwitchItem -> {
+                viewModel.updateSwitchSetting("dark_mode", !item.isChecked)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.AutoSaveSwitchItem -> {
+                viewModel.updateSwitchSetting("auto_save", !item.isChecked)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.LanguageSettingItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_preferences)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.BackupDataItem -> {
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.RestoreDataItem -> {
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.ClearAllDataButtonItem -> {
+                viewModel.clearAllData()
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.VersionInfoItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_about)
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.HelpAndFeedbackItem -> {
+                findNavController().navigate(R.id.action_nav_settings_to_about)
+            }
+            else -> {}
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.settingsItems.observe(viewLifecycleOwner) { items ->
+            settingsAdapter.submitList(items)
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message?.let {
+                android.widget.Toast.makeText(requireContext(), it, android.widget.Toast.LENGTH_SHORT).show()
+                viewModel.clearErrorMessage()
+            }
+        }
     }
 
     override fun onDestroyView() {
