@@ -98,6 +98,7 @@ class SettingsRepository(private val settingDao: SettingDao) {
             is SettingsItem.BaichuanAIServiceItem -> "BaichuanAIServiceItem"
             is SettingsItem.LingyiAIServiceItem -> "LingyiAIServiceItem"
             is SettingsItem.JieyueAIServiceItem -> "JieyueAIServiceItem"
+            is SettingsItem.TencentCloudApiKeyItem -> "TencentCloudApiKeyItem"
         }
         
         val itemJson = gson.toJson(item)
@@ -138,6 +139,7 @@ class SettingsRepository(private val settingDao: SettingDao) {
                 "BaichuanAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.BaichuanAIServiceItem::class.java)
                 "LingyiAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.LingyiAIServiceItem::class.java)
                 "JieyueAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.JieyueAIServiceItem::class.java)
+                "TencentCloudApiKeyItem" -> gson.fromJson(dataJson, SettingsItem.TencentCloudApiKeyItem::class.java)
                 else -> null
             }
         } catch (e: Exception) {

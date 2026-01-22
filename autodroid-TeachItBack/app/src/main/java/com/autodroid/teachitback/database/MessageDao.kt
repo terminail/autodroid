@@ -13,6 +13,9 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE topicId = :topicId ORDER BY timestamp ASC")
     fun getMessagesByTopic(topicId: String): Flow<List<MessageEntity>>
 
+    @Query("SELECT * FROM messages WHERE topicId = :topicId ORDER BY timestamp ASC")
+    suspend fun getMessagesByTopicSync(topicId: String): List<MessageEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: MessageEntity)
 

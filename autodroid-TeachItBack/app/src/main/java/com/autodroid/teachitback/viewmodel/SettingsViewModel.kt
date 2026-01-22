@@ -39,7 +39,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun loadSettings() {
         _isLoading.value = true
         _errorMessage.value = null
-        
+
         viewModelScope.launch {
             try {
                 val allSettings = settingsRepository.getAllSettings().first()
@@ -56,9 +56,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     item is SettingsItem.BaichuanAIServiceItem ||
                     item is SettingsItem.LingyiAIServiceItem ||
                     item is SettingsItem.JieyueAIServiceItem ||
-                    item is SettingsItem.OpenAIServiceItem
+                    item is SettingsItem.OpenAIServiceItem ||
+                    item is SettingsItem.TencentCloudApiKeyItem
                 }
-                val items = buildSettingsItems(aiServiceItems)
+
+                // 如果数据库中没有数据，使用默认设置项
+                val items = if (aiServiceItems.isEmpty()) {
+                    buildDefaultSettingsItems()
+                } else {
+                    buildSettingsItems(aiServiceItems)
+                }
+
                 _settingsItems.value = items
             } catch (e: Exception) {
                 _errorMessage.value = "加载设置失败: ${e.message}"
@@ -78,8 +86,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // AI服务设置 - 从数据库加载
         items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
         
-        val aiServiceMap = aiServiceItems.associateBy { 
+        val aiServiceMap = aiServiceItems.associateBy {
             when (it) {
+                is SettingsItem.TencentCloudApiKeyItem -> "tencentcloud"
                 is SettingsItem.DoubaoAIServiceItem -> "doubao"
                 is SettingsItem.ErnieAIServiceItem -> "ernie"
                 is SettingsItem.QwenAIServiceItem -> "qwen"
@@ -97,6 +106,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
         }
         
+        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudApiKeyItem ?: SettingsItem.TencentCloudApiKeyItem())
         items.add(aiServiceMap["openai"] as? SettingsItem.OpenAIServiceItem ?: SettingsItem.OpenAIServiceItem(isEnabled = true))
         items.add(aiServiceMap["deepseek"] as? SettingsItem.DeepSeekAIServiceItem ?: SettingsItem.DeepSeekAIServiceItem(isEnabled = true))
         items.add(aiServiceMap["ernie"] as? SettingsItem.ErnieAIServiceItem ?: SettingsItem.ErnieAIServiceItem(isEnabled = false))
@@ -203,12 +213,55 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
     
     /**
+     * 构建默认设置项（用于首次启动或数据库为空时）
+     */
+    private fun buildDefaultSettingsItems(): List<SettingsItem> {
+        val items = mutableListOf<SettingsItem>()
+
+        // AI服务设置 - 默认配置
+        items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
+        items.add(SettingsItem.TencentCloudApiKeyItem())  // 腾讯云知识引擎
+        items.add(SettingsItem.OpenAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.DeepSeekAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.QwenAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.DoubaoAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.MinimaxAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.KimiAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.ZhipuAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.SparkAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.HunyuanAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.BaichuanAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.LingyiAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.JieyueAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.ErnieAIServiceItem(isEnabled = false))
+
+        // 应用设置
+        items.add(SettingsItem.SectionHeaderItem("应用设置"))
+        items.add(SettingsItem.DarkModeSwitchItem(isChecked = false))
+        items.add(SettingsItem.AutoSaveSwitchItem(isChecked = true))
+        items.add(SettingsItem.LanguageSettingItem())
+
+        // 数据管理
+        items.add(SettingsItem.SectionHeaderItem("数据管理"))
+        items.add(SettingsItem.BackupDataItem())
+        items.add(SettingsItem.RestoreDataItem())
+        items.add(SettingsItem.ClearAllDataButtonItem())
+
+        // 关于
+        items.add(SettingsItem.SectionHeaderItem("关于"))
+        items.add(SettingsItem.VersionInfoItem())
+        items.add(SettingsItem.HelpAndFeedbackItem())
+
+        return items
+    }
+
+    /**
      * 执行数据清除操作
      */
     fun clearAllData() {
         _isLoading.value = true
         _errorMessage.value = null
-        
+
         viewModelScope.launch {
             try {
                 settingsRepository.deleteAllSettings()

@@ -66,6 +66,7 @@ class SettingsAdapter(
                 val view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false)
                 HelpAndFeedbackViewHolder(view)
             }
+            SettingsItem.TYPE_TENCENTCLOUD_API_KEY_ITEM,
             SettingsItem.TYPE_DOUBAO_AI_SERVICE_ITEM,
             SettingsItem.TYPE_DEEPSEEK_AI_SERVICE_ITEM,
             SettingsItem.TYPE_MINIMAX_AI_SERVICE_ITEM,
@@ -80,6 +81,7 @@ class SettingsAdapter(
             SettingsItem.TYPE_LINGYI_AI_SERVICE_ITEM,
             SettingsItem.TYPE_JIEYUE_AI_SERVICE_ITEM -> {
                 val layoutResId = when (viewType) {
+                    SettingsItem.TYPE_TENCENTCLOUD_API_KEY_ITEM -> android.R.layout.simple_list_item_2
                     SettingsItem.TYPE_DOUBAO_AI_SERVICE_ITEM -> R.layout.setting_item_doubao
                     SettingsItem.TYPE_DEEPSEEK_AI_SERVICE_ITEM -> R.layout.setting_item_deepseek
                     SettingsItem.TYPE_MINIMAX_AI_SERVICE_ITEM -> R.layout.setting_item_minimax
@@ -130,6 +132,7 @@ class SettingsAdapter(
                     is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item)
                     is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item)
                     is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item)
+                    is SettingsItem.TencentCloudApiKeyItem -> holder.bind("腾讯云知识引擎", item.enabled, item)
                     else -> holder.bind("未知AI服务", false, item)
                 }
             }

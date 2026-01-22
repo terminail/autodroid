@@ -1,0 +1,272 @@
+{
+    "project": "Teach It Back - 腾讯云知识引擎集成",
+    "phase": "writing-plans",
+    "timestamp": "2026-01-22",
+    "branch": "feature/teach-it-back-dev",
+    "design_document": "brainstorming_tencentcloud_integration_20260122_172000",
+    "tasks": [
+        {
+            "id": "task-1",
+            "title": "创建TencentCloudAIService基础接口",
+            "description": "定义TencentCloudAIService接口，包含MindMap生成、苏格拉底对话、进度跟踪等核心方法",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/api/TencentCloudAIService.kt",
+            "code_example": "interface TencentCloudAIService {\n    suspend fun sendMessage(messages: List<MessageEntity>, context: String): String\n    \n    suspend fun generateMindMap(topicId: String, learningGoal: String): MindMapEntity?\n    suspend fun analyzeLearningProgress(conversationHistory: List<MessageEntity>): ProgressAnalysis\n    suspend fun generateSocraticQuestions(topic: String, currentLevel: Int): List<String>\n    suspend fun evaluateAnswer(userAnswer: String, correctAnswer: String): AnswerEvaluation\n    \n    suspend fun parseDocument(fileContent: String, fileType: String): DocumentAnalysis\n    suspend fun extractKeyConcepts(content: String): List<Concept>\n    suspend fun buildKnowledgeGraph(concepts: List<Concept>): KnowledgeGraph\n}",
+            "validation_steps": [
+                "接口定义完整",
+                "所有方法签名清晰",
+                "数据类型定义准确"
+            ]
+        },
+        {
+            "id": "task-2",
+            "title": "创建进度跟踪数据结构",
+            "description": "定义ProgressAnalysis、AnswerEvaluation等数据类，支持学习进度评估",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/model/ProgressAnalysis.kt",
+            "code_example": "data class ProgressAnalysis(\n    val overallProgress: Int,\n    val conceptMastery: Map<String, Int>,\n    val learningVelocity: Double,\n    val knowledgeGaps: List<String>,\n    val recommendedNextSteps: List<String>\n)\n\ndata class AnswerEvaluation(\n    val isCorrect: Boolean,\n    val confidence: Double,\n    val feedback: String,\n    val suggestedImprovement: String? = null\n)\n\nenum class QuestionType {\n    CONCEPT_EXPLANATION,\n    EXAMPLE_REQUIRED,\n    COMPARISON_ANALYSIS,\n    PRACTICAL_APPLICATION,\n    CRITICAL_THINKING\n}\n\ndata class SocraticQuestion(\n    val id: String,\n    val question: String,\n    val type: QuestionType,\n    val difficulty: Int,\n    val expectedAnswerHints: List<String>\n)",
+            "validation_steps": [
+                "数据类定义完整",
+                "枚举类型准确",
+                "包含所有必要字段"
+            ]
+        },
+        {
+            "id": "task-3",
+            "title": "扩展MindMapRepository支持AI服务",
+            "description": "修改MindMapRepository，集成TencentCloudAIService，实现本地优先的数据协调逻辑",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/repository/MindMapRepository.kt",
+            "code_example": "class MindMapRepository(\n    private val database: AppDatabase,\n    private val aiService: TencentCloudAIService\n) {\n    \n    // Local-First: 优先返回本地数据\n    fun getAllMindMapsFlow() = database.mindMapDao().getAllMindMapsFlow()\n    \n    suspend fun getMindMapByTopicId(topicId: String): MindMapEntity? {\n        return database.mindMapDao().getByTopicId(topicId)\n    }\n    \n    suspend fun generateMindMap(topicId: String): MindMapEntity? {\n        // 1. 优先返回本地已有的MindMap\n        val existingMindMap = database.mindMapDao().getByTopicId(topicId)\n        if (existingMindMap != null) {\n            return existingMindMap\n        }\n        \n        // 2. 异步调用AI服务生成MindMap\n        val topic = database.topicDao().getTopicByIdSync(topicId)\n        if (topic == null) {\n            return null\n        }\n        \n        val mindMapEntity = aiService.generateMindMap(topicId, topic.title)\n        \n        if (mindMapEntity != null) {\n            database.mindMapDao().insert(mindMapEntity)\n        }\n        \n        return mindMapEntity\n    }\n    \n    suspend fun updateNodeProgress(nodeId: String, progress: Int) {\n        database.mindMapDao().updateNodeProgress(nodeId, progress)\n    }\n}",
+            "validation_steps": [
+                "Local-First策略实现",
+                "数据保存逻辑正确",
+                "异步处理无阻塞"
+            ]
+        },
+        {
+            "id": "task-4",
+            "title": "扩展MessageRepository支持AI服务",
+            "description": "修改MessageRepository，集成TencentCloudAIService，实现消息的本地优先+AI增强",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/repository/MessageRepository.kt",
+            "code_example": "class MessageRepository(\n    private val messageDao: MessageDao,\n    private val topicDao: TopicDao,\n    private val aiService: TencentCloudAIService\n) {\n    \n    fun getMessagesByTopicFlow(topicId: String): Flow<List<MessageEntity>> {\n        return messageDao.getByTopicIdFlow(topicId)\n    }\n    \n    suspend fun getMessagesByTopicId(topicId: String): List<MessageEntity> {\n        return messageDao.getByTopicId(topicId)\n    }\n    \n    suspend fun sendMessageAndGetReply(topicId: String, userContent: String): MessageEntity? {\n        // 1. 保存用户消息到本地数据库\n        val userMessage = MessageEntity(\n            id = UUID.randomUUID().toString(),\n            topicId = topicId,\n            content = userContent,\n            senderType = \"USER\",\n            messageType = \"TEXT\",\n            timestamp = System.currentTimeMillis()\n        )\n        messageDao.insert(userMessage)\n        \n        // 2. 获取对话历史（用于AI分析）\n        val conversationHistory = messageDao.getByTopicId(topicId)\n        \n        // 3. 异步调用AI服务分析进度\n        val progressAnalysis = aiService.analyzeLearningProgress(conversationHistory)\n        \n        // 4. 构建上下文并获取AI回复\n        val context = buildContext(conversationHistory, progressAnalysis)\n        val aiResponse = aiService.sendMessage(conversationHistory, context)\n        \n        // 5. 保存AI回复到本地数据库\n        val aiMessage = MessageEntity(\n            id = UUID.randomUUID().toString(),\n            topicId = topicId,\n            content = aiResponse,\n            senderType = \"AI\",\n            messageType = \"TEXT\",\n            timestamp = System.currentTimeMillis()\n        )\n        messageDao.insert(aiMessage)\n        \n        return aiMessage\n    }\n}",
+            "validation_steps": [
+                "Local-First策略实现",
+                "消息保存逻辑正确",
+                "AI异步调用无阻塞"
+            ]
+        },
+        {
+            "id": "task-5",
+            "title": "实现TencentCloudAIService基础框架",
+            "description": "创建TencentCloudAIServiceImpl实现类，配置API客户端和基础认证，支持测试模式",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "code_example": "class TencentCloudAIServiceImpl(\n    private val context: Context,\n    private val apiKey: String,\n    private val secretId: String,\n    private val testMode: Boolean = false\n) : TencentCloudAIService {\n    \n    private val apiClient: TencentCloudClient by lazy {\n        TencentCloudClient.Builder(context)\n            .setApiKey(apiKey)\n            .setSecretId(secretId)\n            .setTimeout(30000)\n            .build()\n    }\n    \n    companion object {\n        const val BASE_URL = \"https://knowledge-engine.tencentcloudapi.com\"\n    }\n    \n    private suspend fun <T> withRetry(\n        maxRetries: Int = 3,\n        operation: suspend () -> T\n    ): T {\n        repeat(maxRetries) { attempt ->\n            try {\n                return operation()\n            } catch (e: Exception) {\n                if (attempt == maxRetries - 1) throw e\n                delay(1000L * (attempt + 1))\n            }\n        }\n        throw IllegalStateException(\"Unexpected retry logic failure\")\n    }\n    \n    override suspend fun sendMessage(messages: List<MessageEntity>, context: String): String {\n        return if (testMode) {\n            mockSendMessage()\n        } else {\n            withRetry {\n                apiClient.callChatAPI(messages, context)\n            }\n        }\n    }\n    \n    private fun mockSendMessage(): String {\n        return \"这是一个测试回复。真实API调用被禁用。\"\n    }\n    \n    override suspend fun generateMindMap(topicId: String, learningGoal: String): MindMapEntity? {\n        TODO(\"Not yet implemented\")\n    }\n}",
+            "validation_steps": [
+                "基础框架搭建完成",
+                "API客户端初始化正确",
+                "重试机制实现",
+                "测试模式切换正常",
+                "Mock数据返回正确"
+            ]
+        },
+        {
+            "id": "task-6",
+            "title": "添加腾讯云API配置到SettingsEntity",
+            "description": "扩展SettingsEntity，添加腾讯云API密钥、测试模式等配置选项",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/model/SettingEntity.kt",
+            "code_example": "data class SettingEntity(\n    @PrimaryKey\n    val key: String,\n    val value: String\n)\n\n// 腾讯云配置相关常量\nobject TencentCloudSettings {\n    const val API_KEY = \"tencentcloud_api_key\"\n    const val SECRET_ID = \"tencentcloud_secret_id\"\n    const val ENABLED = \"tencentcloud_enabled\"\n    const val TEST_MODE = \"tencentcloud_test_mode\"\n    const val REGION = \"tencentcloud_region\"\n    const val DEFAULT_REGION = \"ap-guangzhou\"\n}",
+            "validation_steps": [
+                "配置常量定义完整",
+                "实体类兼容现有设计",
+                "测试模式配置常量已添加"
+            ]
+        },
+        {
+            "id": "task-7",
+            "title": "添加腾讯云设置项到SettingsItem",
+            "description": "在SettingsItem中添加腾讯云API配置（包含测试模式选项）的UI项",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/adapter/SettingsItem.kt",
+            "code_example": "data class TencentCloudApiKeyItem(\n    val apiKey: String,\n    val testMode: Boolean,\n    val onApiKeyChanged: (String) -> Unit,\n    val onTestModeChanged: (Boolean) -> Unit\n) : SettingsItem {\n    override val id = \"tencentcloud_api_key\"\n    override val title = \"腾讯云API密钥\"\n    override val description = \"配置腾讯云知识引擎API密钥（测试模式不调用真实API）\"\n}",
+            "validation_steps": [
+                "新的SettingsItem类型定义正确",
+                "测试模式选项包含在腾讯云配置中",
+                "包含必要的回调函数",
+                "符合现有UI设计"
+            ]
+        },
+        {
+            "id": "task-8",
+            "title": "在SettingsFragment中添加腾讯云配置UI",
+            "description": "在SettingsFragment中添加腾讯云API配置（包含测试模式）的UI逻辑",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/SettingsFragment.kt",
+            "validation_steps": [
+                "UI正确显示腾讯云配置",
+                "测试模式选项正确显示",
+                "配置保存功能正常",
+                "切换开关生效"
+            ]
+        },
+        {
+            "id": "task-9",
+            "title": "实现文档解析功能",
+            "description": "在TencentCloudAIServiceImpl中实现parseDocument方法",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "文档解析API调用正确",
+                "返回数据结构正确",
+                "异常处理完善"
+            ]
+        },
+        {
+            "id": "task-10",
+            "title": "实现知识图谱构建功能",
+            "description": "在TencentCloudAIServiceImpl中实现buildKnowledgeGraph方法",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "知识图谱构建正确",
+                "节点和边数据完整",
+                "关系映射准确"
+            ]
+        },
+        {
+            "id": "task-11",
+            "title": "实现MindMap生成功能",
+            "description": "在TencentCloudAIServiceImpl中实现generateMindMap方法，直接操作MindMapEntity和MindMapNode",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "MindMap生成逻辑正确",
+                "使用数据库实体而非临时结构",
+                "节点层级关系准确"
+            ]
+        },
+        {
+            "id": "task-12",
+            "title": "实现苏格拉底问题生成功能",
+            "description": "在TencentCloudAIServiceImpl中实现generateSocraticQuestions方法",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "问题生成逻辑正确",
+                "问题类型多样化",
+                "难度适配合理"
+            ]
+        },
+        {
+            "id": "task-13",
+            "title": "实现答案评估功能",
+            "description": "在TencentCloudAIServiceImpl中实现evaluateAnswer方法，支持测试模式Mock数据",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "答案评估准确",
+                "反馈信息有用",
+                "建议具体明确",
+                "测试模式Mock数据正常"
+            ]
+        },
+        {
+            "id": "task-14",
+            "title": "实现学习进度分析功能",
+            "description": "在TencentCloudAIServiceImpl中实现analyzeLearningProgress方法，支持测试模式Mock数据",
+            "estimated_time": "5分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/impl/TencentCloudAIServiceImpl.kt",
+            "validation_steps": [
+                "进度分析算法准确",
+                "知识缺口识别正确",
+                "推荐建议实用",
+                "测试模式Mock数据正常"
+            ]
+        },
+        {
+            "id": "task-15",
+            "title": "扩展ChatViewModel统一管理ChatItem（包含MindMap）",
+            "description": "修改ChatViewModel，统一管理所有ChatItem类型（消息、MindMap、文件），通过Repository调用",
+            "estimated_time": "6分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/viewmodel/ChatViewModel.kt",
+            "validation_steps": [
+                "消息发送正常",
+                "AI回复及时",
+                "进度分析准确"
+            ]
+        },
+        {
+            "id": "task-16",
+            "title": "创建进度显示组件",
+            "description": "创建用于显示学习进度的UI组件",
+            "estimated_time": "3分钟",
+            "file_path": "app/src/main/java/com/autodroid/teachitback/ui/component/ProgressView.kt",
+            "validation_steps": [
+                "UI组件显示正确",
+                "进度颜色准确",
+                "布局合理美观"
+            ]
+        },
+        {
+            "id": "task-17",
+            "title": "创建单元测试 - TencentCloudAIService",
+            "description": "为TencentCloudAIService编写单元测试",
+            "estimated_time": "4分钟",
+            "file_path": "app/src/test/java/com/autodroid/teachitback/api/TencentCloudAIServiceTest.kt",
+            "validation_steps": [
+                "测试用例通过",
+                "覆盖关键功能",
+                "断言准确"
+            ]
+        }
+    ],
+    "total_estimated_time": "66分钟",
+    "implementation_phases": [
+        {
+            "name": "基础架构搭建",
+            "tasks": ["task-1", "task-2", "task-3", "task-4", "task-5", "task-6"],
+            "estimated_time": "25分钟",
+            "description": "创建AI服务接口、数据模型，扩展Repository层集成AI服务"
+        },
+        {
+            "name": "UI配置和设置",
+            "tasks": ["task-7", "task-8"],
+            "estimated_time": "9分钟",
+            "description": "添加腾讯云API配置UI（包含测试模式选项）"
+        },
+        {
+            "name": "核心功能实现",
+            "tasks": ["task-9", "task-10", "task-11", "task-12", "task-13", "task-14"],
+            "estimated_time": "27分钟",
+            "description": "实现AI服务核心功能：文档解析、MindMap生成、苏格拉底对话、进度分析"
+        },
+        {
+            "name": "UI集成和交互",
+            "tasks": ["task-15", "task-16"],
+            "estimated_time": "9分钟",
+            "description": "ChatViewModel统一管理ChatItem（包含MindMap），ChatFragment支持显示"
+        },
+        {
+            "name": "测试验证",
+            "tasks": ["task-17"],
+            "estimated_time": "4分钟",
+            "description": "单元测试、集成测试、端到端测试"
+        }
+    ],
+    "dependencies": {
+        "sequential": [
+            ["task-1", "task-2", "task-3"],
+            ["task-2", "task-3", "task-4", "task-5"],
+            ["task-4", "task-5", "task-15"],
+            ["task-6", "task-7", "task-8"],
+            ["task-9", "task-10", "task-11", "task-12", "task-13", "task-14", "task-15"],
+            ["所有实现任务", "task-17"]
+        ],
+        "parallel": [
+            ["task-3", "task-4"]
+        ]
+    }
+}

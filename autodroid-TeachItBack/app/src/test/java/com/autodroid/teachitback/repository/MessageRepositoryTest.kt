@@ -1,44 +1,42 @@
 package com.autodroid.teachitback.repository
 
 import com.autodroid.teachitback.api.TencentCloudAIService
-import com.autodroid.teachitback.database.AppDatabase
-import com.autodroid.teachitback.model.MindMapEntity
-import com.autodroid.teachitback.model.MindMapNode
+import com.autodroid.teachitback.database.MessageDao
+import com.autodroid.teachitback.model.MessageEntity
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 
-class MindMapRepositoryTest {
+class MessageRepositoryTest {
 
     @Mock
-    private lateinit var database: AppDatabase
+    private lateinit var messageDao: MessageDao
 
     @Mock
     private lateinit var aiService: TencentCloudAIService
 
-    private lateinit var repository: MindMapRepository
+    private lateinit var repository: MessageRepository
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        repository = MindMapRepository(database, aiService)
+        repository = MessageRepository(messageDao, aiService)
     }
 
     @Test
-    fun `MindMapRepository should accept AIService parameter`() {
+    fun `MessageRepository should accept AIService parameter`() {
         // 验证构造函数能够接受 AIService 参数
         assertNotNull(repository)
     }
 
     @Test
-    fun `generateMindMap should be defined`() = runTest {
+    fun `sendMessageAndGetReply should be defined`() = runTest {
         // 验证方法存在（实际测试需要mock database和aiService）
         val topicId = "test-topic-1"
-        val learningGoal = "学习机器学习"
+        val userContent = "测试消息"
 
         // 这里只验证方法存在，不执行实际逻辑
         // 实际测试需要mock database和aiService

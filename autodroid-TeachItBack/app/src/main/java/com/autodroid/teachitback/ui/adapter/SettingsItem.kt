@@ -31,6 +31,7 @@ sealed class SettingsItem {
         const val TYPE_BAICHUAN_AI_SERVICE_ITEM = 19
         const val TYPE_LINGYI_AI_SERVICE_ITEM = 20
         const val TYPE_JIEYUE_AI_SERVICE_ITEM = 21
+        const val TYPE_TENCENTCLOUD_API_KEY_ITEM = 22
     }
     
     /**
@@ -335,5 +336,23 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_JIEYUE_AI_SERVICE_ITEM
+    }
+
+    /**
+     * 腾讯云API密钥配置项
+     */
+    data class TencentCloudApiKeyItem(
+        val apiKey: String = "",
+        val secretId: String = "",
+        val testMode: Boolean = false,
+        val enabled: Boolean = false,
+        val region: String = "ap-guangzhou",
+        val onApiKeyChanged: (String) -> Unit = {},
+        val onSecretIdChanged: (String) -> Unit = {},
+        val onTestModeChanged: (Boolean) -> Unit = {},
+        val onEnabledChanged: (Boolean) -> Unit = {},
+        val onRegionChanged: (String) -> Unit = {}
+    ) : SettingsItem() {
+        override fun getType(): Int = TYPE_TENCENTCLOUD_API_KEY_ITEM
     }
 }

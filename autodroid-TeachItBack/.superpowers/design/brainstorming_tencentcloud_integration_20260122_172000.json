@@ -31,6 +31,23 @@
       "limited_features": ["文档解析", "知识图谱更新", "实时AI对话"],
       "sync_mechanism": "网络恢复后自动同步"
     },
+    "test_mode_support": {
+      "purpose": "在不消耗API配额的情况下测试应用功能",
+      "configuration": "每个AI服务单独配置（非全局设置）",
+      "implementation": "TencentCloudAIService内部根据配置决定调用真实API或返回Mock数据",
+      "features_covered": [
+        "模拟AI对话回复",
+        "模拟MindMap生成",
+        "模拟文档解析结果",
+        "模拟进度分析数据"
+      ],
+      "advantages": [
+        "节省API调用成本",
+        "可离线测试AI功能",
+        "保证测试结果一致性",
+        "不影响其他AI服务的正常使用"
+      ]
+    },
     "privacy_security_measures": {
       "data_encryption": "AES-256传输和存储加密",
       "privacy_protection": "学习数据仅用于个性化服务",

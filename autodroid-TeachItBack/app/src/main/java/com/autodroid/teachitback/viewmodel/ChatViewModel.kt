@@ -3,8 +3,7 @@ package com.autodroid.teachitback.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.autodroid.teachitback.api.AIService
-import com.autodroid.teachitback.api.OpenAIService
+import com.autodroid.teachitback.api.TencentCloudAIService
 import com.autodroid.teachitback.database.AppDatabase
 import com.autodroid.teachitback.model.MessageEntity
 import com.autodroid.teachitback.model.TopicEntity
@@ -22,20 +21,35 @@ import kotlinx.coroutines.launch
 /**
  * Chat ViewModel
  * 统一管理ChatFragment所需的所有数据类型：消息、AI响应、MindMap等
+ * 集成腾讯云AI服务，实现Local-First策略
  */
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
-    
+
     private val database = AppDatabase.getDatabase(application)
-    private val messageRepository = MessageRepository(database.messageDao())
+
+    // AI Service（延迟初始化）
+    private var aiService: TencentCloudAIService? = null
+
+    // Repositories（在initializeAI之后初始化）
+    private lateinit var messageRepository: MessageRepository
+    val mindMapRepository: MindMapRepository by lazy {
+        MindMapRepository(database, aiService!!)
+    }
     private val topicRepository = TopicRepository(database.topicDao())
-    val mindMapRepository = MindMapRepository(database)
-    
-    // AI Service
-    private var aiService: AIService? = null
-    
-    fun initializeAI(apiKey: String, model: String = "gpt-3.5-turbo") {
-        if (apiKey.isNotBlank()) {
-            aiService = OpenAIService(apiKey, model)
+
+    /**
+     * 初始化腾讯云AI服务
+     */
+    fun initializeAI(apiKey: String, secretId: String, testMode: Boolean = false) {
+        if (apiKey.isNotBlank() && secretId.isNotBlank()) {
+            aiService = com.autodroid.teachitback.impl.TencentCloudAIServiceImpl(
+                context = getApplication(),
+                apiKey = apiKey,
+                secretId = secretId,
+                testMode = testMode
+            )
+            // 初始化MessageRepository（需要aiService）
+            messageRepository = MessageRepository(database.messageDao(), aiService!!)
         }
     }
     
@@ -57,23 +71,41 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     
     private val _validationResult = MutableStateFlow<MindMapDemoValidator.ValidationResult?>(null)
     val validationResult: StateFlow<MindMapDemoValidator.ValidationResult?> = _validationResult.asStateFlow()
+
+    // 学习进度分析
+    private val _progressAnalysis = MutableStateFlow<com.autodroid.teachitback.model.ProgressAnalysis?>(null)
+    val progressAnalysis: StateFlow<com.autodroid.teachitback.model.ProgressAnalysis?> = _progressAnalysis.asStateFlow()
     
     /**
      * 加载话题和消息历史
+     * 包含AI增强的进度分析
      */
     fun loadTopicAndMessages(topicId: String) {
         _isLoading.value = true
         _errorMessage.value = null
-        
+
         viewModelScope.launch {
             try {
                 // 加载话题信息
                 val topic = topicRepository.getTopicById(topicId).first()
                 _currentTopic.value = topic
-                
+
                 // 加载消息历史
                 val messages = messageRepository.getMessagesByTopic(topicId).first()
-                
+
+                // AI增强：分析学习进度（如果有足够消息）
+                if (messages.size >= 3 && aiService != null) {
+                    try {
+                        val progressAnalysis = aiService!!.analyzeLearningProgress(messages)
+                        _progressAnalysis.value = progressAnalysis
+                    } catch (e: Exception) {
+                        android.util.Log.w("ChatViewModel", "进度分析失败: ${e.message}")
+                        _progressAnalysis.value = null
+                    }
+                } else {
+                    _progressAnalysis.value = null
+                }
+
                 // 加载MindMap
                 val mindMap = mindMapRepository.getMindMapByTopicId(topicId)
                 val mindMapNodes = if (mindMap != null) {
@@ -81,13 +113,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     emptyList()
                 }
-                
+
                 android.util.Log.d("ChatViewModel", "TopicId: $topicId, MindMap: $mindMap, MindMapNodes count: ${mindMapNodes.size}")
-                
+
                 // 构建聊天项列表
                 val chatItems = buildChatItems(messages, mindMapNodes)
                 _chatItems.value = chatItems
-                
+
             } catch (e: Exception) {
                 _errorMessage.value = "加载聊天记录失败: ${e.message}"
             } finally {
@@ -97,86 +129,34 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
-     * 发送用户消息
+     * 发送用户消息并获取AI回复
+     * 使用MessageRepository的Local-First策略
      */
     fun sendUserMessage(content: String, topicId: String) {
         viewModelScope.launch {
             try {
-                val message = MessageEntity(
-                    content = content,
-                    senderType = "USER",
-                    topicId = topicId,
-                    messageType = "TEXT"
-                )
-                messageRepository.insertMessage(message)
-                
-                // 添加到显示列表
-                val currentItems = _chatItems.value.toMutableList()
-                currentItems.add(ChatItem.UserMessageItem(message))
-                _chatItems.value = currentItems
-                
-                // 发送给AI并获取响应
-                sendMessageToAI(topicId, _currentTopic.value?.title ?: "")
-                
+                _isLoading.value = true
+
+                // 使用MessageRepository的sendMessageAndGetReply方法
+                // 该方法自动处理：保存用户消息、调用AI、保存AI回复
+                val aiMessage = messageRepository.sendMessageAndGetReply(topicId, content)
+
+                if (aiMessage != null) {
+                    // 刷新消息列表
+                    loadTopicAndMessages(topicId)
+                } else {
+                    _errorMessage.value = "获取AI回复失败"
+                }
+
             } catch (e: Exception) {
                 _errorMessage.value = "发送消息失败: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
     
-    /**
-     * 发送消息给AI
-     */
-    fun sendMessageToAI(topicId: String, topicTitle: String) = viewModelScope.launch {
-        val messages = messageRepository.getMessagesByTopic(topicId).first()
-        val aiService = this@ChatViewModel.aiService
 
-        if (aiService != null) {
-            try {
-                val context = "学习主题：$topicTitle"
-                val response = aiService.sendMessage(messages, context)
-
-                // Save AI response
-                val aiMessage = MessageEntity(
-                    topicId = topicId,
-                    content = response,
-                    senderType = "AI",
-                    messageType = "TEXT"
-                )
-                messageRepository.insertMessage(aiMessage)
-                
-                // 添加到显示列表
-                val currentItems = _chatItems.value.toMutableList()
-                currentItems.add(ChatItem.AIMessageItem(aiMessage))
-                _chatItems.value = currentItems
-                
-            } catch (e: Exception) {
-                val errorMessage = MessageEntity(
-                    topicId = topicId,
-                    content = "错误：${e.message}",
-                    senderType = "AI",
-                    messageType = "TEXT"
-                )
-                messageRepository.insertMessage(errorMessage)
-                
-                val currentItems = _chatItems.value.toMutableList()
-                currentItems.add(ChatItem.AIMessageItem(errorMessage))
-                _chatItems.value = currentItems
-            }
-        } else {
-            val noApiKeyMessage = MessageEntity(
-                topicId = topicId,
-                content = "请先在设置中配置 AI API Key",
-                senderType = "AI",
-                messageType = "TEXT"
-            )
-            messageRepository.insertMessage(noApiKeyMessage)
-            
-            val currentItems = _chatItems.value.toMutableList()
-            currentItems.add(ChatItem.AIMessageItem(noApiKeyMessage))
-            _chatItems.value = currentItems
-        }
-    }
     
     /**
      * 加载话题的思维导图
@@ -326,5 +306,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun clearValidationResult() {
         _validationResult.value = null
+    }
+
+    /**
+     * 清除进度分析
+     */
+    fun clearProgressAnalysis() {
+        _progressAnalysis.value = null
     }
 }
