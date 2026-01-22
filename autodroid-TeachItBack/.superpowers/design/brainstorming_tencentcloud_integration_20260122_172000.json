@@ -5,14 +5,38 @@
   "project_root": "d:/git/autodroid/autodroid-TeachItBack",
   "requirement": "腾讯云知识引擎原子能力与TeachItBack集成，重点实现：1.MindMap生成 2.苏格拉底对话 3.进度跟踪",
   
-  "clarifying_questions": [
-    "腾讯云知识引擎的具体API接口和调用方式是什么？",
-    "MindMap生成需要支持哪些类型的文档输入？",
-    "苏格拉底对话的个性化程度和问题生成策略如何？",
-    "进度跟踪需要收集哪些数据指标？",
-    "是否需要支持离线模式下的部分功能？",
-    "用户隐私和数据安全如何保障？"
-  ],
+  "technical_decisions": {
+    "tencent_cloud_api_integration": {
+      "apis": ["文档解析", "知识检索", "大模型对话"],
+      "authentication": "API密钥认证",
+      "implementation": "TencentCloudAIService封装"
+    },
+    "mindmap_document_support": {
+      "formats": ["PDF", "Word", "TXT"],
+      "input_methods": ["文件上传", "文本粘贴", "URL导入"],
+      "processing": "自动解析文档结构，提取关键概念"
+    },
+    "socratic_dialog_strategy": {
+      "personalization_level": "基于学习历史和回答质量动态调整",
+      "question_generation": "多级提问策略（基础→深入→应用）",
+      "adaptive_strategy": "根据正确率动态调整难度和类型"
+    },
+    "progress_tracking_metrics": {
+      "core_metrics": ["学习时长", "回答正确率", "概念掌握度"],
+      "advanced_metrics": ["学习速度", "知识缺口", "学习效率"],
+      "visualization": "MindMap节点进度和图表展示"
+    },
+    "offline_mode_support": {
+      "supported_features": ["基础对话", "本地MindMap浏览", "学习记录查看"],
+      "limited_features": ["文档解析", "知识图谱更新", "实时AI对话"],
+      "sync_mechanism": "网络恢复后自动同步"
+    },
+    "privacy_security_measures": {
+      "data_encryption": "AES-256传输和存储加密",
+      "privacy_protection": "学习数据仅用于个性化服务",
+      "security_certification": "腾讯云企业级安全认证"
+    }
+  },
 
   "alternatives": [
     {
