@@ -65,18 +65,70 @@ class WhyViewModel(application: Application) : AndroidViewModel(application) {
     fun copyPresetTopic(presetTopic: TopicEntity, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("WhyViewModel", "Copying preset topic: ${presetTopic.id}, title: ${presetTopic.title}")
+                
                 val personalTopic = presetTopic.copy(
                     id = java.util.UUID.randomUUID().toString(),
                     isPreset = false,
+                    presetTopicId = presetTopic.id,
                     createdAt = System.currentTimeMillis()
                 )
                 topicRepository.insertTopic(personalTopic)
+                
+                android.util.Log.d("WhyViewModel", "Created personal topic: ${personalTopic.id}")
+                
+                val presetMindMap = database.mindMapDao().getByTopicId(presetTopic.id)
+                android.util.Log.d("WhyViewModel", "Found preset mindmap: $presetMindMap")
+                
+                presetMindMap?.let { mindMap ->
+                    val newMindMap = mindMap.copy(
+                        id = java.util.UUID.randomUUID().toString(),
+                        topicId = personalTopic.id,
+                        createdAt = System.currentTimeMillis()
+                    )
+                    database.mindMapDao().insert(newMindMap)
+                    
+                    android.util.Log.d("WhyViewModel", "Created new mindmap: ${newMindMap.id} for topic: ${personalTopic.id}")
+                    
+                    val presetNodes = database.mindMapDao().getNodesByMindMapSync(mindMap.id)
+                    android.util.Log.d("WhyViewModel", "Found ${presetNodes.size} preset nodes")
+                    
+                    val nodeIdMap = mutableMapOf<String, String>()
+                    
+                    // 先复制所有节点，建立ID映射
+                    presetNodes.forEach { node ->
+                        val newId = java.util.UUID.randomUUID().toString()
+                        nodeIdMap[node.id] = newId
+                    }
+                    
+                    // 然后创建新节点，使用映射后的parentId
+                    presetNodes.forEach { node ->
+                        val newId = nodeIdMap[node.id]!!
+                        val newParentId = node.parentId?.let { nodeIdMap[it] }
+                        
+                        val newNode = node.copy(
+                            id = newId,
+                            mindMapId = newMindMap.id,
+                            parentId = newParentId,
+                            createdAt = System.currentTimeMillis()
+                        )
+                        database.mindMapDao().insertNode(newNode)
+                    }
+                    
+                    android.util.Log.d("WhyViewModel", "Copied ${presetNodes.size} nodes to new mindmap")
+                }
+                
                 onComplete(true)
             } catch (e: Exception) {
+                android.util.Log.e("WhyViewModel", "Error copying preset topic", e)
                 _errorMessage.value = "复制课程失败: ${e.message}"
                 onComplete(false)
             }
         }
+    }
+    
+    suspend fun checkPresetTopicCopied(presetTopicId: String): TopicEntity? {
+        return database.topicDao().getPersonalCopyByPresetId(presetTopicId)
     }
     
     fun clearErrorMessage() {

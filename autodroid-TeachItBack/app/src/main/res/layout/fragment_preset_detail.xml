@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/title_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="课程标题"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/description_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="课程描述"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="学习目标"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/learning_goals_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 学习目标1\n• 学习目标2\n• 学习目标3"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="8dp"
+                android:padding="16dp"
+                android:background="@android:color/white"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="知识点概览"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/knowledge_points_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 知识点1\n• 知识点2\n• 知识点3"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="8dp"
+                android:padding="16dp"
+                android:background="@android:color/white"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="推荐学习路径"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/recommended_path_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. 第一步\n2. 第二步\n3. 第三步"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="8dp"
+                android:padding="16dp"
+                android:background="@android:color/white"
+                android:layout_marginBottom="32dp" />
+
+            <Button
+                android:id="@+id/copy_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="复制到学习列表"
+                android:textColor="@android:color/white"
+                android:background="#07C160"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/already_copied_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="已复制 - 点击开始学习"
+                android:textColor="#666666"
+                android:background="#E0E0E0"
+                android:padding="12dp"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/start_learning_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="开始学习"
+                android:textColor="@android:color/white"
+                android:background="#07C160"
+                android:padding="12dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

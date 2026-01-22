@@ -40,13 +40,13 @@
         android:layout_marginBottom="12dp" />
 
     <!-- 树形结构容器（开始时隐藏） -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/mindmap_tree_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"
-        android:nestedScrollingEnabled="false" />
+     <androidx.recyclerview.widget.RecyclerView
+         android:id="@+id/mindmap_tree_recycler"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_marginTop="8dp"
+         android:visibility="gone"
+         android:nestedScrollingEnabled="false" />
 
     <!-- 进度条显示 -->
     <ProgressBar

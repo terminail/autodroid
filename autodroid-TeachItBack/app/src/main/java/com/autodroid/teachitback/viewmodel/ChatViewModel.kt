@@ -74,8 +74,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 // 加载消息历史
                 val messages = messageRepository.getMessagesByTopic(topicId).first()
                 
+                // 加载MindMap
+                val mindMap = mindMapRepository.getMindMapByTopicId(topicId)
+                val mindMapNodes = if (mindMap != null) {
+                    mindMapRepository.getNodesByMindMapId(mindMap.id)
+                } else {
+                    emptyList()
+                }
+                
+                android.util.Log.d("ChatViewModel", "TopicId: $topicId, MindMap: $mindMap, MindMapNodes count: ${mindMapNodes.size}")
+                
                 // 构建聊天项列表
-                val chatItems = buildChatItems(messages, emptyList())
+                val chatItems = buildChatItems(messages, mindMapNodes)
                 _chatItems.value = chatItems
                 
             } catch (e: Exception) {
@@ -285,10 +295,20 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         
         // 添加MindMap项（如果有MindMap数据）
         if (mindMapNodes.isNotEmpty()) {
-            items.add(ChatItem.MindMapDisplayItem(
+            val mindMapItem = ChatItem.MindMapDisplayItem(
                 mindMapNodes = mindMapNodes,
                 title = "思维导图"
-            ))
+            )
+            
+            // 根据消息数量决定MindMap位置
+            if (messages.size < 10) {
+                // 消息少于10个时，MindMap显示在第一个位置
+                items.add(0, mindMapItem)
+            } else {
+                // 消息大于等于10个时，MindMap显示在倒数第10个位置
+                val insertPosition = items.size - 10
+                items.add(insertPosition, mindMapItem)
+            }
         }
         
         return items

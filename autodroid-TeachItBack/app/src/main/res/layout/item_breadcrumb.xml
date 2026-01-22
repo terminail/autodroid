@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/breadcrumb_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="节点名称"
+        android:textSize="12sp"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:background="@drawable/bg_breadcrumb_parent"
+        android:textColor="@color/colorPrimaryDark"
+        android:clickable="true"
+        android:focusable="true"
+        android:backgroundTint="@color/colorPrimaryLight" />
+
+    <TextView
+        android:id="@+id/breadcrumb_separator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=">"
+        android:textSize="12sp"
+        android:paddingHorizontal="4dp"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone" />
+
+</LinearLayout>

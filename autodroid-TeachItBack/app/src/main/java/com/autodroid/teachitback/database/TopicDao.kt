@@ -29,6 +29,9 @@ interface TopicDao {
     @Query("DELETE FROM topics")
     suspend fun deleteAllTopics()
     
+    @Query("SELECT * FROM topics WHERE presetTopicId = :presetTopicId AND isPreset = 0 LIMIT 1")
+    suspend fun getPersonalCopyByPresetId(presetTopicId: String): TopicEntity?
+    
     // ===== 验证工具需要的额外方法 =====
     
     @Query("SELECT * FROM topics WHERE id = :id")

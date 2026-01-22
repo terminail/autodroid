@@ -111,6 +111,20 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
      */
     class MindMapViewHolder(private val binding: ItemChatMindmapBinding) : RecyclerView.ViewHolder(binding.root) {
         
+        private val flexboxAdapter = MindMapFlexboxAdapter()
+        
+        init {
+            // 设置Flexbox适配器
+            binding.mindmapTreeRecycler.adapter = flexboxAdapter
+            binding.mindmapTreeRecycler.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(binding.root.context)
+            
+            // 设置节点点击监听器
+            flexboxAdapter.setOnNodeClickListener { node ->
+                // 导航到点击的节点
+                flexboxAdapter.navigateToNode(node)
+            }
+        }
+        
         fun bind(item: ChatItem.MindMapDisplayItem) {
             binding.mindmapTitle.text = item.title
             
@@ -126,6 +140,13 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             binding.progressStats.text = "总体进度: $overallProgress% | 红色($redNodes) 黄色($yellowNodes) 绿色($greenNodes)"
             binding.overallProgressBar.progress = overallProgress
             binding.nodeCount.text = "总节点数: $totalNodes"
+            
+            // 更新Flexbox适配器数据
+            flexboxAdapter.updateNodes(nodes)
+            
+            // 默认展开思维导图
+            binding.mindmapTreeRecycler.visibility = View.VISIBLE
+            binding.expandCollapseButton.text = "收起思维导图"
             
             binding.expandCollapseButton.setOnClickListener {
                 if (binding.mindmapTreeRecycler.visibility == View.GONE) {

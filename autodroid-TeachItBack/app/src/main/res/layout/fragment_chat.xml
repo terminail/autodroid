@@ -1,198 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#EDEDED">
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="#EDEDED">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/messages_recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#EDEDED" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/messages_recycler_view" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="#EDEDED" />
 
     <!-- 输入区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#F7F7F7"
-        android:padding="8dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#F7F7F7" android:padding="8dp">
 
         <!-- 输入框和按钮行 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content">
 
-            <!-- 添加附件按钮（无文字时显示） -->
-            <ImageView
-                android:id="@+id/add_button"
-                android:layout_width="72dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_add"
-                android:background="?attr/selectableItemBackground"
-                android:contentDescription="添加附件"
-                android:padding="6dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+            <!-- 按钮容器 -->
+            <FrameLayout android:id="@+id/button_container" android:layout_width="72dp" android:layout_height="36dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-            <!-- 发送按钮（有文字时显示） -->
-            <ImageView
-                android:id="@+id/send_button"
-                android:layout_width="72dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_send"
-                android:background="?attr/selectableItemBackground"
-                android:contentDescription="发送消息"
-                android:padding="6dp"
-                android:visibility="gone"
-                android:enabled="false"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                <!-- 添加附件按钮（无文字时显示） -->
+                <ImageView android:id="@+id/add_button" android:layout_width="72dp" android:layout_height="36dp" android:src="@drawable/ic_add" android:background="?attr/selectableItemBackground" android:contentDescription="添加附件" android:padding="6dp" />
+
+                <!-- 发送按钮（有文字时显示） -->
+                <ImageView android:id="@+id/send_button" android:layout_width="72dp" android:layout_height="36dp" android:src="@drawable/ic_send" android:background="?attr/selectableItemBackground" android:contentDescription="发送消息" android:padding="6dp" android:visibility="gone" android:enabled="false" />
+
+            </FrameLayout>
 
             <!-- 输入框容器 -->
-            <RelativeLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/add_button"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+            <RelativeLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/button_container" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-                <EditText
-                    android:id="@+id/message_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint=""
-                    android:textSize="15sp"
-                    android:paddingLeft="12dp"
-                    android:paddingRight="40dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:background="@drawable/msg_input_bg"
-                    android:minHeight="36dp"
-                    android:maxHeight="80dp"
-                    android:inputType="textMultiLine"
-                    android:maxLines="3" />
+                <EditText android:id="@+id/message_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="" android:textSize="15sp" android:paddingLeft="12dp" android:paddingRight="40dp" android:paddingTop="8dp" android:paddingBottom="8dp" android:background="@drawable/msg_input_bg" android:minHeight="36dp" android:maxHeight="80dp" android:inputType="textMultiLine" android:maxLines="3" />
 
-                <ImageView
-                    android:id="@+id/voice_toggle_button"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/ic_voice"
-                    android:background="?attr/selectableItemBackground"
-                    android:contentDescription="切换输入方式"
-                    android:padding="2dp" />
+                <ImageView android:id="@+id/voice_toggle_button" android:layout_width="24dp" android:layout_height="24dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true" android:layout_marginEnd="8dp" android:src="@drawable/ic_voice" android:background="?attr/selectableItemBackground" android:contentDescription="切换输入方式" android:padding="2dp" />
 
             </RelativeLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- 附件功能icons（点击添加按钮时显示） -->
-        <LinearLayout
-            android:id="@+id/attachment_panel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:padding="16dp"
-            android:visibility="gone"
-            android:background="@android:color/white">
+        <LinearLayout android:id="@+id/attachment_panel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:padding="16dp" android:visibility="gone" android:background="@android:color/white">
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_gallery"
-                    android:background="?attr/selectableItemBackground"
-                    android:contentDescription="相册"
-                    android:padding="8dp" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="相册"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:layout_marginTop="4dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_gallery" android:background="?attr/selectableItemBackground" android:contentDescription="相册" android:padding="8dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="相册" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="4dp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_camera"
-                    android:background="?attr/selectableItemBackground"
-                    android:contentDescription="拍照"
-                    android:padding="8dp" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="拍照"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:layout_marginTop="4dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_camera" android:background="?attr/selectableItemBackground" android:contentDescription="拍照" android:padding="8dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="拍照" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="4dp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_pdf"
-                    android:background="?attr/selectableItemBackground"
-                    android:contentDescription="PDF"
-                    android:padding="8dp" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PDF"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:layout_marginTop="4dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_pdf" android:background="?attr/selectableItemBackground" android:contentDescription="PDF" android:padding="8dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PDF" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="4dp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_text"
-                    android:background="?attr/selectableItemBackground"
-                    android:contentDescription="文本"
-                    android:padding="8dp" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="文本"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:layout_marginTop="4dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_text" android:background="?attr/selectableItemBackground" android:contentDescription="文本" android:padding="8dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="文本" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="4dp" />
             </LinearLayout>
 
         </LinearLayout>

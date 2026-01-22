@@ -15,7 +15,7 @@ import com.autodroid.teachitback.model.WhyEntity
 
 @Database(
     entities = [TopicEntity::class, MessageEntity::class, MindMapEntity::class, MindMapNode::class, SettingEntity::class, WhyEntity::class],
-    version = 5
+    version = 6
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun topicDao(): TopicDao
@@ -76,6 +76,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // 数据库迁移从版本5到版本6
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 为topics表添加presetTopicId字段
+                database.execSQL("ALTER TABLE topics ADD COLUMN presetTopicId TEXT")
+            }
+        }
+
         // 数据库迁移从版本1到版本2
         val MIGRATION_1_2: Migration = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
@@ -122,7 +130,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "teachitback_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

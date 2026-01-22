@@ -116,11 +116,13 @@ class ChatFragment : Fragment() {
 
         // 发送按钮
         binding.sendButton.setOnClickListener {
-            sendMessage()
-            // 发送后清空输入框，恢复添加按钮
-            binding.messageInput.setText("")
-            binding.sendButton.visibility = View.GONE
-            binding.addButton.visibility = View.VISIBLE
+            val message = binding.messageInput.text.toString().trim()
+            if (message.isNotEmpty()) {
+                sendMessage()
+                // 发送后清空输入框
+                binding.messageInput.setText("")
+                // 注意：TextWatcher会自动处理按钮切换，这里不需要手动设置
+            }
         }
 
         // 添加按钮 - 显示/隐藏附件功能面板
@@ -135,20 +137,6 @@ class ChatFragment : Fragment() {
 
         // 设置附件功能图标的点击事件
         setupAttachmentIcons()
-        
-        // 设置MindMap按钮
-        setupMindMapButton()
-    }
-    
-    private fun setupMindMapButton() {
-        lifecycleScope.launch {
-            val mindMap = viewModel.mindMapRepository.getMindMapByTopicId(args.topicId)
-            if (mindMap != null) {
-                viewModel.loadMindMap(args.topicId)
-            } else {
-                viewModel.createMindMap(args.topicId, args.topicTitle ?: "学习主题")
-            }
-        }
     }
 
     private fun setToolbarTitle(title: String) {
@@ -260,6 +248,7 @@ class ChatFragment : Fragment() {
     }
 
     private fun loadTopicAndMessages() {
+        android.util.Log.d("ChatFragment", "Loading topic and messages for topicId: ${args.topicId}, topicTitle: ${args.topicTitle}")
         viewModel.loadTopicAndMessages(args.topicId)
     }
 

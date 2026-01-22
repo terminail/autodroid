@@ -88,6 +88,9 @@ dependencies {
     // Preference
     implementation("androidx.preference:preference-ktx:1.2.1")
     
+    // Flexbox Layout
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

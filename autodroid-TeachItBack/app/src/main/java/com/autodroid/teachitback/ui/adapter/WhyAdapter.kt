@@ -11,15 +11,15 @@ import com.autodroid.teachitback.databinding.ItemWhyPresetTopicsCardBinding
 class WhyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     private var items: List<WhyItem> = emptyList()
-    private var onCopyTopic: ((com.autodroid.teachitback.model.TopicEntity) -> Unit)? = null
+    private var onPresetTopicClick: ((com.autodroid.teachitback.model.TopicEntity) -> Unit)? = null
     
     fun submitList(newItems: List<WhyItem>) {
         items = newItems
         notifyDataSetChanged()
     }
     
-    fun setOnCopyTopic(listener: (com.autodroid.teachitback.model.TopicEntity) -> Unit) {
-        onCopyTopic = listener
+    fun setOnPresetTopicClick(listener: (com.autodroid.teachitback.model.TopicEntity) -> Unit) {
+        onPresetTopicClick = listener
     }
     
     override fun getItemViewType(position: Int): Int {
@@ -55,7 +55,7 @@ class WhyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 (holder as TextCardViewHolder).bind(item)
             }
             is WhyItem.PresetTopicItem -> {
-                (holder as PresetTopicViewHolder).bind(item, onCopyTopic)
+                (holder as PresetTopicViewHolder).bind(item, onPresetTopicClick)
             }
         }
     }
@@ -82,7 +82,7 @@ class WhyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     class PresetTopicViewHolder(private val binding: ItemWhyPresetTopicsCardBinding) : RecyclerView.ViewHolder(binding.root) {
         
-        fun bind(item: WhyItem.PresetTopicItem, onCopyTopic: ((com.autodroid.teachitback.model.TopicEntity) -> Unit)?) {
+        fun bind(item: WhyItem.PresetTopicItem, onPresetTopicClick: ((com.autodroid.teachitback.model.TopicEntity) -> Unit)?) {
             binding.titleText.text = item.topic.title
             binding.descriptionText.text = item.topic.description
             
@@ -94,7 +94,7 @@ class WhyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             binding.topicsText.text = topicsText
             
             binding.root.setOnClickListener {
-                onCopyTopic?.invoke(item.topic)
+                onPresetTopicClick?.invoke(item.topic)
             }
         }
     }

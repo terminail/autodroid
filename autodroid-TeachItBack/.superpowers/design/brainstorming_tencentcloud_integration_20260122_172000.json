@@ -1,0 +1,121 @@
+{
+  "phase": "brainstorming",
+  "timestamp": "2026-01-22T17:20:00",
+  "project_type": "android",
+  "project_root": "d:/git/autodroid/autodroid-TeachItBack",
+  "requirement": "腾讯云知识引擎原子能力与TeachItBack集成，重点实现：1.MindMap生成 2.苏格拉底对话 3.进度跟踪",
+  
+  "clarifying_questions": [
+    "腾讯云知识引擎的具体API接口和调用方式是什么？",
+    "MindMap生成需要支持哪些类型的文档输入？",
+    "苏格拉底对话的个性化程度和问题生成策略如何？",
+    "进度跟踪需要收集哪些数据指标？",
+    "是否需要支持离线模式下的部分功能？",
+    "用户隐私和数据安全如何保障？"
+  ],
+
+  "alternatives": [
+    {
+      "name": "基础API集成",
+      "description": "仅集成腾讯云的基础对话API，MindMap和进度跟踪功能本地实现",
+      "pros": ["实现简单","成本较低","开发周期短"],
+      "cons": ["无法充分利用腾讯云特殊能力","MindMap生成质量有限"]
+    },
+    {
+      "name": "全能力集成",
+      "description": "充分利用腾讯云知识引擎的文档解析、知识检索、对话生成等原子能力",
+      "pros": ["功能强大","MindMap生成精准","智能对话体验好"],
+      "cons": ["实现复杂","成本较高","依赖网络连接"]
+    },
+    {
+      "name": "混合策略",
+      "description": "核心功能使用腾讯云能力，基础功能本地实现，支持离线模式",
+      "pros": ["功能平衡","支持离线","成本可控"],
+      "cons": ["架构复杂","需要维护两套逻辑"]
+    }
+  ],
+
+  "recommended_design": {
+    "name": "全能力集成",
+    "rationale": "最大化利用腾讯云知识引擎的特殊能力，实现高质量的MindMap生成和智能对话体验，符合用户优先级需求"
+  },
+
+  "architecture": {
+    "overall": {
+      "pattern": "MVVM + Repository Pattern + TencentCloud AI Service",
+      "description": "UI Layer -> ViewModel -> Repository -> (TencentCloudAIService / Local Database)"
+    },
+    "design_principles": ["Cloud-First", "Repository Pattern", "MVVM", "Dependency Injection"]
+  },
+
+  "data_models": {
+    "mindmap": {
+      "id": "String (PK)",
+      "topic_id": "String (FK)",
+      "title": "String",
+      "structure_json": "String",
+      "created_at": "Long"
+    },
+    "mindmap_node": {
+      "id": "String (PK)",
+      "mindmap_id": "String (FK)",
+      "parent_id": "String (FK, nullable)",
+      "title": "String",
+      "progress": "Int",
+      "node_type": "String"
+    },
+    "learning_session": {
+      "id": "String (PK)",
+      "topicId": "String (FK)",
+      "startTime": "Long",
+      "endTime": "Long (nullable)",
+      "questionsAsked": "Int",
+      "correctAnswers": "Int",
+      "sessionType": "String"
+    }
+  },
+
+  "ai_integration": {
+    "interface": "TencentCloudAIService",
+    "implementations": ["TencentCloudKnowledgeEngine", "TencentCloudDocumentParser", "TencentCloudDialogAPI"],
+    "methods": [
+      "generateMindMapStructure()",
+      "analyzeLearningProgress()", 
+      "generateSocraticQuestions()",
+      "evaluateAnswer()",
+      "parseDocument()",
+      "buildKnowledgeGraph()"
+    ]
+  },
+
+  "tencent_cloud_capabilities": {
+    "document_parsing": "支持PDF、Word、TXT等格式解析",
+    "knowledge_retrieval": "基于知识图谱的概念检索",
+    "dialog_generation": "智能对话和问题生成",
+    "rag_analysis": "检索增强生成分析",
+    "semantic_understanding": "语义理解和分析"
+  },
+
+  "implementation_priority": [
+    "第一阶段：基础集成（1-2周） - 实现TencentCloudAIService框架",
+    "第二阶段：MindMap生成（2-3周） - 集成文档解析和知识图谱构建",
+    "第三阶段：智能对话（2-3周） - 实现苏格拉底提问引擎",
+    "第四阶段：进度跟踪（1-2周） - 集成学习进度分析"
+  ],
+
+  "error_handling": {
+    "network_errors": "优雅降级到本地模式，提示用户重试",
+    "api_rate_limits": "实现请求队列和重试机制",
+    "document_parsing_errors": "支持多种格式，提供错误反馈",
+    "knowledge_graph_errors": "使用本地知识库作为备用"
+  },
+
+  "performance_optimization": {
+    "caching": "缓存MindMap结构和知识图谱",
+    "batch_processing": "批量处理文档和问题生成",
+    "progressive_loading": "逐步加载大型MindMap结构",
+    "local_storage": "本地存储学习进度和会话记录"
+  },
+
+  "status": "ready_for_planning"
+}

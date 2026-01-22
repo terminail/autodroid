@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentWhyBinding
@@ -46,14 +47,13 @@ class WhyFragment : Fragment() {
     private fun setupRecyclerView() {
         whyAdapter = WhyAdapter()
         
-        whyAdapter.setOnCopyTopic { presetTopic ->
-            viewModel.copyPresetTopic(presetTopic) { success ->
-                if (success) {
-                    android.widget.Toast.makeText(requireContext(), "已复制到学习列表", android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    android.widget.Toast.makeText(requireContext(), "复制失败", android.widget.Toast.LENGTH_SHORT).show()
-                }
+        whyAdapter.setOnPresetTopicClick { presetTopic ->
+            val bundle = Bundle().apply {
+                putString("topic_id", presetTopic.id)
+                putString("topic_title", presetTopic.title)
+                putString("topic_description", presetTopic.description)
             }
+            findNavController().navigate(R.id.action_whyFragment_to_presetDetailFragment, bundle)
         }
         
         binding.whyRecyclerView.apply {

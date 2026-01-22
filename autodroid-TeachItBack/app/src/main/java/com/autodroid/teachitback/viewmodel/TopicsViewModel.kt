@@ -96,30 +96,15 @@ class TopicsViewModel(application: Application) : AndroidViewModel(application) 
     private fun buildTopicsItems(topics: List<TopicEntity>): List<TopicsItem> {
         val items = mutableListOf<TopicsItem>()
         
-        // 添加预置话题分类
-        val presetTopics = topics.filter { it.isPreset }
-        if (presetTopics.isNotEmpty()) {
-            items.add(TopicsItem.SectionHeaderItem("预置话题", "系统提供的学习话题"))
-            presetTopics.forEach { topic ->
-                items.add(TopicsItem.TopicItem(topic))
-            }
-        }
-        
-        // 添加用户话题分类
         val userTopics = topics.filter { !it.isPreset }
+        
         if (userTopics.isNotEmpty()) {
-            items.add(TopicsItem.SectionHeaderItem("我的话题", "您创建的学习话题"))
+            items.add(TopicsItem.SectionHeaderItem("我的学习", "您正在学习的话题"))
             userTopics.forEach { topic ->
                 items.add(TopicsItem.TopicItem(topic))
             }
         }
         
-        // 如果没有话题，显示空状态
-        if (topics.isEmpty()) {
-            items.add(TopicsItem.EmptyStateItem())
-        }
-        
-        // 添加添加按钮
         items.add(TopicsItem.AddButtonItem())
         
         return items

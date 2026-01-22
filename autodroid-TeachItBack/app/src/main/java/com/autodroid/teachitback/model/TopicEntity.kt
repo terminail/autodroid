@@ -14,5 +14,6 @@ data class TopicEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val lastAccessed: Long = System.currentTimeMillis(),
     val nextLearningGoal: String? = null,
-    val isPreset: Boolean = false
+    val isPreset: Boolean = false,
+    val presetTopicId: String? = null
 )

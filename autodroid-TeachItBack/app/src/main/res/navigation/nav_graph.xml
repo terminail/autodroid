@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/nav_topics"
         android:name="com.autodroid.teachitback.ui.TopicsFragment"
-        android:label="主题列表">
+        android:label="学习主题">
         <action
             android:id="@+id/action_nav_topics_to_chat"
             app:destination="@id/nav_chat">
@@ -110,6 +110,45 @@
         android:label="为什么">
         <action
             android:id="@+id/action_whyFragment_to_chatFragment"
+            app:destination="@id/nav_chat">
+            <argument
+                android:name="topicId"
+                app:argType="string" />
+            <argument
+                android:name="topicTitle"
+                app:argType="string" />
+        </action>
+        <action
+            android:id="@+id/action_whyFragment_to_presetDetailFragment"
+            app:destination="@id/presetDetailFragment">
+            <argument
+                android:name="topic_id"
+                app:argType="string" />
+            <argument
+                android:name="topic_title"
+                app:argType="string" />
+            <argument
+                android:name="topic_description"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <!-- 预置课程详情页 -->
+    <fragment
+        android:id="@+id/presetDetailFragment"
+        android:name="com.autodroid.teachitback.ui.PresetDetailFragment"
+        android:label="课程详情">
+        <argument
+            android:name="topic_id"
+            app:argType="string" />
+        <argument
+            android:name="topic_title"
+            app:argType="string" />
+        <argument
+            android:name="topic_description"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_presetDetailFragment_to_chatFragment"
             app:destination="@id/nav_chat">
             <argument
                 android:name="topicId"
