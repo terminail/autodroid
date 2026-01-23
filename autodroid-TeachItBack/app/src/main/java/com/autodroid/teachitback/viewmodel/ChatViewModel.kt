@@ -31,9 +31,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var aiService: TencentCloudAIService? = null
 
     // Repositories（在initializeAI之后初始化）
-    private lateinit var messageRepository: MessageRepository
+    private val messageRepository: MessageRepository by lazy {
+        MessageRepository(database.messageDao(), aiService ?: createDefaultAIService())
+    }
     val mindMapRepository: MindMapRepository by lazy {
-        MindMapRepository(database, aiService!!)
+        MindMapRepository(database, aiService ?: createDefaultAIService())
     }
     private val topicRepository = TopicRepository(database.topicDao())
 
@@ -48,9 +50,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 secretId = secretId,
                 testMode = testMode
             )
-            // 初始化MessageRepository（需要aiService）
-            messageRepository = MessageRepository(database.messageDao(), aiService!!)
+        } else {
+            // 如果没有提供有效的API密钥，使用默认的测试模式服务
+            aiService = createDefaultAIService()
         }
+        // messageRepository和mindMapRepository通过by lazy延迟初始化，无需手动初始化
     }
     
     // UI状态
@@ -313,5 +317,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun clearProgressAnalysis() {
         _progressAnalysis.value = null
+    }
+
+    /**
+     * 创建默认的AI服务（测试模式）
+     */
+    private fun createDefaultAIService(): TencentCloudAIService {
+        return com.autodroid.teachitback.impl.TencentCloudAIServiceImpl(
+            context = getApplication(),
+            apiKey = "",
+            secretId = "",
+            testMode = true
+        )
     }
 }
