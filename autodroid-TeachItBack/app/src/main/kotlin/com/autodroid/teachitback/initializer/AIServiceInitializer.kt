@@ -5,6 +5,7 @@ import android.util.Log
 import com.autodroid.teachitback.registry.AIServiceRegistry
 import com.autodroid.teachitback.service.AIServiceBaichuan
 import com.autodroid.teachitback.service.AIServiceDeepSeek
+import com.autodroid.teachitback.service.AIServiceKimi
 import com.autodroid.teachitback.service.AIServiceMiniMax
 import com.autodroid.teachitback.service.AIServiceTencentHunyuan
 
@@ -45,6 +46,15 @@ object AIServiceInitializer {
             Log.i(TAG, "✓ 已注册DeepSeek AI服务: ${deepseekService.config.displayName}")
         } catch (e: Exception) {
             Log.e(TAG, "✗ 注册DeepSeek AI服务失败: ${e.message}")
+        }
+
+        // 注册Kimi AI服务（长文档处理能力强）
+        try {
+            val kimiService = AIServiceKimi(context)
+            registry.registerAiService(kimiService)
+            Log.i(TAG, "✓ 已注册Kimi AI服务: ${kimiService.config.displayName}")
+        } catch (e: Exception) {
+            Log.e(TAG, "✗ 注册Kimi AI服务失败: ${e.message}")
         }
 
         // 注册MiniMax AI服务（创意写作和多模态）

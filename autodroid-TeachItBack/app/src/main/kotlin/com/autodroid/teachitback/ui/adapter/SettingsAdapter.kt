@@ -12,10 +12,19 @@ import com.autodroid.teachitback.R
  * 专门处理设置界面的异构数据显示
  */
 class SettingsAdapter(
-    private val onItemClick: ((SettingsItem) -> Unit)? = null
+    private val onItemClick: ((SettingsItem) -> Unit)? = null,
+    private var aiServiceTestStatus: Map<String, Boolean>? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     private var items: List<SettingsItem> = emptyList()
+    
+    /**
+     * 更新AI服务测试连接状态
+     */
+    fun updateAIServiceTestStatus(newStatus: Map<String, Boolean>) {
+        aiServiceTestStatus = newStatus
+        notifyDataSetChanged()
+    }
     
     fun submitList(newItems: List<SettingsItem>) {
         items = newItems
@@ -80,24 +89,7 @@ class SettingsAdapter(
             SettingsItem.TYPE_BAICHUAN_AI_SERVICE_ITEM,
             SettingsItem.TYPE_LINGYI_AI_SERVICE_ITEM,
             SettingsItem.TYPE_JIEYUE_AI_SERVICE_ITEM -> {
-                val layoutResId = when (viewType) {
-                    SettingsItem.TYPE_TENCENTCLOUD_API_KEY_ITEM -> android.R.layout.simple_list_item_2
-                    SettingsItem.TYPE_DOUBAO_AI_SERVICE_ITEM -> R.layout.setting_item_doubao
-                    SettingsItem.TYPE_DEEPSEEK_AI_SERVICE_ITEM -> R.layout.setting_item_deepseek
-                    SettingsItem.TYPE_MINIMAX_AI_SERVICE_ITEM -> R.layout.setting_item_minimax
-                    SettingsItem.TYPE_KIMI_AI_SERVICE_ITEM -> R.layout.setting_item_kimi
-                    SettingsItem.TYPE_OPENAI_AI_SERVICE_ITEM -> R.layout.setting_item_openai
-                    SettingsItem.TYPE_ERNIE_AI_SERVICE_ITEM -> R.layout.setting_item_ernie
-                    SettingsItem.TYPE_QWEN_AI_SERVICE_ITEM -> R.layout.setting_item_qwen
-                    SettingsItem.TYPE_ZHIPU_AI_SERVICE_ITEM -> R.layout.setting_item_zhipu
-                    SettingsItem.TYPE_SPARK_AI_SERVICE_ITEM -> R.layout.setting_item_spark
-                    SettingsItem.TYPE_HUNYUAN_AI_SERVICE_ITEM -> R.layout.setting_item_hunyuan
-                    SettingsItem.TYPE_BAICHUAN_AI_SERVICE_ITEM -> R.layout.setting_item_baichuan
-                    SettingsItem.TYPE_LINGYI_AI_SERVICE_ITEM -> R.layout.setting_item_lingyi
-                    SettingsItem.TYPE_JIEYUE_AI_SERVICE_ITEM -> R.layout.setting_item_jieyue
-                    else -> android.R.layout.simple_list_item_1
-                }
-                val view = inflater.inflate(layoutResId, parent, false)
+                val view = inflater.inflate(R.layout.item_setting_ai_service, parent, false)
                 AIServiceViewHolder(view)
             }
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
@@ -118,22 +110,42 @@ class SettingsAdapter(
             is VersionInfoViewHolder -> holder.bind(item as SettingsItem.VersionInfoItem)
             is HelpAndFeedbackViewHolder -> holder.bind(item as SettingsItem.HelpAndFeedbackItem)
             is AIServiceViewHolder -> {
+                val serviceId = when (item) {
+                    is SettingsItem.TencentCloudApiKeyItem -> "tencent-hunyuan"
+                    is SettingsItem.DoubaoAIServiceItem -> "doubao"
+                    is SettingsItem.DeepSeekAIServiceItem -> "deepseek"
+                    is SettingsItem.MinimaxAIServiceItem -> "minimax"
+                    is SettingsItem.KimiAIServiceItem -> "kimi"
+                    is SettingsItem.OpenAIServiceItem -> "openai"
+                    is SettingsItem.ErnieAIServiceItem -> "ernie"
+                    is SettingsItem.QwenAIServiceItem -> "qwen"
+                    is SettingsItem.ZhipuAIServiceItem -> "zhipu"
+                    is SettingsItem.SparkAIServiceItem -> "spark"
+                    is SettingsItem.HunyuanAIServiceItem -> "hunyuan"
+                    is SettingsItem.BaichuanAIServiceItem -> "baichuan"
+                    is SettingsItem.LingyiAIServiceItem -> "lingyi"
+                    is SettingsItem.JieyueAIServiceItem -> "jieyue"
+                    else -> ""
+                }
+                
+                val testStatus = aiServiceTestStatus?.get(serviceId)
+                
                 when (item) {
-                    is SettingsItem.DoubaoAIServiceItem -> holder.bind("豆包", item.isEnabled, item)
-                    is SettingsItem.DeepSeekAIServiceItem -> holder.bind("DeepSeek", item.isEnabled, item)
-                    is SettingsItem.MinimaxAIServiceItem -> holder.bind("MiniMax", item.isEnabled, item)
-                    is SettingsItem.KimiAIServiceItem -> holder.bind("Kimi", item.isEnabled, item)
-                    is SettingsItem.OpenAIServiceItem -> holder.bind("OpenAI", item.isEnabled, item)
-                    is SettingsItem.ErnieAIServiceItem -> holder.bind("文心一言", item.isEnabled, item)
-                    is SettingsItem.QwenAIServiceItem -> holder.bind("通义千问", item.isEnabled, item)
-                    is SettingsItem.ZhipuAIServiceItem -> holder.bind("智谱AI", item.isEnabled, item)
-                    is SettingsItem.SparkAIServiceItem -> holder.bind("讯飞星火", item.isEnabled, item)
-                    is SettingsItem.HunyuanAIServiceItem -> holder.bind("混元", item.isEnabled, item)
-                    is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item)
-                    is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item)
-                    is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item)
-                    is SettingsItem.TencentCloudApiKeyItem -> holder.bind("腾讯云知识引擎", item.enabled, item)
-                    else -> holder.bind("未知AI服务", false, item)
+                    is SettingsItem.DoubaoAIServiceItem -> holder.bind("豆包", item.isEnabled, item, testStatus)
+                    is SettingsItem.DeepSeekAIServiceItem -> holder.bind("DeepSeek", item.isEnabled, item, testStatus)
+                    is SettingsItem.MinimaxAIServiceItem -> holder.bind("MiniMax", item.isEnabled, item, testStatus)
+                    is SettingsItem.KimiAIServiceItem -> holder.bind("Kimi", item.isEnabled, item, testStatus)
+                    is SettingsItem.OpenAIServiceItem -> holder.bind("OpenAI", item.isEnabled, item, testStatus)
+                    is SettingsItem.ErnieAIServiceItem -> holder.bind("文心一言", item.isEnabled, item, testStatus)
+                    is SettingsItem.QwenAIServiceItem -> holder.bind("通义千问", item.isEnabled, item, testStatus)
+                    is SettingsItem.ZhipuAIServiceItem -> holder.bind("智谱AI", item.isEnabled, item, testStatus)
+                    is SettingsItem.SparkAIServiceItem -> holder.bind("讯飞星火", item.isEnabled, item, testStatus)
+                    is SettingsItem.HunyuanAIServiceItem -> holder.bind("混元", item.isEnabled, item, testStatus)
+                    is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item, testStatus)
+                    is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item, testStatus)
+                    is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item, testStatus)
+                    is SettingsItem.TencentCloudApiKeyItem -> holder.bind("腾讯云知识引擎", item.enabled, item, testStatus)
+                    else -> holder.bind("未知AI服务", false, item, testStatus)
                 }
             }
         }
@@ -283,12 +295,36 @@ class SettingsAdapter(
         private val descriptionTextView: TextView? = itemView.findViewById(R.id.setting_description)
         private val statusTextView: TextView? = itemView.findViewById(R.id.setting_status)
         
-        fun bind(serviceName: String, isEnabled: Boolean, item: SettingsItem) {
+        fun bind(serviceName: String, isEnabled: Boolean, item: SettingsItem, testStatus: Boolean? = null) {
+            // 第一行：服务名称
             titleTextView?.text = serviceName
             
-            val statusText = if (isEnabled) "已配置" else "未配置"
-            statusTextView?.text = statusText
-            statusTextView?.setTextColor(if (isEnabled) 0xFF07C160.toInt() else 0xFFFF4444.toInt())
+            // 第二行：配置状态、能力描述和测试连接状态
+            val configStatus = if (isEnabled) "☑️" else "☐"
+            val testConnectionStatus = if (testStatus == true) "☑️测试连接" else "☐测试连接"
+            
+            val detailText = when (item) {
+                is SettingsItem.TencentCloudApiKeyItem -> "$configStatus SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
+                is SettingsItem.DoubaoAIServiceItem -> "$configStatus Api Key，字节跳动AI助手，$testConnectionStatus"
+                is SettingsItem.DeepSeekAIServiceItem -> "$configStatus Api Key，深度求索AI，$testConnectionStatus"
+                is SettingsItem.MinimaxAIServiceItem -> "$configStatus Api Key，稀宇科技，$testConnectionStatus"
+                is SettingsItem.KimiAIServiceItem -> "$configStatus Api Key，月之暗面，$testConnectionStatus"
+                is SettingsItem.OpenAIServiceItem -> "$configStatus Api Key，OpenAI，$testConnectionStatus"
+                is SettingsItem.ErnieAIServiceItem -> "$configStatus Api Key，百度AI，$testConnectionStatus"
+                is SettingsItem.QwenAIServiceItem -> "$configStatus Api Key，阿里巴巴AI，$testConnectionStatus"
+                is SettingsItem.ZhipuAIServiceItem -> "$configStatus Api Key，智谱AI，$testConnectionStatus"
+                is SettingsItem.SparkAIServiceItem -> "$configStatus Api Key，科大讯飞，$testConnectionStatus"
+                is SettingsItem.HunyuanAIServiceItem -> "$configStatus Api Key，腾讯混元，$testConnectionStatus"
+                is SettingsItem.BaichuanAIServiceItem -> "$configStatus Api Key，百川智能，$testConnectionStatus"
+                is SettingsItem.LingyiAIServiceItem -> "$configStatus Api Key，零一万物，$testConnectionStatus"
+                is SettingsItem.JieyueAIServiceItem -> "$configStatus Api Key，阶跃星辰，$testConnectionStatus"
+                else -> "$configStatus 未知服务，$testConnectionStatus"
+            }
+            
+            descriptionTextView?.text = detailText
+            
+            // 隐藏状态文本视图，因为我们已经在描述中显示了状态
+            statusTextView?.visibility = View.GONE
             
             itemView.setOnClickListener {
                 onItemClick?.invoke(item)

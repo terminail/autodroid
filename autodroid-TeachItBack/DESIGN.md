@@ -746,6 +746,33 @@ classDiagram
         +getModelName()
     }
     
+    class AppViewModel {
+        -aiService: AIService
+        +setAIService()
+        +sendUserMessage()
+    }
+    
+    AIService <|.. DoubaoAIService
+    AIService <|.. DeepSeekAIService
+    AIService <|.. MinimaxAIService
+    AIService <|.. KimiAIService
+    AIService <|.. OpenAIService
+    AIService <|.. ErnieAIService
+    AIService <|.. QwenAIService
+    AppViewModel --> AIService
+```
+
+
+```mermaid
+classDiagram
+    class AIService {
+        <<interface>>
+        +sendMessage()
+        +processFileContent()
+        +getModelName()
+    }
+    
+    
     class ZhipuAIService {
         +sendMessage()
         +processFileContent()
@@ -788,13 +815,7 @@ classDiagram
         +sendUserMessage()
     }
     
-    AIService <|.. DoubaoAIService
-    AIService <|.. DeepSeekAIService
-    AIService <|.. MinimaxAIService
-    AIService <|.. KimiAIService
-    AIService <|.. OpenAIService
-    AIService <|.. ErnieAIService
-    AIService <|.. QwenAIService
+
     AIService <|.. ZhipuAIService
     AIService <|.. SparkAIService
     AIService <|.. HunyuanAIService
@@ -848,6 +869,211 @@ sequenceDiagram
     
     Note over U,AI: 后续对话将使用新选择的AI模型
 ```
+
+## 插件化AI服务架构
+
+Teach It Back采用先进的插件化AI服务架构，支持多AI模型的动态集成、智能路由和统一配置管理。该架构基于MVVM + Repository + Plugin Architecture模式，实现高度模块化和可扩展的AI服务集成。
+
+### 核心架构图
+
+```mermaid
+graph TB
+    A["UI Layer<br/>Activities/Fragments"] --> B["ViewModel Layer<br/>ChatViewModel, SettingsViewModel"]
+    B --> C["Repository Layer<br/>MessageRepository, MindMapRepository"]
+    C --> D["AI Service Layer<br/>AIServiceRouter + AIServiceRegistry"]
+    D --> E["Plugin AIServices<br/>腾讯云混元, DeepSeek, MiniMax, 百川等"]
+    E --> F["API Layer<br/>各模型API"]
+    
+    C --> G["Room Database<br/>本地持久化"]
+    G -.->|LiveData更新| A
+    
+    subgraph "架构原则"
+        H["MVVM模式：ViewModel只与Repository交互<br/>不感知AI服务细节"]
+        I["Local-First策略：Repository先从数据库读取<br/>异步调用AI服务更新数据"]
+        J["智能路由：基于能力+成本+配额优化选择"]
+    end
+    
+    B --> H
+    C --> I
+    D --> J
+```
+
+**架构原则**：
+- **MVVM模式**：ViewModel只与Repository交互，不感知AI服务细节
+- **Local-First策略**：Repository先从本地数据库读取数据返回，然后异步调用AI服务更新数据
+- **AI服务抽象**：AI服务调用对ViewModel透明，就像普通网络API一样
+
+### 统一配置系统
+
+应用采用统一的AIServiceConfig密封类管理所有AI服务配置，避免重复配置文件：
+
+```kotlin
+// AI服务配置密封类
+sealed class AIServiceConfig {
+    abstract val id: String
+    abstract val name: String
+    abstract val displayName: String
+    abstract val description: String
+    abstract val requiredFields: AIServiceRequiredFields
+    abstract val capabilities: AIServiceCapability
+    abstract val freeQuota: Long
+    abstract val pricePerMillion: Double
+    
+    // 腾讯云混元配置
+    data class TencentHunyuanConfig(
+        override val id: String = "tencent-hunyuan",
+        override val name: String = "Tencent Hunyuan",
+        override val displayName: String = "腾讯云混元",
+        override val description: String = "腾讯云混元大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.CLOUD_SERVICE,
+        override val capabilities: AIServiceCapability = AIServiceCapability.FULL_CAPABILITIES,
+        override val freeQuota: Long = 0,
+        override val pricePerMillion: Double = 12.0
+    ) : AIServiceConfig()
+    
+    // DeepSeek配置
+    data class DeepSeekConfig(
+        override val id: String = "deepseek",
+        override val name: String = "DeepSeek",
+        override val displayName: String = "DeepSeek",
+        override val description: String = "DeepSeek开源模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val capabilities: AIServiceCapability = AIServiceCapability.BASIC_CHAT
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportMath(true),
+        override val freeQuota: Long = 1000000,
+        override val pricePerMillion: Double = 1.0
+    ) : AIServiceConfig()
+}
+```
+
+### 智能路由策略
+
+AIServiceRouter实现基于能力和成本的智能路由：
+
+```mermaid
+flowchart TD
+    A[用户请求AI服务] --> B{能力需求分析}
+    B --> C[获取所有支持该能力的服务]
+    C --> D{是否有免费额度服务?}
+    D -->|是| E[按剩余额度排序]
+    D -->|否| F[按成本排序（低到高）]
+    E --> G[尝试路由]
+    F --> G
+    G --> H{服务可用性检查}
+    H -->|可用| I[执行操作]
+    H -->|不可用| J[记录异常]
+    J --> K{是否有下一个服务?}
+    K -->|是| G
+    K -->|否| L[抛出AIServiceException]
+    I --> M[返回结果]
+```
+
+**路由优先级**：
+1. **免费额度优先**：选择有免费额度的服务，按剩余额度排序
+2. **成本优化**：按价格从低到高选择服务
+3. **服务可用性**：实时检查服务状态，自动故障转移
+
+### Repository层集成AIServiceRouter
+
+Repository层内部集成AIServiceRouter，对ViewModel透明：
+
+```mermaid
+sequenceDiagram
+    participant U as UI Layer
+    participant V as ViewModel
+    participant R as Repository
+    participant D as Database
+    participant RTR as AIServiceRouter
+    participant AI as AI Service
+    
+    U->>V: 用户发送消息
+    V->>R: sendMessageAndGetReply()
+    R->>D: 保存用户消息到数据库
+    D-->>U: 即时显示用户消息
+    
+    R->>RTR: routeBasicChat()
+    RTR->>AI: 选择最佳AI服务
+    AI-->>RTR: 返回AI响应
+    RTR-->>R: 返回响应内容
+    
+    R->>D: 保存AI响应到数据库
+    D-->>U: 自动更新显示AI回复
+    
+    Note over V,AI: ViewModel不感知AI服务，只与Repository交互
+```
+
+### 统一Prompt管理
+
+所有AI服务使用相同的Prompt模板，确保输出一致性：
+
+```kotlin
+object PromptTemplates {
+    
+    /**
+     * 文件内容处理 - 所有AI服务使用此相同prompt
+     */
+    fun processFileContent(content: String, context: String): String {
+        return """
+            请分析以下文件内容：
+            
+            $content
+            
+            上下文：$context
+            
+            请提供：
+            1. 主要内容摘要
+            2. 关键概念识别
+            3. 学习建议
+            4. 相关测试问题（3-5个）
+            
+            请以结构化方式返回，使用清晰的标题和列表。
+        """.trimIndent()
+    }
+    
+    /**
+     * 思维导图生成
+     */
+    fun generateMindMap(topicId: String, learningGoal: String): String {
+        return """
+            请为"$learningGoal"主题生成思维导图结构。
+            主题ID: $topicId
+            
+            请提供层级结构，格式：
+            # 主主题
+            ## 子主题1
+            ### 子子主题1.1
+            ## 子主题2
+            ### 子子主题2.1
+            ### 子子主题2.2
+            
+            确保结构清晰，层次分明。
+        """.trimIndent()
+    }
+    
+    // 其他功能prompt...
+}
+```
+
+### 支持的多模型AI服务
+
+| AI模型 | 厂商 | 核心能力 | 成本/百万token | 优先级 |
+|--------|------|----------|--------------|--------|
+| 腾讯云混元 | 腾讯 | 全功能（教育专用） | 12.0 | 高 |
+| DeepSeek | DeepSeek | 基础对话+代码+数学 | 1.0 | 中 |
+| MiniMax | MiniMax | 基础对话+创意+多模态 | 5.0 | 中 |
+| 百川 | 百川智能 | 基础对话 | 4.0 | 低 |
+
+### 架构优势总结
+
+1. **类型安全**：使用密封类和Fluent API确保配置正确性
+2. **可扩展性**：新增AI服务只需实现AIService接口
+3. **成本优化**：智能路由自动选择性价比最高的服务
+4. **用户体验一致**：统一Prompt确保不同服务输出格式统一
+5. **维护成本低**：统一配置管理减少重复代码
+6. **架构清晰**：MVVM模式确保ViewModel不感知AI服务细节
 
 ## UI 架构
 

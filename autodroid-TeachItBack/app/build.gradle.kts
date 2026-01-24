@@ -18,6 +18,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "DEEPSEEK_API_KEY", "\"${project.findProperty("DEEPSEEK_API_KEY") ?: ""}\"")
+        buildConfigField("String", "KIMI_API_KEY", "\"${project.findProperty("KIMI_API_KEY") ?: ""}\"")
     }
 
     buildTypes {
@@ -38,6 +41,7 @@ android {
     
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

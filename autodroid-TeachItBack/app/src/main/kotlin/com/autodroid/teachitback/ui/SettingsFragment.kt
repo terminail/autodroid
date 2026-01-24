@@ -46,9 +46,12 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        settingsAdapter = SettingsAdapter { item ->
-            handleSettingsItemClick(item)
-        }
+        settingsAdapter = SettingsAdapter(
+            onItemClick = { item ->
+                handleSettingsItemClick(item)
+            },
+            aiServiceTestStatus = viewModel.aiServiceTestStatus.value
+        )
 
         binding.settingsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -59,47 +62,46 @@ class SettingsFragment : Fragment() {
     private fun handleSettingsItemClick(item: com.autodroid.teachitback.ui.adapter.SettingsItem) {
         when (item) {
             is com.autodroid.teachitback.ui.adapter.SettingsItem.TencentCloudApiKeyItem -> {
-                // 腾讯云配置项处理
-                showTencentCloudConfigurationDialog(item)
+                navigateToAIServiceDetail("tencent-hunyuan")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.DoubaoAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_doubao)
+                navigateToAIServiceDetail("doubao")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.DeepSeekAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_deepseek)
+                navigateToAIServiceDetail("deepseek")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.MinimaxAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_minimax)
+                navigateToAIServiceDetail("minimax")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.KimiAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_kimi)
+                navigateToAIServiceDetail("kimi")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.OpenAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_openai)
+                navigateToAIServiceDetail("openai")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.ErnieAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_ernie)
+                navigateToAIServiceDetail("ernie")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.QwenAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_qwen)
+                navigateToAIServiceDetail("qwen")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.ZhipuAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_zhipu)
+                navigateToAIServiceDetail("zhipu")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.SparkAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_spark)
+                navigateToAIServiceDetail("spark")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.HunyuanAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_hunyuan)
+                navigateToAIServiceDetail("hunyuan")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.BaichuanAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_baichuan)
+                navigateToAIServiceDetail("baichuan")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.LingyiAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_lingyi)
+                navigateToAIServiceDetail("lingyi")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.JieyueAIServiceItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_jieyue)
+                navigateToAIServiceDetail("jieyue")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.DarkModeSwitchItem -> {
                 viewModel.updateSwitchSetting("dark_mode", !item.isChecked)
@@ -127,9 +129,28 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    private fun navigateToAIServiceDetail(configType: String) {
+        val bundle = Bundle().apply {
+            putString("config_type", configType)
+        }
+        findNavController().navigate(R.id.action_nav_settings_to_ai_service_detail, bundle)
+    }
+
     private fun observeViewModel() {
         viewModel.settingsItems.observe(viewLifecycleOwner) { items ->
             settingsAdapter.submitList(items)
+        }
+
+        viewModel.aiServiceConfigs.observe(viewLifecycleOwner) { _ ->
+            // 当AI服务配置发生变化时，重新加载设置项
+            viewModel.loadSettings()
+        }
+
+        viewModel.aiServiceTestStatus.observe(viewLifecycleOwner) { testStatus ->
+            // 当AI服务测试状态发生变化时，更新适配器
+            testStatus?.let {
+                settingsAdapter.updateAIServiceTestStatus(it)
+            }
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
@@ -138,43 +159,6 @@ class SettingsFragment : Fragment() {
                 viewModel.clearErrorMessage()
             }
         }
-    }
-
-    /**
-     * 显示腾讯云配置对话框
-     */
-    private fun showTencentCloudConfigurationDialog(item: com.autodroid.teachitback.ui.adapter.SettingsItem.TencentCloudApiKeyItem) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_tencentcloud_config, null)
-
-        val apiKeyEditText = dialogView.findViewById<EditText>(R.id.et_api_key)
-        val secretIdEditText = dialogView.findViewById<EditText>(R.id.et_secret_id)
-        val testModeSwitch = dialogView.findViewById<Switch>(R.id.switch_test_mode)
-        val enabledSwitch = dialogView.findViewById<Switch>(R.id.switch_enabled)
-
-        // 填充当前值
-        apiKeyEditText.setText(item.apiKey)
-        secretIdEditText.setText(item.secretId)
-        testModeSwitch.isChecked = item.testMode
-        enabledSwitch.isChecked = item.enabled
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("腾讯云知识引擎配置")
-            .setView(dialogView)
-            .setPositiveButton("保存") { _, _ ->
-                // 保存配置
-                item.onApiKeyChanged(apiKeyEditText.text.toString())
-                item.onSecretIdChanged(secretIdEditText.text.toString())
-                item.onTestModeChanged(testModeSwitch.isChecked)
-                item.onEnabledChanged(enabledSwitch.isChecked)
-
-                android.widget.Toast.makeText(
-                    requireContext(),
-                    "配置已保存",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-            .setNegativeButton("取消", null)
-            .show()
     }
 
     override fun onDestroyView() {

@@ -554,7 +554,7 @@ object PromptTemplates {
 ---
 
 #### 任务13：创建 AIServiceDetailFragment
-- **文件路径**：`app/src/main/java/com/autodroid/teachitback/fragment/AIServiceDetailFragment.kt`
+- **文件路径**：`app/src/main/java/com/autodroid/teachitback/fragment/SettingsAIServiceDetailFragment.kt`
 - **预估时间**：5分钟
 - **描述**：创建通用的AI服务配置Fragment，支持所有AI服务类型的统一配置
 - **验证步骤**：

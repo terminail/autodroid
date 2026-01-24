@@ -63,7 +63,7 @@ sealed class AIServiceConfig : Parcelable {
         override val description: String = "深度求索大模型，擅长长文本和数理计算",
         override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
         override val secretId: String = "",
-        override val apiKey: String = "",
+        override val apiKey: String = com.autodroid.teachitback.BuildConfig.DEEPSEEK_API_KEY,
         override val baseUrl: String = "https://api.deepseek.com/v1",
         override val region: String = "",
         override val model: String = "deepseek-chat",
@@ -126,6 +126,33 @@ sealed class AIServiceConfig : Parcelable {
     ) : AIServiceConfig()
     
     /**
+     * Kimi配置
+     * 月之暗面，20万汉字上下文窗口，长文档处理效率高
+     */
+    @Parcelize
+    data class KimiConfig(
+        override val id: String = "kimi",
+        override val name: String = "Kimi",
+        override val displayName: String = "Kimi",
+        override val description: String = "月之暗面大模型，20万汉字上下文窗口，长文档处理效率高",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = com.autodroid.teachitback.BuildConfig.KIMI_API_KEY,
+        override val baseUrl: String = "https://api.moonshot.cn/v1",
+        override val region: String = "",
+        override val model: String = "moonshot-v1-8k",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportMath(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 800000, // 80万token
+        override val pricePerMillion: Double = 12.0
+    ) : AIServiceConfig()
+    
+    /**
      * OpenAI配置
      * 国际标准，功能全面
      */
@@ -144,5 +171,213 @@ sealed class AIServiceConfig : Parcelable {
         override val capabilities: AIServiceCapability = AIServiceCapability.FULL_CAPABILITIES,
         override val freeQuota: Long = 500000, // 50万token
         override val pricePerMillion: Double = 20.0
+    ) : AIServiceConfig()
+
+    /**
+     * Ernie配置
+     * 百度文心一言，中文优化
+     */
+    @Parcelize
+    data class ErnieConfig(
+        override val id: String = "ernie",
+        override val name: String = "Ernie",
+        override val displayName: String = "文心一言",
+        override val description: String = "百度文心一言大模型，中文优化",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1",
+        override val region: String = "",
+        override val model: String = "ernie-bot-4",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 500000,
+        override val pricePerMillion: Double = 8.0
+    ) : AIServiceConfig()
+
+    /**
+     * Qwen配置
+     * 阿里通义千问
+     */
+    @Parcelize
+    data class QwenConfig(
+        override val id: String = "qwen",
+        override val name: String = "Qwen",
+        override val displayName: String = "通义千问",
+        override val description: String = "阿里通义千问大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        override val region: String = "",
+        override val model: String = "qwen-turbo",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 1000000,
+        override val pricePerMillion: Double = 6.0
+    ) : AIServiceConfig()
+
+    /**
+     * Zhipu配置
+     * 智谱AI
+     */
+    @Parcelize
+    data class ZhipuConfig(
+        override val id: String = "zhipu",
+        override val name: String = "Zhipu",
+        override val displayName: String = "智谱AI",
+        override val description: String = "智谱AI大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://open.bigmodel.cn/api/paas/v4",
+        override val region: String = "",
+        override val model: String = "glm-4",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 500000,
+        override val pricePerMillion: Double = 15.0
+    ) : AIServiceConfig()
+
+    /**
+     * Spark配置
+     * 讯飞星火
+     */
+    @Parcelize
+    data class SparkConfig(
+        override val id: String = "spark",
+        override val name: String = "Spark",
+        override val displayName: String = "讯飞星火",
+        override val description: String = "讯飞星火大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://spark-api.xf-yun.com/v1",
+        override val region: String = "",
+        override val model: String = "spark-lite",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 500000,
+        override val pricePerMillion: Double = 10.0
+    ) : AIServiceConfig()
+
+    /**
+     * Hunyuan配置
+     * 腾讯混元
+     */
+    @Parcelize
+    data class HunyuanConfig(
+        override val id: String = "hunyuan",
+        override val name: String = "Hunyuan",
+        override val displayName: String = "混元大模型",
+        override val description: String = "腾讯混元大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://hunyuan.tencentcloudapi.com/v1",
+        override val region: String = "",
+        override val model: String = "hunyuan-lite",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 1000000,
+        override val pricePerMillion: Double = 12.0
+    ) : AIServiceConfig()
+
+    /**
+     * Doubao配置
+     * 豆包AI
+     */
+    @Parcelize
+    data class DoubaoConfig(
+        override val id: String = "doubao",
+        override val name: String = "Doubao",
+        override val displayName: String = "豆包",
+        override val description: String = "字节跳动豆包大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://ark.cn-beijing.volces.com/api/v3",
+        override val region: String = "",
+        override val model: String = "doubao-pro-32k",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 1000000,
+        override val pricePerMillion: Double = 8.0
+    ) : AIServiceConfig()
+
+    /**
+     * Lingyi配置
+     * 零一万物
+     */
+    @Parcelize
+    data class LingyiConfig(
+        override val id: String = "lingyi",
+        override val name: String = "Lingyi",
+        override val displayName: String = "零一万物",
+        override val description: String = "零一万物大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://api.lingyiwanwu.com/v1",
+        override val region: String = "",
+        override val model: String = "yi-34b-chat",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 500000,
+        override val pricePerMillion: Double = 10.0
+    ) : AIServiceConfig()
+
+    /**
+     * Jieyue配置
+     * 阶跃星辰
+     */
+    @Parcelize
+    data class JieyueConfig(
+        override val id: String = "jieyue",
+        override val name: String = "Jieyue",
+        override val displayName: String = "阶跃星辰",
+        override val description: String = "阶跃星辰大模型",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.API_KEY_ONLY,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://api.jieyuesx.com/v1",
+        override val region: String = "",
+        override val model: String = "jieyue-chat",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportFileProcessing(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true),
+        override val freeQuota: Long = 500000,
+        override val pricePerMillion: Double = 10.0
     ) : AIServiceConfig()
 }

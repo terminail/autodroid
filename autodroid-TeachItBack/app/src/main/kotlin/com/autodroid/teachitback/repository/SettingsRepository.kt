@@ -1,5 +1,6 @@
 package com.autodroid.teachitback.repository
 
+import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.database.SettingDao
 import com.autodroid.teachitback.model.SettingEntity
 import com.autodroid.teachitback.ui.adapter.SettingsItem
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * 设置项仓库
- * 负责SettingsItem的序列化、反序列化和数据库操作
+ * 负责SettingsItem和AIServiceConfig的序列化、反序列化和数据库操作
  */
 class SettingsRepository(private val settingDao: SettingDao) {
     
@@ -69,6 +70,34 @@ class SettingsRepository(private val settingDao: SettingDao) {
      */
     suspend fun deleteAllSettings() {
         settingDao.deleteAllSettings()
+    }
+    
+    /**
+     * 保存AI服务配置
+     */
+    suspend fun saveAIServiceConfig(config: AIServiceConfig) {
+        val json = serializeAIServiceConfig(config)
+        val entity = SettingEntity(
+            key = "ai_config_${config.id}",
+            value = json,
+            lastUpdated = System.currentTimeMillis()
+        )
+        settingDao.insertSetting(entity)
+    }
+    
+    /**
+     * 获取AI服务配置
+     */
+    suspend fun getAIServiceConfig(configId: String): AIServiceConfig? {
+        val entity = settingDao.getSettingByKeySync("ai_config_$configId")
+        return entity?.let { deserializeAIServiceConfig(it.value) }
+    }
+    
+    /**
+     * 删除AI服务配置
+     */
+    suspend fun deleteAIServiceConfig(configId: String) {
+        settingDao.deleteSettingByKey("ai_config_$configId")
     }
     
     /**
@@ -140,6 +169,64 @@ class SettingsRepository(private val settingDao: SettingDao) {
                 "LingyiAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.LingyiAIServiceItem::class.java)
                 "JieyueAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.JieyueAIServiceItem::class.java)
                 "TencentCloudApiKeyItem" -> gson.fromJson(dataJson, SettingsItem.TencentCloudApiKeyItem::class.java)
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    /**
+     * 序列化AIServiceConfig为JSON字符串
+     */
+    private fun serializeAIServiceConfig(config: AIServiceConfig): String {
+        val type = when (config) {
+            is AIServiceConfig.TencentHunyuanConfig -> "TencentHunyuanConfig"
+            is AIServiceConfig.DeepSeekConfig -> "DeepSeekConfig"
+            is AIServiceConfig.KimiConfig -> "KimiConfig"
+            is AIServiceConfig.MiniMaxConfig -> "MiniMaxConfig"
+            is AIServiceConfig.BaichuanConfig -> "BaichuanConfig"
+            is AIServiceConfig.OpenAIConfig -> "OpenAIConfig"
+            is AIServiceConfig.ErnieConfig -> "ErnieConfig"
+            is AIServiceConfig.QwenConfig -> "QwenConfig"
+            is AIServiceConfig.ZhipuConfig -> "ZhipuConfig"
+            is AIServiceConfig.SparkConfig -> "SparkConfig"
+            is AIServiceConfig.HunyuanConfig -> "HunyuanConfig"
+            is AIServiceConfig.DoubaoConfig -> "DoubaoConfig"
+            is AIServiceConfig.LingyiConfig -> "LingyiConfig"
+            is AIServiceConfig.JieyueConfig -> "JieyueConfig"
+        }
+        
+        val configJson = gson.toJson(config)
+        return """{"type":"$type","data":$configJson}"""
+    }
+    
+    /**
+     * 反序列化JSON字符串为AIServiceConfig
+     */
+    private fun deserializeAIServiceConfig(json: String): AIServiceConfig? {
+        return try {
+            val wrapperType = object : TypeToken<Map<String, Any>>() {}.type
+            val wrapper: Map<String, Any> = gson.fromJson(json, wrapperType)
+            
+            val type = wrapper["type"] as? String ?: return null
+            val dataJson = gson.toJson(wrapper["data"])
+            
+            when (type) {
+                "TencentHunyuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.TencentHunyuanConfig::class.java)
+                "DeepSeekConfig" -> gson.fromJson(dataJson, AIServiceConfig.DeepSeekConfig::class.java)
+                "KimiConfig" -> gson.fromJson(dataJson, AIServiceConfig.KimiConfig::class.java)
+                "MiniMaxConfig" -> gson.fromJson(dataJson, AIServiceConfig.MiniMaxConfig::class.java)
+                "BaichuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.BaichuanConfig::class.java)
+                "OpenAIConfig" -> gson.fromJson(dataJson, AIServiceConfig.OpenAIConfig::class.java)
+                "ErnieConfig" -> gson.fromJson(dataJson, AIServiceConfig.ErnieConfig::class.java)
+                "QwenConfig" -> gson.fromJson(dataJson, AIServiceConfig.QwenConfig::class.java)
+                "ZhipuConfig" -> gson.fromJson(dataJson, AIServiceConfig.ZhipuConfig::class.java)
+                "SparkConfig" -> gson.fromJson(dataJson, AIServiceConfig.SparkConfig::class.java)
+                "HunyuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.HunyuanConfig::class.java)
+                "DoubaoConfig" -> gson.fromJson(dataJson, AIServiceConfig.DoubaoConfig::class.java)
+                "LingyiConfig" -> gson.fromJson(dataJson, AIServiceConfig.LingyiConfig::class.java)
+                "JieyueConfig" -> gson.fromJson(dataJson, AIServiceConfig.JieyueConfig::class.java)
                 else -> null
             }
         } catch (e: Exception) {

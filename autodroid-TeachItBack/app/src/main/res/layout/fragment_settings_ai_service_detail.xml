@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- 获取 API Key 链接 -->
+        <TextView
+            android:id="@+id/get_api_key_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="获取 API KEY"
+            android:textSize="14sp"
+            android:textColor="#2196F3"
+            android:layout_marginBottom="16dp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        
+        <!-- Secret ID 字段 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/secret_id_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Secret ID"
+            app:passwordToggleEnabled="true"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/secret_id_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- API Key 字段 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/api_key_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="API Key"
+            app:passwordToggleEnabled="true"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/api_key_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Base URL 字段 -->
+        <TextView
+            android:id="@+id/base_url_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Base URL"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/base_url_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:padding="12dp"
+            android:background="#EEEEEE"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Region 字段 -->
+        <TextView
+            android:id="@+id/region_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Region"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/region_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:padding="12dp"
+            android:background="#EEEEEE"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Model 字段 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/model_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Model"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+
+            <AutoCompleteTextView
+                android:id="@+id/model_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 测试连接按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/test_connection_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="测试连接"
+            app:icon="@android:drawable/ic_menu_search"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <!-- 保存按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/save_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="保存配置"
+            app:icon="@android:drawable/ic_menu_save"
+            style="@style/Widget.MaterialComponents.Button" />
+
+            
+        <!-- 列出所有能力，每个能力占一行，动态显示根据supportXXXX -->
+        <LinearLayout
+            android:id="@+id/capabilities_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp"
+            android:padding="12dp"
+            android:background="@android:color/white">
+            
+        <!-- AI服务能力 -->
+        <TextView
+            android:id="@+id/capabilities_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AI服务能力"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp"
+            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/cap_basic_chat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持基本会话"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_file_processing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持文件处理"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_mind_map"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持思维导图"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_learning_analysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持学习分析"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_socratic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持苏格拉底式提问"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_answer_eval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持答案评估"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_document_parsing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持文档解析"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_concept_extraction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持概念提取"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_knowledge_graph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持知识图谱"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_long_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持长文本"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_multimodal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持多模态"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_education"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持教育功能"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_code_generation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持代码生成"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_math"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持数学计算"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_creative_writing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持创意写作"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_image_analysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持图像分析"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_image_generation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持图像生成"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_audio_processing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持音频处理"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_video_analysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持视频分析"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+            
+            <TextView
+                android:id="@+id/cap_rag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☑️ 支持RAG"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

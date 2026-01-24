@@ -25,8 +25,9 @@ object AIServiceConfigHelper {
         // 根据AIServiceRequiredFields显示/隐藏字段
         secretIdField.visibility = if (config.requiredFields.requireSecretId) View.VISIBLE else View.GONE
         apiKeyField.visibility = if (config.requiredFields.requireApiKey) View.VISIBLE else View.GONE
-        baseUrlField.visibility = if (config.requiredFields.requireBaseUrl) View.VISIBLE else View.GONE
-        regionField.visibility = if (config.requiredFields.requireRegion) View.VISIBLE else View.GONE
+        // Base URL和Region总是显示，但为只读
+        baseUrlField.visibility = View.VISIBLE
+        regionField.visibility = View.VISIBLE
         modelField.visibility = if (config.requiredFields.requireModel) View.VISIBLE else View.GONE
     }
 
@@ -60,6 +61,10 @@ object AIServiceConfigHelper {
                 apiKey = apiKey,
                 model = model
             )
+            is AIServiceConfig.KimiConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
             is AIServiceConfig.MiniMaxConfig -> baseConfig.copy(
                 apiKey = apiKey,
                 baseUrl = baseUrl,
@@ -71,6 +76,38 @@ object AIServiceConfigHelper {
                 model = model
             )
             is AIServiceConfig.OpenAIConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.ErnieConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.QwenConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.ZhipuConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.SparkConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.HunyuanConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.DoubaoConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.LingyiConfig -> baseConfig.copy(
+                apiKey = apiKey,
+                model = model
+            )
+            is AIServiceConfig.JieyueConfig -> baseConfig.copy(
                 apiKey = apiKey,
                 model = model
             )
@@ -142,6 +179,11 @@ object AIServiceConfigHelper {
                 "deepseek-chat",
                 "deepseek-coder"
             )
+            is AIServiceConfig.KimiConfig -> listOf(
+                "moonshot-v1-8k",
+                "moonshot-v1-32k",
+                "moonshot-v1-128k"
+            )
             is AIServiceConfig.MiniMaxConfig -> listOf(
                 "abab5.5-chat",
                 "abab5.5s-chat"
@@ -155,6 +197,45 @@ object AIServiceConfigHelper {
                 "gpt-3.5-turbo",
                 "gpt-4",
                 "gpt-4-turbo"
+            )
+            is AIServiceConfig.ErnieConfig -> listOf(
+                "ernie-bot-4",
+                "ernie-bot-turbo"
+            )
+            is AIServiceConfig.QwenConfig -> listOf(
+                "qwen-turbo",
+                "qwen-plus",
+                "qwen-max"
+            )
+            is AIServiceConfig.ZhipuConfig -> listOf(
+                "glm-4",
+                "glm-4-plus",
+                "glm-4-0520"
+            )
+            is AIServiceConfig.SparkConfig -> listOf(
+                "spark-lite",
+                "spark-pro",
+                "spark-max"
+            )
+            is AIServiceConfig.HunyuanConfig -> listOf(
+                "hunyuan-lite",
+                "hunyuan-standard",
+                "hunyuan-pro"
+            )
+            is AIServiceConfig.DoubaoConfig -> listOf(
+                "doubao-pro-32k",
+                "doubao-pro-128k",
+                "doubao-pro-256k"
+            )
+            is AIServiceConfig.LingyiConfig -> listOf(
+                "yi-34b-chat",
+                "yi-34b-0926",
+                "yi-98b"
+            )
+            is AIServiceConfig.JieyueConfig -> listOf(
+                "jieyue-chat",
+                "jieyue-chat-pro",
+                "jieyue-chat-max"
             )
         }
     }

@@ -5,10 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.database.AppDatabase
 import com.autodroid.teachitback.repository.SettingsRepository
 import com.autodroid.teachitback.ui.adapter.SettingsItem
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -29,8 +31,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
     
+    // AI 服务配置相关
+    private val _aiServiceConfigs = MutableLiveData<Map<String, AIServiceConfig>>()
+    val aiServiceConfigs: LiveData<Map<String, AIServiceConfig>> = _aiServiceConfigs
+    
+    // AI 服务测试连接状态
+    private val _aiServiceTestStatus = MutableLiveData<Map<String, Boolean>>()
+    val aiServiceTestStatus: LiveData<Map<String, Boolean>> = _aiServiceTestStatus
+    
     init {
         loadSettings()
+        loadAIServiceConfigs()
+        loadAIServiceTestStatus()
     }
     
     /**
@@ -106,20 +118,38 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
         }
         
-        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudApiKeyItem ?: SettingsItem.TencentCloudApiKeyItem())
-        items.add(aiServiceMap["openai"] as? SettingsItem.OpenAIServiceItem ?: SettingsItem.OpenAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["deepseek"] as? SettingsItem.DeepSeekAIServiceItem ?: SettingsItem.DeepSeekAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["ernie"] as? SettingsItem.ErnieAIServiceItem ?: SettingsItem.ErnieAIServiceItem(isEnabled = false))
-        items.add(aiServiceMap["qwen"] as? SettingsItem.QwenAIServiceItem ?: SettingsItem.QwenAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["doubao"] as? SettingsItem.DoubaoAIServiceItem ?: SettingsItem.DoubaoAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["minimax"] as? SettingsItem.MinimaxAIServiceItem ?: SettingsItem.MinimaxAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["kimi"] as? SettingsItem.KimiAIServiceItem ?: SettingsItem.KimiAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["zhipu"] as? SettingsItem.ZhipuAIServiceItem ?: SettingsItem.ZhipuAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["spark"] as? SettingsItem.SparkAIServiceItem ?: SettingsItem.SparkAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["hunyuan"] as? SettingsItem.HunyuanAIServiceItem ?: SettingsItem.HunyuanAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["baichuan"] as? SettingsItem.BaichuanAIServiceItem ?: SettingsItem.BaichuanAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["lingyi"] as? SettingsItem.LingyiAIServiceItem ?: SettingsItem.LingyiAIServiceItem(isEnabled = true))
-        items.add(aiServiceMap["jieyue"] as? SettingsItem.JieyueAIServiceItem ?: SettingsItem.JieyueAIServiceItem(isEnabled = true))
+        // 获取当前AI服务配置状态
+        val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
+        
+        // 根据实际配置状态设置 isEnabled
+        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudApiKeyItem ?: 
+            SettingsItem.TencentCloudApiKeyItem(enabled = currentConfigs["tencent-hunyuan"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["openai"] as? SettingsItem.OpenAIServiceItem ?: 
+            SettingsItem.OpenAIServiceItem(isEnabled = currentConfigs["openai"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["deepseek"] as? SettingsItem.DeepSeekAIServiceItem ?: 
+            SettingsItem.DeepSeekAIServiceItem(isEnabled = currentConfigs["deepseek"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["ernie"] as? SettingsItem.ErnieAIServiceItem ?: 
+            SettingsItem.ErnieAIServiceItem(isEnabled = currentConfigs["ernie"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["qwen"] as? SettingsItem.QwenAIServiceItem ?: 
+            SettingsItem.QwenAIServiceItem(isEnabled = currentConfigs["qwen"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["doubao"] as? SettingsItem.DoubaoAIServiceItem ?: 
+            SettingsItem.DoubaoAIServiceItem(isEnabled = currentConfigs["doubao"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["minimax"] as? SettingsItem.MinimaxAIServiceItem ?: 
+            SettingsItem.MinimaxAIServiceItem(isEnabled = currentConfigs["minimax"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["kimi"] as? SettingsItem.KimiAIServiceItem ?: 
+            SettingsItem.KimiAIServiceItem(isEnabled = currentConfigs["kimi"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["zhipu"] as? SettingsItem.ZhipuAIServiceItem ?: 
+            SettingsItem.ZhipuAIServiceItem(isEnabled = currentConfigs["zhipu"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["spark"] as? SettingsItem.SparkAIServiceItem ?: 
+            SettingsItem.SparkAIServiceItem(isEnabled = currentConfigs["spark"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["hunyuan"] as? SettingsItem.HunyuanAIServiceItem ?: 
+            SettingsItem.HunyuanAIServiceItem(isEnabled = currentConfigs["hunyuan"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["baichuan"] as? SettingsItem.BaichuanAIServiceItem ?: 
+            SettingsItem.BaichuanAIServiceItem(isEnabled = currentConfigs["baichuan"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["lingyi"] as? SettingsItem.LingyiAIServiceItem ?: 
+            SettingsItem.LingyiAIServiceItem(isEnabled = currentConfigs["lingyi"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["jieyue"] as? SettingsItem.JieyueAIServiceItem ?: 
+            SettingsItem.JieyueAIServiceItem(isEnabled = currentConfigs["jieyue"]?.apiKey?.isNotEmpty() == true))
         
         // 应用设置
         items.add(SettingsItem.SectionHeaderItem("应用设置"))
@@ -266,6 +296,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             try {
                 settingsRepository.deleteAllSettings()
                 _errorMessage.value = "数据清除成功"
+                loadAIServiceConfigs() // 重新加载配置
             } catch (e: Exception) {
                 _errorMessage.value = "清除数据失败: ${e.message}"
             } finally {
@@ -275,9 +306,122 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
     
     /**
+     * 加载所有 AI 服务配置
+     */
+    private fun loadAIServiceConfigs() {
+        viewModelScope.launch {
+            try {
+                val configs = mutableMapOf<String, AIServiceConfig>()
+                
+                // 加载所有支持的 AI 服务配置
+                val serviceIds = listOf(
+                    "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
+                    "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
+                    "doubao", "lingyi", "jieyue"
+                )
+                
+                serviceIds.forEach { serviceId ->
+                    val config = settingsRepository.getAIServiceConfig(serviceId)
+                    config?.let {
+                        configs[serviceId] = it
+                    }
+                }
+                
+                _aiServiceConfigs.value = configs
+            } catch (e: Exception) {
+                _errorMessage.value = "加载AI服务配置失败: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * 保存 AI 服务配置
+     */
+    fun saveAIServiceConfig(config: AIServiceConfig) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.saveAIServiceConfig(config)
+                loadAIServiceConfigs() // 重新加载配置以更新 UI
+            } catch (e: Exception) {
+                _errorMessage.value = "保存AI服务配置失败: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * 获取特定 AI 服务配置
+     */
+    fun getAIServiceConfig(configId: String): AIServiceConfig? {
+        return _aiServiceConfigs.value?.get(configId)
+    }
+    
+    /**
      * 清除错误消息
      */
     fun clearErrorMessage() {
         _errorMessage.value = null
+    }
+    
+    /**
+     * 加载 AI 服务测试连接状态
+     */
+    private fun loadAIServiceTestStatus() {
+        viewModelScope.launch {
+            try {
+                val testStatus = mutableMapOf<String, Boolean>()
+                
+                // 加载所有支持的 AI 服务测试状态
+                val serviceIds = listOf(
+                    "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
+                    "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
+                    "doubao", "lingyi", "jieyue"
+                )
+                
+                // 这里可以添加实际的测试连接逻辑
+                // 目前先设置为默认值（已配置的服务为true，未配置的为false）
+                val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
+                serviceIds.forEach { serviceId ->
+                    testStatus[serviceId] = currentConfigs[serviceId]?.apiKey?.isNotEmpty() == true
+                }
+                
+                _aiServiceTestStatus.value = testStatus
+            } catch (e: Exception) {
+                _errorMessage.value = "加载AI服务测试状态失败: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * 测试 AI 服务连接
+     */
+    fun testAIServiceConnection(serviceId: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                
+                // 模拟测试连接（这里可以替换为实际的测试逻辑）
+                delay(1000) // 模拟网络延迟
+                
+                val config = _aiServiceConfigs.value?.get(serviceId)
+                val isConnected = config?.apiKey?.isNotEmpty() == true
+                
+                // 更新测试状态
+                val currentStatus = _aiServiceTestStatus.value ?: emptyMap()
+                val updatedStatus = currentStatus.toMutableMap()
+                updatedStatus[serviceId] = isConnected
+                _aiServiceTestStatus.value = updatedStatus
+                
+                if (isConnected) {
+                    _errorMessage.value = "$serviceId 连接测试成功"
+                } else {
+                    _errorMessage.value = "$serviceId 连接测试失败：请先配置API Key"
+                }
+                
+            } catch (e: Exception) {
+                _errorMessage.value = "$serviceId 连接测试失败: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }
