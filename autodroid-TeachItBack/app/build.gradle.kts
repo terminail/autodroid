@@ -1,17 +1,18 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
     id("androidx.navigation.safeargs.kotlin")
+    id("kotlin-kapt")
+    id("kotlin-parcelize")
 }
 
 android {
     namespace = "com.autodroid.teachitback"
-    compileSdk = 36
-    
+    compileSdk = 34
+
     defaultConfig {
         applicationId = "com.autodroid.teachitback"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -27,26 +28,17 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     
     buildFeatures {
         viewBinding = true
     }
-    
-    // Room schema export
-    kapt {
-        arguments {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
-    }
-    
-
 }
 
 dependencies {

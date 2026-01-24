@@ -17,6 +17,7 @@
             android:padding="16dp">
 
             <TextView
+                android:id="@+id/title_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="混元大模型 配置"
@@ -25,57 +26,136 @@
                 android:layout_marginBottom="24dp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="API Key"
-                android:textSize="16sp"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp" />
-
-            <EditText
-                android:id="@+id/api_key_input"
+            <!-- Secret ID 字段 -->
+            <LinearLayout
+                android:id="@+id/secret_id_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="输入 混元大模型 API Key"
-                android:inputType="textPassword"
-                android:padding="12dp"
-                android:background="@android:color/white"
-                android:layout_marginBottom="16dp" />
+                android:orientation="vertical"
+                android:visibility="visible">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Secret ID"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="模型选择"
-                android:textSize="16sp"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/secret_id_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="输入腾讯云 Secret ID"
+                    android:inputType="textPassword"
+                    android:padding="12dp"
+                    android:background="@android:color/white"
+                    android:layout_marginBottom="16dp" />
+            </LinearLayout>
 
-            <Spinner
-                android:id="@+id/model_spinner"
+            <!-- API Key 字段 -->
+            <LinearLayout
+                android:id="@+id/api_key_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/white"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp" />
+                android:orientation="vertical"
+                android:visibility="visible">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="API Key"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="基础 URL"
-                android:textSize="16sp"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp" />
+                <EditText
+                    android:id="@+id/api_key_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="输入混元大模型 API Key"
+                    android:inputType="textPassword"
+                    android:padding="12dp"
+                    android:background="@android:color/white"
+                    android:layout_marginBottom="16dp" />
+            </LinearLayout>
 
-            <EditText
-                android:id="@+id/base_url_input"
+            <!-- 基础 URL 字段 -->
+            <LinearLayout
+                android:id="@+id/base_url_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="https://hunyuan.tencent.com"
-                android:inputType="textUri"
-                android:padding="12dp"
-                android:background="@android:color/white"
-                android:layout_marginBottom="24dp" />
+                android:orientation="vertical"
+                android:visibility="visible">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="基础 URL"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
+
+                <EditText
+                    android:id="@+id/base_url_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="https://hunyuan.tencent.com"
+                    android:inputType="textUri"
+                    android:padding="12dp"
+                    android:background="@android:color/white"
+                    android:layout_marginBottom="16dp" />
+            </LinearLayout>
+
+            <!-- 区域选择器 -->
+            <LinearLayout
+                android:id="@+id/region_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="区域"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
+
+                <Spinner
+                    android:id="@+id/region_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/white"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp" />
+            </LinearLayout>
+
+            <!-- 模型选择器 -->
+            <LinearLayout
+                android:id="@+id/model_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="模型选择"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
+
+                <Spinner
+                    android:id="@+id/model_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/white"
+                    android:padding="12dp"
+                    android:layout_marginBottom="24dp" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/save_button"

@@ -27,7 +27,7 @@ Autodroid Trader App 是 Autodroid Android 自动化系统的客户端应用，�
 
 ### 1. 打开项目
 
-使用 Android Studio 打开 `autodroid-app` 目录。
+使用 Android Studio 打开 `autodroid-trader-app` 目录。
 
 ### 2. 同步 Gradle
 
@@ -91,7 +91,7 @@ cd 'd:/git/autodroid/autodroid-trader-app'; adb install app/build/outputs/apk/de
 ## 项目结构
 
 ```
-autodroid-app/
+autodroid-trader-app/
 ├── app/
 │   ├── src/
 │   │   ├── main/

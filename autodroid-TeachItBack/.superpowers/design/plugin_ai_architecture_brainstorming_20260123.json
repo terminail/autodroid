@@ -1,0 +1,186 @@
+{
+  "phase": "brainstorming",
+  "timestamp": "2026-01-23T00:00:00",
+  "project_type": "android",
+  "project_root": "d:/git/autodroid/autodroid-TeachItBack",
+  "requirement": "设计插件化AI服务架构，支持多AI模型动态集成、统一配置界面、智能路由策略",
+  
+  "technical_decisions": {
+    "architecture_pattern": {
+      "pattern": "MVVM + Repository Pattern + Plugin Architecture",
+      "description": "UI Layer → ViewModel → Repository → AIServiceRouter → Plugin AIServices",
+      "advantages": ["解耦AI服务实现", "支持动态插件注册", "统一配置管理", "智能路由选择"]
+    },
+    "unified_configuration_system": {
+      "problem": "13个AI服务 × 2个配置文件 = 26个重复布局文件",
+      "solution": "动态配置界面 + 统一配置数据类",
+      "implementation": "AIServiceConfig密封类 + AIServiceRequiredFields + AIServiceCapability"
+    },
+    "ai_capability_management": {
+      "approach": "类型安全的布尔属性替代字符串集合",
+      "components": [
+        "AIServiceCapability: 26个能力布尔属性",
+        "AIServiceRequiredFields: 配置需求管理",
+        "Fluent API: 流畅配置语法"
+      ]
+    },
+    "smart_routing_strategy": {
+      "algorithm": "基于能力检查 + 成本优化 + 配额优先",
+      "priority_order": ["免费额度服务 → 成本最低服务 → 其他可用服务"],
+      "features": ["类型安全路由", "容错重试", "实时状态检测"]
+    },
+    "unified_prompt_management": {
+      "principle": "同一个AI功能的所有服务使用完全相同的Prompt模板",
+      "problem": "当前代码库中不同AI服务的prompt各不相同，导致用户体验不一致，维护成本高",
+      "solution": [
+        "创建PromptTemplates单例对象统一管理所有prompt",
+        "所有AI服务共享相同的prompt模板",
+        "支持适配不同模型（system prompt模式 vs 单条消息模式）",
+        "便于集中优化prompt质量和A/B测试"
+      ],
+      "implementation": "config/PromptTemplates.kt 文件，包含所有AI功能的统一prompt方法"
+    },
+    "service_registry_mechanism": {
+      "design": "动态插件注册 + 能力发现 + 状态管理",
+      "components": ["AIServiceRegistry", "AIServiceRouter", "AIService接口"]
+    }
+  },
+
+  "core_components": {
+    "AIServiceConfig": {
+      "type": "密封类/数据类",
+      "purpose": "统一AI服务配置管理",
+      "fields": [
+        "modelId: 模型唯一标识",
+        "displayName: 显示名称",
+        "apiKey/secretId/baseUrl: 认证配置",
+        "freeQuota/pricePerMillion: 成本管理",
+        "requiredFields: AIServiceRequiredFields",
+        "capabilities: AIServiceCapability"
+      ]
+    },
+    "AIServiceCapability": {
+      "type": "数据类 + Fluent API",
+      "purpose": "统一管理26个AI能力布尔属性",
+      "capabilities": [
+        "基础对话: supportBasicChat",
+        "文件处理: supportFileProcessing", 
+        "思维导图: supportMindMapGeneration",
+        "学习分析: supportLearningAnalysis",
+        "苏格拉底提问: supportSocraticQuestioning",
+        "答案评估: supportAnswerEvaluation",
+        "文档解析: supportDocumentParsing",
+        "概念提取: supportConceptExtraction",
+        "知识图谱: supportKnowledgeGraph",
+        "长文本: supportLongText",
+        "多模态: supportMultimodal",
+        "教育专用: supportEducation",
+        "代码生成: supportCodeGeneration",
+        "数学计算: supportMath",
+        "创意写作: supportCreativeWriting",
+        "图像分析: supportImageAnalysis",
+        "图像生成: supportImageGeneration",
+        "音频处理: supportAudioProcessing",
+        "视频分析: supportVideoAnalysis",
+        "RAG支持: supportRAG"
+      ]
+    },
+    "AIServiceRequiredFields": {
+      "type": "数据类 + 预定义模板",
+      "purpose": "统一管理配置需求",
+      "templates": [
+        "NO_REQUIRED_FIELDS: 无配置需求",
+        "API_KEY_ONLY: 仅需要API Key",
+        "API_AND_URL: 需要API Key和Base URL", 
+        "CLOUD_SERVICE: 完整云服务配置"
+      ]
+    },
+    "AIServiceRegistry": {
+      "type": "服务注册中心",
+      "purpose": "动态管理AI服务插件",
+      "features": ["服务注册", "能力发现", "可用性检查", "服务查找"]
+    },
+    "AIServiceRouter": {
+      "type": "智能路由引擎",
+      "purpose": "基于能力和成本的路由决策",
+      "algorithms": ["能力匹配", "成本优化", "配额优先", "容错重试"]
+    }
+  },
+
+  "implementation_strategy": {
+    "phase_1": {
+      "name": "核心架构实现",
+      "duration": "1-2周",
+      "deliverables": [
+        "AIServiceConfig数据类定义",
+        "AIServiceCapability能力管理",
+        "AIServiceRequiredFields配置需求",
+        "PromptTemplates统一prompt管理",
+        "基础AIService接口"
+      ]
+    },
+    "phase_2": {
+      "name": "插件注册与路由",
+      "duration": "2-3周", 
+      "deliverables": [
+        "AIServiceRegistry实现",
+        "AIServiceRouter路由引擎",
+        "基础AI服务插件（DeepSeek、腾讯云混元）"
+      ]
+    },
+    "phase_3": {
+      "name": "统一配置界面",
+      "duration": "2-3周",
+      "deliverables": [
+        "动态配置界面UI",
+        "配置数据持久化",
+        "配置验证和测试"
+      ]
+    },
+    "phase_4": {
+      "name": "高级功能集成",
+      "duration": "2-3周",
+      "deliverables": [
+        "多AI服务完整集成",
+        "智能路由优化",
+        "性能监控和调优"
+      ]
+    }
+  },
+
+  "ai_service_models": {
+    "deepseek": {
+      "capabilities": ["basicChat", "fileProcessing", "longText", "codeGeneration", "math"],
+      "cost": "低",
+      "quota": "免费额度充足"
+    },
+    "tencent_hunyuan": {
+      "capabilities": ["basicChat", "fileProcessing", "mindMap", "learningAnalysis", "socraticQuestioning", "answerEvaluation", "documentParsing", "conceptExtraction", "knowledgeGraph", "longText", "education"],
+      "cost": "中等", 
+      "features": "教育专用能力突出"
+    },
+    "baichuan": {
+      "capabilities": ["basicChat"],
+      "cost": "低",
+      "simplicity": "配置简单"
+    }
+  },
+
+  "design_advantages": {
+    "type_safety": "编译器检查确保配置正确性",
+    "extensibility": "新增能力只需添加布尔字段",
+    "performance": "避免字符串集合操作",
+    "readability": "明确的布尔属性比字符串集合更易理解",
+    "maintainability": "统一配置管理减少重复代码",
+    "prompt_consistency": "所有AI服务共享相同prompt，用户体验一致，维护成本低"
+  },
+
+  "risk_mitigation": {
+    "complexity_management": "模块化设计降低复杂度",
+    "backward_compatibility": "保持接口兼容性",
+    "error_handling": "完善的异常处理和降级策略",
+    "testing_strategy": "单元测试 + 集成测试 + 端到端测试"
+  },
+
+  "status": "ready_for_implementation"
+}

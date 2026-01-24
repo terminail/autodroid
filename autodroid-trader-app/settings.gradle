@@ -23,5 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "autodroid-app"
+rootProject.name = "autodroid-trader-app"
 include(":app")

@@ -12,7 +12,7 @@ buildscript {
         // Use Android Gradle Plugin 8.13.1 which matches Gradle 8.13
         classpath("com.android.tools.build:gradle:8.13.1")
         
-        // Kotlin plugin
+        // Kotlin plugin (includes KAPT)
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
         
         // Navigation Safe Args plugin
