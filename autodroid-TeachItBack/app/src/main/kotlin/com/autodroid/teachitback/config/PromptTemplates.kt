@@ -300,20 +300,20 @@ object PromptTemplates {
      * 学习计划制定模板
      * 帮助学生制定个性化的学习计划
      *
-     * @param subject 学科
+     * @param topic 学习主题
      * @param targetLevel 目标水平
      * @param availableTime 可用时间（小时/周）
      * @param learningStyle 学习风格（visual/auditory/kinesthetic）
      * @return 统一格式的prompt字符串
      */
     fun createLearningPlan(
-        subject: String,
+        topic: String,
         targetLevel: String,
         availableTime: Int = 10,
         learningStyle: String = "visual"
     ): String {
         return """
-            请为学习${subject}的学生制定一个个性化的学习计划。
+            请为学习${topic}的学生制定一个个性化的学习计划。
             
             学生信息：
             - 目标水平：${targetLevel}
@@ -338,14 +338,14 @@ object PromptTemplates {
      * @param wrongQuestion 错题内容
      * @param studentAnswer 学生答案
      * @param correctAnswer 正确答案
-     * @param subject 学科
+     * @param topic 学习主题
      * @return 统一格式的prompt字符串
      */
     fun analyzeWrongAnswer(
         wrongQuestion: String,
         studentAnswer: String,
         correctAnswer: String,
-        subject: String
+        topic: String
     ): String {
         return """
             请分析学生在${subject}科目中的错题：

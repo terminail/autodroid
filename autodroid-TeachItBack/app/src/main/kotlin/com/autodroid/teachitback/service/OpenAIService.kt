@@ -223,13 +223,21 @@ class OpenAIService(
     }
 
     override suspend fun getUsageStatistics(): UsageStatistics {
+        val totalCalls = config.freeQuota - remainingQuota
+        val reliability = if (totalCalls > 0) {
+            successfulCalls.toDouble() / totalCalls.toDouble()
+        } else {
+            1.0
+        }
+        
         return UsageStatistics(
-            totalCalls = config.freeQuota - remainingQuota,
-            successfulCalls = config.freeQuota - remainingQuota,
+            totalCalls = totalCalls,
+            successfulCalls = totalCalls,
             failedCalls = 0,
             totalTokensUsed = 0,
             totalCost = 0.0,
             averageResponseTime = 0,
+            reliability = reliability,
             lastCallTime = System.currentTimeMillis()
         )
     }

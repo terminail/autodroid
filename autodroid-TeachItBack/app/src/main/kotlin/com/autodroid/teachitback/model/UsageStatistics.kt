@@ -35,6 +35,11 @@ data class UsageStatistics(
     val averageResponseTime: Long = 0,
     
     /**
+     * 可靠性评分（0.0-1.0）
+     */
+    val reliability: Double = 1.0,
+    
+    /**
      * 最后调用时间
      */
     val lastCallTime: Long = 0

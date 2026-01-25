@@ -3,6 +3,8 @@ package com.autodroid.teachitback.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,14 +19,18 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.MainActivity
 import com.autodroid.teachitback.R
+import com.autodroid.teachitback.service.AIRouterService
 import com.autodroid.teachitback.ui.adapter.ChatItem
 import com.autodroid.teachitback.databinding.FragmentChatBinding
 import com.autodroid.teachitback.model.MessageEntity
 import com.autodroid.teachitback.service.VoiceProcessor
 import com.autodroid.teachitback.ui.adapter.ChatAdapter
 import com.autodroid.teachitback.viewmodel.ChatViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ChatFragment : Fragment() {
     private var _binding: FragmentChatBinding? = null
@@ -33,8 +39,13 @@ class ChatFragment : Fragment() {
     private lateinit var viewModel: ChatViewModel
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var voiceProcessor: VoiceProcessor
+    private lateinit var aiRouterService: AIRouterService
 
     private val args: ChatFragmentArgs by navArgs()
+    
+    // 输入建议相关变量
+    private var lastInputTime = 0L
+    private var suggestionDebounceDelay = 500L // 500ms防抖延迟
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -60,6 +71,7 @@ class ChatFragment : Fragment() {
         viewModel = ViewModelProvider(requireActivity())[ChatViewModel::class.java]
         
         voiceProcessor = VoiceProcessor(requireContext())
+        aiRouterService = AIRouterService()
 
         setupUI()
         setupRecyclerView()

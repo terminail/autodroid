@@ -16,12 +16,12 @@ import java.util.UUID
 class PresetMindMapCreator(private val database: AppDatabase) {
 
     /**
-     * 根据科目类型创建详细的MindMap结构
+     * 根据主题类型创建详细的MindMap结构
      */
-    suspend fun createDetailedMindMapStructure(mindMapId: String, subject: String) = withContext(Dispatchers.IO) {
-        android.util.Log.d("PresetMindMapCreator", "Creating detailed structure for mindMapId: $mindMapId, subject: $subject")
+    suspend fun createDetailedMindMapStructure(mindMapId: String, topic: String) = withContext(Dispatchers.IO) {
+        android.util.Log.d("PresetMindMapCreator", "Creating detailed structure for mindMapId: $mindMapId, topic: $topic")
         
-        val result = when (subject) {
+        val result = when (topic) {
             "CFP财务规划" -> {
                 android.util.Log.d("PresetMindMapCreator", "Matched CFP财务规划")
                 createCFPStructure(mindMapId)
@@ -68,7 +68,7 @@ class PresetMindMapCreator(private val database: AppDatabase) {
             }
             else -> {
                 android.util.Log.d("PresetMindMapCreator", "No match found, using default structure")
-                createDefaultStructure(mindMapId, subject)
+                createDefaultStructure(mindMapId, topic)
             }
         }
         
@@ -206,7 +206,7 @@ class PresetMindMapCreator(private val database: AppDatabase) {
     /**
      * 创建默认结构
      */
-    private suspend fun createDefaultStructure(mindMapId: String, subject: String) {
+    private suspend fun createDefaultStructure(mindMapId: String, topic: String) {
         val rootNode = MindMapNode(mindMapId = mindMapId, title = "基础知识", progress = 0)
         database.mindMapDao().insertNode(rootNode)
         

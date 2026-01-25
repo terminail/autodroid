@@ -298,4 +298,253 @@ class AIRouterService {
         val service = aiServices[serviceName] ?: throw IllegalArgumentException("AI服务不存在: $serviceName")
         return operation(service)
     }
+    
+    /**
+     * 获取能力需求分析提示指南
+     */
+    fun getCapabilityAnalysisTips(): Map<String, List<String>> {
+        return mapOf(
+            "快速解答类" to listOf("快速", "即时", "马上", "立刻"),
+            "概念理解类" to listOf("概念", "解释", "理解", "含义", "定义"),
+            "学习分析类" to listOf("学习", "进步", "评估", "分析", "总结"),
+            "思维导图类" to listOf("思维", "导图", "整理", "结构", "框架"),
+            "深度提问类" to listOf("提问", "思考", "深度", "启发", "探讨"),
+            "答案评估类" to listOf("评估", "反馈", "检查", "评分", "改进"),
+            "文件处理类" to listOf("文件", "文档", "pdf", "word", "excel"),
+            "代码编程类" to listOf("代码", "编程", "程序", "算法", "开发"),
+            "数学计算类" to listOf("数学", "计算", "公式", "方程", "统计"),
+            "创意写作类" to listOf("写作", "创意", "文章", "故事", "文案"),
+            "多模态处理" to listOf("图片", "图像", "音频", "视频", "视觉"),
+            "长文本处理" to listOf("长文本", "长文章", "大段", "长篇", "详细"),
+            "知识检索类" to listOf("检索", "搜索", "知识库", "资料", "文献")
+        )
+    }
+    
+    /**
+     * 基于用户自由文本输入进行能力需求分析
+     * 将教育概念、快速答案等用户需求映射到具体AI能力
+     */
+    fun analyzeCapabilityRequirements(userInput: String): List<AIAbility> {
+        val requirements = mutableListOf<AIAbility>()
+        val normalizedInput = userInput.lowercase()
+        
+        // 教育概念相关需求分析
+        when {
+            // 快速答案/即时解答
+            normalizedInput.contains("快速") || normalizedInput.contains("即时") || 
+            normalizedInput.contains("马上") || normalizedInput.contains("立刻") -> {
+                requirements.add(AIAbility.BASIC_CHAT)
+            }
+            
+            // 概念解释/知识理解
+            normalizedInput.contains("概念") || normalizedInput.contains("解释") || 
+            normalizedInput.contains("理解") || normalizedInput.contains("含义") -> {
+                requirements.add(AIAbility.CONCEPT_EXTRACTION)
+                requirements.add(AIAbility.KNOWLEDGE_GRAPH)
+            }
+            
+            // 学习分析/进度评估
+            normalizedInput.contains("学习") || normalizedInput.contains("进步") || 
+            normalizedInput.contains("评估") || normalizedInput.contains("分析") -> {
+                requirements.add(AIAbility.LEARNING_ANALYSIS)
+            }
+            
+            // 思维导图/知识整理
+            normalizedInput.contains("思维") || normalizedInput.contains("导图") || 
+            normalizedInput.contains("整理") || normalizedInput.contains("结构") -> {
+                requirements.add(AIAbility.MIND_MAP_GENERATION)
+            }
+            
+            // 苏格拉底式提问/深度思考
+            normalizedInput.contains("提问") || normalizedInput.contains("思考") || 
+            normalizedInput.contains("深度") || normalizedInput.contains("启发") -> {
+                requirements.add(AIAbility.SOCRATIC_QUESTIONING)
+            }
+            
+            // 答案评估/反馈
+            normalizedInput.contains("评估") || normalizedInput.contains("反馈") || 
+            normalizedInput.contains("检查") || normalizedInput.contains("评分") -> {
+                requirements.add(AIAbility.ANSWER_EVALUATION)
+            }
+            
+            // 文件处理/文档解析
+            normalizedInput.contains("文件") || normalizedInput.contains("文档") || 
+            normalizedInput.contains("pdf") || normalizedInput.contains("word") -> {
+                requirements.add(AIAbility.FILE_PROCESSING)
+                requirements.add(AIAbility.DOCUMENT_PARSING)
+            }
+            
+            // 代码相关
+            normalizedInput.contains("代码") || normalizedInput.contains("编程") || 
+            normalizedInput.contains("程序") -> {
+                requirements.add(AIAbility.CODE_GENERATION)
+            }
+            
+            // 数学相关
+            normalizedInput.contains("数学") || normalizedInput.contains("计算") || 
+            normalizedInput.contains("公式") -> {
+                requirements.add(AIAbility.MATH)
+            }
+            
+            // 创意写作
+            normalizedInput.contains("写作") || normalizedInput.contains("创意") || 
+            normalizedInput.contains("文章") -> {
+                requirements.add(AIAbility.CREATIVE_WRITING)
+            }
+            
+            // 多模态处理
+            normalizedInput.contains("图片") || normalizedInput.contains("图像") || 
+            normalizedInput.contains("音频") || normalizedInput.contains("视频") -> {
+                requirements.add(AIAbility.MULTIMODAL)
+                if (normalizedInput.contains("图片") || normalizedInput.contains("图像")) {
+                    requirements.add(AIAbility.IMAGE_ANALYSIS)
+                }
+                if (normalizedInput.contains("生成图片") || normalizedInput.contains("生成图像")) {
+                    requirements.add(AIAbility.IMAGE_GENERATION)
+                }
+                if (normalizedInput.contains("音频") || normalizedInput.contains("声音")) {
+                    requirements.add(AIAbility.AUDIO_PROCESSING)
+                }
+                if (normalizedInput.contains("视频")) {
+                    requirements.add(AIAbility.VIDEO_ANALYSIS)
+                }
+            }
+            
+            // 长文本处理
+            normalizedInput.contains("长文本") || normalizedInput.contains("长文章") || 
+            normalizedInput.contains("大段") -> {
+                requirements.add(AIAbility.LONG_TEXT)
+            }
+            
+            // RAG相关
+            normalizedInput.contains("检索") || normalizedInput.contains("搜索") || 
+            normalizedInput.contains("知识库") -> {
+                requirements.add(AIAbility.RAG_RETRIEVAL)
+                requirements.add(AIAbility.RAG_GENERATION)
+            }
+        }
+        
+        // 如果没有匹配到特定需求，默认使用基础对话
+        if (requirements.isEmpty()) {
+            requirements.add(AIAbility.BASIC_CHAT)
+        }
+        
+        return requirements.distinct()
+    }
+    
+    /**
+     * 分析用户输入并提供优化建议
+     */
+    fun getInputOptimizationSuggestions(userInput: String): Map<String, Any> {
+        val suggestions = mutableListOf<String>()
+        val detectedKeywords = mutableListOf<String>()
+        val normalizedInput = userInput.lowercase()
+        
+        val tips = getCapabilityAnalysisTips()
+        
+        // 检测已有关键词
+        tips.forEach { (category, keywords) ->
+            keywords.forEach { keyword ->
+                if (normalizedInput.contains(keyword)) {
+                    detectedKeywords.add("$keyword ($category)")
+                }
+            }
+        }
+        
+        // 提供优化建议
+        if (detectedKeywords.isEmpty()) {
+            suggestions.add("💡 尝试添加具体需求关键词，如：'快速'、'概念'、'学习'、'思维导图'等")
+            suggestions.add("📚 明确说明任务类型：解答问题、分析学习、生成导图、评估答案等")
+            suggestions.add("🎯 指定内容形式：文件、代码、数学、写作、图片等")
+        } else {
+            suggestions.add("✅ 已识别关键词: ${detectedKeywords.joinToString(", ")}")
+            
+            // 根据已识别关键词推荐相关能力
+            val capabilities = analyzeCapabilityRequirements(userInput)
+            if (capabilities.isNotEmpty()) {
+                suggestions.add("🚀 将为您匹配以下AI能力: ${capabilities.joinToString(", ") { it.name }}")
+            }
+        }
+        
+        // 检查输入是否过于简单
+        if (userInput.length < 10 && detectedKeywords.isEmpty()) {
+            suggestions.add("🔍 输入可能过于简单，请详细描述您的需求以获得更精准的服务")
+        }
+        
+        return mapOf(
+            "suggestions" to suggestions,
+            "detectedKeywords" to detectedKeywords,
+            "inputLength" to userInput.length,
+            "capabilities" to analyzeCapabilityRequirements(userInput).map { it.name }
+        )
+    }
+    
+    /**
+     * 获取完整的能力需求分析指南
+     */
+    fun getCompleteAnalysisGuide(): String {
+        val tips = getCapabilityAnalysisTips()
+        val guide = StringBuilder()
+        
+        guide.append("🤖 AI能力需求分析指南\n\n")
+        guide.append("为了让AI更好地理解您的需求，请参考以下关键词分类：\n\n")
+        
+        tips.forEach { (category, keywords) ->
+            guide.append("📌 $category:\n")
+            guide.append("   关键词: ${keywords.joinToString(", ")}\n")
+            guide.append("   示例: '${getExampleForCategory(category)}'\n\n")
+        }
+        
+        guide.append("💡 使用技巧：\n")
+        guide.append("• 组合使用关键词：'快速解释数学概念'\n")
+        guide.append("• 明确任务目标：'生成思维导图总结学习内容'\n")
+        guide.append("• 指定内容类型：'分析PDF文档中的关键概念'\n")
+        
+        return guide.toString()
+    }
+    
+    /**
+     * 为每个类别提供示例
+     */
+    private fun getExampleForCategory(category: String): String {
+        return when (category) {
+            "快速解答类" -> "快速解答这个数学问题"
+            "概念理解类" -> "解释人工智能的基本概念"
+            "学习分析类" -> "分析我的学习进度和薄弱环节"
+            "思维导图类" -> "为这篇文章生成思维导图"
+            "深度提问类" -> "提出深度思考问题启发学习"
+            "答案评估类" -> "评估我的答案并提出改进建议"
+            "文件处理类" -> "解析这个PDF文档的主要内容"
+            "代码编程类" -> "帮我编写一个排序算法的代码"
+            "数学计算类" -> "计算这个复杂的数学公式"
+            "创意写作类" -> "帮我写一篇关于环保的创意文章"
+            "多模态处理" -> "分析这张图片中的物体和场景"
+            "长文本处理" -> "总结这篇长文章的核心观点"
+            "知识检索类" -> "从知识库中检索相关文献资料"
+            else -> "请描述您的具体需求"
+        }
+    }
+    
+    /**
+     * 基于用户输入智能路由到最合适的服务
+     */
+    suspend fun <T> routeByUserInput(
+        userInput: String,
+        operation: suspend (AIService) -> T
+    ): T {
+        val capabilities = analyzeCapabilityRequirements(userInput)
+        
+        // 按能力优先级选择服务
+        for (capability in capabilities) {
+            try {
+                return routeByAbility(capability, operation)
+            } catch (e: Exception) {
+                // 当前能力路由失败，尝试下一个能力
+                continue
+            }
+        }
+        
+        // 如果所有能力都失败，使用基础对话作为兜底
+        return routeByAbility(AIAbility.BASIC_CHAT, operation)
+    }
 }
