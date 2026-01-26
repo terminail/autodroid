@@ -101,14 +101,28 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      * 使用MessageRepository的Local-First策略（内部通过AIServiceRouter智能路由）
      */
     fun sendUserMessage(content: String, topicId: String) {
+        sendUserMessage(content, topicId, null)
+    }
+
+    /**
+     * 发送用户消息并获取AI回复（带服务建议）
+     * @param content 消息内容
+     * @param topicId 主题ID
+     * @param suggestedService 推荐的服务ID（可选，用于优先使用该服务）
+     */
+    fun sendUserMessage(content: String, topicId: String, suggestedService: String?) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
                 _errorMessage.value = null
 
                 // 使用MessageRepository的sendMessageAndGetReply方法
-                // 该方法自动处理：保存用户消息、智能路由AI服务、保存AI回复
-                val aiMessage = messageRepository.sendMessageAndGetReply(topicId, content)
+                // 如果提供了suggestedService，Repository会优先使用该服务
+                val aiMessage = if (suggestedService != null) {
+                    messageRepository.sendMessageAndGetReplyWithPreference(topicId, content, suggestedService)
+                } else {
+                    messageRepository.sendMessageAndGetReply(topicId, content)
+                }
 
                 if (aiMessage != null) {
                     // AI回复会自动通过Flow更新到messages和chatItems

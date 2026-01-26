@@ -112,7 +112,7 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     class MindMapViewHolder(private val binding: ItemChatMindmapBinding) : RecyclerView.ViewHolder(binding.root) {
         
         private val flexboxAdapter = MindMapFlexboxAdapter()
-        private var isExpanded = true // 保存展开/收起状态
+        private var isExpanded = false // 默认收起状态
         
         init {
             // 设置Flexbox适配器

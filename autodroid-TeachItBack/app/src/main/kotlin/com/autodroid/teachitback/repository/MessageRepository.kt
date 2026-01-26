@@ -45,6 +45,23 @@ class MessageRepository(
         topicId: String,
         userContent: String
     ): MessageEntity? {
+        return sendMessageAndGetReplyWithPreference(topicId, userContent, null)
+    }
+
+    /**
+     * 发送消息并获取AI回复（带服务偏好）
+     * Local-First策略：
+     * 1. 保存用户消息到本地数据库
+     * 2. 获取对话历史（用于AI分析）
+     * 3. 使用AIServiceRouter智能路由调用AI服务分析进度
+     * 4. 构建上下文并使用AIServiceRouter获取AI回复（优先使用suggestedService）
+     * 5. 保存AI回复到本地数据库（包含AIProcessInfo）
+     */
+    suspend fun sendMessageAndGetReplyWithPreference(
+        topicId: String,
+        userContent: String,
+        suggestedService: String?
+    ): MessageEntity? {
         // 1. 保存用户消息到本地数据库
         val userMessage = MessageEntity(
             id = UUID.randomUUID().toString(),
@@ -83,10 +100,20 @@ class MessageRepository(
         // 4. 构建上下文并使用AIServiceRouter获取AI回复
         val context = buildContext(conversationHistory, progressAnalysis)
         val aiResponse: AIServiceResponse = try {
-            aiRouter.routeByCapability(
-                capabilityCheck = { it.supportBasicChat },
-                operation = { service -> service.sendMessage(userMessage, context) }
-            )
+            if (suggestedService != null) {
+                // 如果有推荐的服务，优先使用该服务
+                aiRouter.routeWithPreference(
+                    capabilityCheck = { it.supportBasicChat },
+                    preferredServiceId = suggestedService,
+                    operation = { service -> service.sendMessage(userMessage, context) }
+                )
+            } else {
+                // 否则使用智能路由
+                aiRouter.routeByCapability(
+                    capabilityCheck = { it.supportBasicChat },
+                    operation = { service -> service.sendMessage(userMessage, context) }
+                )
+            }
         } catch (e: Exception) {
             Log.e("MessageRepository", "AI回复生成失败: ${e.message}", e)
             // 返回错误响应，不阻塞主流程

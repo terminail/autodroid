@@ -24,6 +24,7 @@ import com.autodroid.teachitback.ui.adapter.ChatItem
 import com.autodroid.teachitback.databinding.FragmentChatBinding
 import com.autodroid.teachitback.model.MessageEntity
 import com.autodroid.teachitback.service.VoiceProcessor
+import com.autodroid.teachitback.service.InputSuggestionDetector
 import com.autodroid.teachitback.ui.adapter.ChatAdapter
 import com.autodroid.teachitback.viewmodel.ChatViewModel
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ class ChatFragment : Fragment() {
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var voiceProcessor: VoiceProcessor
     private lateinit var aiRouterService: AIRouterService
+    private lateinit var inputSuggestionDetector: InputSuggestionDetector
 
     private val args: ChatFragmentArgs by navArgs()
     
@@ -72,6 +74,7 @@ class ChatFragment : Fragment() {
         
         voiceProcessor = VoiceProcessor(requireContext())
         aiRouterService = AIRouterService()
+        inputSuggestionDetector = InputSuggestionDetector()
 
         setupUI()
         setupRecyclerView()
@@ -126,14 +129,20 @@ class ChatFragment : Fragment() {
             }
         }
 
-        // 发送按钮
+        // 发送按钮 - 集成输入建议系统
         binding.sendButton.setOnClickListener {
             val message = binding.messageInput.text.toString().trim()
             if (message.isNotEmpty()) {
-                sendMessage()
-                // 发送后清空输入框
-                binding.messageInput.setText("")
-                // 注意：TextWatcher会自动处理按钮切换，这里不需要手动设置
+                // 发送前检测，提供优化建议
+                lifecycleScope.launch {
+                    val suggestion = inputSuggestionDetector.analyzeBeforeSend(message)
+                    if (suggestion.shouldShowDialog) {
+                        showInputSuggestionDialog(suggestion, message)
+                    } else {
+                        // 直接发送，不弹出对话框
+                        sendMessageDirectly(message, suggestion.suggestedService)
+                    }
+                }
             }
         }
 
@@ -269,6 +278,63 @@ class ChatFragment : Fragment() {
         if (content.isNotEmpty()) {
             viewModel.sendUserMessage(content, args.topicId)
             binding.messageInput.text?.clear()
+        }
+    }
+
+    /**
+     * 显示输入建议对话框
+     * 只显示两个按钮并排，点击外部取消
+     */
+    private fun showInputSuggestionDialog(suggestion: InputSuggestionDetector.SuggestionResult, originalMessage: String) {
+        val message = buildString {
+            append(suggestion.message)
+            suggestion.suggestion?.let {
+                append("\n\n")
+                append(it)
+            }
+        }
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("输入优化建议")
+            .setMessage(message)
+            .setPositiveButton("采纳并发送") { _, _ ->
+                // 优化后发送（可以在这里添加实际的优化逻辑）
+                sendMessageDirectly(originalMessage, suggestion.suggestedService)
+            }
+            .setNegativeButton("忽略并发送") { _, _ ->
+                // 原样发送
+                sendMessageDirectly(originalMessage)
+            }
+            .setCancelable(true)  // 允许点击外部取消
+            .create()
+        
+        dialog.show()
+    }
+
+    /**
+     * 直接发送消息（可选择指定服务）
+     */
+    private fun sendMessageDirectly(message: String, suggestedService: String? = null) {
+        if (message.isNotEmpty()) {
+            viewModel.sendUserMessage(message, args.topicId, suggestedService)
+            binding.messageInput.text?.clear()
+        }
+    }
+
+    /**
+     * 获取服务的显示名称
+     */
+    private fun getServiceDisplayName(serviceId: String): String {
+        return when (serviceId) {
+            "tinybert_local" -> "TinyBERT（快速响应）"
+            "chatglm_local" -> "ChatGLM（本地模型）"
+            "tencent-hunyuan" -> "腾讯混元（云端）"
+            "deepseek" -> "DeepSeek（云端）"
+            "doubao" -> "豆包（云端）"
+            "baidu" -> "百度文心（云端）"
+            "alibaba" -> "阿里通义（云端）"
+            "kimi" -> "Kimi（云端）"
+            else -> serviceId
         }
     }
 

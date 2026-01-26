@@ -1,5 +1,6 @@
 package com.autodroid.teachitback.router
 
+import android.util.Log
 import com.autodroid.teachitback.api.AIService
 import com.autodroid.teachitback.config.AIServiceCapability
 import com.autodroid.teachitback.model.*
@@ -120,6 +121,52 @@ class AIServiceRouter(
         // 2. 按成本排序选择（价格从低到高）
         val servicesByCost = availableServices.sortedBy { service -> service.config.pricePerMillion }
         return tryRoute(servicesByCost, operation)
+    }
+
+    /**
+     * 根据能力检查路由到合适的服务（带服务偏好）
+     * @param capabilityCheck 能力检查函数
+     * @param preferredServiceId 优先使用的服务ID
+     * @param operation 执行的操作
+     * @return 操作结果
+     */
+    suspend fun <T> routeWithPreference(
+        capabilityCheck: (AIServiceCapability) -> Boolean,
+        preferredServiceId: String,
+        operation: suspend (AIService) -> T
+    ): T {
+        // 获取所有可用服务
+        val allServices = serviceRegistry.getAllServices()
+        
+        // 过滤支持所需能力的服务
+        val availableServices = allServices.filter { service ->
+            capabilityCheck(service.config.capabilities)
+        }
+        
+        if (availableServices.isEmpty()) {
+            throw AIServiceException("没有可用的AI服务支持该功能")
+        }
+        
+        // 1. 首先尝试使用推荐的服务
+        val preferredService = availableServices.find { it.config.id == preferredServiceId }
+        if (preferredService != null) {
+            try {
+                val status = preferredService.checkStatus()
+                if (status == ServiceStatus.AVAILABLE) {
+                    return operation(preferredService)
+                } else {
+                    Log.d("AIServiceRouter", "推荐服务 ${preferredService.config.displayName} 不可用，状态: $status")
+                }
+            } catch (e: Exception) {
+                Log.e("AIServiceRouter", "推荐服务 ${preferredService.config.displayName} 调用失败: ${e.message}", e)
+            }
+        } else {
+            Log.d("AIServiceRouter", "推荐服务 $preferredServiceId 不支持所需能力，回退到智能路由")
+        }
+        
+        // 2. 如果推荐服务不可用或不支持，回退到普通的能力路由
+        Log.d("AIServiceRouter", "回退到普通路由策略")
+        return routeByCapability(capabilityCheck, operation)
     }
     
     /**
