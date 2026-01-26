@@ -111,6 +111,12 @@ object AIServiceConfigHelper {
                 apiKey = apiKey,
                 model = model
             )
+            is AIServiceConfig.ChatGLMConfig -> baseConfig.copy(
+                // ChatGLM和TinyBERT是本地模型，不需要额外配置
+            )
+            is AIServiceConfig.TinyBERTConfig -> baseConfig.copy(
+                // ChatGLM和TinyBERT是本地模型，不需要额外配置
+            )
         }
     }
 
@@ -236,6 +242,14 @@ object AIServiceConfigHelper {
                 "jieyue-chat",
                 "jieyue-chat-pro",
                 "jieyue-chat-max"
+            )
+            is AIServiceConfig.ChatGLMConfig -> listOf(
+                "chatglm-6b",
+                "chatglm-6b-int4"
+            )
+            is AIServiceConfig.TinyBERTConfig -> listOf(
+                "tinybert-50m",
+                "tinybert-100m"
             )
         }
     }

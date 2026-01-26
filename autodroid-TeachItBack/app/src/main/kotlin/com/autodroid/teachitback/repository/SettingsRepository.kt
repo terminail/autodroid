@@ -127,7 +127,9 @@ class SettingsRepository(private val settingDao: SettingDao) {
             is SettingsItem.BaichuanAIServiceItem -> "BaichuanAIServiceItem"
             is SettingsItem.LingyiAIServiceItem -> "LingyiAIServiceItem"
             is SettingsItem.JieyueAIServiceItem -> "JieyueAIServiceItem"
-            is SettingsItem.TencentCloudApiKeyItem -> "TencentCloudApiKeyItem"
+            is SettingsItem.ChatGLMAIServiceItem -> "ChatGLMAIServiceItem"
+            is SettingsItem.TinyBERTAIServiceItem -> "TinyBERTAIServiceItem"
+            is SettingsItem.TencentCloudAIServiceItem -> "TencentCloudAIServiceItem"
         }
         
         val itemJson = gson.toJson(item)
@@ -168,7 +170,9 @@ class SettingsRepository(private val settingDao: SettingDao) {
                 "BaichuanAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.BaichuanAIServiceItem::class.java)
                 "LingyiAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.LingyiAIServiceItem::class.java)
                 "JieyueAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.JieyueAIServiceItem::class.java)
-                "TencentCloudApiKeyItem" -> gson.fromJson(dataJson, SettingsItem.TencentCloudApiKeyItem::class.java)
+                "ChatGLMAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.ChatGLMAIServiceItem::class.java)
+                "TinyBERTAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.TinyBERTAIServiceItem::class.java)
+                "TencentCloudAIServiceItem" -> gson.fromJson(dataJson, SettingsItem.TencentCloudAIServiceItem::class.java)
                 else -> null
             }
         } catch (e: Exception) {
@@ -195,6 +199,8 @@ class SettingsRepository(private val settingDao: SettingDao) {
             is AIServiceConfig.DoubaoConfig -> "DoubaoConfig"
             is AIServiceConfig.LingyiConfig -> "LingyiConfig"
             is AIServiceConfig.JieyueConfig -> "JieyueConfig"
+            is AIServiceConfig.ChatGLMConfig -> "ChatGLMConfig"
+            is AIServiceConfig.TinyBERTConfig -> "TinyBERTConfig"
         }
         
         val configJson = gson.toJson(config)
@@ -227,7 +233,9 @@ class SettingsRepository(private val settingDao: SettingDao) {
                 "DoubaoConfig" -> gson.fromJson(dataJson, AIServiceConfig.DoubaoConfig::class.java)
                 "LingyiConfig" -> gson.fromJson(dataJson, AIServiceConfig.LingyiConfig::class.java)
                 "JieyueConfig" -> gson.fromJson(dataJson, AIServiceConfig.JieyueConfig::class.java)
-                else -> null
+                "ChatGLMConfig" -> gson.fromJson(dataJson, AIServiceConfig.ChatGLMConfig::class.java)
+                "TinyBERTConfig" -> gson.fromJson(dataJson, AIServiceConfig.TinyBERTConfig::class.java)
+                else -> throw IllegalArgumentException("未知的AIServiceConfig类型: $type")
             }
         } catch (e: Exception) {
             null

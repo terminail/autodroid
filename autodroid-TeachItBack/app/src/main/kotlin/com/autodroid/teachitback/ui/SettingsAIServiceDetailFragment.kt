@@ -61,7 +61,9 @@ class SettingsAIServiceDetailFragment : Fragment() {
         "hunyuan" to "https://cloud.tencent.com/product/hunyuan",
         "doubao" to "https://developer.doubao.com",
         "lingyi" to "https://open.lingyiwanwu.com",
-        "jieyue" to "https://open.jieyuesx.com"
+        "jieyue" to "https://open.jieyuesx.com",
+        "chatglm" to "https://github.com/THUDM/ChatGLM-6B",
+        "tinybert" to "https://github.com/huawei-noah/TinyBERT"
     )
 
     override fun onCreateView(
@@ -98,6 +100,8 @@ class SettingsAIServiceDetailFragment : Fragment() {
             "doubao" -> AIServiceConfig.DoubaoConfig()
             "lingyi" -> AIServiceConfig.LingyiConfig()
             "jieyue" -> AIServiceConfig.JieyueConfig()
+            "chatglm" -> AIServiceConfig.ChatGLMConfig()
+            "tinybert" -> AIServiceConfig.TinyBERTConfig()
             else -> AIServiceConfig.TencentHunyuanConfig()
         }
 
@@ -124,6 +128,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
         setupGetApiKeyLink()
 
         // 设置按钮监听器
+        setupEnableSwitch()
         setupSaveButton()
         setupTestButton()
     }
@@ -264,6 +269,46 @@ class SettingsAIServiceDetailFragment : Fragment() {
             Toast.makeText(requireContext(), "链接已复制到剪贴板", Toast.LENGTH_SHORT).show()
             true
         }
+    }
+
+    /**
+     * 设置启用状态开关
+     */
+    private fun setupEnableSwitch() {
+        // 初始状态：从当前配置获取启用状态
+        // 注意：启用状态应该存储在SettingsItem中，而不是单独存储在数据库
+        val isEnabled = true // 默认启用，具体实现需要根据SettingsItem状态
+        binding.enableServiceSwitch.isChecked = isEnabled
+        
+        // 监听开关状态变化
+        binding.enableServiceSwitch.setOnCheckedChangeListener { _, isChecked ->
+            // 启用状态应该通过更新SettingsItem来管理，而不是单独存储
+            // 这里需要调用相应的方法来更新SettingsItem中的启用状态
+            
+            // 更新UI状态
+            updateUIForEnabledState(isChecked)
+        }
+    }
+    
+    /**
+     * 根据启用状态更新UI
+     */
+    private fun updateUIForEnabledState(isEnabled: Boolean) {
+        val alpha = if (isEnabled) 1.0f else 0.5f
+        
+        // 设置所有配置字段的透明度
+        binding.secretIdField.alpha = alpha
+        binding.apiKeyField.alpha = alpha
+        binding.baseUrlInput.alpha = alpha
+        binding.regionInput.alpha = alpha
+        binding.modelField.alpha = alpha
+        
+        // 设置按钮的启用状态
+        binding.secretIdInput.isEnabled = isEnabled
+        binding.apiKeyInput.isEnabled = isEnabled
+        binding.modelInput.isEnabled = isEnabled
+        binding.testConnectionButton.isEnabled = isEnabled
+        binding.saveButton.isEnabled = isEnabled
     }
 
     /**

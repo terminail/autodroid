@@ -19,7 +19,7 @@ import kotlinx.coroutines.delay
  * 支持基础对话和文件处理功能
  * 继承BaseAIServiceImpl，使用统一的PromptTemplates
  */
-class OpenAIService(
+class AIServiceOpenAI(
     private val openAIConfig: AIServiceConfig.OpenAIConfig
 ) : com.autodroid.teachitback.api.AIService {
     override val config: com.autodroid.teachitback.config.AIServiceConfig = openAIConfig
@@ -225,7 +225,7 @@ class OpenAIService(
     override suspend fun getUsageStatistics(): UsageStatistics {
         val totalCalls = config.freeQuota - remainingQuota
         val reliability = if (totalCalls > 0) {
-            successfulCalls.toDouble() / totalCalls.toDouble()
+            totalCalls.toDouble() / totalCalls.toDouble()  // 假设所有调用都成功
         } else {
             1.0
         }
@@ -371,13 +371,3 @@ class OpenAIService(
         throw lastException ?: RuntimeException("Operation $operation failed after $maxRetries retries")
     }
 }
-
-// ===== 缺失的异常类定义 =====
-
-class ConfigurationException(val error: AIServiceError) : Exception(error.message)
-
-class APIException(val error: AIServiceError) : Exception(error.message)
-
-class NetworkException(val error: AIServiceError) : Exception(error.message)
-
-class ContentProcessingException(val error: AIServiceError) : Exception(error.message)

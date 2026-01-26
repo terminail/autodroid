@@ -6,8 +6,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.teachitback.R
+import com.autodroid.teachitback.config.PresetTopicCategories
 import com.autodroid.teachitback.databinding.ItemMindmapFlexboxBinding
 import com.autodroid.teachitback.model.MindMapNode
+import com.autodroid.teachitback.model.TopicEntity
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
@@ -16,14 +18,17 @@ import com.google.android.flexbox.JustifyContent
 /**
  * 基于FlexboxLayout的多级树形结构适配器
  * 支持面包屑导航式的多级显示
+ * 面包屑导航使用TopicTreeNode的分类路径而非MindMapNode的父节点路径
  */
-class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) : 
-    RecyclerView.Adapter<MindMapFlexboxAdapter.MindMapFlexboxViewHolder>() {
-    
+class MindMapFlexboxAdapter(
+    private var nodes: List<MindMapNode> = emptyList(),
+    private var topic: TopicEntity? = null
+) : RecyclerView.Adapter<MindMapFlexboxAdapter.MindMapFlexboxViewHolder>() {
+
     private var currentPath: List<MindMapNode> = emptyList()
     private var currentChildren: List<MindMapNode> = emptyList()
     private var currentNode: MindMapNode? = null
-    
+
     private var onNodeClickListener: ((MindMapNode) -> Unit)? = null
     
     init {
@@ -37,9 +42,10 @@ class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) 
     /**
      * 更新节点数据
      */
-    fun updateNodes(newNodes: List<MindMapNode>) {
+    fun updateNodes(newNodes: List<MindMapNode>, newTopic: TopicEntity? = null) {
         nodes = newNodes
-        
+        topic = newTopic
+
         // 重新计算当前路径
         if (currentNode != null) {
             val updatedNode = nodes.find { it.id == currentNode?.id }
@@ -58,7 +64,7 @@ class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) 
                 navigateToNode(rootNodes.first())
             }
         }
-        
+
         notifyDataSetChanged()
     }
     
@@ -114,7 +120,7 @@ class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) 
     }
     
     override fun onBindViewHolder(holder: MindMapFlexboxViewHolder, position: Int) {
-        holder.bind(currentPath, currentChildren, currentNode)
+        holder.bind(currentPath, currentChildren, currentNode, topic)
     }
     
     override fun getItemCount(): Int = 1
@@ -122,17 +128,17 @@ class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) 
     /**
      * MindMap Flexbox ViewHolder
      */
-    inner class MindMapFlexboxViewHolder(private val binding: ItemMindmapFlexboxBinding) : 
+    inner class MindMapFlexboxViewHolder(private val binding: ItemMindmapFlexboxBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        
-        fun bind(path: List<MindMapNode>, children: List<MindMapNode>, currentNode: MindMapNode?) {
+
+        fun bind(path: List<MindMapNode>, children: List<MindMapNode>, currentNode: MindMapNode?, topic: TopicEntity?) {
             // 清空之前的视图
             binding.breadcrumbContainer.removeAllViews()
             binding.childrenContainer.removeAllViews()
-            
-            // 设置面包屑导航
-            setupBreadcrumb(path)
-            
+
+            // 设置面包屑导航（使用TopicTreeNode的分类路径）
+            setupBreadcrumb(path, topic)
+
             // 设置当前节点信息
             setupCurrentNodeInfo(currentNode)
             
@@ -142,48 +148,46 @@ class MindMapFlexboxAdapter(private var nodes: List<MindMapNode> = emptyList()) 
         
         /**
          * 设置面包屑导航
+         * 使用TopicTreeNode的分类路径而非MindMapNode的父节点路径
          */
-        private fun setupBreadcrumb(path: List<MindMapNode>) {
-            // 先添加"路径："标签
-            val pathLabel = LayoutInflater.from(binding.root.context)
-                .inflate(R.layout.item_breadcrumb_label, binding.breadcrumbContainer, false)
-            binding.breadcrumbContainer.addView(pathLabel)
-            
-            path.forEachIndexed { index, node ->
-                val breadcrumbView = LayoutInflater.from(binding.root.context)
-                    .inflate(R.layout.item_breadcrumb, binding.breadcrumbContainer, false)
-                
-                val textView = breadcrumbView.findViewById<TextView>(R.id.breadcrumb_text)
-                
-                textView.text = node.title
-                
-                // 设置颜色：当前节点为深色，父节点为浅色
-                if (index == path.size - 1) {
-                    // 当前节点
-                    textView.setTextColor(binding.root.context.getColor(android.R.color.white))
-                    textView.setBackgroundResource(R.drawable.bg_breadcrumb_current)
-                } else {
-                    // 父节点
-                    textView.setTextColor(binding.root.context.getColor(R.color.colorPrimaryDark))
-                    textView.setBackgroundResource(R.drawable.bg_breadcrumb_parent)
-                }
-                
-                // 设置点击事件
-                textView.setOnClickListener {
-                    onNodeClickListener?.invoke(node)
-                }
-                
-                binding.breadcrumbContainer.addView(breadcrumbView)
-                
-                // 如果不是最后一个节点，添加分隔符
-                if (index < path.size - 1) {
-                    val separatorView = LayoutInflater.from(binding.root.context)
-                        .inflate(R.layout.item_breadcrumb_separator, binding.breadcrumbContainer, false)
-                    binding.breadcrumbContainer.addView(separatorView)
+        private fun setupBreadcrumb(path: List<MindMapNode>, topic: TopicEntity?) {
+            // 如果有主题信息，显示TopicTreeNode的分类路径
+            if (topic != null) {
+                val categoryId = topic.topicTreeNodeId
+                val categoryPath = PresetTopicCategories.buildCategoryPath(categoryId)
+
+                categoryPath.forEachIndexed { index, categoryNode ->
+                    val breadcrumbView = LayoutInflater.from(binding.root.context)
+                        .inflate(R.layout.item_breadcrumb, binding.breadcrumbContainer, false)
+
+                    val textView = breadcrumbView.findViewById<TextView>(R.id.breadcrumb_text)
+
+                    textView.text = categoryNode.name
+
+                    // 设置颜色：当前节点为深色，父节点为浅色
+                    if (index == categoryPath.size - 1) {
+                        // 当前节点
+                        textView.setTextColor(binding.root.context.getColor(android.R.color.white))
+                        textView.setBackgroundResource(R.drawable.bg_breadcrumb_current)
+                    } else {
+                        // 父节点
+                        textView.setTextColor(binding.root.context.getColor(R.color.colorPrimaryDark))
+                        textView.setBackgroundResource(R.drawable.bg_breadcrumb_parent)
+                    }
+
+                    // 分类路径节点不可点击（只显示导航，不可交互）
+                    binding.breadcrumbContainer.addView(breadcrumbView)
+
+                    // 如果不是最后一个节点，添加分隔符
+                    if (index < categoryPath.size - 1) {
+                        val separatorView = LayoutInflater.from(binding.root.context)
+                            .inflate(R.layout.item_breadcrumb_separator, binding.breadcrumbContainer, false)
+                        binding.breadcrumbContainer.addView(separatorView)
+                    }
                 }
             }
         }
-        
+
         /**
          * 设置当前节点信息
          */

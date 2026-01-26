@@ -69,7 +69,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     item is SettingsItem.LingyiAIServiceItem ||
                     item is SettingsItem.JieyueAIServiceItem ||
                     item is SettingsItem.OpenAIServiceItem ||
-                    item is SettingsItem.TencentCloudApiKeyItem
+                    item is SettingsItem.ChatGLMAIServiceItem ||
+                    item is SettingsItem.TinyBERTAIServiceItem ||
+                    item is SettingsItem.TencentCloudAIServiceItem
                 }
 
                 // 如果数据库中没有数据，使用默认设置项
@@ -100,7 +102,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         
         val aiServiceMap = aiServiceItems.associateBy {
             when (it) {
-                is SettingsItem.TencentCloudApiKeyItem -> "tencentcloud"
+                is SettingsItem.TencentCloudAIServiceItem -> "tencentcloud"
                 is SettingsItem.DoubaoAIServiceItem -> "doubao"
                 is SettingsItem.ErnieAIServiceItem -> "ernie"
                 is SettingsItem.QwenAIServiceItem -> "qwen"
@@ -114,6 +116,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 is SettingsItem.LingyiAIServiceItem -> "lingyi"
                 is SettingsItem.JieyueAIServiceItem -> "jieyue"
                 is SettingsItem.OpenAIServiceItem -> "openai"
+                is SettingsItem.ChatGLMAIServiceItem -> "chatglm"
+                is SettingsItem.TinyBERTAIServiceItem -> "tinybert"
                 else -> ""
             }
         }
@@ -122,8 +126,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
         
         // 根据实际配置状态设置 isEnabled
-        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudApiKeyItem ?: 
-            SettingsItem.TencentCloudApiKeyItem(enabled = currentConfigs["tencent-hunyuan"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudAIServiceItem ?:
+            SettingsItem.TencentCloudAIServiceItem(enabled = currentConfigs["tencent-hunyuan"]?.apiKey?.isNotEmpty() == true))
         items.add(aiServiceMap["openai"] as? SettingsItem.OpenAIServiceItem ?: 
             SettingsItem.OpenAIServiceItem(isEnabled = currentConfigs["openai"]?.apiKey?.isNotEmpty() == true))
         items.add(aiServiceMap["deepseek"] as? SettingsItem.DeepSeekAIServiceItem ?: 
@@ -150,6 +154,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             SettingsItem.LingyiAIServiceItem(isEnabled = currentConfigs["lingyi"]?.apiKey?.isNotEmpty() == true))
         items.add(aiServiceMap["jieyue"] as? SettingsItem.JieyueAIServiceItem ?: 
             SettingsItem.JieyueAIServiceItem(isEnabled = currentConfigs["jieyue"]?.apiKey?.isNotEmpty() == true))
+        items.add(aiServiceMap["chatglm"] as? SettingsItem.ChatGLMAIServiceItem ?: 
+            SettingsItem.ChatGLMAIServiceItem())
+        items.add(aiServiceMap["tinybert"] as? SettingsItem.TinyBERTAIServiceItem ?: 
+            SettingsItem.TinyBERTAIServiceItem())
         
         // 应用设置
         items.add(SettingsItem.SectionHeaderItem("应用设置"))
@@ -250,7 +258,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
         // AI服务设置 - 默认配置
         items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
-        items.add(SettingsItem.TencentCloudApiKeyItem())  // 腾讯云知识引擎
+        items.add(SettingsItem.TencentCloudAIServiceItem())  // 腾讯云知识引擎
         items.add(SettingsItem.OpenAIServiceItem(isEnabled = true))
         items.add(SettingsItem.DeepSeekAIServiceItem(isEnabled = true))
         items.add(SettingsItem.QwenAIServiceItem(isEnabled = true))
@@ -264,6 +272,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         items.add(SettingsItem.LingyiAIServiceItem(isEnabled = true))
         items.add(SettingsItem.JieyueAIServiceItem(isEnabled = true))
         items.add(SettingsItem.ErnieAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.ChatGLMAIServiceItem())
+        items.add(SettingsItem.TinyBERTAIServiceItem())
 
         // 应用设置
         items.add(SettingsItem.SectionHeaderItem("应用设置"))

@@ -380,4 +380,53 @@ sealed class AIServiceConfig : Parcelable {
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 10.0
     ) : AIServiceConfig()
+    
+    /**
+     * ChatGLM 嵌入式AI配置
+     * 清华开源6B模型，本地化部署
+     */
+    @Parcelize
+    data class ChatGLMConfig(
+        override val id: String = "chatglm",
+        override val name: String = "ChatGLM",
+        override val displayName: String = "ChatGLM",
+        override val description: String = "清华开源6B模型，本地化部署，中文语义理解优秀",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.NO_REQUIRED_FIELDS,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "local://chatglm",
+        override val region: String = "",
+        override val model: String = "chatglm-6b",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportLongText(true)
+            .supportCodeGeneration(true)
+            .supportCreativeWriting(true)
+            .supportEducation(true),
+        override val freeQuota: Long = Long.MAX_VALUE,
+        override val pricePerMillion: Double = 0.0
+    ) : AIServiceConfig()
+    
+    /**
+     * TinyBERT 嵌入式AI配置
+     * 超轻量级50MB模型，设备端推理
+     */
+    @Parcelize
+    data class TinyBERTConfig(
+        override val id: String = "tinybert",
+        override val name: String = "TinyBERT",
+        override val displayName: String = "TinyBERT",
+        override val description: String = "超轻量级50MB模型，设备端推理，推理速度快",
+        override val requiredFields: AIServiceRequiredFields = AIServiceRequiredFields.NO_REQUIRED_FIELDS,
+        override val secretId: String = "",
+        override val apiKey: String = "",
+        override val baseUrl: String = "local://tinybert",
+        override val region: String = "",
+        override val model: String = "tinybert-L-4",
+        override val capabilities: AIServiceCapability = AIServiceCapability.EMPTY
+            .supportBasicChat(true)
+            .supportEducation(true),
+        override val freeQuota: Long = Long.MAX_VALUE,
+        override val pricePerMillion: Double = 0.0
+    ) : AIServiceConfig()
 }

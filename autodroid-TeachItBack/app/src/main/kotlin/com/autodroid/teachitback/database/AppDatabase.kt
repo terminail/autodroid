@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autodroid.teachitback.model.MessageEntity
@@ -15,8 +16,9 @@ import com.autodroid.teachitback.model.WhyEntity
 
 @Database(
     entities = [TopicEntity::class, MessageEntity::class, MindMapEntity::class, MindMapNode::class, SettingEntity::class, WhyEntity::class],
-    version = 7
+    version = 8
 )
+@TypeConverters(TopicConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun topicDao(): TopicDao
     abstract fun messageDao(): MessageDao
@@ -90,9 +92,27 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 为messages表添加aiProcessInfoJson字段（存储AI处理信息）
                 database.execSQL("ALTER TABLE messages ADD COLUMN aiProcessInfoJson TEXT")
-                
+
                 // 为mindmaps表添加aiProcessInfoJson字段（存储AI处理信息）
                 database.execSQL("ALTER TABLE mindmaps ADD COLUMN aiProcessInfoJson TEXT")
+            }
+        }
+
+        // 数据库迁移从版本7到版本8
+        // 添加path、parentId、capabilities、servicePreferences字段到topics表
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 添加path字段（JSON字符串）
+                database.execSQL("ALTER TABLE topics ADD COLUMN path TEXT NOT NULL DEFAULT '[]'")
+
+                // 添加parentId字段
+                database.execSQL("ALTER TABLE topics ADD COLUMN parentId TEXT")
+
+                // 添加capabilities字段（JSON字符串）
+                database.execSQL("ALTER TABLE topics ADD COLUMN capabilities TEXT NOT NULL DEFAULT '[]'")
+
+                // 添加servicePreferences字段（JSON字符串）
+                database.execSQL("ALTER TABLE topics ADD COLUMN servicePreferences TEXT NOT NULL DEFAULT '{}'")
             }
         }
 
@@ -142,7 +162,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "teachitback_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

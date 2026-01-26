@@ -31,7 +31,9 @@ sealed class SettingsItem {
         const val TYPE_BAICHUAN_AI_SERVICE_ITEM = 19
         const val TYPE_LINGYI_AI_SERVICE_ITEM = 20
         const val TYPE_JIEYUE_AI_SERVICE_ITEM = 21
-        const val TYPE_TENCENTCLOUD_API_KEY_ITEM = 22
+        const val TYPE_TENCENTCLOUD_AI_SERVICE_ITEM = 22
+        const val TYPE_CHATGLM_AI_SERVICE_ITEM = 23
+        const val TYPE_TINYBERT_AI_SERVICE_ITEM = 24
     }
     
     /**
@@ -341,7 +343,7 @@ sealed class SettingsItem {
     /**
      * 腾讯云API密钥配置项
      */
-    data class TencentCloudApiKeyItem(
+    data class TencentCloudAIServiceItem(
         val apiKey: String = "",
         val secretId: String = "",
         val testMode: Boolean = false,
@@ -352,7 +354,45 @@ sealed class SettingsItem {
         val onTestModeChanged: (Boolean) -> Unit = {},
         val onEnabledChanged: (Boolean) -> Unit = {},
         val onRegionChanged: (String) -> Unit = {}
+    ) : SettingsItem() {       
+        override fun getType(): Int = TYPE_TENCENTCLOUD_AI_SERVICE_ITEM
+    }
+
+    /**
+     * ChatGLM嵌入式AI服务项
+     */
+    data class ChatGLMAIServiceItem(
+        val id: String = "chatglm",
+        val name: String = "ChatGLM",
+        val description: String = "清华开源6B模型，本地化部署，中文语义理解优秀",
+        val defaultModel: String = "chatglm-6b",
+        val isEnabled: Boolean = true,
+        val priority: Int = 100,
+        val modelDownloadStrategy: String = "AUTO",
+        val isModelDownloaded: Boolean = false,
+        val modelDownloadProgress: Float = 0.0f,
+        val modelSize: String = "6GB",
+        val githubRepo: String = "THUDM/ChatGLM-6B"
     ) : SettingsItem() {
-        override fun getType(): Int = TYPE_TENCENTCLOUD_API_KEY_ITEM
+        override fun getType(): Int = TYPE_CHATGLM_AI_SERVICE_ITEM
+    }
+    
+    /**
+     * TinyBERT嵌入式AI服务项
+     */
+    data class TinyBERTAIServiceItem(
+        val id: String = "tinybert",
+        val name: String = "TinyBERT",
+        val description: String = "超轻量级50MB模型，设备端推理，推理速度快",
+        val defaultModel: String = "tinybert-L-4",
+        val isEnabled: Boolean = true,
+        val priority: Int = 100,
+        val modelDownloadStrategy: String = "AUTO",
+        val isModelDownloaded: Boolean = false,
+        val modelDownloadProgress: Float = 0.0f,
+        val modelSize: String = "50MB",
+        val githubRepo: String = "huawei-noah/TinyBERT"
+    ) : SettingsItem() {
+        override fun getType(): Int = TYPE_TINYBERT_AI_SERVICE_ITEM
     }
 }

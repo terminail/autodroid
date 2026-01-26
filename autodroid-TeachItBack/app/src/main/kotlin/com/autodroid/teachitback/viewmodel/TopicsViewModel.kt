@@ -55,6 +55,7 @@ class TopicsViewModel(application: Application) : AndroidViewModel(application) 
                 val topic = com.autodroid.teachitback.model.TopicEntity(
                     title = title,
                     description = description,
+                    topicTreeNodeId = "user-topics",
                     isPreset = false
                 )
                 repository.insertTopic(topic)
@@ -119,6 +120,7 @@ class TopicsViewModel(application: Application) : AndroidViewModel(application) 
                 val newTopic = TopicEntity(
                     title = title,
                     description = description,
+                    topicTreeNodeId = "user-topics",
                     masteryLevel = 0,
                     isPreset = false
                 )

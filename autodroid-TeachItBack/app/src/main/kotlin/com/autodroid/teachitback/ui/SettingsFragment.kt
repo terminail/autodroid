@@ -4,16 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.Switch
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentSettingsBinding
-import com.autodroid.teachitback.repository.SettingsRepository
 import com.autodroid.teachitback.ui.adapter.SettingsAdapter
 import com.autodroid.teachitback.viewmodel.SettingsViewModel
 
@@ -61,7 +57,7 @@ class SettingsFragment : Fragment() {
 
     private fun handleSettingsItemClick(item: com.autodroid.teachitback.ui.adapter.SettingsItem) {
         when (item) {
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.TencentCloudApiKeyItem -> {
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.TencentCloudAIServiceItem -> {
                 navigateToAIServiceDetail("tencent-hunyuan")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.DoubaoAIServiceItem -> {
@@ -102,6 +98,12 @@ class SettingsFragment : Fragment() {
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.JieyueAIServiceItem -> {
                 navigateToAIServiceDetail("jieyue")
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.ChatGLMAIServiceItem -> {
+                navigateToAIServiceDetail("chatglm")
+            }
+            is com.autodroid.teachitback.ui.adapter.SettingsItem.TinyBERTAIServiceItem -> {
+                navigateToAIServiceDetail("tinybert")
             }
             is com.autodroid.teachitback.ui.adapter.SettingsItem.DarkModeSwitchItem -> {
                 viewModel.updateSwitchSetting("dark_mode", !item.isChecked)

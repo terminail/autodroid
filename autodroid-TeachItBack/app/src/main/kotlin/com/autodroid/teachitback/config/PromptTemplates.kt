@@ -348,7 +348,7 @@ object PromptTemplates {
         topic: String
     ): String {
         return """
-            请分析学生在${subject}科目中的错题：
+            请分析学生在${topic}中的错题：
             
             题目：${wrongQuestion}
             学生答案：${studentAnswer}

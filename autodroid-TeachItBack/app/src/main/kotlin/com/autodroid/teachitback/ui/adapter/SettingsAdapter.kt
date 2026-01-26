@@ -75,7 +75,7 @@ class SettingsAdapter(
                 val view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false)
                 HelpAndFeedbackViewHolder(view)
             }
-            SettingsItem.TYPE_TENCENTCLOUD_API_KEY_ITEM,
+            SettingsItem.TYPE_TENCENTCLOUD_AI_SERVICE_ITEM,
             SettingsItem.TYPE_DOUBAO_AI_SERVICE_ITEM,
             SettingsItem.TYPE_DEEPSEEK_AI_SERVICE_ITEM,
             SettingsItem.TYPE_MINIMAX_AI_SERVICE_ITEM,
@@ -88,7 +88,9 @@ class SettingsAdapter(
             SettingsItem.TYPE_HUNYUAN_AI_SERVICE_ITEM,
             SettingsItem.TYPE_BAICHUAN_AI_SERVICE_ITEM,
             SettingsItem.TYPE_LINGYI_AI_SERVICE_ITEM,
-            SettingsItem.TYPE_JIEYUE_AI_SERVICE_ITEM -> {
+            SettingsItem.TYPE_JIEYUE_AI_SERVICE_ITEM,
+            SettingsItem.TYPE_CHATGLM_AI_SERVICE_ITEM,
+            SettingsItem.TYPE_TINYBERT_AI_SERVICE_ITEM -> {
                 val view = inflater.inflate(R.layout.item_setting_ai_service, parent, false)
                 AIServiceViewHolder(view)
             }
@@ -111,7 +113,7 @@ class SettingsAdapter(
             is HelpAndFeedbackViewHolder -> holder.bind(item as SettingsItem.HelpAndFeedbackItem)
             is AIServiceViewHolder -> {
                 val serviceId = when (item) {
-                    is SettingsItem.TencentCloudApiKeyItem -> "tencent-hunyuan"
+                    is SettingsItem.TencentCloudAIServiceItem -> "tencent-hunyuan"
                     is SettingsItem.DoubaoAIServiceItem -> "doubao"
                     is SettingsItem.DeepSeekAIServiceItem -> "deepseek"
                     is SettingsItem.MinimaxAIServiceItem -> "minimax"
@@ -125,6 +127,8 @@ class SettingsAdapter(
                     is SettingsItem.BaichuanAIServiceItem -> "baichuan"
                     is SettingsItem.LingyiAIServiceItem -> "lingyi"
                     is SettingsItem.JieyueAIServiceItem -> "jieyue"
+                    is SettingsItem.ChatGLMAIServiceItem -> "chatglm"
+                    is SettingsItem.TinyBERTAIServiceItem -> "tinybert"
                     else -> ""
                 }
                 
@@ -144,7 +148,9 @@ class SettingsAdapter(
                     is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item, testStatus)
                     is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item, testStatus)
                     is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item, testStatus)
-                    is SettingsItem.TencentCloudApiKeyItem -> holder.bind("腾讯云知识引擎", item.enabled, item, testStatus)
+                    is SettingsItem.ChatGLMAIServiceItem -> holder.bind("ChatGLM", item.isEnabled, item, testStatus)
+                    is SettingsItem.TinyBERTAIServiceItem -> holder.bind("TinyBERT", item.isEnabled, item, testStatus)
+                    is SettingsItem.TencentCloudAIServiceItem -> holder.bind("腾讯云知识引擎", item.enabled, item, testStatus)
                     else -> holder.bind("未知AI服务", false, item, testStatus)
                 }
             }
@@ -304,7 +310,7 @@ class SettingsAdapter(
             val testConnectionStatus = if (testStatus == true) "☑️测试连接" else "☐测试连接"
             
             val detailText = when (item) {
-                is SettingsItem.TencentCloudApiKeyItem -> "$configStatus SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
+                is SettingsItem.TencentCloudAIServiceItem -> "$configStatus SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
                 is SettingsItem.DoubaoAIServiceItem -> "$configStatus Api Key，字节跳动AI助手，$testConnectionStatus"
                 is SettingsItem.DeepSeekAIServiceItem -> "$configStatus Api Key，深度求索AI，$testConnectionStatus"
                 is SettingsItem.MinimaxAIServiceItem -> "$configStatus Api Key，稀宇科技，$testConnectionStatus"
@@ -318,6 +324,8 @@ class SettingsAdapter(
                 is SettingsItem.BaichuanAIServiceItem -> "$configStatus Api Key，百川智能，$testConnectionStatus"
                 is SettingsItem.LingyiAIServiceItem -> "$configStatus Api Key，零一万物，$testConnectionStatus"
                 is SettingsItem.JieyueAIServiceItem -> "$configStatus Api Key，阶跃星辰，$testConnectionStatus"
+                is SettingsItem.ChatGLMAIServiceItem -> "${item.modelSize}模型，清华开源，${if(item.isModelDownloaded) "已下载" else "未下载"}"
+                is SettingsItem.TinyBERTAIServiceItem -> "${item.modelSize}模型，设备端推理，${if(item.isModelDownloaded) "已下载" else "未下载"}"
                 else -> "$configStatus 未知服务，$testConnectionStatus"
             }
             

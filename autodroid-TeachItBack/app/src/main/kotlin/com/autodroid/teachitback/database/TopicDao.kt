@@ -36,4 +36,15 @@ interface TopicDao {
     
     @Query("SELECT * FROM topics WHERE id = :id")
     suspend fun getTopicByIdSync(id: String): TopicEntity?
+    
+    // ===== 基于新字段的查询方法 =====
+    
+    @Query("SELECT * FROM topics WHERE topicTreeNodeId = :topicTreeNodeId ORDER BY lastAccessed DESC")
+    fun getTopicsByTreeNode(topicTreeNodeId: String): Flow<List<TopicEntity>>
+    
+    @Query("SELECT * FROM topics WHERE capabilities LIKE '%' || :capability || '%' ORDER BY masteryLevel DESC")
+    fun getTopicsByCapability(capability: String): Flow<List<TopicEntity>>
+    
+    @Query("SELECT * FROM topics WHERE title LIKE '%' || :query || '%' ORDER BY lastAccessed DESC")
+    fun searchTopicsByTitle(query: String): Flow<List<TopicEntity>>
 }

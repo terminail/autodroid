@@ -42,7 +42,8 @@ sealed class ChatItem {
      */
     data class MindMapDisplayItem(
         val mindMapNodes: List<MindMapNode>,
-        val title: String
+        val title: String,
+        val topic: com.autodroid.teachitback.model.TopicEntity? = null
     ) : ChatItem() {
         override fun getType(): Int = TYPE_MINDMAP
     }

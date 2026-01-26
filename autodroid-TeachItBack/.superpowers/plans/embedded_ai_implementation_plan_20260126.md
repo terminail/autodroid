@@ -87,10 +87,10 @@ graph TB
 
 ## 🎯 阶段二：统一主题架构增强（基于扩展后的TopicEntity）
 
-### 任务2.1：创建TopicGraphManager
-**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/TopicGraphManager.kt`
+### 任务2.1：创建TopicTreeManager
+**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/TopicTreeManager.kt`
 **预估时间**: 8分钟
-**验证**: 主题图构建和智能路由功能正常
+**验证**: 主题树构建和智能路由功能正常
 
 ### 任务2.2：扩展TopicDao
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/database/TopicDao.kt`

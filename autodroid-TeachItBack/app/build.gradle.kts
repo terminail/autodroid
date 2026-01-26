@@ -21,6 +21,12 @@ android {
 
         buildConfigField("String", "DEEPSEEK_API_KEY", "\"${project.findProperty("DEEPSEEK_API_KEY") ?: ""}\"")
         buildConfigField("String", "KIMI_API_KEY", "\"${project.findProperty("KIMI_API_KEY") ?: ""}\"")
+   
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+            }
+        }
     }
 
     buildTypes {

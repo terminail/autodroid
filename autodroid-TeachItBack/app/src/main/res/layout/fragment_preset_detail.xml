@@ -16,6 +16,30 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Breadcrumb 导航 - 显示主题在分类树中的位置 -->
+            <LinearLayout
+                android:id="@+id/breadcrumb_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:padding="12dp"
+                android:background="@android:color/white"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/breadcrumb_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="教育 > 高中教育 > CFP考试"
+                    android:textSize="14sp"
+                    android:textColor="#1976D2"
+                    android:ellipsize="end"
+                    android:maxLines="2" />
+
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/title_text"
                 android:layout_width="wrap_content"

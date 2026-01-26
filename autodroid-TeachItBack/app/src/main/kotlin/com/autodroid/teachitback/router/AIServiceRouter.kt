@@ -2,10 +2,8 @@ package com.autodroid.teachitback.router
 
 import com.autodroid.teachitback.api.AIService
 import com.autodroid.teachitback.config.AIServiceCapability
-import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.model.*
 import com.autodroid.teachitback.registry.AIServiceRegistry
-import com.autodroid.teachitback.service.OpenAIService
 
 /**
  * AI服务路由异常

@@ -272,7 +272,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (mindMapNodes.isNotEmpty()) {
             val mindMapItem = ChatItem.MindMapDisplayItem(
                 mindMapNodes = mindMapNodes,
-                title = "思维导图"
+                title = "思维导图",
+                topic = _currentTopic.value
             )
 
             // 根据消息数量决定MindMap位置

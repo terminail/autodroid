@@ -1,6 +1,7 @@
 package com.autodroid.teachitback.utils
 
 import android.content.Context
+import com.autodroid.teachitback.config.PresetTopicCategories
 import com.autodroid.teachitback.database.AppDatabase
 import com.autodroid.teachitback.database.SettingDao
 import com.autodroid.teachitback.model.MessageEntity
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.util.Log
 
 import java.io.Serializable
 
@@ -52,74 +54,91 @@ class DataInitializer(private val context: Context) {
             if (existingTopics.isNotEmpty()) {
                 return@launch
             }
-            
+
+            // 初始化主题分类树结构
+            initializeTopicTreeNodes()
+
             initializeAIServices(database)
 
-            // Create preset topics for WhyFragment (these won't show in TopicsFragment)
+            // Create preset topics with proper category assignments
             val presetTopics = listOf(
+                // ===== CFP财务规划相关 =====
                 TopicEntity(
                     title = "CFP财务规划",
                     description = "系统化学习CFP考试内容，掌握核心财务规划概念",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("CFP财务规划"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "投资组合管理",
                     description = "掌握资产配置策略，理解风险与收益平衡",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("投资组合管理"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "税务规划",
                     description = "深入理解税务优化方法，学习税收规划策略",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("税务规划"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
+
+                // ===== 高中教育相关 =====
                 TopicEntity(
                     title = "高中数学",
                     description = "涵盖函数、几何、代数、概率统计等核心数学知识点",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中数学"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中物理",
                     description = "学习力学、电磁学、热学、光学等物理基础知识",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中物理"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中化学",
                     description = "掌握元素周期表、化学反应、有机化学等化学核心内容",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中化学"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中生物",
                     description = "了解细胞结构、遗传学、生态系统等生物学基础知识",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中生物"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中英语",
                     description = "提升听说读写能力，掌握语法、词汇和阅读理解技巧",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中英语"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中历史",
                     description = "学习中国历史和世界历史的重要事件和发展脉络",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中历史"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中地理",
                     description = "掌握自然地理和人文地理知识，理解地球环境与人类活动",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中地理"),
                     masteryLevel = 0,
                     isPreset = true
                 ),
                 TopicEntity(
                     title = "高中政治",
                     description = "学习马克思主义基本原理、中国特色社会主义理论体系",
+                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中政治"),
                     masteryLevel = 0,
                     isPreset = true
                 )
@@ -143,13 +162,50 @@ class DataInitializer(private val context: Context) {
 
     private suspend fun initializeMindMapDemoData(database: AppDatabase) {
         val existingMindMaps = database.mindMapDao().getAllMindMaps()
-        
+
         if (existingMindMaps.isNotEmpty()) {
             return
         }
-        
+
         val presetMindMapCreator = PresetMindMapCreator(database)
         presetMindMapCreator.createAllPresetMindMaps()
+    }
+
+    /**
+     * 初始化主题分类树结构
+     * 
+     * 当前实现：硬编码的分类结构（PresetTopicCategories）
+     * 未来扩展：可以从Git仓库动态下载分类结构
+     * 
+     * 初始化流程：
+     * 1. 加载预设分类配置
+     * 2. 验证分类结构的完整性
+     * 3. 记录分类信息到日志
+     */
+    private fun initializeTopicTreeNodes() {
+        val allCategories = PresetTopicCategories.getAllCategoriesFlattened()
+
+        Log.d("DataInitializer", "=== 初始化主题分类树结构 ===")
+        Log.d("DataInitializer", "分类节点总数: ${allCategories.size}")
+
+        allCategories.forEach { category ->
+            val parentInfo = if (category.parentId != null) {
+                " (父节点: ${category.parentId})"
+            } else {
+                " (根节点)"
+            }
+            Log.d("DataInitializer", "  - [${category.source}] ${category.name} (ID: ${category.id})${parentInfo}")
+        }
+
+        // 验证主题分类映射
+        Log.d("DataInitializer", "=== 主题到分类的映射 ===")
+        PresetTopicCategories.topicCategoryMapping.forEach { (topicTitle, categoryId) ->
+            val category = PresetTopicCategories.getCategoryById(categoryId)
+            val categoryName = category?.name ?: "未知"
+            Log.d("DataInitializer", "  - '$topicTitle' -> '$categoryName' (ID: $categoryId)")
+        }
+
+        Log.d("DataInitializer", "主题分类树结构初始化完成")
     }
 
     private suspend fun initializeAIServices(database: AppDatabase) {

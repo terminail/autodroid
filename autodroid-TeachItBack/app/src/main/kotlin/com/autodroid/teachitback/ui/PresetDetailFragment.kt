@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.autodroid.teachitback.R
+import com.autodroid.teachitback.config.PresetTopicCategories
 import com.autodroid.teachitback.databinding.FragmentPresetDetailBinding
 import com.autodroid.teachitback.model.TopicEntity
 import com.autodroid.teachitback.viewmodel.WhyViewModel
@@ -35,10 +36,14 @@ class PresetDetailFragment : Fragment() {
             val topicDescription = it.getString(ARG_TOPIC_DESCRIPTION)
             
             if (topicId != null && topicTitle != null && topicDescription != null) {
+                // 使用 PresetTopicCategories 获取正确的分类节点ID
+                val categoryNodeId = PresetTopicCategories.getCategoryForTopic(topicTitle)
+                
                 presetTopic = TopicEntity(
                     id = topicId,
                     title = topicTitle,
                     description = topicDescription,
+                    topicTreeNodeId = categoryNodeId,
                     isPreset = true
                 )
             }
@@ -68,6 +73,9 @@ class PresetDetailFragment : Fragment() {
     private fun setupUI(topic: TopicEntity) {
         binding.titleText.text = topic.title
         binding.descriptionText.text = topic.description
+
+        // 显示 breadcrumb 导航
+        setupBreadcrumb(topic.topicTreeNodeId)
         
         val learningGoals = generateLearningGoals(topic.title)
         binding.learningGoalsText.text = learningGoals
@@ -93,6 +101,42 @@ class PresetDetailFragment : Fragment() {
                 navigateToChat(id)
             }
         }
+    }
+
+    /**
+     * 设置 breadcrumb 导航，显示主题在分类树中的位置
+     */
+    private fun setupBreadcrumb(treeNodeId: String) {
+        val categoryPath = buildCategoryPath(treeNodeId)
+        
+        if (categoryPath.isNotEmpty()) {
+            binding.breadcrumbContainer.visibility = View.VISIBLE
+            binding.breadcrumbText.text = categoryPath
+        } else {
+            binding.breadcrumbContainer.visibility = View.GONE
+        }
+    }
+
+    /**
+     * 构建分类路径字符串
+     * 例如：教育学习 > 财务金融 > CFP考试
+     */
+    private fun buildCategoryPath(treeNodeId: String): String {
+        val path = mutableListOf<String>()
+        var currentCategoryId: String? = treeNodeId
+        
+        // 递归构建路径
+        while (currentCategoryId != null) {
+            val currentCategory = PresetTopicCategories.getCategoryById(currentCategoryId)
+                ?: break
+            
+            path.add(0, currentCategory.name) // 添加到开头
+            
+            // 移动到父节点
+            currentCategoryId = currentCategory.parentId
+        }
+        
+        return path.joinToString(" > ")
     }
 
     private fun checkCopyStatus(presetTopicId: String) {

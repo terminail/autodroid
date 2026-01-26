@@ -112,6 +112,7 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     class MindMapViewHolder(private val binding: ItemChatMindmapBinding) : RecyclerView.ViewHolder(binding.root) {
         
         private val flexboxAdapter = MindMapFlexboxAdapter()
+        private var isExpanded = true // 保存展开/收起状态
         
         init {
             // 设置Flexbox适配器
@@ -123,11 +124,23 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 // 导航到点击的节点
                 flexboxAdapter.navigateToNode(node)
             }
+            
+            // 设置展开/收起按钮点击事件
+            binding.expandCollapseButton.setOnClickListener {
+                isExpanded = !isExpanded
+                if (isExpanded) {
+                    binding.mindmapTreeRecycler.visibility = View.VISIBLE
+                    binding.expandCollapseButton.text = "收起思维导图"
+                } else {
+                    binding.mindmapTreeRecycler.visibility = View.GONE
+                    binding.expandCollapseButton.text = "展开思维导图"
+                }
+            }
         }
         
         fun bind(item: ChatItem.MindMapDisplayItem) {
             binding.mindmapTitle.text = item.title
-            
+
             val nodes = item.mindMapNodes
             val totalNodes = nodes.size
             val redNodes = nodes.count { it.progress == 0 }
@@ -136,27 +149,17 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val overallProgress = if (totalNodes > 0) {
                 nodes.sumOf { it.progress } / totalNodes
             } else 0
-            
+
             binding.progressStats.text = "总体进度: $overallProgress% | 红色($redNodes) 黄色($yellowNodes) 绿色($greenNodes)"
             binding.overallProgressBar.progress = overallProgress
             binding.nodeCount.text = "总节点数: $totalNodes"
-            
-            // 更新Flexbox适配器数据
-            flexboxAdapter.updateNodes(nodes)
-            
-            // 默认展开思维导图
-            binding.mindmapTreeRecycler.visibility = View.VISIBLE
-            binding.expandCollapseButton.text = "收起思维导图"
-            
-            binding.expandCollapseButton.setOnClickListener {
-                if (binding.mindmapTreeRecycler.visibility == View.GONE) {
-                    binding.mindmapTreeRecycler.visibility = View.VISIBLE
-                    binding.expandCollapseButton.text = "收起思维导图"
-                } else {
-                    binding.mindmapTreeRecycler.visibility = View.GONE
-                    binding.expandCollapseButton.text = "展开思维导图"
-                }
-            }
+
+            // 更新Flexbox适配器数据，传递主题信息
+            flexboxAdapter.updateNodes(nodes, item.topic)
+
+            // 根据保存的状态设置思维导图展开/收起
+            binding.mindmapTreeRecycler.visibility = if (isExpanded) View.VISIBLE else View.GONE
+            binding.expandCollapseButton.text = if (isExpanded) "收起思维导图" else "展开思维导图"
         }
     }
     

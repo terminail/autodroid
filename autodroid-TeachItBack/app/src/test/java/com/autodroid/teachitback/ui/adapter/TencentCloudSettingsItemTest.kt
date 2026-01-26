@@ -7,7 +7,7 @@ class TencentCloudSettingsItemTest {
 
     @Test
     fun `TencentCloudApiKeyItem should be defined`() {
-        val item = SettingsItem.TencentCloudApiKeyItem(
+        val item = SettingsItem.TencentCloudAIServiceItem(
             apiKey = "test-api-key",
             secretId = "test-secret-id",
             testMode = true,
@@ -20,7 +20,7 @@ class TencentCloudSettingsItemTest {
             onRegionChanged = {}
         )
 
-        assertNotNull("TencentCloudApiKeyItem should be created", item)
+        assertNotNull("TencentCloudAIServiceItem should be created", item)
         assertEquals("test-api-key", item.apiKey)
         assertEquals("test-secret-id", item.secretId)
         assertTrue(item.testMode)
@@ -30,7 +30,7 @@ class TencentCloudSettingsItemTest {
 
     @Test
     fun `TencentCloudApiKeyItem should have correct type`() {
-        val item = SettingsItem.TencentCloudApiKeyItem(
+        val item = SettingsItem.TencentCloudAIServiceItem(
             apiKey = "",
             secretId = "",
             testMode = false,
@@ -43,7 +43,7 @@ class TencentCloudSettingsItemTest {
             onRegionChanged = {}
         )
 
-        assertEquals(SettingsItem.TYPE_TENCENTCLOUD_API_KEY_ITEM, item.getType())
+        assertEquals(SettingsItem.TYPE_TENCENTCLOUD_AI_SERVICE_ITEM, item.getType())
     }
 }
 
