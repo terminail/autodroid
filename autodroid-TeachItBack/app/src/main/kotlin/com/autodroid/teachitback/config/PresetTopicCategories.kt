@@ -1,7 +1,5 @@
 package com.autodroid.teachitback.config
 
-import com.autodroid.teachitback.service.TopicTreeNode
-
 /**
  * 预设主题分类配置
  * 
@@ -300,37 +298,24 @@ object PresetTopicCategories {
     }
 }
 
-/**
- * 主题分类节点数据类
- * 
- * 设计考虑：
- * - 支持多层级结构（通过parentId和children）
- * - 支持来源标识（preset/git/user），便于区分分类来源
- * - 支持排序（orderIndex）
- * - 可序列化为JSON，便于Git同步
- */
-data class TopicCategoryNode(
-    val id: String,
-    val name: String,
-    val description: String = "",
-    val parentId: String? = null,
-    val orderIndex: Int = 0,
-    val source: String = "preset", // preset, git, user
-    val children: List<TopicCategoryNode>? = null
-) {
     /**
-     * 转换为TopicTreeNode（用于TopicTreeManager）
+     * 主题分类节点数据类
+     *
+     * 设计考虑：
+     * - 支持多层级结构（通过parentId和children）
+     * - 支持来源标识（preset/git/user），便于区分分类来源
+     * - 支持排序（orderIndex）
+     * - 可序列化为JSON，便于Git同步
      */
-    fun toTopicTreeNode(topicIds: List<String> = emptyList()): TopicTreeNode {
-        return TopicTreeNode(
-            id = id,
-            name = name,
-            parent = null, // 在这里不设置parent，由TopicTreeManager构建
-            children = children?.map { it.toTopicTreeNode() } ?: emptyList(),
-            description = description,
-            topicIds = topicIds
-        )
-    }
+    data class TopicCategoryNode(
+        val id: String,
+        val name: String,
+        val description: String = "",
+        val parentId: String? = null,
+        val orderIndex: Int = 0,
+        val source: String = "preset", // preset, git, user
+        val children: List<TopicCategoryNode>? = null
+    ) {
 }
 
 /**

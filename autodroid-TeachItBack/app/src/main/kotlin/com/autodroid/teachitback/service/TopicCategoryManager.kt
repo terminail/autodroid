@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.first
 import android.util.Log
 
 /**
- * 主题树管理器
- * 负责构建和管理主题树结构，实现智能路由功能
- * 树节点代表分类目录，主题代表具体的内容实体
+ * 主题分类管理器
+ * 负责构建和管理主题分类结构，实现智能路由功能
+ * 分类节点代表目录，主题代表具体的内容实体
+ *
+ * 统一使用 TopicCategoryNode 作为分类节点数据结构
  */
-class TopicTreeManager(private val topicDao: TopicDao) {
+class TopicCategoryManager(private val topicDao: TopicDao) {
 
     /**
      * 获取指定树节点下的所有主题
@@ -75,7 +77,7 @@ class TopicTreeManager(private val topicDao: TopicDao) {
      *
      * 使用PresetTopicCategories获取分类节点的名称和描述
      */
-    suspend fun buildTopicTree(): List<TopicTreeNode> {
+    suspend fun buildTopicTree(): List<TopicCategoryNode> {
         return withContext(Dispatchers.IO) {
             val allTopics = topicDao.getAllTopics().first()
 
@@ -91,16 +93,15 @@ class TopicTreeManager(private val topicDao: TopicDao) {
 
                 if (presetCategory != null) {
                     // 使用预设分类的信息
-                    presetCategory.toTopicTreeNode(topicsInNode.map { it.id })
+                    presetCategory
                 } else {
                     // 如果找不到预设分类，创建一个临时节点
-                    TopicTreeNode(
+                    TopicCategoryNode(
                         id = treeNodeId,
                         name = "自定义分类",
-                        parent = null,
-                        children = emptyList(),
+                        parentId = null,
                         description = "包含 ${topicsInNode.size} 个主题",
-                        topicIds = topicsInNode.map { it.id }
+                        source = "user"
                     )
                 }
             }
@@ -113,7 +114,7 @@ class TopicTreeManager(private val topicDao: TopicDao) {
      * 这个方法会构建一个包含所有预设分类的完整树结构
      * 包括有主题的节点和空的分类节点
      */
-    suspend fun buildFullCategoryTree(): TopicTreeNode {
+    suspend fun buildFullCategoryTree(): TopicCategoryNode {
         return withContext(Dispatchers.IO) {
             val allTopics = topicDao.getAllTopics().first()
             val allCategories = PresetTopicCategories.getAllCategoriesFlattened()
@@ -121,13 +122,13 @@ class TopicTreeManager(private val topicDao: TopicDao) {
             Log.d("TopicTreeManager", "构建完整分类树: ${allCategories.size} 个分类节点")
 
             // 构建分类树结构
-            buildCategoryTreeRecursive(allCategories, null, allTopics) ?: TopicTreeNode(
+            buildCategoryTreeRecursive(allCategories, null, allTopics) ?: TopicCategoryNode(
                 id = "root",
                 name = "全部分类",
-                parent = null,
-                children = emptyList(),
+                parentId = null,
                 description = "主题分类根节点",
-                topicIds = emptyList()
+                source = "system",
+                orderIndex = 0
             )
         }
     }
@@ -139,7 +140,7 @@ class TopicTreeManager(private val topicDao: TopicDao) {
         categories: List<TopicCategoryNode>,
         parentId: String?,
         allTopics: List<TopicEntity>
-    ): TopicTreeNode? {
+    ): TopicCategoryNode? {
         // 获取当前层级的分类节点
         val currentCategories = categories.filter { it.parentId == parentId }
 
@@ -154,17 +155,23 @@ class TopicTreeManager(private val topicDao: TopicDao) {
             // 递归构建子节点
             val childTreeNodes = buildCategoryTreeRecursive(categories, category.id, allTopics)
 
-            TopicTreeNode(
+            // 如果没有子节点且没有主题，则过滤掉这个节点
+            if (childTreeNodes == null && topicsInNode.isEmpty() && category.source != "system") {
+                return@mapNotNull null
+            }
+
+            TopicCategoryNode(
                 id = category.id,
                 name = category.name,
-                parent = null, // 父节点关系通过树结构维护
-                children = childTreeNodes?.let { listOf(it) } ?: emptyList(),
+                parentId = category.parentId, // 保持原始的父节点ID
+                children = childTreeNodes?.let { listOf(it) },
                 description = if (topicsInNode.isNotEmpty()) {
                     "${category.description} (${topicsInNode.size} 个主题)"
                 } else {
                     category.description
                 },
-                topicIds = topicsInNode.map { it.id }
+                source = category.source,
+                orderIndex = category.orderIndex
             )
         }
 
@@ -172,13 +179,14 @@ class TopicTreeManager(private val topicDao: TopicDao) {
         return if (children.size == 1) {
             children[0]
         } else {
-            TopicTreeNode(
+            TopicCategoryNode(
                 id = "root",
                 name = "全部分类",
-                parent = null,
+                parentId = null,
                 children = children,
                 description = "主题分类根节点",
-                topicIds = emptyList()
+                source = "system",
+                orderIndex = 0
             )
         }
     }
@@ -237,16 +245,3 @@ class TopicTreeManager(private val topicDao: TopicDao) {
         }
     }
 }
-
-/**
- * 主题树节点，用于构建主题分类目录结构
- * 树节点代表分类目录，主题代表具体的内容实体
- */
-data class TopicTreeNode(
-    val id: String,
-    val name: String,
-    val parent: TopicTreeNode?,
-    val children: List<TopicTreeNode> = emptyList(),
-    val description: String = "",
-    val topicIds: List<String> = emptyList() // 该节点下包含的主题ID列表
-)

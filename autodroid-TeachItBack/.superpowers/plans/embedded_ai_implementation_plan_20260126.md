@@ -45,12 +45,20 @@ graph TB
 
 ## 🎯 阶段零：统一主题架构基础（必须优先完成）
 
-### 任务0.1：扩展TopicEntity数据模型
+### 任务0.1：扩展TopicEntity数据模型 ✅
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/model/TopicEntity.kt`  
 **预估时间**: 5分钟  
-**验证**: 编译通过，无语法错误
+**验证**: ✅ 编译通过，无语法错误
 
-**重要性说明**: 这是所有后续任务的基础，必须首先完成TopicEntity的扩展，包括添加path、parentId、capabilities和servicePreferences字段。
+**重要性说明**: 这是所有后续任务的基础，必须首先完成TopicEntity的扩展，包括添加topicTreeNodeId、capabilities和servicePreferences字段。
+
+**实现内容**:
+- ✅ 重构 TopicEntity，移除 path 和 parentId
+- ✅ 添加 topicTreeNodeId 字段关联分类节点
+- ✅ 添加 capabilities: Set<AIAbility> 字段定义主题能力
+- ✅ 添加 servicePreferences: Map<String, Double> 字段管理服务偏好
+- ✅ 实现类型转换器 TopicConverters 支持数据库存储
+- ✅ 更新数据库 schema 到版本8
 
 ---
 
@@ -87,65 +95,47 @@ graph TB
 
 ## 🎯 阶段二：统一主题架构增强（基于扩展后的TopicEntity）
 
-### 任务2.1：创建TopicTreeManager
-**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/TopicTreeManager.kt`
+### 任务2.1：创建TopicCategoryManager ✅
+**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/TopicCategoryManager.kt`
 **预估时间**: 8分钟
-**验证**: 主题树构建和智能路由功能正常
+**验证**: ✅ 主题分类构建和智能路由功能正常
 
-### 任务2.2：扩展TopicDao
+**实现内容**:
+- ✅ 统一使用 TopicCategoryNode 作为分类节点数据结构
+- ✅ 删除冗余的 TopicTreeNode 类定义
+- ✅ 重命名 TopicTreeManager → TopicCategoryManager
+- ✅ 实现 buildTopicTree() 构建包含主题的分类树
+- ✅ 实现 buildFullCategoryTree() 构建完整的分类树
+- ✅ 实现 buildCategoryTreeRecursive() 递归构建树结构
+- ✅ 实现 recommendAIService() 根据主题能力推荐AI服务
+- ✅ 实现 searchRelatedTopics()、getSiblingTopics() 等查询方法
+- ✅ 重构 PresetTopicCategories 删除 toTopicTreeNode() 转换方法
+
+### 任务2.2：扩展TopicDao ✅
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/database/TopicDao.kt`
 **预估时间**: 4分钟
-**验证**: 新增查询方法正常工作
+**验证**: ✅ 新增查询方法正常工作
 
-### 任务2.3：创建TopicConverters
+**实现内容**:
+- ✅ 添加 getTopicsByTreeNode() 按分类节点查询主题
+- ✅ 添加 getTopicByIdSync() 同步查询主题
+- ✅ 添加 updateTopic() 更新主题信息
+- ✅ 移除基于 path/parentId 的旧查询方法
+
+### 任务2.3：创建TopicConverters ✅
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/database/TopicConverters.kt`
 **预估时间**: 5分钟
-**验证**: 数据类型转换正常工作
+**验证**: ✅ 数据类型转换正常工作
 
-**说明**：TopicConverters用于Room数据库的类型转换，将复杂的数据类型转换为Room可以存储的简单类型：
-
-**需要转换的类型**：
-1. `List<String>` (path字段) → 使用Gson转换为JSON字符串
-2. `Set<AIAbility>` (capabilities字段) → 转换为JSON字符串或逗号分隔的字符串
-3. `Map<String, Double>` (servicePreferences字段) → 使用Gson转换为JSON字符串
-
-**示例代码**：
-```kotlin
-class TopicConverters {
-    @TypeConverter
-    fun fromStringList(list: List<String>?): String {
-        return Gson().toJson(list)
-    }
-    
-    @TypeConverter
-    fun toStringList(json: String?): List<String> {
-        return Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
-    }
-    
-    @TypeConverter
-    fun fromAIAbilitySet(set: Set<AIAbility>?): String {
-        return Gson().toJson(set.map { it.name })
-    }
-    
-    @TypeConverter
-    fun toAIAbilitySet(json: String?): Set<AIAbility> {
-        val names = Gson().fromJson(json, Array<String>::class.java)
-        return names.map { AIAbility.valueOf(it) }.toSet()
-    }
-    
-    @TypeConverter
-    fun fromServicePreferencesMap(map: Map<String, Double>?): String {
-        return Gson().toJson(map)
-    }
-    
-    @TypeConverter
-    fun toServicePreferencesMap(json: String?): Map<String, Double> {
-        return Gson().fromJson(json, object : TypeToken<Map<String, Double>>() {}.type)
-    }
-}
-```
+**实现内容**：
+- ✅ 实现 Set<AIAbility> ↔ String 的转换
+- ✅ 实现 Map<String, Double> ↔ String 的转换
+- ✅ 在 AppDatabase 中注册 TopicConverters
+- ✅ 移除不需要的 List<String> 转换（path字段已删除）
 
 **使用方式**：在AppDatabase类中使用`@TypeConverters(TopicConverters::class)`注解。
+
+**注意**：由于path字段已被移除，只需转换capabilities和servicePreferences字段。
 
 ### 任务2.4：预设主题初始化
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/PresetTopicInitializer.kt`
@@ -170,20 +160,33 @@ class TopicConverters {
 
 ## 🎯 阶段三：核心交互功能（1-2周）
 
-### 任务3.0：输入建议系统
+### 任务3.0：输入建议系统 ✅
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/service/InputSuggestionDetector.kt`  
 **预估时间**: 4分钟  
-**验证**: 智能输入建议功能
+**验证**: ✅ 智能输入建议功能
+
+**实现内容**:
+- ✅ 实现实时输入建议提示
+- ✅ 添加输入防抖机制（500ms）
+- ✅ 集成到ChatFragment的输入框
+- ✅ 支持语音/文字输入切换
 
 ### 任务3.1：ChatFragment优化
 **文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/ui/ChatFragment.kt`  
 **预估时间**: 5分钟  
 **验证**: 消息流、文件上传体验改进
 
-### 任务3.2：MindMap显示完善
-**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/ui/MindMapFragment.kt`  
+### 任务3.2：MindMap显示完善 ✅
+**文件路径**: `app/src/main/kotlin/com/autodroid/teachitback/ui/adapter/ChatAdapter.kt`  
 **预估时间**: 5分钟  
-**验证**: 进度同步、交互体验增强
+**验证**: ✅ 进度同步、交互体验增强
+
+**实现内容**:
+- ✅ 修复思维导图展开/收起状态丢失问题
+- ✅ 修复面包屑导航中重复的"路径:"标签
+- ✅ 将思维导图父路径改为使用 TopicCategoryNode 分类路径
+- ✅ 优化MindMapViewHolder状态管理
+- ✅ 在ChatItem.MindMapDisplayItem中添加topic字段传递主题信息
 
 ### 任务3.3：基础功能测试
 **文件路径**: `app/src/test/java/com/autodroid/teachitback/`  
@@ -285,16 +288,16 @@ class TopicConverters {
 
 ## 📊 预估时间线
 
-| 阶段 | 任务数 | 预估时间 | 优先级 |
-|------|--------|----------|--------|
-| 阶段零：统一主题架构基础 | 1 | 5分钟 | 最高 |
-| 阶段一：基础功能完善 | 3 | 14分钟 | 高 |
-| 阶段二：统一主题架构增强 | 5 | 32分钟 | 高 |
-| 阶段三：核心交互功能 | 4 | 17分钟 | 高 |
-| 阶段四：用户体验优化 | 4 | 16分钟 | 中 |
-| 阶段五：嵌入式AI集成 | 7 | 34分钟 | 高 |
-| 阶段六：测试与验证 | 3 | 15分钟 | 低 |
-| **总计** | **27** | **133分钟 (约2.22小时)** | - |
+| 阶段 | 任务数 | 预估时间 | 优先级 | 完成状态 |
+|------|--------|----------|--------|----------|
+| 阶段零：统一主题架构基础 | 1 | 5分钟 | 最高 | ✅ 100% |
+| 阶段一：基础功能完善 | 3 | 14分钟 | 高 | ⏳ 待开始 |
+| 阶段二：统一主题架构增强 | 5 | 32分钟 | 高 | ✅ 100% |
+| 阶段三：核心交互功能 | 4 | 17分钟 | 高 | ✅ 50% (2/4) |
+| 阶段四：用户体验优化 | 4 | 16分钟 | 中 | ⏳ 待开始 |
+| 阶段五：嵌入式AI集成 | 7 | 34分钟 | 高 | ⏳ 待开始 |
+| 阶段六：测试与验证 | 3 | 15分钟 | 低 | ⏳ 待开始 |
+| **总计** | **27** | **133分钟 (约2.22小时)** | - | **7/27 (约26%)** |
 
 ---
 

@@ -806,8 +806,8 @@ data class TopicTreeNode(
     val topicIds: List<String> = emptyList(),  // 该分类下的主题ID列表
 )
 
-// 主题树管理器 - 管理分类目录和主题实体
-class TopicTreeManager(private val topicDao: TopicDao) {
+// 主题分类管理器 - 管理分类目录和主题实体
+class TopicCategoryManager(private val topicDao: TopicDao) {
 
     // 构建主题树（仅包含有主题的分类节点）
     suspend fun buildTopicTree(): List<TopicTreeNode> {

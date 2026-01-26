@@ -3,7 +3,7 @@ package com.autodroid.teachitback.viewmodel
 import androidx.lifecycle.*
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.repository.SettingsRepository
-import com.autodroid.teachitback.service.TopicTreeManager
+import com.autodroid.teachitback.service.TopicCategoryManager
 import kotlinx.coroutines.launch
 
 /**
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
  */
 class ServiceSettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val topicTreeManager: TopicTreeManager
+    private val topicCategoryManager: TopicCategoryManager
 ) : ViewModel() {
 
     /**
@@ -180,7 +180,7 @@ class ServiceSettingsViewModel(
                     return@launch
                 }
                 
-                val recommended = topicTreeManager.recommendAIService(topicId, available)
+                val recommended = topicCategoryManager.recommendAIService(topicId, available)
                 
                 if (recommended != null) {
                     _selectedService.value = recommended
