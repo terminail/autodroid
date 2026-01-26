@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "499e963d0036b1ddbf703efdb3f93be2",
+    "identityHash": "ea3bcbfb4dabdf77e894ccc1f057b319",
     "entities": [
       {
         "tableName": "topics",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `topicTreeNodeId` TEXT NOT NULL, `capabilities` TEXT NOT NULL, `servicePreferences` TEXT NOT NULL, `masteryLevel` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `lastAccessed` INTEGER NOT NULL, `nextLearningGoal` TEXT, `isPreset` INTEGER NOT NULL, `presetTopicId` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `topicCategoryId` TEXT NOT NULL, `capabilities` TEXT NOT NULL, `servicePreferences` TEXT NOT NULL, `masteryLevel` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `lastAccessed` INTEGER NOT NULL, `nextLearningGoal` TEXT, `isPreset` INTEGER NOT NULL, `presetTopicId` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -27,8 +27,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "topicTreeNodeId",
-            "columnName": "topicTreeNodeId",
+            "fieldPath": "topicCategoryId",
+            "columnName": "topicCategoryId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -429,7 +429,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '499e963d0036b1ddbf703efdb3f93be2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea3bcbfb4dabdf77e894ccc1f057b319')"
     ]
   }
 }

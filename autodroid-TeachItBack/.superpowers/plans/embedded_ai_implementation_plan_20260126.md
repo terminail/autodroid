@@ -101,7 +101,7 @@ graph TB
 **验证**: ✅ 主题分类构建和智能路由功能正常
 
 **实现内容**:
-- ✅ 统一使用 TopicCategoryNode 作为分类节点数据结构
+- ✅ 统一使用 TopicCategory 作为分类节点数据结构
 - ✅ 删除冗余的 TopicTreeNode 类定义
 - ✅ 重命名 TopicTreeManager → TopicCategoryManager
 - ✅ 实现 buildTopicTree() 构建包含主题的分类树
@@ -184,7 +184,7 @@ graph TB
 **实现内容**:
 - ✅ 修复思维导图展开/收起状态丢失问题
 - ✅ 修复面包屑导航中重复的"路径:"标签
-- ✅ 将思维导图父路径改为使用 TopicCategoryNode 分类路径
+- ✅ 将思维导图父路径改为使用 TopicCategory 分类路径
 - ✅ 优化MindMapViewHolder状态管理
 - ✅ 在ChatItem.MindMapDisplayItem中添加topic字段传递主题信息
 

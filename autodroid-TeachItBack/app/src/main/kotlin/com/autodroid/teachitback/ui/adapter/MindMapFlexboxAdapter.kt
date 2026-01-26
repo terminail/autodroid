@@ -10,10 +10,6 @@ import com.autodroid.teachitback.config.PresetTopicCategories
 import com.autodroid.teachitback.databinding.ItemMindmapFlexboxBinding
 import com.autodroid.teachitback.model.MindMapNode
 import com.autodroid.teachitback.model.TopicEntity
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
 
 /**
  * 基于FlexboxLayout的多级树形结构适配器
@@ -153,7 +149,7 @@ class MindMapFlexboxAdapter(
         private fun setupBreadcrumb(path: List<MindMapNode>, topic: TopicEntity?) {
             // 如果有主题信息，显示TopicTreeNode的分类路径
             if (topic != null) {
-                val categoryId = topic.topicTreeNodeId
+                val categoryId = topic.topicCategoryId
                 val categoryPath = PresetTopicCategories.buildCategoryPath(categoryId)
 
                 categoryPath.forEachIndexed { index, categoryNode ->

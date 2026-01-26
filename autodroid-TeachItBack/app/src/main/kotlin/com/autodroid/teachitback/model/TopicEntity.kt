@@ -15,7 +15,7 @@ data class TopicEntity(
     val description: String,
 
     // 关联树节点（分类目录）
-    val topicTreeNodeId: String,
+    val topicCategoryId: String,
 
     // 路由配置
     val capabilities: Set<AIAbility> = emptySet(),

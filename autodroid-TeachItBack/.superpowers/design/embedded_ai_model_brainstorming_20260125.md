@@ -765,9 +765,9 @@ graph LR
 #### 统一主题架构设计（基于TopicEntity重构 - 目录-商品模式）
 
 **核心设计理念**：将主题分为两个独立的实体
-- **TopicTreeNode**：纯粹的分类目录管理（类似电商的目录）
+- **TopicCategory**：纯粹的分类目录管理（类似电商的目录）
 - **TopicEntity**：具体的学习内容实体（类似电商的商品）
-- **关联关系**：TopicEntity通过`topicTreeNodeId`关联到TopicTreeNode
+- **关联关系**：TopicEntity通过`TopicCategoryId`关联到TopicCategory
 
 ```kotlin
 // 重构后的TopicEntity - 简化的内容实体
@@ -781,7 +781,7 @@ data class TopicEntity(
     val description: String,                    // 描述
 
     // 🆕 分类关联 - 通过树节点ID关联到分类目录
-    val topicTreeNodeId: String,                // 所属分类树节点ID
+    val TopicCategoryId: String,                // 所属分类树节点ID
 
     // 路由配置
     val capabilities: Set<AIAbility>,         // 关联能力集合
@@ -797,11 +797,11 @@ data class TopicEntity(
 )
 
 // 分类树节点 - 纯粹的目录管理
-data class TopicTreeNode(
+data class TopicCategory(
     val id: String,
     val name: String,                           // 分类名称
-    val parent: TopicTreeNode?,                 // 父节点
-    val children: List<TopicTreeNode> = emptyList(),  // 子节点
+    val parent: TopicCategory?,                 // 父节点
+    val children: List<TopicCategory> = emptyList(),  // 子节点
     val description: String = "",
     val topicIds: List<String> = emptyList(),  // 该分类下的主题ID列表
 )
@@ -810,25 +810,25 @@ data class TopicTreeNode(
 class TopicCategoryManager(private val topicDao: TopicDao) {
 
     // 构建主题树（仅包含有主题的分类节点）
-    suspend fun buildTopicTree(): List<TopicTreeNode> {
+    suspend fun buildTopicTree(): List<TopicCategory> {
         val allTopics = topicDao.getAllTopics().first()
 
         // 从主题中提取所有唯一的树节点ID
-        val treeNodeIds = allTopics.map { it.topicTreeNodeId }.distinct()
+        val treeNodeIds = allTopics.map { it.TopicCategoryId }.distinct()
 
         // 为每个树节点ID创建分类节点
         return treeNodeIds.map { treeNodeId ->
-            val topicsInNode = allTopics.filter { it.topicTreeNodeId == treeNodeId }
+            val topicsInNode = allTopics.filter { it.TopicCategoryId == treeNodeId }
 
             // 从预设分类配置中获取节点信息
             val presetCategory = PresetTopicCategories.getCategoryById(treeNodeId)
 
             if (presetCategory != null) {
                 // 使用预设分类的信息
-                presetCategory.toTopicTreeNode(topicsInNode.map { it.id })
+                presetCategory.toTopicCategory(topicsInNode.map { it.id })
             } else {
                 // 如果找不到预设分类，创建一个临时节点
-                TopicTreeNode(
+                TopicCategory(
                     id = treeNodeId,
                     name = "自定义分类",
                     parent = null,
@@ -841,14 +841,14 @@ class TopicCategoryManager(private val topicDao: TopicDao) {
     }
 
     // 构建完整的主题分类树（包含所有预设分类）
-    suspend fun buildFullCategoryTree(): TopicTreeNode {
+    suspend fun buildFullCategoryTree(): TopicCategory {
         val allTopics = topicDao.getAllTopics().first()
         val allCategories = PresetTopicCategories.getAllCategoriesFlattened()
 
         Log.d("TopicTreeManager", "构建完整分类树: ${allCategories.size} 个分类节点")
 
         // 构建分类树结构
-        buildCategoryTreeRecursive(allCategories, null, allTopics) ?: TopicTreeNode(
+        buildCategoryTreeRecursive(allCategories, null, allTopics) ?: TopicCategory(
             id = "root",
             name = "全部分类",
             parent = null,
@@ -859,9 +859,9 @@ class TopicCategoryManager(private val topicDao: TopicDao) {
     }
 
     // 根据主题ID获取所属分类
-    suspend fun getTopicCategory(topicId: String): TopicTreeNode? {
+    suspend fun getTopicCategory(topicId: String): TopicCategory? {
         val topic = topicDao.getTopicByIdSync(topicId) ?: return null
-        return buildTopicTree().find { it.id == topic.topicTreeNodeId }
+        return buildTopicTree().find { it.id == topic.TopicCategoryId }
     }
 }
 ```
@@ -881,9 +881,9 @@ object PresetTopicCategories {
      * 预设分类节点定义
      * 支持多层级结构：root -> 教育 -> 高中教育
      */
-    val categories: List<TopicCategoryNode> = listOf(
+    val categories: List<TopicCategory> = listOf(
         // ===== 根分类 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "preset-topics",
             name = "预设主题",
             description = "应用预设的学习主题",
@@ -891,7 +891,7 @@ object PresetTopicCategories {
             source = "preset"
         ),
 
-        TopicCategoryNode(
+        TopicCategory(
             id = "user-topics",
             name = "用户主题",
             description = "用户自定义的学习主题",
@@ -900,14 +900,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 教育学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "education",
             name = "教育学习",
             description = "各阶段教育学科学习",
             orderIndex = 3,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "high-school",
                     name = "高中教育",
                     description = "高中各学科学习",
@@ -915,7 +915,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "professional-exam",
                     name = "职业考试",
                     description = "各类职业资格考试",
@@ -927,14 +927,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 财务金融 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "finance",
             name = "财务金融",
             description = "财务规划与投资管理",
             orderIndex = 4,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "cfp-exam",
                     name = "CFP考试",
                     description = "CFP财务规划师考试",
@@ -942,7 +942,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "investment",
                     name = "投资管理",
                     description = "资产配置与投资策略",
@@ -954,14 +954,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 技术学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "technology",
             name = "技术学习",
             description = "编程与技术技能学习",
             orderIndex = 5,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "programming",
                     name = "编程开发",
                     description = "各类编程语言与开发",
@@ -969,7 +969,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "data-science",
                     name = "数据科学",
                     description = "数据分析与机器学习",
@@ -981,14 +981,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 语言学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "language",
             name = "语言学习",
             description = "各类语言学习",
             orderIndex = 6,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "english",
                     name = "英语学习",
                     description = "英语听说读写",
@@ -996,7 +996,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "other-languages",
                     name = "其他语言",
                     description = "其他外语学习",
@@ -1039,15 +1039,15 @@ object PresetTopicCategories {
     /**
      * 根据ID获取分类节点
      */
-    fun getCategoryById(nodeId: String): TopicCategoryNode? {
+    fun getCategoryById(nodeId: String): TopicCategory? {
         return findNodeRecursive(categories, nodeId)
     }
 
     /**
      * 获取所有分类节点（扁平化）
      */
-    fun getAllCategoriesFlattened(): List<TopicCategoryNode> {
-        val result = mutableListOf<TopicCategoryNode>()
+    fun getAllCategoriesFlattened(): List<TopicCategory> {
+        val result = mutableListOf<TopicCategory>()
         flattenCategories(categories, result)
         return result
     }
@@ -1062,24 +1062,24 @@ object PresetTopicCategories {
  * - 支持排序（orderIndex）
  * - 可序列化为JSON，便于Git同步
  */
-data class TopicCategoryNode(
+data class TopicCategory(
     val id: String,
     val name: String,
     val description: String = "",
     val parentId: String? = null,
     val orderIndex: Int = 0,
     val source: String = "preset", // preset, git, user
-    val children: List<TopicCategoryNode>? = null
+    val children: List<TopicCategory>? = null
 ) {
     /**
-     * 转换为TopicTreeNode（用于TopicTreeManager）
+     * 转换为TopicCategory（用于TopicTreeManager）
      */
-    fun toTopicTreeNode(topicIds: List<String> = emptyList()): TopicTreeNode {
-        return TopicTreeNode(
+    fun toTopicCategory(topicIds: List<String> = emptyList()): TopicCategory {
+        return TopicCategory(
             id = id,
             name = name,
             parent = null,
-            children = children?.map { it.toTopicTreeNode() } ?: emptyList(),
+            children = children?.map { it.toTopicCategory() } ?: emptyList(),
             description = description,
             topicIds = topicIds
         )
@@ -1149,7 +1149,7 @@ val presetTopics = listOf(
     TopicEntity(
         title = "CFP财务规划",
         description = "系统化学习CFP考试内容，掌握核心财务规划概念",
-        topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("CFP财务规划"),
+        TopicCategoryId = PresetTopicCategories.getCategoryForTopic("CFP财务规划"),
         // "cfp-exam"
         capabilities = setOf(AIAbility.LEARNING_ANALYSIS, AIAbility.SOCRATIC_QUESTIONING),
         isPreset = true
@@ -1158,7 +1158,7 @@ val presetTopics = listOf(
     TopicEntity(
         title = "投资组合管理",
         description = "掌握资产配置策略，理解风险与收益平衡",
-        topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("投资组合管理"),
+        TopicCategoryId = PresetTopicCategories.getCategoryForTopic("投资组合管理"),
         // "investment"
         capabilities = setOf(AIAbility.MATH, AIAbility.LEARNING_ANALYSIS),
         isPreset = true
@@ -1168,7 +1168,7 @@ val presetTopics = listOf(
     TopicEntity(
         title = "高中数学",
         description = "涵盖函数、几何、代数、概率统计等核心数学知识点",
-        topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中数学"),
+        TopicCategoryId = PresetTopicCategories.getCategoryForTopic("高中数学"),
         // "high-school"
         capabilities = setOf(AIAbility.MATH, AIAbility.EDUCATION),
         isPreset = true
@@ -1177,7 +1177,7 @@ val presetTopics = listOf(
     TopicEntity(
         title = "高中英语",
         description = "提升听说读写能力，掌握语法、词汇和阅读理解技巧",
-        topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("高中英语"),
+        TopicCategoryId = PresetTopicCategories.getCategoryForTopic("高中英语"),
         // "english"
         capabilities = setOf(AIAbility.LONG_TEXT, AIAbility.EDUCATION),
         isPreset = true
@@ -1200,14 +1200,14 @@ val chineseTopic = TopicEntity(
 val quadraticTopic = TopicEntity(
     title = "二次函数",
     description = "二次函数专题学习",
-    topicTreeNodeId = "user-topics", // 用户主题归属到"用户主题"分类
+    TopicCategoryId = "user-topics", // 用户主题归属到"用户主题"分类
     capabilities = setOf(AIAbility.ANSWER_EVALUATION, AIAbility.MATH),
     isPreset = false
 )
 
 // 用户也可以创建子分类
 // 假设用户创建了一个"编程进阶"子分类（存储在user_custom_categories）
-val programmingNode = TopicCategoryNode(
+val programmingNode = TopicCategory(
     id = "user-programming-advanced",
     name = "编程进阶",
     description = "高级编程主题",
@@ -1219,7 +1219,7 @@ val programmingNode = TopicCategoryNode(
 val advancedKotlinTopic = TopicEntity(
     title = "Kotlin高级特性",
     description = "深入理解Kotlin的高级特性和最佳实践",
-    topicTreeNodeId = "user-programming-advanced", // 关联到用户创建的子分类
+    TopicCategoryId = "user-programming-advanced", // 关联到用户创建的子分类
     capabilities = setOf(AIAbility.CODE_GENERATION, AIAbility.LEARNING_ANALYSIS),
     isPreset = false
 )
@@ -1228,9 +1228,9 @@ val advancedKotlinTopic = TopicEntity(
 #### 架构优势
 
 **目录-商品模式的优点**：
-1. **职责分离**：TopicTreeNode管理分类，TopicEntity管理内容
+1. **职责分离**：TopicCategory管理分类，TopicEntity管理内容
 2. **概念清晰**：类似电商的目录-商品关系，不混淆层级概念
-3. **查询简单**：通过topicTreeNodeId直接关联，无需复杂的层级遍历
+3. **查询简单**：通过TopicCategoryId直接关联，无需复杂的层级遍历
 4. **扩展性强**：分类可以独立于主题进行管理和更新
 5. **支持Git同步**：分类结构可以序列化为JSON，从Git仓库动态下载
 
@@ -1262,7 +1262,7 @@ interface TopicDao {
     // ✅ 新增：基于树节点关联的查询方法
     @Query("""
         SELECT * FROM topics
-        WHERE topicTreeNodeId = :treeNodeId
+        WHERE TopicCategoryId = :treeNodeId
         ORDER BY createdAt DESC
     """)
     fun getTopicsByTreeNode(treeNodeId: String): Flow<List<TopicEntity>>
@@ -1323,8 +1323,8 @@ interface TopicDao {
 class TopicRepository(private val topicDao: TopicDao) {
 
     // ✅ 新增：基于树节点关联的查询
-    fun getTopicsByTreeNode(topicTreeNodeId: String): Flow<List<TopicEntity>> =
-        topicDao.getTopicsByTreeNode(topicTreeNodeId)
+    fun getTopicsByTreeNode(TopicCategoryId: String): Flow<List<TopicEntity>> =
+        topicDao.getTopicsByTreeNode(TopicCategoryId)
 
     // ✅ 保留：通用查询方法
     fun getAllTopics(): Flow<List<TopicEntity>> = topicDao.getAllTopics()
@@ -1364,7 +1364,7 @@ class DataInitializer(private val context: Context) {
             }
 
             // 1. 初始化主题分类树结构
-            initializeTopicTreeNodes()
+            initializeTopicCategorys()
 
             // 2. 初始化AI服务配置
             initializeAIServices(database)
@@ -1374,7 +1374,7 @@ class DataInitializer(private val context: Context) {
                 TopicEntity(
                     title = "CFP财务规划",
                     description = "系统化学习CFP考试内容，掌握核心财务规划概念",
-                    topicTreeNodeId = PresetTopicCategories.getCategoryForTopic("CFP财务规划"),
+                    TopicCategoryId = PresetTopicCategories.getCategoryForTopic("CFP财务规划"),
                     capabilities = setOf(AIAbility.LEARNING_ANALYSIS, AIAbility.SOCRATIC_QUESTIONING),
                     isPreset = true
                 ),
@@ -1396,7 +1396,7 @@ class DataInitializer(private val context: Context) {
     /**
      * 初始化主题分类树结构
      */
-    private fun initializeTopicTreeNodes() {
+    private fun initializeTopicCategorys() {
         val allCategories = PresetTopicCategories.getAllCategoriesFlattened()
 
         Log.d("DataInitializer", "=== 初始化主题分类树结构 ===")
@@ -3035,20 +3035,20 @@ private fun showInputSuggestionDialog(suggestion: SuggestionResult) {
 ### 核心设计理念
 
 **目录-商品模式**：将主题分类分为两个独立的实体
-- **TopicTreeNode**：纯粹的分类目录管理（类似电商的目录）
+- **TopicCategory**：纯粹的分类目录管理（类似电商的目录）
 - **TopicEntity**：具体的学习内容实体（类似电商的商品）
-- **关联关系**：TopicEntity通过`topicTreeNodeId`关联到TopicTreeNode
+- **关联关系**：TopicEntity通过`TopicCategoryId`关联到TopicCategory
 
 ### 架构优势
 
 #### 1. 职责分离
-- ✅ TopicTreeNode：管理分类目录、层级关系、排序
+- ✅ TopicCategory：管理分类目录、层级关系、排序
 - ✅ TopicEntity：管理学习内容、能力关联、学习进度
 - ✅ 概念清晰，不混淆层级概念
 
 #### 2. 查询简单
-- ✅ 通过`topicTreeNodeId`直接关联，无需复杂的层级遍历
-- ✅ 数据库查询高效：`WHERE topicTreeNodeId = ?`
+- ✅ 通过`TopicCategoryId`直接关联，无需复杂的层级遍历
+- ✅ 数据库查询高效：`WHERE TopicCategoryId = ?`
 - ✅ 避免了旧设计的`path`和`parentId`层级查询复杂性
 
 #### 3. 扩展性强
@@ -3076,7 +3076,7 @@ data class TopicEntity(
 // ✅ 新设计
 @Entity(tableName = "topics")
 data class TopicEntity(
-    val topicTreeNodeId: String,                // 所属分类树节点ID
+    val TopicCategoryId: String,                // 所属分类树节点ID
     // ...
 )
 ```
@@ -3096,15 +3096,15 @@ data class TopicEntity(
 ```kotlin
 object PresetTopicCategories {
     // 硬编码的预设分类结构
-    val categories: List<TopicCategoryNode>
+    val categories: List<TopicCategory>
 
     // 主题到分类的映射
     val topicCategoryMapping: Map<String, String>
 
     // 辅助方法
     fun getCategoryForTopic(topicTitle: String): String
-    fun getCategoryById(nodeId: String): TopicCategoryNode?
-    fun getAllCategoriesFlattened(): List<TopicCategoryNode>
+    fun getCategoryById(nodeId: String): TopicCategory?
+    fun getAllCategoriesFlattened(): List<TopicCategory>
 }
 ```
 
@@ -3165,7 +3165,7 @@ class TopicCategorySyncManager {
 
 ### 实现状态
 
-- ✅ **TopicEntity重构完成**：移除path和parentId，添加topicTreeNodeId
+- ✅ **TopicEntity重构完成**：移除path和parentId，添加TopicCategoryId
 - ✅ **PresetTopicCategories实现**：硬编码的预设分类结构
 - ✅ **TopicTreeManager更新**：支持新的分类关联方式
 - ✅ **DataInitializer更新**：使用新的分类初始化流程

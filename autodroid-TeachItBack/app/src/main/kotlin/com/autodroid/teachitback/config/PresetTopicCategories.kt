@@ -29,9 +29,9 @@ object PresetTopicCategories {
      * 预设分类节点定义
      * 结构设计考虑了多层级支持和Git同步扩展性
      */
-    val categories: List<TopicCategoryNode> = listOf(
+    val categories: List<TopicCategory> = listOf(
         // ===== 根分类 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "preset-topics",
             name = "预设主题",
             description = "应用预设的学习主题",
@@ -39,7 +39,7 @@ object PresetTopicCategories {
             source = "preset"
         ),
         
-        TopicCategoryNode(
+        TopicCategory(
             id = "user-topics",
             name = "用户主题",
             description = "用户自定义的学习主题",
@@ -48,14 +48,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 教育学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "education",
             name = "教育学习",
             description = "各阶段教育学科学习",
             orderIndex = 3,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "high-school",
                     name = "高中教育",
                     description = "高中各学科学习",
@@ -63,7 +63,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "professional-exam",
                     name = "职业考试",
                     description = "各类职业资格考试",
@@ -75,14 +75,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 财务金融 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "finance",
             name = "财务金融",
             description = "财务规划与投资管理",
             orderIndex = 4,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "cfp-exam",
                     name = "CFP考试",
                     description = "CFP财务规划师考试",
@@ -90,7 +90,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "investment",
                     name = "投资管理",
                     description = "资产配置与投资策略",
@@ -102,14 +102,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 技术学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "technology",
             name = "技术学习",
             description = "编程与技术技能学习",
             orderIndex = 5,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "programming",
                     name = "编程开发",
                     description = "各类编程语言与开发",
@@ -117,7 +117,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "data-science",
                     name = "数据科学",
                     description = "数据分析与机器学习",
@@ -129,14 +129,14 @@ object PresetTopicCategories {
         ),
 
         // ===== 语言学习 =====
-        TopicCategoryNode(
+        TopicCategory(
             id = "language",
             name = "语言学习",
             description = "各类语言学习",
             orderIndex = 6,
             source = "preset",
             children = listOf(
-                TopicCategoryNode(
+                TopicCategory(
                     id = "english",
                     name = "英语学习",
                     description = "英语听说读写",
@@ -144,7 +144,7 @@ object PresetTopicCategories {
                     orderIndex = 1,
                     source = "preset"
                 ),
-                TopicCategoryNode(
+                TopicCategory(
                     id = "other-languages",
                     name = "其他语言",
                     description = "其他外语学习",
@@ -191,7 +191,7 @@ object PresetTopicCategories {
      * @param nodeId 分类节点ID
      * @return 分类节点，如果未找到则返回null
      */
-    fun getCategoryById(nodeId: String): TopicCategoryNode? {
+    fun getCategoryById(nodeId: String): TopicCategory? {
         return findNodeRecursive(categories, nodeId)
     }
 
@@ -199,9 +199,9 @@ object PresetTopicCategories {
      * 递归查找分类节点
      */
     private fun findNodeRecursive(
-        nodes: List<TopicCategoryNode>,
+        nodes: List<TopicCategory>,
         targetId: String
-    ): TopicCategoryNode? {
+    ): TopicCategory? {
         for (node in nodes) {
             if (node.id == targetId) {
                 return node
@@ -216,8 +216,8 @@ object PresetTopicCategories {
     /**
      * 获取所有分类节点（扁平化）
      */
-    fun getAllCategoriesFlattened(): List<TopicCategoryNode> {
-        val result = mutableListOf<TopicCategoryNode>()
+    fun getAllCategoriesFlattened(): List<TopicCategory> {
+        val result = mutableListOf<TopicCategory>()
         flattenCategories(categories, result)
         return result
     }
@@ -226,8 +226,8 @@ object PresetTopicCategories {
      * 递归扁平化分类列表
      */
     private fun flattenCategories(
-        nodes: List<TopicCategoryNode>,
-        result: MutableList<TopicCategoryNode>
+        nodes: List<TopicCategory>,
+        result: MutableList<TopicCategory>
     ) {
         for (node in nodes) {
             result.add(node)
@@ -257,8 +257,8 @@ object PresetTopicCategories {
      * @param categoryId 分类节点ID
      * @return 分类路径列表（从根节点到目标节点）
      */
-    fun buildCategoryPath(categoryId: String): List<TopicCategoryNode> {
-        val path = mutableListOf<TopicCategoryNode>()
+    fun buildCategoryPath(categoryId: String): List<TopicCategory> {
+        val path = mutableListOf<TopicCategory>()
         buildPathRecursive(categories, categoryId, path)
         return path
     }
@@ -267,9 +267,9 @@ object PresetTopicCategories {
      * 递归构建路径
      */
     private fun buildPathRecursive(
-        nodes: List<TopicCategoryNode>,
+        nodes: List<TopicCategory>,
         targetId: String,
-        path: MutableList<TopicCategoryNode>
+        path: MutableList<TopicCategory>
     ): Boolean {
         for (node in nodes) {
             if (node.id == targetId) {
@@ -307,14 +307,14 @@ object PresetTopicCategories {
      * - 支持排序（orderIndex）
      * - 可序列化为JSON，便于Git同步
      */
-    data class TopicCategoryNode(
+    data class TopicCategory(
         val id: String,
         val name: String,
         val description: String = "",
         val parentId: String? = null,
         val orderIndex: Int = 0,
         val source: String = "preset", // preset, git, user
-        val children: List<TopicCategoryNode>? = null
+        val children: List<TopicCategory>? = null
     ) {
 }
 

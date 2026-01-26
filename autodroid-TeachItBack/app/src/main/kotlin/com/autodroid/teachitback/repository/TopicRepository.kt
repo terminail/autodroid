@@ -4,7 +4,6 @@ import com.autodroid.teachitback.database.TopicDao
 import com.autodroid.teachitback.model.TopicEntity
 import com.autodroid.teachitback.service.AIAbility
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 class TopicRepository(private val topicDao: TopicDao) {
     fun getAllTopics(): Flow<List<TopicEntity>> = topicDao.getAllTopics()
@@ -22,7 +21,7 @@ class TopicRepository(private val topicDao: TopicDao) {
     // ===== 基于新字段的管理功能 =====
     
     fun getTopicsByTreeNode(topicTreeNodeId: String): Flow<List<TopicEntity>> = 
-        topicDao.getTopicsByTreeNode(topicTreeNodeId)
+        topicDao.getTopicsByCategoryId(topicTreeNodeId)
     
     fun getTopicsByCapability(capability: AIAbility): Flow<List<TopicEntity>> = 
         topicDao.getTopicsByCapability(capability.name)

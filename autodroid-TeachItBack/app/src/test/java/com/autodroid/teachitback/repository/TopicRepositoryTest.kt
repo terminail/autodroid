@@ -22,12 +22,12 @@ class TopicRepositoryTest {
             TopicEntity(
                 title = "代数", 
                 description = "代数主题", 
-                topicTreeNodeId = treeNodeId
+                topicCategoryId = treeNodeId
             ),
             TopicEntity(
                 title = "几何", 
                 description = "几何主题", 
-                topicTreeNodeId = treeNodeId
+                topicCategoryId = treeNodeId
             )
         )
         
@@ -36,7 +36,7 @@ class TopicRepositoryTest {
         val result = repository.getTopicsByTreeNode(treeNodeId).first()
         
         assertEquals(expectedTopics.size, result.size)
-        assertEquals(treeNodeId, result[0].topicTreeNodeId)
+        assertEquals(treeNodeId, result[0].topicCategoryId)
         verify(topicDao).getTopicsByTreeNode(treeNodeId)
     }
 
@@ -50,13 +50,13 @@ class TopicRepositoryTest {
             TopicEntity(
                 title = "数学",
                 description = "数学主题",
-                topicTreeNodeId = "math-node",
+                topicCategoryId = "math-node",
                 capabilities = setOf(capability, AIAbility.MATH)
             ),
             TopicEntity(
                 title = "物理",
                 description = "物理主题",
-                topicTreeNodeId = "physics-node",
+                topicCategoryId = "physics-node",
                 capabilities = setOf(capability, AIAbility.CODE_GENERATION)
             )
         )
@@ -81,7 +81,7 @@ class TopicRepositoryTest {
             id = topicId,
             title = "测试主题",
             description = "测试描述",
-            topicTreeNodeId = "test-node",
+            topicCategoryId = "test-node",
             masteryLevel = 50
         )
         

@@ -39,8 +39,8 @@ interface TopicDao {
     
     // ===== 基于新字段的查询方法 =====
     
-    @Query("SELECT * FROM topics WHERE topicTreeNodeId = :topicTreeNodeId ORDER BY lastAccessed DESC")
-    fun getTopicsByTreeNode(topicTreeNodeId: String): Flow<List<TopicEntity>>
+    @Query("SELECT * FROM topics WHERE topicCategoryId = :topicCategoryId ORDER BY lastAccessed DESC")
+    fun getTopicsByCategoryId(topicCategoryId: String): Flow<List<TopicEntity>>
     
     @Query("SELECT * FROM topics WHERE capabilities LIKE '%' || :capability || '%' ORDER BY masteryLevel DESC")
     fun getTopicsByCapability(capability: String): Flow<List<TopicEntity>>

@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -43,7 +41,7 @@ class PresetDetailFragment : Fragment() {
                     id = topicId,
                     title = topicTitle,
                     description = topicDescription,
-                    topicTreeNodeId = categoryNodeId,
+                    topicCategoryId = categoryNodeId,
                     isPreset = true
                 )
             }
@@ -75,7 +73,7 @@ class PresetDetailFragment : Fragment() {
         binding.descriptionText.text = topic.description
 
         // 显示 breadcrumb 导航
-        setupBreadcrumb(topic.topicTreeNodeId)
+        setupBreadcrumb(topic.topicCategoryId)
         
         val learningGoals = generateLearningGoals(topic.title)
         binding.learningGoalsText.text = learningGoals
