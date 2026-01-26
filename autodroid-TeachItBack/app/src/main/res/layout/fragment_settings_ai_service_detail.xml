@@ -22,10 +22,11 @@
             android:padding="16dp">
             
             <TextView
+                android:id="@+id/enable_service_text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="启用该服务"
+                android:text="服务已启用"
                 android:textSize="16sp"
                 android:textColor="@android:color/black" />
                 

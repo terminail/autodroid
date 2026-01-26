@@ -305,28 +305,29 @@ class SettingsAdapter(
             // 第一行：服务名称
             titleTextView?.text = serviceName
             
-            // 第二行：配置状态、能力描述和测试连接状态
+            // 第二行：服务状态、配置状态和测试连接状态
+            val serviceStatus = if (isEnabled) "☑️服务已启用" else "☐服务未启用"
             val configStatus = if (isEnabled) "☑️" else "☐"
             val testConnectionStatus = if (testStatus == true) "☑️测试连接" else "☐测试连接"
             
             val detailText = when (item) {
-                is SettingsItem.TencentCloudAIServiceItem -> "$configStatus SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
-                is SettingsItem.DoubaoAIServiceItem -> "$configStatus Api Key，字节跳动AI助手，$testConnectionStatus"
-                is SettingsItem.DeepSeekAIServiceItem -> "$configStatus Api Key，深度求索AI，$testConnectionStatus"
-                is SettingsItem.MinimaxAIServiceItem -> "$configStatus Api Key，稀宇科技，$testConnectionStatus"
-                is SettingsItem.KimiAIServiceItem -> "$configStatus Api Key，月之暗面，$testConnectionStatus"
-                is SettingsItem.OpenAIServiceItem -> "$configStatus Api Key，OpenAI，$testConnectionStatus"
-                is SettingsItem.ErnieAIServiceItem -> "$configStatus Api Key，百度AI，$testConnectionStatus"
-                is SettingsItem.QwenAIServiceItem -> "$configStatus Api Key，阿里巴巴AI，$testConnectionStatus"
-                is SettingsItem.ZhipuAIServiceItem -> "$configStatus Api Key，智谱AI，$testConnectionStatus"
-                is SettingsItem.SparkAIServiceItem -> "$configStatus Api Key，科大讯飞，$testConnectionStatus"
-                is SettingsItem.HunyuanAIServiceItem -> "$configStatus Api Key，腾讯混元，$testConnectionStatus"
-                is SettingsItem.BaichuanAIServiceItem -> "$configStatus Api Key，百川智能，$testConnectionStatus"
-                is SettingsItem.LingyiAIServiceItem -> "$configStatus Api Key，零一万物，$testConnectionStatus"
-                is SettingsItem.JieyueAIServiceItem -> "$configStatus Api Key，阶跃星辰，$testConnectionStatus"
-                is SettingsItem.ChatGLMAIServiceItem -> "${item.modelSize}模型，清华开源，${if(item.isModelDownloaded) "已下载" else "未下载"}"
-                is SettingsItem.TinyBERTAIServiceItem -> "${item.modelSize}模型，设备端推理，${if(item.isModelDownloaded) "已下载" else "未下载"}"
-                else -> "$configStatus 未知服务，$testConnectionStatus"
+                is SettingsItem.TencentCloudAIServiceItem -> "$serviceStatus，SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
+                is SettingsItem.DoubaoAIServiceItem -> "$serviceStatus，Api Key，字节跳动AI助手，$testConnectionStatus"
+                is SettingsItem.DeepSeekAIServiceItem -> "$serviceStatus，Api Key，深度求索AI，$testConnectionStatus"
+                is SettingsItem.MinimaxAIServiceItem -> "$serviceStatus，Api Key，稀宇科技，$testConnectionStatus"
+                is SettingsItem.KimiAIServiceItem -> "$serviceStatus，Api Key，月之暗面，$testConnectionStatus"
+                is SettingsItem.OpenAIServiceItem -> "$serviceStatus，Api Key，OpenAI，$testConnectionStatus"
+                is SettingsItem.ErnieAIServiceItem -> "$serviceStatus，Api Key，百度AI，$testConnectionStatus"
+                is SettingsItem.QwenAIServiceItem -> "$serviceStatus，Api Key，阿里巴巴AI，$testConnectionStatus"
+                is SettingsItem.ZhipuAIServiceItem -> "$serviceStatus，Api Key，智谱AI，$testConnectionStatus"
+                is SettingsItem.SparkAIServiceItem -> "$serviceStatus，Api Key，科大讯飞，$testConnectionStatus"
+                is SettingsItem.HunyuanAIServiceItem -> "$serviceStatus，Api Key，腾讯混元，$testConnectionStatus"
+                is SettingsItem.BaichuanAIServiceItem -> "$serviceStatus，Api Key，百川智能，$testConnectionStatus"
+                is SettingsItem.LingyiAIServiceItem -> "$serviceStatus，Api Key，零一万物，$testConnectionStatus"
+                is SettingsItem.JieyueAIServiceItem -> "$serviceStatus，Api Key，阶跃星辰，$testConnectionStatus"
+                is SettingsItem.ChatGLMAIServiceItem -> "$serviceStatus，${item.modelSize}模型，清华开源，${if(item.isModelDownloaded) "已下载" else "未下载"}"
+                is SettingsItem.TinyBERTAIServiceItem -> "$serviceStatus，${item.modelSize}模型，设备端推理，${if(item.isModelDownloaded) "已下载" else "未下载"}"
+                else -> "$serviceStatus，未知服务，$testConnectionStatus"
             }
             
             descriptionTextView?.text = detailText

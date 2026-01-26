@@ -294,6 +294,9 @@ class SettingsAIServiceDetailFragment : Fragment() {
      * 根据启用状态更新UI
      */
     private fun updateUIForEnabledState(isEnabled: Boolean) {
+        // 更新文本显示
+        binding.enableServiceText.text = if (isEnabled) "服务已启用" else "服务未启用"
+        
         val alpha = if (isEnabled) 1.0f else 0.5f
         
         // 设置所有配置字段的透明度
