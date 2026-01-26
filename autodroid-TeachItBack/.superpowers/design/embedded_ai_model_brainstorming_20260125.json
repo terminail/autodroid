@@ -3,164 +3,195 @@
   "timestamp": "2026-01-25T00:00:00",
   "project_type": "android",
   "project_root": "d:/git/autodroid/autodroid-TeachItBack",
-  "requirement": "为Teach It Back Android应用增加嵌入式大模型功能，实现离线学习支持。主要需求：1. 在应用中内置本地大模型，在没有云端大模型支持下提供基础功能；2. 对于复杂功能（如生成mindmap），从Git仓库下载预先准备好的mindmap资源；3. 保持本地大模型与云端大模型处理架构的一致性；4. 在设置中允许用户指定本地大模型和云端大模型的使用优先级排序",
+  "requirement": "为Teach It Back Android应用增加嵌入式大模型功能，实现离线学习支持。主要需求：1. 在应用中内置本地大模型，在没有云端大模型支持下提供基础功能；2. 对于复杂功能（如生成mindmap），从GitHub仓库下载预先准备好的mindmap资源；3. 保持本地大模型与云端大模型处理架构的一致性；4. 在设置中允许用户指定本地大模型和云端大模型的使用优先级排序",
   
-  "technical_decisions": {
-    "architecture_extension": {
-      "approach": "基于现有插件化AI服务架构扩展",
-      "base_architecture": "MVVM + Repository Pattern + Plugin Architecture",
-      "extension": "在现有AIService层基础上新增EmbeddedAIService",
-      "components": [
-        "EmbeddedAIService: 本地大模型服务实现",
-        "ResourceManager: 预置资源下载和管理",
-        "KnowledgeGraphEngine: 知识图谱引擎",
-        "PriorityRouter: 智能服务路由和降级"
-      ]
+  "core_design_principles": {
+    "ability_oriented": "路由决策基于任务能力需求，而非部署位置（本地/云端）",
+    "unified_interface": "所有本地和云端服务实现相同的AIService接口",
+    "user_controllable": "用户可独立控制每个AI服务的启用状态，按需下载和删除模型",
+    "non_interruptive": "输入建议仅在发送前检测，避免干扰用户输入流程"
+  },
+
+  "technical_architecture": {
+    "architecture_approach": "基于现有插件化AI服务架构扩展",
+    "base_architecture": "MVVM + Repository Pattern + Plugin Architecture",
+    "extension_strategy": "在现有AIService层基础上新增本地模型服务",
+    
+    "service_capability_rating": {
+      "approach": "星级评分系统（1-5⭐）替代布尔属性",
+      "rating_dimensions": ["性能指标", "准确率", "响应时间", "用户满意度"],
+      "visualization": ["设置界面显示", "服务比较图表", "能力雷达图"]
     },
-    "model_selection": {
-      "primary_model": {
-        "name": "ChatGLM-6B (INT4量化版)",
-        "size": "约2.8GB",
-        "framework": "MNN (字节开源，对安卓ARM架构优化)",
-        "format": ".mnn格式",
-        "capabilities": ["基础对话", "文件处理", "教育专用"],
-        "advantages": ["中文优化好", "适合中医问答", "有教育领域微调基础"]
-      },
-      "auxiliary_model": {
-        "name": "TinyBERT-Chinese (INT8量化版)",
-        "size": "约100MB", 
-        "purpose": "答案相似度判断",
-        "performance": "推理耗时<200ms/次",
-        "technique": "余弦相似度计算"
-      }
+    
+    "input_suggestion_system": {
+      "approach": "发送前检测（非实时）",
+      "detection_timing": "仅在用户点击发送按钮时触发",
+      "analysis_method": "轻量化关键词匹配",
+      "user_control": "可选择是否采纳建议"
+    }
+  },
+
+  "model_selection": {
+    "dual_model_strategy": {
+      "approach": "双模型协作架构",
+      "rationale": "针对不同任务类型优化，提供最佳性能体验"
     },
-    "configuration_extension": {
+    
+    "chatglm_6b_service": {
+      "name": "ChatGLM-6B (INT4量化版)",
+      "type": "教育概念解释服务",
+      "size": "约2.8GB",
+      "framework": "MNN (字节开源，对安卓ARM架构优化)",
+      "format": ".mnn格式",
+      "capabilities": ["基础对话", "概念解释", "中等推理"],
+      "limitations": ["复杂推理能力有限", "不支持长文本处理"],
+      "target_scenarios": ["语文概念解释", "数学公式说明", "理科术语解释"]
+    },
+    
+    "tinybert_service": {
+      "name": "TinyBERT-Chinese (INT8量化版)",
+      "type": "快速答案判断服务", 
+      "size": "约100MB",
+      "performance": "推理耗时<200ms/次",
+      "capabilities": ["答案相似度判断", "快速响应", "轻量化推理"],
+      "technique": "余弦相似度计算",
+      "target_scenarios": ["答案评分", "实时反馈", "简单问答"]
+    }
+  },
+
+  "service_configuration": {
+    "configuration_extensions": {
       "AIServiceConfig_extension": {
         "new_fields": [
           "isEmbedded: Boolean - 是否为嵌入式模型",
-          "modelFilePath: String? - 本地模型文件路径",
+          "modelFilePath: String? - 本地模型文件路径", 
           "requiresDownload: Boolean - 是否需要下载模型",
           "downloadSize: Long - 下载大小"
-        ],
-        "embedded_config_example": "EmbeddedChatGLMConfig - 嵌入式ChatGLM配置"
+        ]
       },
       "AIServiceCapability_extension": {
         "new_flags": [
           "isAlwaysOnline: Boolean - 嵌入式服务始终在线",
-          "supportsOfflineMode: Boolean - 支持离线模式", 
+          "supportsOfflineMode: Boolean - 支持离线模式",
           "hasPrebuiltResources: Boolean - 有预置资源支持",
           "requiresModelDownload: Boolean - 需要下载模型文件"
         ]
       }
     },
-    "resource_management": {
-      "github_repository_structure": {
-        "models/": "预训练模型文件",
-        "knowledge/": "按学科分类的知识库",
-        "templates/": "模板文件",
-        "metadata/": "元数据文件"
-      },
-      "download_strategy": "按需下载 + 缓存管理",
-      "resource_types": ["MindMap", "Questions", "Textbook", "KnowledgeGraph"]
-    },
-    "routing_strategy": {
-      "priority_mechanism": "用户定义的优先级排序",
-      "fallback_strategy": {
-        "prebuilt_resources": "使用预置资源",
-        "template_based": "使用预置模板",
-        "user_friendly_prompts": "友好提示用户"
-      },
-      "integration": "扩展现有AIServiceRouter支持嵌入式优先级"
+    
+    "user_preferences": {
+      "service_enablement": "用户可独立启用/禁用每个AI服务",
+      "model_download_strategy": ["AUTO", "MANUAL", "WIFI_ONLY"],
+      "storage_management_strategy": ["CONSERVATIVE", "AGGRESSIVE", "SMART"]
     }
   },
 
-  "core_components": {
-    "EmbeddedAIService": {
-      "type": "AIService接口实现",
-      "dependencies": ["ChatGLMModel", "TinyBERTModel", "KnowledgeGraph", "ResourceManager"],
-      "key_methods": [
-        "initialize(): 模型加载和初始化",
-        "sendMessage(): 基础对话功能", 
-        "generateMindMap(): 预置思维导图",
-        "evaluateAnswer(): 答案判断（使用TinyBERT）",
-        "getCapabilities(): 获取嵌入式特有能力"
-      ],
-      "special_features": [
-        "离线优先：在没有网络时提供服务",
-        "资源检查：检查是否支持特定话题",
-        "智能降级：复杂功能使用预置资源"
-      ]
+  "resource_management": {
+    "github_repository_structure": {
+      "models/": "预训练模型文件",
+      "knowledge/": "按学科分类的知识库", 
+      "templates/": "模板文件",
+      "metadata/": "元数据文件"
     },
-    "ResourceManager": {
-      "type": "资源下载和管理器",
-      "responsibilities": [
-        "GitHub资源按需下载",
-        "模型文件下载管理", 
-        "本地资源缓存",
-        "资源版本控制"
-      ],
-      "download_strategies": ["按需下载", "后台预下载", "重试机制"]
-    },
-    "KnowledgeGraphEngine": {
-      "type": "知识图谱引擎",
-      "data_sources": ["本地数据库", "GitHub知识库", "用户学习记录"],
-      "functions": [
-        "话题支持检查",
-        "知识点关联分析", 
-        "学习路径推荐",
-        "薄弱点识别"
-      ]
-    },
-    "PriorityRouter": {
-      "type": "智能路由扩展",
-      "features": [
-        "用户优先级排序",
-        "服务可用性检测",
-        "智能降级策略",
-        "性能监控"
-      ]
+    "download_strategy": "按需下载 + 缓存管理",
+    "resource_types": ["MindMap", "Questions", "Textbook", "KnowledgeGraph"],
+    
+    "prebuilt_resources": {
+      "tangtou_gejue": "汤头歌诀结构化数据和知识图谱",
+      "high_school_subjects": {
+        "语文": "文言文阅读、现代文阅读、作文写作思维导图",
+        "数学": "代数、几何、概率统计、微积分思维导图", 
+        "英语": "词汇语法、阅读理解、写作表达思维导图",
+        "理科综合": "物理、化学、生物各主题思维导图"
+      }
     }
   },
 
-  "implementation_strategy": {
+  "intelligent_routing": {
+    "routing_strategy": "基于能力星级评分的智能路由",
+    "decision_factors": ["任务能力需求", "服务性能统计", "用户偏好", "成本优化"],
+    
+    "ability_mapping": {
+      "SIMPLE_QA": "TinyBERT优先（快速响应）",
+      "CONCEPT_EXPLANATION": "ChatGLM优先（详细解释）", 
+      "COMPLEX_REASONING": "云端服务优先（复杂推理）"
+    },
+    
+    "scoring_algorithm": {
+      "ability_score": "40%权重 - 服务是否支持所需能力",
+      "availability_score": "20%权重 - 服务可用性（离线服务加分）",
+      "performance_score": "20%权重 - 响应时间和可靠性",
+      "cost_score": "20%权重 - 使用成本（离线服务无持续成本）"
+    }
+  },
+
+  "input_suggestion_system_design": {
+    "approach": "发送前检测（非实时）",
+    "detection_timing": "仅在用户点击发送按钮时触发",
+    "analysis_method": "轻量化关键词匹配",
+    "performance_target": "检测过程<100ms",
+    
+    "keyword_categories": {
+      "simple_qa": ["是什么", "为什么", "怎么", "快速", "即时"],
+      "concept_explanation": ["定义", "解释", "概念", "理解"], 
+      "complex_reasoning": ["证明", "分析", "论述", "推理"]
+    },
+    
+    "suggestion_types": {
+      "simple_qa": "检测到简单问答问题，建议使用简答模式以获得更快响应",
+      "concept_explanation": "检测到概念解释需求，建议详细说明背景以获得更准确回答", 
+      "complex_reasoning": "检测到复杂推理需求，建议使用云端服务以获得最佳效果"
+    },
+    
+    "user_interface": {
+      "suggestion_dialog": "非侵入式对话框显示优化建议",
+      "user_choices": ["采纳建议", "忽略建议"],
+      "integration_point": "发送按钮点击事件"
+    }
+  },
+
+  "implementation_phases": {
     "phase_1": {
-      "name": "基础框架搭建",
-      "duration": "1-2周",
+      "name": "基础功能完善",
+      "duration": "1-2周", 
+      "priority": "高价值低复杂度",
       "deliverables": [
-        "MNN框架集成和依赖添加",
-        ".mnn模型加载器实现", 
-        "嵌入式AIService接口扩展",
-        "基础资源管理器框架"
+        "Topic管理功能完善",
+        "设置功能完善",
+        "数据持久化优化"
       ]
     },
+    
     "phase_2": {
-      "name": "双模型集成",
-      "duration": "2-3周", 
+      "name": "核心交互功能", 
+      "duration": "1-2周",
+      "priority": "高价值中等复杂度",
       "deliverables": [
-        "ChatGLM-6B对话功能集成",
-        "TinyBERT答案判断功能",
-        "模型切换和路由逻辑",
-        "基础测试和性能优化"
+        "ChatFragment优化",
+        "MindMap显示完善", 
+        "基础功能测试"
       ]
     },
+    
     "phase_3": {
-      "name": "知识图谱集成",
+      "name": "嵌入式AI集成",
       "duration": "2-3周",
+      "priority": "高价值高复杂度", 
+      "deliverables": [
+        "MNN框架集成和模型加载器",
+        "ChatGLM-6B和TinyBERT双模型集成",
+        "智能路由和降级策略实现"
+      ]
+    },
+    
+    "phase_4": {
+      "name": "知识图谱集成",
+      "duration": "2-3周", 
+      "priority": "中等价值中等复杂度",
       "deliverables": [
         "Room数据库设计（知识图谱存储）",
-        "GitHub资源下载器实现",
-        "动态提问模板生成器",
-        "资源缓存管理机制"
-      ]
-    },
-    "phase_4": {
-      "name": "用户体验优化",
-      "duration": "1-2周",
-      "deliverables": [
-        "服务优先级设置界面",
-        "模型加载和推理性能优化", 
-        "优雅的错误处理和降级",
-        "完整的用户文档和引导"
+        "GitHub资源下载器实现", 
+        "动态提问模板生成器"
       ]
     }
   },
@@ -172,13 +203,13 @@
       "mitigation": ["分模块下载", "选择性安装", "压缩优化"]
     },
     "memory_usage": {
-      "risk": "内存占用过高",
-      "impact": "中", 
+      "risk": "内存占用过高", 
+      "impact": "中",
       "mitigation": ["动态加载", "及时释放", "弱引用管理"]
     },
     "inference_performance": {
       "risk": "推理性能问题",
-      "impact": "中",
+      "impact": "中", 
       "mitigation": ["多线程优化", "GPU加速", "缓存策略"]
     },
     "resource_download": {
@@ -188,26 +219,27 @@
     },
     "model_compatibility": {
       "risk": "模型兼容性问题",
-      "impact": "中",
+      "impact": "中", 
       "mitigation": ["格式验证", "备选方案", "版本控制"]
     }
   },
 
   "design_advantages": {
     "architecture_consistency": "基于现有插件化架构，无缝集成",
-    "hybrid_intelligence": "本地模型与云端模型协同工作",
-    "offline_first": "在没有网络时提供基础学习功能", 
-    "user_experience": "智能降级策略，友好错误提示",
-    "extensibility": "支持后续添加更多本地模型",
-    "cost_optimization": "减少云端服务依赖，降低成本"
+    "hybrid_intelligence": "本地模型与云端模型协同工作，优势互补", 
+    "offline_first": "在没有网络时提供基础学习功能",
+    "user_experience": "智能降级策略，友好的错误提示",
+    "extensibility": "支持后续添加更多本地模型和预置资源",
+    "cost_optimization": "减少对云端服务的依赖，降低使用成本"
   },
 
   "confirmation_points": {
     "model_selection": "双模型架构（ChatGLM-6B + TinyBERT）技术选型",
     "architecture_approach": "基于现有插件化AI服务架构的扩展方案", 
     "resource_management": "预置资源管理和GitHub仓库组织结构",
-    "routing_strategy": "智能路由和用户优先级设置方案"
+    "routing_strategy": "基于能力星级评分的智能路由方案",
+    "input_suggestion": "发送前检测的非实时输入建议系统"
   },
 
-  "status": "ready_for_review"
+  "status": "ready_for_implementation"
 }

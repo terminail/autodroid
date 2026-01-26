@@ -388,7 +388,7 @@ AIService Layer (扩展)
 - **推理框架**：MNN (字节开源，对安卓ARM架构优化极佳)
 - **格式**：.mnn格式
 - **能力范围**：
-  - ✅ **概念解释**：各学科基础概念、定义说明
+  - ✅ **概念解释**：各主题基础概念、定义说明
   - ✅ **基础问答**：简单问题解答和知识梳理
   - ✅ **中等推理**：中等难度题目的分析指导
   - ⚠️ **复杂推理**：复杂证明和长篇分析能力有限
@@ -437,7 +437,7 @@ graph TD
     
     B --> B1[TinyBERT-Chinese]
     B --> B2[INT8量化]
-    B --> B3[跨学科通用]
+    B --> B3[跨主题通用]
     
     C --> C1[孟德尔遗传定律]
     C --> C2[函数单调性]
@@ -449,7 +449,7 @@ graph TD
 ```
 
 **优势分析：**
-- ✅ **统一性**：所有学科使用同一模型，减少维护成本
+- ✅ **统一性**：所有主题使用同一模型，减少维护成本
 - ✅ **中文优化**：专门针对中文教育术语优化
 - ✅ **轻量化**：INT8量化后体积小，适合移动端部署
 - ✅ **性能稳定**：推理速度快，满足实时交互需求
@@ -482,7 +482,7 @@ class EmbeddedAIEngine {
 }
 
 // Repository层负责数据整合，只与AIService交互
-class AIRepository {
+class MessageRepository {
     suspend fun processQuestion(question: String): AIResponse {
         // 1. 通过Repository获取相关知识
         val knowledge = knowledgeGraphRepository.getRelatedKnowledge(question)
@@ -610,7 +610,7 @@ gantt
 
 #### Repository层的标准职责
 ```kotlin
-class AIRepository(
+class MessageRepository(
     // ✅ 数据源：DAO（本地数据库）
     private val knowledgeGraphDao: KnowledgeGraphDao,
     private val answerHistoryDao: AnswerHistoryDao,
@@ -693,9 +693,9 @@ class AIServiceInitializer {
 }
 ```
 
-## ChatGLM-6B对高中全学科的适用性评估
+## ChatGLM-6B对高中全主题的适用性评估
 
-### 高中全学科适配能力分析
+### 高中全主题适配能力分析
 ```mermaid
 graph TB
     A[ChatGLM-6B INT4量化版] --> B[语文: 85%适配]
@@ -721,9 +721,9 @@ graph TB
     G --> G3[遗传计算: ❌ 有限]
 ```
 
-### 各学科能力适配度详细分析
+### 各主题能力适配度详细分析
 
-| 学科 | 适配度 | 优势领域 | 局限性 | 智能路由策略 |
+| 主题 | 适配度 | 优势领域 | 局限性 | 智能路由策略 |
 |------|--------|----------|--------|--------------|
 | **语文** | 85% | 概念解释、文言翻译、名句默写 | 长篇文本分析、复杂写作指导 | 本地优先，云端辅助复杂分析 |
 | **数学** | 80% | 公式定理说明、基础计算指导 | 复杂证明、高阶数学推理 | 本地基础题，云端复杂证明 |
@@ -735,11 +735,11 @@ graph TB
 | **历史** | 80% | 事件解释、时间线梳理 | 深层因果分析 | 本地良好表现 |
 | **地理** | 75% | 概念解释、区位分析 | 复杂图表、计算题 | 本地基础，云端辅助 |
 
-### 跨学科统一架构设计
+### 跨主题统一架构设计
 ```mermaid
 graph LR
     A[高中学习需求] --> B[智能路由系统]
-    B --> C[学科能力匹配]
+    B --> C[主题能力匹配]
     B --> D[性能统计优化]
     
     C --> E[ChatGLM-6B]
@@ -842,7 +842,7 @@ val educationTopic = TopicEntity(
 
 val mathTopic = TopicEntity(
     title = "数学", 
-    description = "数学学科主题",
+    description = "数学主题主题",
     path = listOf("教育", "数学"),
     capabilities = setOf(AIAbility.MATH),
     isPreset = true
@@ -850,7 +850,7 @@ val mathTopic = TopicEntity(
 
 val chineseTopic = TopicEntity(
     title = "语文",
-    description = "语文学科主题",
+    description = "语文主题主题",
     path = listOf("教育", "语文"),
     capabilities = setOf(AIAbility.LONG_TEXT, AIAbility.CREATIVE_WRITING),
     isPreset = true
@@ -875,88 +875,236 @@ val quadraticTopic = TopicEntity(
 
 **设计目标**：提供完整的用户控制能力，包括服务启用/禁用、模型下载/删除管理。
 
+**重要设计原则**：
+- **所有服务状态（isEnabled、priority等）都存储在SettingsItem中**
+- **不使用UserServicePreferences类，所有管理逻辑都在ViewModel中**
+- **使用DataStore持久化SettingsItem的所有可变状态**
+- **保持与现有云AI服务（如DoubaoAIServiceItem）的设计一致**
+
 ```kotlin
-// 用户服务偏好配置
-class UserServicePreferences {
+// 服务设置ViewModel - 统一管理所有AI服务的状态
+class ServiceSettingsViewModel : ViewModel() {
     
-    // 服务启用状态（独立控制）
-    val enabledServices = mutableSetOf<String>()
+    // 使用DataStore持久化服务配置
+    private val dataStore: DataStore<Preferences> by lazy {
+        context.createDataStore("service_settings")
+    }
     
-    // 服务优先级配置
-    val servicePriority = mutableListOf<String>()
+    // 管理所有AI服务的SettingsItem列表
+    private val _serviceItems = MutableStateFlow<List<SettingsItem>>(emptyList())
+    val serviceItems: StateFlow<List<SettingsItem>> = _serviceItems.asStateFlow()
     
-    // 模型下载策略
-    val modelDownloadStrategy = ModelDownloadStrategy.AUTO
+    // 全局策略（嵌入式服务专用）
+    private val _modelDownloadStrategy = MutableStateFlow(ModelDownloadStrategy.WIFI_ONLY)
+    val modelDownloadStrategy: StateFlow<ModelDownloadStrategy> = _modelDownloadStrategy.asStateFlow()
     
-    // 存储空间管理策略
-    val storageManagementStrategy = StorageManagementStrategy.CONSERVATIVE
+    private val _storageManagementStrategy = MutableStateFlow(StorageManagementStrategy.CONSERVATIVE)
+    val storageManagementStrategy: StateFlow<StorageManagementStrategy> = _storageManagementStrategy.asStateFlow()
     
-    // 服务启用管理
-    suspend fun enableService(serviceId: String) {
-        if (!isServiceDownloaded(serviceId)) {
-            when (modelDownloadStrategy) {
-                ModelDownloadStrategy.AUTO -> {
-                    // 自动下载模型
-                    downloadServiceModel(serviceId)
+    // 初始化服务列表
+    init {
+        loadServiceItems()
+    }
+    
+    // 加载所有服务项（从持久化存储或默认配置）
+    private suspend fun loadServiceItems() {
+        // 云AI服务
+        val doubao = DoubaoAIServiceItem(
+            isEnabled = loadEnabledState("doubao"),
+            priority = loadPriorityState("doubao")
+        )
+        val deepseek = DeepSeekAIServiceItem(
+            isEnabled = loadEnabledState("deepseek"),
+            priority = loadPriorityState("deepseek")
+        )
+        // ... 其他云AI服务
+        
+        // 嵌入式AI服务
+        val chatglm = ChatGLMAIServiceItem(
+            isEnabled = loadEnabledState("chatglm-embedded"),
+            isModelDownloaded = checkModelDownloaded("chatglm-embedded"),
+            downloadStrategy = loadDownloadStrategy("chatglm-embedded"),
+            priority = loadPriorityState("chatglm-embedded")
+        )
+        val tinybert = TinyBERTAIServiceItem(
+            isEnabled = loadEnabledState("tinybert-embedded"),
+            isModelDownloaded = checkModelDownloaded("tinybert-embedded"),
+            downloadStrategy = loadDownloadStrategy("tinybert-embedded"),
+            priority = loadPriorityState("tinybert-embedded")
+        )
+        
+        _serviceItems.value = listOf(doubao, deepseek, /* ... */, chatglm, tinybert)
+    }
+    
+    // 切换服务启用状态
+    suspend fun toggleServiceEnabled(serviceId: String) {
+        val currentItem = _serviceItems.value.find { hasServiceId(it, serviceId) }
+        
+        currentItem?.let { item ->
+            // 对于嵌入式服务，检查模型是否已下载
+            if (item is ChatGLMAIServiceItem || item is TinyBERTAIServiceItem) {
+                if (!item.isModelDownloaded) {
+                    // 显示需要先下载模型的提示
+                    return
                 }
-                ModelDownloadStrategy.MANUAL -> {
-                    // 提示用户手动下载
-                    showDownloadPrompt(serviceId)
-                }
-                ModelDownloadStrategy.WIFI_ONLY -> {
-                    // 仅在WiFi下下载
-                    if (isWifiConnected()) {
-                        downloadServiceModel(serviceId)
-                    } else {
-                        showWifiRequiredPrompt(serviceId)
-                    }
+            }
+            
+            // 切换启用状态
+            val newEnabled = !item.isEnabled
+            updateServiceEnabledState(serviceId, newEnabled)
+            
+            // 持久化到DataStore
+            dataStore.edit { preferences ->
+                preferences[booleanPreferencesKey("${serviceId}_enabled")] = newEnabled
+            }
+        }
+    }
+    
+    // 更新服务启用状态
+    private fun updateServiceEnabledState(serviceId: String, enabled: Boolean) {
+        _serviceItems.value = _serviceItems.value.map { item ->
+            updateItemField(item, serviceId, "isEnabled", enabled)
+        }
+    }
+    
+    // 更新服务优先级
+    suspend fun updateServicePriority(serviceId: String, priority: Int) {
+        _serviceItems.value = _serviceItems.value.map { item ->
+            updateItemField(item, serviceId, "priority", priority)
+        }
+        
+        dataStore.edit { preferences ->
+            preferences[intPreferencesKey("${serviceId}_priority")] = priority
+        }
+    }
+    
+    // 更新嵌入式服务的下载策略
+    suspend fun updateDownloadStrategy(serviceId: String, strategy: ModelDownloadStrategy) {
+        _serviceItems.value = _serviceItems.value.map { item ->
+            if (item is ChatGLMAIServiceItem && item.id == serviceId) {
+                item.copy(downloadStrategy = strategy)
+            } else if (item is TinyBERTAIServiceItem && item.id == serviceId) {
+                item.copy(downloadStrategy = strategy)
+            } else {
+                item
+            }
+        }
+        
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("${serviceId}_download_strategy")] = strategy.name
+        }
+    }
+    
+    // 触发模型下载
+    suspend fun downloadServiceModel(serviceId: String) {
+        when (modelDownloadStrategy.value) {
+            ModelDownloadStrategy.AUTO -> {
+                // 自动下载模型
+                downloadModel(serviceId)
+            }
+            ModelDownloadStrategy.MANUAL -> {
+                // 提示用户手动下载
+                showDownloadPrompt(serviceId)
+            }
+            ModelDownloadStrategy.WIFI_ONLY -> {
+                // 仅在WiFi下下载
+                if (isWifiConnected()) {
+                    downloadModel(serviceId)
+                } else {
+                    showWifiRequiredPrompt(serviceId)
                 }
             }
         }
-        enabledServices.add(serviceId)
-        savePreferences()
     }
     
-    // 服务禁用管理
-    suspend fun disableService(serviceId: String) {
-        enabledServices.remove(serviceId)
-        
-        // 根据存储管理策略决定是否删除模型
-        when (storageManagementStrategy) {
+    // 删除模型（根据存储管理策略）
+    suspend fun deleteServiceModel(serviceId: String) {
+        when (storageManagementStrategy.value) {
             StorageManagementStrategy.CONSERVATIVE -> {
                 // 保守策略：不删除模型，保留以备重新启用
             }
             StorageManagementStrategy.AGGRESSIVE -> {
                 // 激进策略：立即删除模型释放空间
-                deleteServiceModel(serviceId)
+                deleteModel(serviceId)
             }
             StorageManagementStrategy.SMART -> {
                 // 智能策略：根据存储空间状况决定
                 if (isStorageLow()) {
-                    deleteServiceModel(serviceId)
+                    deleteModel(serviceId)
                 }
             }
         }
-        savePreferences()
     }
     
-    // 获取可用的服务列表（基于启用状态）
-    fun getAvailableServices(requiredAbility: AIAbility): List<String> {
-        return servicePriority.filter { serviceId ->
-            enabledServices.contains(serviceId) && 
-            aiServiceRegistry.hasAbility(serviceId, requiredAbility)
+    // 更新全局下载策略
+    suspend fun updateGlobalDownloadStrategy(strategy: ModelDownloadStrategy) {
+        _modelDownloadStrategy.value = strategy
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("global_download_strategy")] = strategy.name
         }
     }
     
-    // 保存用户偏好到SharedPreferences
-    private fun savePreferences() {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit()
-            .putStringSet("enabled_services", enabledServices)
-            .putString("service_priority", servicePriority.joinToString(","))
-            .apply()
+    // 更新全局存储管理策略
+    suspend fun updateGlobalStorageStrategy(strategy: StorageManagementStrategy) {
+        _storageManagementStrategy.value = strategy
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("global_storage_strategy")] = strategy.name
+        }
+    }
+    
+    // 辅助方法：检查item是否有指定的serviceId
+    private fun hasServiceId(item: SettingsItem, serviceId: String): Boolean = when (item) {
+        is DoubaoAIServiceItem -> item.id == serviceId
+        is ChatGLMAIServiceItem -> item.id == serviceId
+        is TinyBERTAIServiceItem -> item.id == serviceId
+        // 其他AI服务...
+        else -> false
+    }
+    
+    // 辅助方法：更新item的字段
+    private fun updateItemField(item: SettingsItem, serviceId: String, field: String, value: Any): SettingsItem {
+        return when (item) {
+            is DoubaoAIServiceItem -> if (item.id == serviceId) {
+                when (field) {
+                    "isEnabled" -> item.copy(isEnabled = value as Boolean)
+                    "priority" -> item.copy(priority = value as Int)
+                    else -> item
+                }
+            } else item
+            is ChatGLMAIServiceItem -> if (item.id == serviceId) {
+                when (field) {
+                    "isEnabled" -> item.copy(isEnabled = value as Boolean)
+                    "priority" -> item.copy(priority = value as Int)
+                    else -> item
+                }
+            } else item
+            is TinyBERTAIServiceItem -> if (item.id == serviceId) {
+                when (field) {
+                    "isEnabled" -> item.copy(isEnabled = value as Boolean)
+                    "priority" -> item.copy(priority = value as Int)
+                    else -> item
+                }
+            } else item
+            // 其他AI服务...
+            else -> item
+        }
+    }
+    
+    // 辅助方法：从DataStore加载状态
+    private suspend fun loadEnabledState(serviceId: String): Boolean {
+        return dataStore.data.first()[booleanPreferencesKey("${serviceId}_enabled")] ?: false
+    }
+    
+    private suspend fun loadPriorityState(serviceId: String): Int {
+        return dataStore.data.first()[intPreferencesKey("${serviceId}_priority")] ?: 0
+    }
+    
+    private suspend fun loadDownloadStrategy(serviceId: String): ModelDownloadStrategy {
+        val name = dataStore.data.first()[stringPreferencesKey("${serviceId}_download_strategy")]
+        return name?.let { ModelDownloadStrategy.valueOf(it) } ?: ModelDownloadStrategy.WIFI_ONLY
     }
 }
+```
 
 // 模型下载策略枚举
 enum class ModelDownloadStrategy {
@@ -1029,11 +1177,11 @@ sequenceDiagram
 - **成本优化建议**：根据使用量推荐性价比高的服务
 ```
 
-**高中全学科评估总结：**
+**高中全主题评估总结：**
 - ✅ **ChatGLM-6B整体适配度良好**（75-85%），特别适合概念解释类任务
-- ✅ **化学、生物、语文等学科表现优秀**，可作为主要服务选项
+- ✅ **化学、生物、语文等主题表现优秀**，可作为主要服务选项
 - ⚠️ **数学复杂证明、英语高级写作等需要云端辅助**
-- 🔄 **智能路由系统根据学科特点和性能数据动态优化服务选择**
+- 🔄 **智能路由系统根据主题特点和性能数据动态优化服务选择**
 
 ### 基于现有AI能力架构的扩展
 
@@ -1324,14 +1472,15 @@ graph TB
     B --> B1[ChatGLM-6B模型]
     B --> B2[教育概念解释]
     B --> B3[基础对话功能]
+
+    B --> D[共享知识图谱]
+    D --> E[预置资源管理]
+    C --> D
     
     C --> C1[TinyBERT模型]
     C --> C2[答案判断]
     C --> C3[相似度计算]
     
-    B --> D[共享知识图谱]
-    C --> D
-    D --> E[预置资源管理]
 ```
 
 ### ChatGLM服务实现概览
@@ -1361,7 +1510,7 @@ classDiagram
 ```
 
 **核心能力**：
-- ✅ **教育概念解释**：各学科基础概念和定义说明
+- ✅ **教育概念解释**：各主题基础概念和定义说明
 - ✅ **基础问答**：简单问题解答和知识梳理  
 - ✅ **中等推理**：中等难度题目的分析指导
 - ⚠️ **复杂推理**：复杂证明和长篇分析能力有限
@@ -1717,7 +1866,7 @@ graph TD
     C3 --> J[普济消毒饮]
 ```
 
-### 高中各学科思维导图准备
+### 高中各主题思维导图准备
 
 #### 1. 语文思维导图结构
 ```mermaid
@@ -1814,7 +1963,7 @@ graph TD
 
 ### 知识图谱准备方法
 
-#### 1. 学科知识图谱结构设计
+#### 1. 主题知识图谱结构设计
 ```json
 {
   "knowledge_graph": {
@@ -1886,7 +2035,7 @@ gantt
 ```
 
 #### 2. 资源质量保证
-- **准确性验证**：由学科专家审核内容
+- **准确性验证**：由主题专家审核内容
 - **格式标准化**：统一JSON/YAML格式
 - **版本控制**：GitHub仓库管理，支持增量更新
 - **性能优化**：压缩存储，按需加载
@@ -1938,20 +2087,20 @@ graph TB
 
 ```mermaid
 quadrantChart
-    title 功能实施优先级矩阵
-    x-axis 低复杂度 → 高复杂度
-    y-axis 低价值 → 高价值
-    quadrant-1 高价值高复杂度
-    quadrant-2 高价值低复杂度
-    quadrant-3 低价值低复杂度  
-    quadrant-4 低价值高复杂度
+    title Feature Implementation Priority Matrix
+    x-axis Low Complexity → High Complexity
+    y-axis Low Value → High Value
+    quadrant-1 High Value, High Complexity
+    quadrant-2 High Value, Low Complexity
+    quadrant-3 Low Value, Low Complexity  
+    quadrant-4 Low Value, High Complexity
     
-    "Topic管理功能": [0.2, 0.8]
-    "设置功能完善": [0.3, 0.7]
-    "数据持久化优化": [0.4, 0.6]
-    "ChatFragment优化": [0.6, 0.9]
-    "MindMap显示完善": [0.7, 0.8]
-    "嵌入式AI集成": [0.9, 0.7]
+    "Topic Management": [0.2, 0.8]
+    "Settings Enhancement": [0.3, 0.7]
+    "Data Persistence Optimization": [0.4, 0.6]
+    "ChatFragment Optimization": [0.6, 0.9]
+    "MindMap Display Enhancement": [0.7, 0.8]
+    "Embedded AI Integration": [0.9, 0.7]
 ```
 
 **优先级排序**：
@@ -2067,7 +2216,7 @@ graph LR
 ### 实现方案（简化的Kotlin代码）
 
 ```kotlin
-class InputSuggestionService {
+class InputSuggestionDetector {
     
     // 发送前检测入口
     suspend fun analyzeBeforeSend(message: String): SuggestionResult {
@@ -2149,17 +2298,15 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[用户开始输入] --> B{输入框监听}
-    B --> C[防抖处理500ms]
-    C --> D[能力需求分析]
-    D --> E[关键词检测]
-    E --> F[实时建议生成]
-    F --> G[UI显示建议]
-    G --> H{用户优化输入}
-    H -->|采纳建议| I[更精准路由]
-    H -->|忽略建议| J[继续当前输入]
-    I --> K[选择最佳AI服务]
-    J --> K
+    A[用户输入完成] --> B{点击发送按钮}
+    B --> C[发送前检测分析]
+    C --> D[关键词匹配检测]
+    D --> E[建议生成]
+    E --> F{显示建议对话框}
+    F -->|接受建议| G[优化后发送]
+    F -->|忽略建议| H[原样发送]
+    G --> I[选择最佳AI服务]
+    H --> I
 ```
 
 ### 2. 用户交互流程
@@ -2171,16 +2318,18 @@ sequenceDiagram
     participant A as AIRouterService
     participant AI as AI服务
     
-    U->>C: 输入文本
-    Note over C: 实时监听输入变化
-    C->>C: 防抖处理500ms
-    C->>A: analyzeCapabilityRequirements()
+    U->>C: 输入文本并点击发送
+    Note over C: 发送前检测（非实时）
+    C->>A: analyzeBeforeSend()
     A->>A: 关键词映射分析
-    A->>C: 返回建议和检测结果
-    C->>U: 显示实时建议
-    Note over U: 用户看到优化提示
-    U->>C: 优化输入或直接发送
-    C->>A: routeByUserInput()
+    A->>C: 返回优化建议
+    alt 有建议
+        C->>U: 显示建议对话框
+        U->>C: 选择是否采纳建议
+        C->>A: routeWithSuggestion()
+    else 无建议
+        C->>A: routeDirectly()
+    end
     A->>AI: 选择最合适服务
     AI->>U: 返回精准结果
 ```
@@ -2261,77 +2410,60 @@ graph TB
 - `getCapabilityAnalysisTips()`: 关键词映射指南
 - `routeByUserInput()`: 基于用户输入的智能路由
 
-**防抖机制**：500ms延迟，避免频繁触发分析
-
-**建议类型**：
-- **具体建议**：检测到关键词时显示对应能力说明
-- **通用指导**：未检测到关键词时提供输入优化提示
-- **示例展示**：提供输入示例帮助用户更好表达
-
 ### 7. 用户体验优化
 
-**智能提示时机**：
-- 输入长度≥5字符时开始分析
-- 防抖处理避免干扰输入
-- 输入清空时自动隐藏建议
+**发送前检测时机**：
+- 仅在用户点击发送按钮时触发检测
+- 不监听输入过程，避免干扰用户
+- 检测完成后立即显示建议对话框
 
 **建议显示策略**：
-- 检测到关键词：显示具体能力映射
-- 输入过于简单：提供输入优化指导
-- 多关键词匹配：展示所有相关能力
+- 检测到关键词：显示具体能力映射和优化建议
+- 未检测到关键词：提供输入优化指导
+- 用户可选择接受或忽略建议
 
 **界面交互**：
-- 非侵入式提示：不影响正常输入
-- 实时更新：输入变化时即时更新建议
-- 可忽略：用户可继续输入或采纳建议
+- 非侵入式对话框：不影响正常输入流程
+- 用户完全可控：可自由选择是否采纳建议
+- 简洁明了的建议内容
 
 ### 8. 技术实现要点
 
-**实时监听机制**：
+**发送前检测机制**：
 ```kotlin
-binding.messageInput.addTextChangedListener(object : TextWatcher {
-    override fun afterTextChanged(s: Editable?) {
-        // 防抖处理
-        val currentTime = System.currentTimeMillis()
-        lastInputTime = currentTime
-        
-        lifecycleScope.launch {
-            delay(suggestionDebounceDelay)
-            if (currentTime == lastInputTime) {
-                analyzeAndShowInputSuggestions(text.toString())
-            }
+// 发送按钮点击事件
+binding.sendButton.setOnClickListener {
+    val message = binding.messageInput.text.toString()
+    
+    // 发送前检测
+    lifecycleScope.launch {
+        val suggestion = InputSuggestionDetector.analyzeBeforeSend(message)
+        if (suggestion.shouldShowDialog) {
+            showInputSuggestionDialog(suggestion)
+        } else {
+            sendMessageDirectly(message)
         }
     }
-})
+}
 ```
 
-**建议生成逻辑**：
+**建议对话框实现**：
 ```kotlin
-fun getInputOptimizationSuggestions(userInput: String): Map<String, Any> {
-    val suggestions = mutableListOf<String>()
-    val detectedKeywords = mutableListOf<String>()
-    
-    // 关键词检测
-    tips.forEach { (category, keywords) ->
-        keywords.forEach { keyword ->
-            if (normalizedInput.contains(keyword)) {
-                detectedKeywords.add("$keyword ($category)")
-            }
+private fun showInputSuggestionDialog(suggestion: SuggestionResult) {
+    val dialog = MaterialAlertDialogBuilder(requireContext())
+        .setTitle("输入优化建议")
+        .setMessage(suggestion.message)
+        .setPositiveButton("采纳建议") { _, _ ->
+            // 优化后的消息发送
+            sendOptimizedMessage(suggestion.optimizedMessage)
         }
-    }
+        .setNegativeButton("忽略建议") { _, _ ->
+            // 原样发送
+            sendMessageDirectly(binding.messageInput.text.toString())
+        }
+        .create()
     
-    // 建议生成
-    if (detectedKeywords.isEmpty()) {
-        suggestions.add("💡 尝试添加具体需求关键词")
-        suggestions.add("📚 明确说明任务类型")
-    } else {
-        suggestions.add("✅ 已识别关键词: ${detectedKeywords.joinToString(", ")}")
-    }
-    
-    return mapOf(
-        "suggestions" to suggestions,
-        "detectedKeywords" to detectedKeywords
-    )
+    dialog.show()
 }
 ```
 
@@ -2339,8 +2471,8 @@ fun getInputOptimizationSuggestions(userInput: String): Map<String, Any> {
 
 **能力导向路由**：用户无需了解技术细节，只需自然表达需求
 
-**实时交互优化**：在输入过程中即时提供优化指导
+**非干扰式交互**：仅在发送前提供建议，不影响输入体验
 
 **智能服务选择**：基于用户输入内容自动选择最合适的AI服务
 
-**渐进式学习**：用户通过建议系统学习如何更有效表达需求
+**用户完全可控**：用户可自由选择是否采纳优化建议
