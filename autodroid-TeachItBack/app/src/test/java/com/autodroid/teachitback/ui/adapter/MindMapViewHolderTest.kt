@@ -5,7 +5,7 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import androidx.test.core.app.ApplicationProvider
-import com.autodroid.teachitback.adapter.MindMapItem
+import com.autodroid.teachitback.ui.adapter.ChatItem
 import com.autodroid.teachitback.model.MindMapNode
 
 @RunWith(RobolectricTestRunner::class)
@@ -19,7 +19,7 @@ class MindMapViewHolderTest {
             MindMapNode(id = "2", mindMapId = "map1", parentId = "1", title = "子节点", progress = 30)
         )
         
-        val mindMapItem = MindMapItem.MindMapDisplayItem("map1", nodes, "测试MindMap")
+        val mindMapItem = ChatItem.MindMapDisplayItem(nodes, "测试MindMap", null)
         
         // 这里会失败，因为布局文件还不存在
         // val binding = ItemMindmapBinding.inflate(LayoutInflater.from(context))
@@ -35,7 +35,7 @@ class MindMapViewHolderTest {
     @Test
     fun `MindMapViewHolder应该处理空节点列表`() {
         // RED: 这个测试会失败
-        val emptyMindMapItem = MindMapItem.MindMapDisplayItem("map1", emptyList(), "空MindMap")
+        val emptyMindMapItem = ChatItem.MindMapDisplayItem(emptyList(), "空MindMap", null)
         
         // 验证空列表处理
         // val binding = ItemMindmapBinding.inflate(LayoutInflater.from(context))

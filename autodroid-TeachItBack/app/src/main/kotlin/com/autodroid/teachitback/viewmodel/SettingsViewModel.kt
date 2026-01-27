@@ -1,16 +1,16 @@
 package com.autodroid.teachitback.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.autodroid.teachitback.config.AIServiceConfig
-import com.autodroid.teachitback.database.AppDatabase
 import com.autodroid.teachitback.repository.SettingsRepository
+import com.autodroid.teachitback.repository.TopicRepository
 import com.autodroid.teachitback.ui.adapter.SettingsItem
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -19,8 +19,9 @@ import kotlinx.coroutines.launch
  */
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     
-    private val database = AppDatabase.getDatabase(application)
-    private val settingsRepository = SettingsRepository(database.settingDao())
+    // Repository（通过应用上下文获取，ViewModel不感知数据库创建细节）
+    private val settingsRepository = (application as com.autodroid.teachitback.TeachItBackApplication).getSettingsRepository()
+    private val topicRepository = (application as com.autodroid.teachitback.TeachItBackApplication).getTopicRepository()
     
     private val _settingsItems = MutableLiveData<List<SettingsItem>>()
     val settingsItems: LiveData<List<SettingsItem>> = _settingsItems
@@ -34,15 +35,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     // AI 服务配置相关
     private val _aiServiceConfigs = MutableLiveData<Map<String, AIServiceConfig>>()
     val aiServiceConfigs: LiveData<Map<String, AIServiceConfig>> = _aiServiceConfigs
-    
-    // AI 服务测试连接状态
-    private val _aiServiceTestStatus = MutableLiveData<Map<String, Boolean>>()
-    val aiServiceTestStatus: LiveData<Map<String, Boolean>> = _aiServiceTestStatus
-    
+
     init {
         loadSettings()
         loadAIServiceConfigs()
-        loadAIServiceTestStatus()
     }
     
     /**
@@ -192,11 +188,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 when (settingType) {
                     "dark_mode" -> {
                         val item = SettingsItem.DarkModeSwitchItem(isChecked = isChecked)
-                        settingsRepository.saveSetting("dark_mode", item)
+                        settingsRepository.saveSetting(item)
                     }
                     "auto_save" -> {
                         val item = SettingsItem.AutoSaveSwitchItem(isChecked = isChecked)
-                        settingsRepository.saveSetting("auto_save", item)
+                        settingsRepository.saveSetting(item)
                     }
                 }
                 loadSettings() // 重新加载以反映更改
@@ -242,7 +238,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                         ?: SettingsItem.JieyueAIServiceItem(isEnabled = isEnabled)
                     else -> return@launch
                 }
-                settingsRepository.saveSetting("ai_$serviceName", item)
+                settingsRepository.saveSetting(item)
                 loadSettings() // 重新加载以反映更改
             } catch (e: Exception) {
                 _errorMessage.value = "切换AI服务失败: ${e.message}"
@@ -331,7 +327,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 )
                 
                 serviceIds.forEach { serviceId ->
-                    val config = settingsRepository.getAIServiceConfig(serviceId)
+                    val config = settingsRepository.loadAIServiceConfig(serviceId)
                     config?.let {
                         configs[serviceId] = it
                     }
@@ -370,68 +366,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     fun clearErrorMessage() {
         _errorMessage.value = null
-    }
-    
-    /**
-     * 加载 AI 服务测试连接状态
-     */
-    private fun loadAIServiceTestStatus() {
-        viewModelScope.launch {
-            try {
-                val testStatus = mutableMapOf<String, Boolean>()
-                
-                // 加载所有支持的 AI 服务测试状态
-                val serviceIds = listOf(
-                    "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
-                    "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
-                    "doubao", "lingyi", "jieyue"
-                )
-                
-                // 这里可以添加实际的测试连接逻辑
-                // 目前先设置为默认值（已配置的服务为true，未配置的为false）
-                val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
-                serviceIds.forEach { serviceId ->
-                    testStatus[serviceId] = currentConfigs[serviceId]?.apiKey?.isNotEmpty() == true
-                }
-                
-                _aiServiceTestStatus.value = testStatus
-            } catch (e: Exception) {
-                _errorMessage.value = "加载AI服务测试状态失败: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * 测试 AI 服务连接
-     */
-    fun testAIServiceConnection(serviceId: String) {
-        viewModelScope.launch {
-            try {
-                _isLoading.value = true
-                
-                // 模拟测试连接（这里可以替换为实际的测试逻辑）
-                delay(1000) // 模拟网络延迟
-                
-                val config = _aiServiceConfigs.value?.get(serviceId)
-                val isConnected = config?.apiKey?.isNotEmpty() == true
-                
-                // 更新测试状态
-                val currentStatus = _aiServiceTestStatus.value ?: emptyMap()
-                val updatedStatus = currentStatus.toMutableMap()
-                updatedStatus[serviceId] = isConnected
-                _aiServiceTestStatus.value = updatedStatus
-                
-                if (isConnected) {
-                    _errorMessage.value = "$serviceId 连接测试成功"
-                } else {
-                    _errorMessage.value = "$serviceId 连接测试失败：请先配置API Key"
-                }
-                
-            } catch (e: Exception) {
-                _errorMessage.value = "$serviceId 连接测试失败: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
     }
 }

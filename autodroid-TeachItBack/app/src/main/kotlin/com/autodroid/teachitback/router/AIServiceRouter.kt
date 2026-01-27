@@ -59,10 +59,23 @@ class AIServiceRouter(
          */
         fun configureDefaultService(apiKey: String, model: String): Boolean {
             return try {
-                // 这里需要实现具体的服务注册逻辑
-                // 目前先返回true表示配置成功
-                true
+                val instance = INSTANCE
+                if (instance != null) {
+                    // 检查服务是否已注册
+                    val service = instance.serviceRegistry.getService(model)
+                    if (service != null) {
+                        Log.d("AIServiceRouter", "默认服务配置成功: $model")
+                        true
+                    } else {
+                        Log.w("AIServiceRouter", "服务未注册: $model")
+                        false
+                    }
+                } else {
+                    Log.w("AIServiceRouter", "路由器未初始化")
+                    false
+                }
             } catch (e: Exception) {
+                Log.e("AIServiceRouter", "默认服务配置失败: ${e.message}")
                 false
             }
         }
@@ -102,18 +115,22 @@ class AIServiceRouter(
     ): T {
         // 获取所有可用服务
         val allServices = serviceRegistry.getAllServices()
+        Log.d("AIServiceRouter", "routeByCapability: 总服务数=${allServices.size}")
         
         // 过滤支持所需能力的服务
         val availableServices = allServices.filter { service ->
             capabilityCheck(service.config.capabilities)
         }
+        Log.d("AIServiceRouter", "routeByCapability: 支持能力的服务数=${availableServices.size}, 服务列表=${availableServices.map { it.config.id }}")
         
         if (availableServices.isEmpty()) {
             throw AIServiceException("没有可用的AI服务支持该功能")
         }
         
+        // 智能路由策略（能力导向设计）：
         // 1. 优先选择有免费额度的服务
         val servicesWithQuota = availableServices.filter { service -> service.remainingQuota > 0 }
+        Log.d("AIServiceRouter", "routeByCapability: 有额度的服务数=${servicesWithQuota.size}")
         if (servicesWithQuota.isNotEmpty()) {
             return tryRoute(servicesWithQuota.sortedByDescending { service -> service.remainingQuota }, operation)
         }
@@ -152,7 +169,7 @@ class AIServiceRouter(
         if (preferredService != null) {
             try {
                 val status = preferredService.checkStatus()
-                if (status == ServiceStatus.AVAILABLE) {
+                if (status.isOk) {
                     return operation(preferredService)
                 } else {
                     Log.d("AIServiceRouter", "推荐服务 ${preferredService.config.displayName} 不可用，状态: $status")
@@ -180,20 +197,18 @@ class AIServiceRouter(
         
         for (service in services) {
             try {
+                Log.d("AIServiceRouter", "tryRoute: 尝试服务 ${service.config.displayName}, isAvailable=${service.isAvailable}")
                 // 检查服务状态
                 val status = service.checkStatus()
-                when (status) {
-                    ServiceStatus.AVAILABLE -> {
-                        return operation(service)
-                    }
-                    ServiceStatus.INSUFFICIENT_BALANCE -> 
-                        exceptions.add(InsufficientBalanceException("${service.config.displayName} 余额不足"))
-                    ServiceStatus.RATE_LIMITED -> 
-                        exceptions.add(RateLimitException("${service.config.displayName} 频率限制"))
-                    else -> 
-                        exceptions.add(Exception("${service.config.displayName} 不可用"))
+                Log.d("AIServiceRouter", "tryRoute: 服务 ${service.config.displayName} 状态: $status")
+                if (status.isOk) {
+                    Log.d("AIServiceRouter", "tryRoute: 选择服务 ${service.config.displayName} 进行操作")
+                    return operation(service)
+                } else {
+                    exceptions.add(Exception("${service.config.displayName} 不可用: ${status.description}"))
                 }
             } catch (e: Exception) {
+                Log.e("AIServiceRouter", "tryRoute: 服务 ${service.config.displayName} 调用失败", e)
                 exceptions.add(e)
             }
         }

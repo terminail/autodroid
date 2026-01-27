@@ -1,6 +1,9 @@
 package com.autodroid.teachitback.service
 
 import com.autodroid.teachitback.api.AIService
+import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
+import com.autodroid.teachitback.config.PromptTemplates
 import com.autodroid.teachitback.model.*
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicInteger
@@ -176,13 +179,13 @@ abstract class BaseAIServiceImpl : AIService {
 
     // ===== 状态检测和管理（默认实现）=====
 
-    override suspend fun checkStatus(): ServiceStatus {
+    override suspend fun checkStatus(): AIServiceStatus {
         val errorCount = errorCounter.get()
         return when {
-            errorCount > 10 -> ServiceStatus.ERROR
-            errorCount > 5 -> ServiceStatus.NETWORK_ERROR
-            !validateConfig() -> ServiceStatus.CONFIGURATION_ERROR
-            else -> ServiceStatus.UNAVAILABLE
+            errorCount > 10 -> AIServiceStatus.fromCode(500, "服务错误")
+            errorCount > 5 -> AIServiceStatus.fromCode(500, "网络错误")
+            !validateConfig() -> AIServiceStatus.fromCode(400, "配置错误")
+            else -> AIServiceStatus.fromCode(503, "服务不可用")
         }
     }
 
@@ -202,9 +205,5 @@ abstract class BaseAIServiceImpl : AIService {
 
     override suspend fun updateConfig(newConfig: com.autodroid.teachitback.config.AIServiceConfig) {
         throw UnsupportedFeatureException("配置更新", config.displayName)
-    }
-
-    override suspend fun testConnection(): Boolean {
-        return validateConfig()
     }
 }

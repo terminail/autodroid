@@ -3,12 +3,13 @@ package com.autodroid.teachitback.repository
 import com.autodroid.teachitback.database.MessageDao
 import com.autodroid.teachitback.model.MessageEntity
 import io.mockk.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.*
+import org.junit.Assert.*
 
 /**
  * MessageRepository单元测试
@@ -50,8 +51,8 @@ class MessageRepositoryTest {
 
         // 验证结果
         assertNotNull(result)
-        assertEquals("AI", result.senderType)
-        assertEquals(aiResponseContent, result.content)
+        assertEquals("AI", result!!.senderType)
+        assertEquals(aiResponseContent, result!!.content)
 
         // 验证DAO调用
         coVerify(exactly = 2) { mockDao.insertMessage(any()) } // 用户消息 + AI回复
@@ -91,7 +92,7 @@ class MessageRepositoryTest {
 
         // 验证结果
         assertNotNull(result)
-        assertEquals("AI", result.senderType)
+        assertEquals("AI", result!!.senderType)
 
         // 验证DAO调用
         coVerify(exactly = 2) { mockDao.insertMessage(any()) }

@@ -7,7 +7,6 @@ class MindMapNodeTest {
     
     @Test
     fun `MindMapNode应该具有正确的属性`() {
-        // RED: 这个测试会失败，因为MindMapNode类还不存在
         val node = MindMapNode(
             id = "node1",
             mindMapId = "map1",
@@ -25,7 +24,6 @@ class MindMapNodeTest {
     
     @Test
     fun `MindMapNode应该支持子节点`() {
-        // RED: 这个测试会失败
         val parent = MindMapNode(
             id = "parent",
             mindMapId = "map1",
@@ -49,13 +47,12 @@ class MindMapNodeTest {
     
     @Test
     fun `MindMapNode应该根据进度返回颜色`() {
-        // RED: 这个测试会失败
         val node0 = MindMapNode(id = "1", mindMapId = "map1", progress = 0)
         val node30 = MindMapNode(id = "2", mindMapId = "map1", progress = 30)
         val node70 = MindMapNode(id = "3", mindMapId = "map1", progress = 70)
         
-        assertEquals(Color.RED, node0.getProgressColor())
-        assertEquals(Color.YELLOW, node30.getProgressColor())
-        assertEquals(Color.GREEN, node70.getProgressColor())
+        assertEquals(android.graphics.Color.RED, node0.getProgressColor())
+        assertEquals(android.graphics.Color.YELLOW, node30.getProgressColor())
+        assertEquals(android.graphics.Color.GREEN, node70.getProgressColor())
     }
 }

@@ -45,20 +45,6 @@ class AIServiceDeepSeekTest {
     }
 
     @Test
-    fun `DeepSeek connection test should pass`() {
-        runBlocking {
-            val context = org.robolectric.RuntimeEnvironment.getApplication() as Context
-            val deepSeekService = AIServiceDeepSeek(
-                context = context,
-                config = AIServiceConfig.DeepSeekConfig()
-            )
-
-            val isConnected = deepSeekService.testConnection()
-            assertTrue("DeepSeek connection should be successful", isConnected)
-        }
-    }
-
-    @Test
     fun `DeepSeek status check should return AVAILABLE`() {
         runBlocking {
             val context = org.robolectric.RuntimeEnvironment.getApplication() as Context

@@ -31,13 +31,13 @@ class TopicRepositoryTest {
             )
         )
         
-        whenever(topicDao.getTopicsByTreeNode(treeNodeId)).thenReturn(flowOf(expectedTopics))
+        whenever(topicDao.getTopicsByCategoryId(treeNodeId)).thenReturn(flowOf(expectedTopics))
         
         val result = repository.getTopicsByTreeNode(treeNodeId).first()
         
         assertEquals(expectedTopics.size, result.size)
         assertEquals(treeNodeId, result[0].topicCategoryId)
-        verify(topicDao).getTopicsByTreeNode(treeNodeId)
+        verify(topicDao).getTopicsByCategoryId(treeNodeId)
     }
 
     @Test
@@ -105,8 +105,8 @@ class TopicRepositoryTest {
         
         val query = "数学"
         val expectedTopics = listOf(
-            TopicEntity(title = "数学基础", description = "数学基础主题"),
-            TopicEntity(title = "高等数学", description = "高等数学主题")
+            TopicEntity(title = "数学基础", description = "数学基础主题", topicCategoryId = "test-node"),
+            TopicEntity(title = "高等数学", description = "高等数学主题", topicCategoryId = "test-node")
         )
         
         whenever(topicDao.searchTopicsByTitle(query)).thenReturn(flowOf(expectedTopics))
@@ -129,6 +129,7 @@ class TopicRepositoryTest {
             id = topicId,
             title = "测试主题",
             description = "测试描述",
+            topicCategoryId = "test-node",
             servicePreferences = emptyMap()
         )
         

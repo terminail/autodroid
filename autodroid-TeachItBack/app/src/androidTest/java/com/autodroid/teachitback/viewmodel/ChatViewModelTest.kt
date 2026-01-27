@@ -10,6 +10,8 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 
+@ExperimentalCoroutinesApi
+@RunWith(AndroidJUnit4::class)
 class ChatViewModelTest {
 
     @Mock

@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentSettingsBinding
+import com.autodroid.teachitback.di.ViewModelFactoryProvider
 import com.autodroid.teachitback.ui.adapter.SettingsAdapter
 import com.autodroid.teachitback.viewmodel.SettingsViewModel
 
@@ -31,7 +32,10 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[SettingsViewModel::class.java]
+        
+        // 使用自定义的ViewModelFactory来创建ViewModel实例
+        val factory = ViewModelFactoryProvider.getFactory()
+        viewModel = ViewModelProvider(requireActivity(), factory)[SettingsViewModel::class.java]
 
         setupUI()
         setupRecyclerView()
@@ -45,8 +49,7 @@ class SettingsFragment : Fragment() {
         settingsAdapter = SettingsAdapter(
             onItemClick = { item ->
                 handleSettingsItemClick(item)
-            },
-            aiServiceTestStatus = viewModel.aiServiceTestStatus.value
+            }
         )
 
         binding.settingsRecyclerView.apply {
@@ -146,13 +149,6 @@ class SettingsFragment : Fragment() {
         viewModel.aiServiceConfigs.observe(viewLifecycleOwner) { _ ->
             // 当AI服务配置发生变化时，重新加载设置项
             viewModel.loadSettings()
-        }
-
-        viewModel.aiServiceTestStatus.observe(viewLifecycleOwner) { testStatus ->
-            // 当AI服务测试状态发生变化时，更新适配器
-            testStatus?.let {
-                settingsAdapter.updateAIServiceTestStatus(it)
-            }
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->

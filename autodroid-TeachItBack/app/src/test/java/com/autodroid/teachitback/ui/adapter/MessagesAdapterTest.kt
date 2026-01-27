@@ -35,15 +35,17 @@ class MessagesAdapterTest {
             )
         )
 
-        val adapter = MessagesAdapter()
-        adapter.submitList(messages)
+        val adapter = ChatAdapter()
+        adapter.submitList(messages.map { 
+            com.autodroid.teachitback.ui.adapter.ChatItem.UserMessageItem(it)
+        })
 
         assertEquals(3, adapter.itemCount)
     }
 
     @Test
     fun testAdapterEmptyList() {
-        val adapter = MessagesAdapter()
+        val adapter = ChatAdapter()
         adapter.submitList(emptyList())
 
         assertEquals(0, adapter.itemCount)
@@ -60,8 +62,10 @@ class MessagesAdapterTest {
             )
         )
 
-        val adapter = MessagesAdapter()
-        adapter.submitList(messages)
+        val adapter = ChatAdapter()
+        adapter.submitList(messages.map { 
+            com.autodroid.teachitback.ui.adapter.ChatItem.UserMessageItem(it)
+        })
 
         val viewType = adapter.getItemViewType(0)
         assertEquals(1, viewType)
@@ -78,8 +82,10 @@ class MessagesAdapterTest {
             )
         )
 
-        val adapter = MessagesAdapter()
-        adapter.submitList(messages)
+        val adapter = ChatAdapter()
+        adapter.submitList(messages.map { 
+            com.autodroid.teachitback.ui.adapter.ChatItem.AIMessageItem(it)
+        })
 
         val viewType = adapter.getItemViewType(0)
         assertEquals(2, viewType)

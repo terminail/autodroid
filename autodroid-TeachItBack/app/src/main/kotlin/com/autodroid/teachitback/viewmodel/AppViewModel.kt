@@ -24,11 +24,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
      * 初始化AI服务配置
      * ViewModel通过AIServiceRouter配置AI服务，不直接操作具体服务
      */
-    fun initializeAI(apiKey: String, model: String = "gpt-3.5-turbo") {
-        if (apiKey.isNotBlank()) {
+    fun initializeAI(apiKey: String, model: String = "deepseek_online") {
+        // 对于本地模型（如tinybert_local、chatglm_local），即使apiKey为空也要配置
+        if (apiKey.isNotBlank() || model == "tinybert_local" || model == "chatglm_local") {
             // 通过AIServiceRouter配置服务，ViewModel不感知具体实现细节
             val success = AIServiceRouter.configureDefaultService(apiKey, model)
             _isAIInitialized.value = success
+            
+            if (success) {
+                android.util.Log.d("AppViewModel", "AI服务配置成功: $model")
+            } else {
+                android.util.Log.w("AppViewModel", "AI服务配置失败: $model")
+            }
+        } else {
+            android.util.Log.w("AppViewModel", "未配置AI服务: apiKey为空且不是本地模型")
         }
     }
     

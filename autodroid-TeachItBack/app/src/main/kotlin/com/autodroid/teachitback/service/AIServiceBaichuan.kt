@@ -1,6 +1,7 @@
 package com.autodroid.teachitback.service
 
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.config.PromptTemplates
 import com.autodroid.teachitback.model.FileEntity
 import com.autodroid.teachitback.model.*
@@ -91,7 +92,7 @@ class AIServiceBaichuan(
 
     // ===== 状态检测和管理 =====
 
-    override suspend fun checkStatus(): ServiceStatus {
+    override suspend fun checkStatus(): AIServiceStatus {
         return try {
             val testRequest = """
                 {"model": "${config.model}", "messages": [{"role": "user", "content": "test"}], "max_tokens": 5}
@@ -107,14 +108,14 @@ class AIServiceBaichuan(
             val response = client.newCall(request).execute()
 
             if (response.isSuccessful) {
-                ServiceStatus.AVAILABLE
+                AIServiceStatus.fromCode(200, "服务可用")
             } else when (response.code) {
-                401 -> ServiceStatus.UNAUTHORIZED
-                429 -> ServiceStatus.RATE_LIMITED
-                else -> ServiceStatus.UNAVAILABLE
+                401 -> AIServiceStatus.fromCode(401, "未授权")
+                429 -> AIServiceStatus.fromCode(429, "请求频率限制")
+                else -> AIServiceStatus.fromCode(503, "服务不可用")
             }
         } catch (e: IOException) {
-            ServiceStatus.UNAVAILABLE
+            AIServiceStatus.fromCode(500, "网络错误")
         }
     }
 
@@ -135,14 +136,6 @@ class AIServiceBaichuan(
 
     override suspend fun updateConfig(newConfig: AIServiceConfig) {
         // 百川不支持运行时更新配置
-    }
-
-    override suspend fun testConnection(): Boolean {
-        return try {
-            checkStatus() == ServiceStatus.AVAILABLE
-        } catch (e: Exception) {
-            false
-        }
     }
 
     // ===== 教育专用功能（百川不支持）=====

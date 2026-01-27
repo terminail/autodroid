@@ -1,3 +1,4 @@
 .gradle/
 app/build/
 local.properties
+mnn_3.3.0_android_armv7_armv8_cpu_opencl_vulkan/

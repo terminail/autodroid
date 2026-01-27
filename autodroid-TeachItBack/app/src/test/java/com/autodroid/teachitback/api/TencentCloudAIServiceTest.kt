@@ -8,12 +8,10 @@ import org.junit.Test
 class TencentCloudAIServiceTest {
 
     @Test
-    fun `TencentCloudAIService interface should be defined`() {
-        // 这个测试验证接口是否正确定义
-        val serviceMethods = TencentCloudAIService::class.java.declaredMethods
+    fun `AIService interface should be defined`() {
+        val serviceMethods = AIService::class.java.declaredMethods
         val methodNames = serviceMethods.map { it.name }
 
-        // 验证所有必需的方法都存在
         assertTrue("sendMessage方法必须存在", methodNames.contains("sendMessage"))
         assertTrue("generateMindMap方法必须存在", methodNames.contains("generateMindMap"))
         assertTrue("analyzeLearningProgress方法必须存在", methodNames.contains("analyzeLearningProgress"))

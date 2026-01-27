@@ -1830,8 +1830,9 @@ class ChatGLMAIServiceConfig private constructor(
 ## 预置资源管理系统设计
 
 ### GitHub资源仓库结构
+repo：https://gitee.com/teachitback/tibresource.git
 ```
-teach-it-back-resources/
+tibresource/
 ├── models/                    # 预训练模型
 │   ├── chatglm-6b-int4.mnn   # ChatGLM-6B量化模型
 │   ├── tinybert-int8.mnn     # TinyBERT量化模型

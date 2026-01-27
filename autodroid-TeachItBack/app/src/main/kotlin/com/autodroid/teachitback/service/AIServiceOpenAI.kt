@@ -1,6 +1,7 @@
 package com.autodroid.teachitback.service
 
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.config.PromptTemplates
 import com.autodroid.teachitback.model.*
 import kotlinx.coroutines.Dispatchers
@@ -172,13 +173,12 @@ class AIServiceOpenAI(
 
     // ===== 状态检测和管理 =====
 
-    override suspend fun checkStatus(): ServiceStatus {
+    override suspend fun checkStatus(): AIServiceStatus {
         return try {
             executeWithRetry("checkStatus") {
                 withContext(Dispatchers.IO) {
-                    // 验证配置
                     if (!validateConfig()) {
-                        return@withContext ServiceStatus.CONFIGURATION_ERROR
+                        return@withContext AIServiceStatus.fromCode(400, "配置错误")
                     }
                     
                     val testRequest = """
@@ -195,29 +195,29 @@ class AIServiceOpenAI(
                     val response = client.newCall(request).execute()
 
                     if (response.isSuccessful) {
-                        ServiceStatus.AVAILABLE
+                        AIServiceStatus.fromCode(200, "服务可用")
                     } else {
                         when (response.code) {
-                            401 -> ServiceStatus.UNAUTHORIZED
-                            429 -> ServiceStatus.RATE_LIMITED
-                            400 -> ServiceStatus.CONFIGURATION_ERROR
-                            else -> ServiceStatus.UNAVAILABLE
+                            401 -> AIServiceStatus.fromCode(401, "未授权")
+                            429 -> AIServiceStatus.fromCode(429, "请求频率限制")
+                            400 -> AIServiceStatus.fromCode(400, "配置错误")
+                            else -> AIServiceStatus.fromCode(503, "服务不可用")
                         }
                     }
                 }
             }
         } catch (e: Exception) {
             when (e) {
-                is ConfigurationException -> ServiceStatus.CONFIGURATION_ERROR
-                is NetworkException -> ServiceStatus.NETWORK_ERROR
+                is ConfigurationException -> AIServiceStatus.fromCode(400, "配置错误")
+                is NetworkException -> AIServiceStatus.fromCode(500, "网络错误")
                 is APIException -> {
                     when (e.error.type) {
-                        AIServiceErrorType.API_RATE_LIMIT_EXCEEDED -> ServiceStatus.RATE_LIMITED
-                        AIServiceErrorType.API_AUTHENTICATION_ERROR -> ServiceStatus.UNAUTHORIZED
-                        else -> ServiceStatus.UNAVAILABLE
+                        AIServiceErrorType.API_RATE_LIMIT_EXCEEDED -> AIServiceStatus.fromCode(429, "请求频率限制")
+                        AIServiceErrorType.API_AUTHENTICATION_ERROR -> AIServiceStatus.fromCode(401, "未授权")
+                        else -> AIServiceStatus.fromCode(503, "服务不可用")
                     }
                 }
-                else -> ServiceStatus.ERROR
+                else -> AIServiceStatus.fromCode(500, "服务错误")
             }
         }
     }
@@ -242,13 +242,7 @@ class AIServiceOpenAI(
         )
     }
 
-    override suspend fun testConnection(): Boolean {
-        return try {
-            checkStatus() == ServiceStatus.AVAILABLE
-        } catch (e: Exception) {
-            false
-        }
-    }
+    // ===== 配置管理 =====
 
     override suspend fun generateMindMap(topicId: String, learningGoal: String): MindMapEntity? {
         return executeWithRetry("generateMindMap") {

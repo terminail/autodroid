@@ -35,7 +35,7 @@ class SettingsAIServiceDetailViewModel(application: Application) : AndroidViewMo
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                val config = settingsRepository.getAIServiceConfig(configId)
+                val config = settingsRepository.loadAIServiceConfig(configId)
                 _savedConfig.value = config
             } catch (e: Exception) {
                 _saveResult.value = SaveResult.Error("加载配置失败: ${e.message}")

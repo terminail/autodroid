@@ -14,6 +14,9 @@ interface SettingDao {
     @Query("SELECT * FROM settings ORDER BY lastUpdated DESC")
     fun getAllSettings(): Flow<List<SettingEntity>>
 
+    @Query("SELECT * FROM settings ORDER BY lastUpdated DESC")
+    suspend fun getAllSettingsSync(): List<SettingEntity>
+
     @Query("SELECT * FROM settings WHERE key = :key")
     fun getSettingByKey(key: String): Flow<SettingEntity?>
 

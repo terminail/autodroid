@@ -14,7 +14,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.autodroid.teachitback.MainActivity
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.databinding.FragmentSettingsAiServiceDetailBinding
+import com.autodroid.teachitback.di.ViewModelFactoryProvider
 import com.autodroid.teachitback.helper.AIServiceConfigHelper
 import com.autodroid.teachitback.viewmodel.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +44,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
 
     // 当前配置类型
     private lateinit var currentConfig: AIServiceConfig
-    
+
     // ViewModel实例
     private lateinit var viewModel: SettingsViewModel
 
@@ -79,7 +81,8 @@ class SettingsAIServiceDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // 初始化 ViewModel（使用 Activity 范围的 ViewModel 以便与 SettingsFragment 共享数据）
-        viewModel = ViewModelProvider(requireActivity())[SettingsViewModel::class.java]
+        val factory = ViewModelFactoryProvider.getFactory()
+        viewModel = ViewModelProvider(requireActivity(), factory)[SettingsViewModel::class.java]
 
         // 获取配置类型参数
         val configType = arguments?.getString("config_type") ?: "tencent-hunyuan"
@@ -141,16 +144,18 @@ class SettingsAIServiceDetailFragment : Fragment() {
             configs?.get(currentConfig.id)?.let { savedConfig ->
                 // 使用已保存的配置更新 UI
                 updateUIWithSavedConfig(savedConfig)
+                // 更新服务状态显示
+                updateServiceStatusDisplay(savedConfig.status)
             }
         }
-        
+
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
             message?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                 viewModel.clearErrorMessage()
             }
         }
-        
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             safeBinding()?.let { binding ->
                 binding.saveButton.isEnabled = !isLoading
@@ -163,7 +168,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
             }
         }
     }
-    
+
     /**
      * 加载已保存的配置
      */
@@ -198,13 +203,13 @@ class SettingsAIServiceDetailFragment : Fragment() {
             models
         )
         binding.modelInput.setAdapter(adapter)
-        
+
         // 初始使用默认配置值
         binding.apiKeyInput.setText(currentConfig.apiKey)
         binding.secretIdInput.setText(currentConfig.secretId)
         binding.modelInput.setText(currentConfig.model, false)
     }
-    
+
     /**
      * 使用已保存的配置更新 UI
      */
@@ -279,33 +284,33 @@ class SettingsAIServiceDetailFragment : Fragment() {
         // 注意：启用状态应该存储在SettingsItem中，而不是单独存储在数据库
         val isEnabled = true // 默认启用，具体实现需要根据SettingsItem状态
         binding.enableServiceSwitch.isChecked = isEnabled
-        
+
         // 监听开关状态变化
         binding.enableServiceSwitch.setOnCheckedChangeListener { _, isChecked ->
             // 启用状态应该通过更新SettingsItem来管理，而不是单独存储
             // 这里需要调用相应的方法来更新SettingsItem中的启用状态
-            
+
             // 更新UI状态
             updateUIForEnabledState(isChecked)
         }
     }
-    
+
     /**
      * 根据启用状态更新UI
      */
     private fun updateUIForEnabledState(isEnabled: Boolean) {
         // 更新文本显示
         binding.enableServiceText.text = if (isEnabled) "服务已启用" else "服务未启用"
-        
+
         val alpha = if (isEnabled) 1.0f else 0.5f
-        
+
         // 设置所有配置字段的透明度
         binding.secretIdField.alpha = alpha
         binding.apiKeyField.alpha = alpha
         binding.baseUrlInput.alpha = alpha
         binding.regionInput.alpha = alpha
         binding.modelField.alpha = alpha
-        
+
         // 设置按钮的启用状态
         binding.secretIdInput.isEnabled = isEnabled
         binding.apiKeyInput.isEnabled = isEnabled
@@ -328,7 +333,70 @@ class SettingsAIServiceDetailFragment : Fragment() {
      */
     private fun setupTestButton() {
         binding.testConnectionButton.setOnClickListener {
-            testConnection()
+            binding.apiKeyField.error = null
+            checkServiceStatus()
+        }
+    }
+
+    /**
+     * 格式化时间为微信风格（如"刚刚"、"1分钟前"、"3小时前"、"12-26"等）
+     */
+    private fun formatTimeWeChatStyle(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+
+        // 转换为分钟
+        val minutes = diff / 60000
+        if (minutes < 1) return "刚刚"
+
+        // 转换为小时
+        val hours = minutes / 60
+        if (hours < 1) return "${minutes}分钟前"
+
+        // 转换为天
+        val days = hours / 24
+        if (days < 1) return "${hours}小时前"
+
+        // 超过1天，显示日期
+        val date = java.util.Date(timestamp)
+        val calendar = java.util.Calendar.getInstance()
+        calendar.time = date
+
+        val currentCalendar = java.util.Calendar.getInstance()
+        val currentYear = currentCalendar.get(java.util.Calendar.YEAR)
+        val year = calendar.get(java.util.Calendar.YEAR)
+
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+
+        return if (year == currentYear) {
+            // 同一年，只显示月-日
+            String.format("%d-%02d", month, day)
+        } else {
+            // 不同年份，显示年-月-日
+            String.format("%d-%02d-%02d", year, month, day)
+        }
+    }
+
+    /**
+     * 更新服务状态显示
+     */
+    private fun updateServiceStatusDisplay(status: AIServiceStatus) {
+        safeBinding()?.let { binding ->
+            binding.serviceStatusContainer.visibility = View.VISIBLE
+            binding.serviceStatusDescription.text = status.description
+
+            // 根据状态码设置颜色
+            val color = when (status.code) {
+                200 -> "#4CAF50" // 绿色 - 正常
+                in 400..499 -> "#FF9800" // 橙色 - 客户端错误
+                in 500..599 -> "#F44336" // 红色 - 服务器错误
+                else -> "#9E9E9E" // 灰色 - 未知状态
+            }
+            binding.serviceStatusDescription.setTextColor(android.graphics.Color.parseColor(color))
+
+            // 更新时间
+            binding.serviceStatusLastUpdated.text = formatTimeWeChatStyle(status.lastUpdated)
         }
     }
 
@@ -344,7 +412,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
 
             // 验证必填字段
             if (currentConfig.requiredFields.requireApiKey && apiKey.isBlank()) {
-                Toast.makeText(requireContext(), "API Key不能为空", Toast.LENGTH_SHORT).show()
+                binding.apiKeyField.error = "请先填写API Key"
                 return
             }
 
@@ -375,26 +443,27 @@ class SettingsAIServiceDetailFragment : Fragment() {
     }
 
     /**
-     * 测试连接
+     * 检查服务状态
      */
-    private fun testConnection() {
+    private fun checkServiceStatus() {
         safeBinding()?.let { binding ->
             val apiKey = binding.apiKeyInput.text?.toString() ?: ""
 
-            if (apiKey.isBlank()) {
-                Toast.makeText(requireContext(), "请先填写API Key", Toast.LENGTH_SHORT).show()
+            // 对于需要API Key的服务，检查API Key是否填写
+            if (currentConfig.requiredFields.requireApiKey && apiKey.isBlank()) {
+                binding.apiKeyField.error = "请先填写API Key"
                 return
             }
 
             binding.testConnectionButton.isEnabled = false
-            binding.testConnectionButton.text = "测试中..."
+            binding.testConnectionButton.text = "检查中..."
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     if (!isAdded || _binding == null) {
                         return@launch
                     }
-                    
+
                     val testConfig = AIServiceConfigHelper.getConfigData(
                         secretId = binding.secretIdInput.text?.toString() ?: "",
                         apiKey = apiKey,
@@ -404,23 +473,26 @@ class SettingsAIServiceDetailFragment : Fragment() {
                         baseConfig = currentConfig
                     )
 
-                    val isSuccess = testConnectionWithConfig(testConfig)
+                    // 使用统一的checkAndUpdateAiServiceStatus方法检查服务状态
+                    val repository = com.autodroid.teachitback.di.AppContainer.getSettingsRepository()
+                    val updatedConfig = repository.checkAndUpdateAiServiceStatus(testConfig)
 
                     withContext(Dispatchers.Main) {
                         safeBinding()?.let { binding ->
-                            if (isSuccess) {
-                                saveConfig()
-                                viewModel.testAIServiceConnection(currentConfig.id)
+                            // 更新状态显示
+                            updateServiceStatusDisplay(updatedConfig.status)
+
+                            if (updatedConfig.status.isOk) {
                                 Toast.makeText(
                                     requireContext(),
-                                    "连接成功！配置已保存",
+                                    "服务状态: ${updatedConfig.status.description}",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             } else {
                                 Toast.makeText(
                                     requireContext(),
-                                    "连接失败，请检查配置",
-                                    Toast.LENGTH_SHORT
+                                    "服务异常: ${updatedConfig.status.description}",
+                                    Toast.LENGTH_LONG
                                 ).show()
                             }
                         }
@@ -430,7 +502,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
                         safeBinding()?.let { binding ->
                             Toast.makeText(
                                 requireContext(),
-                                "测试失败: ${e.message}",
+                                "检查失败: ${e.message}",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -439,23 +511,12 @@ class SettingsAIServiceDetailFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         safeBinding()?.let { binding ->
                             binding.testConnectionButton.isEnabled = true
-                            binding.testConnectionButton.text = "测试连接"
+                            binding.testConnectionButton.text = "检查服务状态"
                         }
                     }
                 }
             }
         }
-    }
-
-    // saveToDatabase 方法已被 SettingsViewModel 替代，不再需要
-
-    /**
-     * 测试连接（简化实现）
-     */
-    private suspend fun testConnectionWithConfig(config: AIServiceConfig): Boolean {
-        // 实际实现：调用AI服务的testConnection方法
-        // 这里仅作为示例，总是返回true
-        return true
     }
 
     override fun onDestroyView() {

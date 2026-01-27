@@ -1,20 +1,27 @@
 package com.autodroid.teachitback.repository
 
+import android.content.Context
+import android.util.Log
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.database.SettingDao
+import com.autodroid.teachitback.database.TopicConverters
+import com.autodroid.teachitback.di.AppContainer
 import com.autodroid.teachitback.model.SettingEntity
 import com.autodroid.teachitback.ui.adapter.SettingsItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.File
 
 /**
  * 设置项仓库
- * 负责SettingsItem和AIServiceConfig的序列化、反序列化和数据库操作
+ * 负责SettingsItem和AIServiceConfig的序列化、反序列化和数据库存取操作
  */
 class SettingsRepository(private val settingDao: SettingDao) {
     
+    // 初始化gson用于SettingsItem的序列化
     private val gson = Gson()
     
     /**
@@ -41,63 +48,180 @@ class SettingsRepository(private val settingDao: SettingDao) {
      * 同步获取设置项
      */
     suspend fun getSettingByKeySync(key: String): SettingsItem? {
-        val entity = settingDao.getSettingByKeySync(key)
-        return entity?.let { deserializeSettingItem(it.value) }
+        return try {
+            val entity = settingDao.getSettingByKeySync(key)
+            entity?.let { deserializeSettingItem(it.value) }
+        } catch (e: Exception) {
+            null
+        }
     }
     
     /**
      * 保存设置项
      */
-    suspend fun saveSetting(key: String, item: SettingsItem) {
-        val json = serializeSettingItem(item)
-        val entity = SettingEntity(
-            key = key,
-            value = json,
-            lastUpdated = System.currentTimeMillis()
-        )
-        settingDao.insertSetting(entity)
+    suspend fun saveSetting(item: SettingsItem) {
+        try {
+            val key = when (item) {
+                is SettingsItem.DeepSeekAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.OpenAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.KimiAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.BaichuanAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.MinimaxAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.HunyuanAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.ChatGLMAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.TinyBERTAIServiceItem -> "ai_service_${item.id}"
+                is SettingsItem.TencentCloudAIServiceItem -> "ai_service_tencentcloud"
+                is SettingsItem.DarkModeSwitchItem -> "dark_mode"
+                is SettingsItem.AutoSaveSwitchItem -> "auto_save"
+                else -> return
+            }
+            val json = serializeSettingItem(item)
+            val entity = SettingEntity(
+                key = key,
+                value = json,
+                lastUpdated = System.currentTimeMillis(),
+                created = System.currentTimeMillis()
+            )
+            settingDao.insertSetting(entity)
+        } catch (e: Exception) {
+        }
     }
     
     /**
      * 删除设置项
      */
     suspend fun deleteSetting(key: String) {
-        settingDao.deleteSettingByKey(key)
+        try {
+            settingDao.deleteSettingByKey(key)
+        } catch (e: Exception) {
+        }
     }
-    
+
     /**
-     * 删除所有设置项
+     * 删除所有设置
      */
     suspend fun deleteAllSettings() {
-        settingDao.deleteAllSettings()
+        try {
+            settingDao.deleteAllSettings()
+        } catch (e: Exception) {
+        }
+    }
+
+    /**
+     * 检查并更新AI服务状态
+     */
+    suspend fun checkAndUpdateAiServiceStatus(config: AIServiceConfig): AIServiceConfig {
+        Log.d("SettingsRepository", "开始检查AI服务状态: ${config.displayName} (${config.id})")
+        
+        return try {
+            // 检查服务是否可用
+            val updatedConfig = checkServiceAvailability(config)
+            
+            // 保存更新后的配置
+            saveAIServiceConfig(updatedConfig)
+            
+            Log.d("SettingsRepository", "AI服务状态检查完成: 状态码=${updatedConfig.status.code}, 描述=${updatedConfig.status.description}")
+            updatedConfig
+        } catch (e: Exception) {
+            val errorConfig = copyConfigWithStatus(
+                config,
+                AIServiceStatus.fromCode(500, "状态检查异常: ${e.message}")
+            )
+            saveAIServiceConfig(errorConfig)
+            errorConfig
+        }
     }
     
     /**
-     * 保存AI服务配置
+     * 检查AI服务可用性
+     * 测试服务的checkStatus()方法来验证服务是否可用
      */
-    suspend fun saveAIServiceConfig(config: AIServiceConfig) {
-        val json = serializeAIServiceConfig(config)
-        val entity = SettingEntity(
-            key = "ai_config_${config.id}",
-            value = json,
-            lastUpdated = System.currentTimeMillis()
-        )
-        settingDao.insertSetting(entity)
+    private suspend fun checkServiceAvailability(config: AIServiceConfig): AIServiceConfig {
+        Log.d("SettingsRepository", "检查AI服务可用性: ${config.displayName}")
+
+        // 1. 首先检查基本配置是否完整（对于非本地AI服务）
+        val isConfigComplete = when {
+            config.requiredFields.requireApiKey && config.apiKey.isEmpty() -> false
+            config.requiredFields.requireBaseUrl && config.baseUrl.isEmpty() -> false
+            config.requiredFields.requireSecretId && config.secretId.isEmpty() -> false
+            config.requiredFields.requireRegion && config.region.isEmpty() -> false
+            else -> true
+        }
+
+        if (!isConfigComplete) {
+            val status = AIServiceStatus.fromCode(400, "配置不完整")
+            return copyConfigWithStatus(config, status)
+        }
+
+        // 2. 检查模型文件是否存在（如果服务使用本地模型）
+        val modelFilePath = config.modelFilePath
+        if (!modelFilePath.isNullOrEmpty()) {
+            val modelFileExists = checkModelFileExists(modelFilePath)
+            if (!modelFileExists) {
+                val status = AIServiceStatus.fromCode(404, "模型文件未找到: $modelFilePath")
+                return copyConfigWithStatus(config, status)
+            }
+        }
+
+        // 3. 测试服务的checkStatus()方法来验证服务是否可用
+        return try {
+            // 获取服务实例
+            val service = AppContainer.getAIServiceRegistry().getService(config.id)
+            if (service == null) {
+                copyConfigWithStatus(config, AIServiceStatus.fromCode(404, "服务未注册: ${config.id}"))
+            } else {
+                // 测试服务的checkStatus()方法
+                val status = service.checkStatus()
+                copyConfigWithStatus(config, status)
+            }
+        } catch (e: Exception) {
+            val errorMessage = when (e) {
+                is java.net.UnknownHostException -> "网络连接失败"
+                is java.net.SocketTimeoutException -> "请求超时"
+                is java.io.IOException -> "网络错误: ${e.message}"
+                else -> "服务测试失败: ${e.message}"
+            }
+            copyConfigWithStatus(config, AIServiceStatus.fromCode(503, errorMessage))
+        }
     }
     
     /**
-     * 获取AI服务配置
+     * 检查模型文件是否存在
      */
-    suspend fun getAIServiceConfig(configId: String): AIServiceConfig? {
-        val entity = settingDao.getSettingByKeySync("ai_config_$configId")
-        return entity?.let { deserializeAIServiceConfig(it.value) }
+    private suspend fun checkModelFileExists(modelFilePath: String?): Boolean {
+        if (modelFilePath.isNullOrEmpty()) return true
+
+        return try {
+            val context: Context = AppContainer.getApplication()
+            val modelFile = File(context.filesDir, modelFilePath)
+            val exists = modelFile.exists() && modelFile.length() > 0
+
+            if (exists) {
+                Log.d("SettingsRepository", "模型文件存在: ${modelFile.absolutePath} (大小: ${modelFile.length()} bytes)")
+            } else {
+                Log.e("SettingsRepository", "模型文件不存在: ${modelFile.absolutePath}")
+            }
+
+            exists
+        } catch (e: Exception) {
+            Log.e("SettingsRepository", "检查模型文件失败: $modelFilePath", e)
+            false
+        }
     }
     
     /**
-     * 删除AI服务配置
+     * 验证API Key是否有效
+     * 模拟验证过程，实际应调用服务进行验证
      */
-    suspend fun deleteAIServiceConfig(configId: String) {
-        settingDao.deleteSettingByKey("ai_config_$configId")
+    private suspend fun validateApiKey(apiKey: String): Boolean {
+        // 模板验证：长度至少为10个字符
+        if (apiKey.length < 10) {
+            return false
+        }
+
+        // 其他可以调用服务进行简单的测试请求，然后根据返回结果判断
+
+        return true
     }
     
     /**
@@ -132,8 +256,8 @@ class SettingsRepository(private val settingDao: SettingDao) {
             is SettingsItem.TencentCloudAIServiceItem -> "TencentCloudAIServiceItem"
         }
         
-        val itemJson = gson.toJson(item)
-        return """{"type":"$type","data":$itemJson}"""
+        val dataJson = gson.toJson(item)
+        return """{"type":"$type","data":$dataJson}"""
     }
     
     /**
@@ -184,61 +308,83 @@ class SettingsRepository(private val settingDao: SettingDao) {
      * 序列化AIServiceConfig为JSON字符串
      */
     private fun serializeAIServiceConfig(config: AIServiceConfig): String {
-        val type = when (config) {
-            is AIServiceConfig.TencentHunyuanConfig -> "TencentHunyuanConfig"
-            is AIServiceConfig.DeepSeekConfig -> "DeepSeekConfig"
-            is AIServiceConfig.KimiConfig -> "KimiConfig"
-            is AIServiceConfig.MiniMaxConfig -> "MiniMaxConfig"
-            is AIServiceConfig.BaichuanConfig -> "BaichuanConfig"
-            is AIServiceConfig.OpenAIConfig -> "OpenAIConfig"
-            is AIServiceConfig.ErnieConfig -> "ErnieConfig"
-            is AIServiceConfig.QwenConfig -> "QwenConfig"
-            is AIServiceConfig.ZhipuConfig -> "ZhipuConfig"
-            is AIServiceConfig.SparkConfig -> "SparkConfig"
-            is AIServiceConfig.HunyuanConfig -> "HunyuanConfig"
-            is AIServiceConfig.DoubaoConfig -> "DoubaoConfig"
-            is AIServiceConfig.LingyiConfig -> "LingyiConfig"
-            is AIServiceConfig.JieyueConfig -> "JieyueConfig"
-            is AIServiceConfig.ChatGLMConfig -> "ChatGLMConfig"
-            is AIServiceConfig.TinyBERTConfig -> "TinyBERTConfig"
-        }
-        
-        val configJson = gson.toJson(config)
-        return """{"type":"$type","data":$configJson}"""
+        return TopicConverters.fromAIServiceConfig(config)
     }
     
     /**
      * 反序列化JSON字符串为AIServiceConfig
      */
     private fun deserializeAIServiceConfig(json: String): AIServiceConfig? {
-        return try {
-            val wrapperType = object : TypeToken<Map<String, Any>>() {}.type
-            val wrapper: Map<String, Any> = gson.fromJson(json, wrapperType)
-            
-            val type = wrapper["type"] as? String ?: return null
-            val dataJson = gson.toJson(wrapper["data"])
-            
-            when (type) {
-                "TencentHunyuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.TencentHunyuanConfig::class.java)
-                "DeepSeekConfig" -> gson.fromJson(dataJson, AIServiceConfig.DeepSeekConfig::class.java)
-                "KimiConfig" -> gson.fromJson(dataJson, AIServiceConfig.KimiConfig::class.java)
-                "MiniMaxConfig" -> gson.fromJson(dataJson, AIServiceConfig.MiniMaxConfig::class.java)
-                "BaichuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.BaichuanConfig::class.java)
-                "OpenAIConfig" -> gson.fromJson(dataJson, AIServiceConfig.OpenAIConfig::class.java)
-                "ErnieConfig" -> gson.fromJson(dataJson, AIServiceConfig.ErnieConfig::class.java)
-                "QwenConfig" -> gson.fromJson(dataJson, AIServiceConfig.QwenConfig::class.java)
-                "ZhipuConfig" -> gson.fromJson(dataJson, AIServiceConfig.ZhipuConfig::class.java)
-                "SparkConfig" -> gson.fromJson(dataJson, AIServiceConfig.SparkConfig::class.java)
-                "HunyuanConfig" -> gson.fromJson(dataJson, AIServiceConfig.HunyuanConfig::class.java)
-                "DoubaoConfig" -> gson.fromJson(dataJson, AIServiceConfig.DoubaoConfig::class.java)
-                "LingyiConfig" -> gson.fromJson(dataJson, AIServiceConfig.LingyiConfig::class.java)
-                "JieyueConfig" -> gson.fromJson(dataJson, AIServiceConfig.JieyueConfig::class.java)
-                "ChatGLMConfig" -> gson.fromJson(dataJson, AIServiceConfig.ChatGLMConfig::class.java)
-                "TinyBERTConfig" -> gson.fromJson(dataJson, AIServiceConfig.TinyBERTConfig::class.java)
-                else -> throw IllegalArgumentException("未知的AIServiceConfig类型: $type")
-            }
+        return TopicConverters.toAIServiceConfig(json)
+    }
+    
+    /**
+     * 创建副本并配置更新后的状态
+     */
+    private fun copyConfigWithStatus(config: AIServiceConfig, status: AIServiceStatus): AIServiceConfig {
+        return when (config) {
+            is AIServiceConfig.TencentHunyuanConfig -> config.copy(status = status)
+            is AIServiceConfig.DeepSeekConfig -> config.copy(status = status)
+            is AIServiceConfig.MiniMaxConfig -> config.copy(status = status)
+            is AIServiceConfig.BaichuanConfig -> config.copy(status = status)
+            is AIServiceConfig.KimiConfig -> config.copy(status = status)
+            is AIServiceConfig.OpenAIConfig -> config.copy(status = status)
+            is AIServiceConfig.ErnieConfig -> config.copy(status = status)
+            is AIServiceConfig.QwenConfig -> config.copy(status = status)
+            is AIServiceConfig.ZhipuConfig -> config.copy(status = status)
+            is AIServiceConfig.SparkConfig -> config.copy(status = status)
+            is AIServiceConfig.HunyuanConfig -> config.copy(status = status)
+            is AIServiceConfig.DoubaoConfig -> config.copy(status = status)
+            is AIServiceConfig.LingyiConfig -> config.copy(status = status)
+            is AIServiceConfig.JieyueConfig -> config.copy(status = status)
+            is AIServiceConfig.ChatGLMConfig -> config.copy(status = status)
+            is AIServiceConfig.TinyBERTConfig -> config.copy(status = status)
+        }
+    }
+    
+    /**
+     * 保存AI服务配置
+     */
+    suspend fun saveAIServiceConfig(config: AIServiceConfig) {
+        try {
+            val json = serializeAIServiceConfig(config)
+            val entity = SettingEntity(
+                key = "ai_service_${config.id}",
+                value = json,
+                lastUpdated = System.currentTimeMillis(),
+                created = System.currentTimeMillis()
+            )
+            settingDao.insertSetting(entity)
         } catch (e: Exception) {
+            Log.e("SettingsRepository", "保存AI服务配置失败: ${config.id}", e)
+        }
+    }
+    
+    /**
+     * 加载AI服务配置
+     */
+    suspend fun loadAIServiceConfig(serviceId: String): AIServiceConfig? {
+        return try {
+            val entity = settingDao.getSettingByKeySync("ai_service_$serviceId")
+            entity?.let { deserializeAIServiceConfig(it.value) }
+        } catch (e: Exception) {
+            Log.e("SettingsRepository", "鍔犺浇AI鏈嶅姟閰嶇疆澶辫触: $serviceId", e)
             null
         }
     }
+    
+    /**
+     * 获取所有AI服务配置
+     */
+    suspend fun getAllAIServiceConfigs(): List<AIServiceConfig> {
+        return try {
+            val entities = settingDao.getAllSettingsSync()
+            entities.filter { it.key.startsWith("ai_service_") }
+                .mapNotNull { deserializeAIServiceConfig(it.value) }
+        } catch (e: Exception) {
+            Log.e("SettingsRepository", "获取所有AI服务配置失败", e)
+            emptyList()
+        }
+    }
 }
+

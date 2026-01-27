@@ -210,7 +210,7 @@ class MindMapDaoTest {
         val nodes = listOf(
             MindMapNode(mindMapId = mindMap.id, title = "Node 1"),
             MindMapNode(mindMapId = mindMap.id, title = "Node 2"),
-            MindMapNode(mindMapId = mindMap.id, title = "Node 3")
+            MindMapNode(mindMapId = mindMap.id, title = "Node3")
         )
         mindMapDao.insertNodes(nodes)
         

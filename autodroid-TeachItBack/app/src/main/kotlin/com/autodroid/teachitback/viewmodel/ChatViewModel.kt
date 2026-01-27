@@ -1,6 +1,7 @@
 package com.autodroid.teachitback.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.autodroid.teachitback.database.AppDatabase
@@ -28,12 +29,10 @@ import kotlinx.coroutines.launch
  */
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val database = AppDatabase.getDatabase(application)
-
-    // Repositories（内部使用AIServiceRouter单例，ViewModel不感知AI服务）
-    private val messageRepository = MessageRepository(database.messageDao())
-    private val mindMapRepository = MindMapRepository(database)
-    private val topicRepository = TopicRepository(database.topicDao())
+    // Repositories（通过应用上下文获取，ViewModel不感知数据库创建细节）
+    private val messageRepository = (application as com.autodroid.teachitback.TeachItBackApplication).getMessageRepository()
+    private val mindMapRepository = (application as com.autodroid.teachitback.TeachItBackApplication).getMindMapRepository()
+    private val topicRepository = (application as com.autodroid.teachitback.TeachItBackApplication).getTopicRepository()
 
     // UI状态
     private val _currentTopic = MutableStateFlow<TopicEntity?>(null)
@@ -131,6 +130,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
             } catch (e: Exception) {
+                Log.e("ChatViewModel", "发送消息失败: ${e.message}", e)
                 _errorMessage.value = "发送消息失败: ${e.message}"
             } finally {
                 _isLoading.value = false

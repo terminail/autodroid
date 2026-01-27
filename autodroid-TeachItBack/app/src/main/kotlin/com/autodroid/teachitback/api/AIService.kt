@@ -1,6 +1,7 @@
 package com.autodroid.teachitback.api
 
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.model.*
 
 /**
@@ -93,7 +94,7 @@ interface AIService {
      * 检查服务状态
      * @return 服务状态
      */
-    suspend fun checkStatus(): ServiceStatus
+    suspend fun checkStatus(): AIServiceStatus
     
     /**
      * 获取使用统计
@@ -108,10 +109,4 @@ interface AIService {
      * @param newConfig 新配置
      */
     suspend fun updateConfig(newConfig: AIServiceConfig)
-    
-    /**
-     * 测试连接
-     * @return 是否成功
-     */
-    suspend fun testConnection(): Boolean
 }

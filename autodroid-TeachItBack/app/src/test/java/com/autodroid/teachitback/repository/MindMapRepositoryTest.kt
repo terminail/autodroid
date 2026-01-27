@@ -7,12 +7,15 @@ import com.autodroid.teachitback.model.MindMapEntity
 import com.autodroid.teachitback.model.MindMapNode
 import com.autodroid.teachitback.model.TopicEntity
 import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.*
+import org.junit.Assert.*
 
 /**
  * MindMapRepository单元测试
@@ -68,8 +71,8 @@ class MindMapRepositoryTest {
 
         // 验证结果
         assertNotNull(result)
-        assertEquals("mindmap-1", result.id)
-        assertEquals("Kotlin学习", result.title)
+        assertEquals("mindmap-1", result!!.id)
+        assertEquals("Kotlin学习", result!!.title)
 
         // 验证DAO调用
         coVerify { mockMindMapDao.getByTopicId(topicId) }
@@ -110,8 +113,7 @@ class MindMapRepositoryTest {
             id = topicId,
             title = "Kotlin学习",
             description = "",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            topicCategoryId = "test-node"
         )
 
         // Mock DAO行为
@@ -123,8 +125,8 @@ class MindMapRepositoryTest {
 
         // 验证结果：Local-First策略，直接返回本地数据
         assertNotNull(result)
-        assertEquals("mindmap-1", result.id)
-        assertEquals("Kotlin学习", result.title)
+        assertEquals("mindmap-1", result!!.id)
+        assertEquals("Kotlin学习", result!!.title)
 
         // 验证DAO调用：只查询了本地，没有调用AI服务
         coVerify { mockMindMapDao.getByTopicId(topicId) }
@@ -140,8 +142,7 @@ class MindMapRepositoryTest {
             id = topicId,
             title = "Kotlin学习",
             description = "",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            topicCategoryId = "test-node"
         )
 
         // Mock DAO行为

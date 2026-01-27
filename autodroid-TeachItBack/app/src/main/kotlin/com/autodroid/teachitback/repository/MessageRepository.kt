@@ -62,6 +62,8 @@ class MessageRepository(
         userContent: String,
         suggestedService: String?
     ): MessageEntity? {
+        Log.d("MessageRepository", "开始处理消息: topicId=$topicId, userContent=$userContent, suggestedService=$suggestedService")
+        
         // 1. 保存用户消息到本地数据库
         val userMessage = MessageEntity(
             id = UUID.randomUUID().toString(),
@@ -72,52 +74,74 @@ class MessageRepository(
             timestamp = System.currentTimeMillis()
         )
         messageDao.insertMessage(userMessage)
-        Log.d("MessageRepository", "已保存用户消息: ${userMessage.id}")
+        Log.d("MessageRepository", "已保存用户消息: ${userMessage.id}, 内容: $userContent")
 
         // 2. 获取对话历史（用于AI分析）
         val conversationHistory = messageDao.getMessagesByTopicSync(topicId)
         Log.d("MessageRepository", "获取对话历史: ${conversationHistory.size} 条消息")
+        if (conversationHistory.isNotEmpty()) {
+            Log.d("MessageRepository", "最近对话摘要: ${conversationHistory.take(3).joinToString(", ") { it.content.take(20) + "..." }}")
+        }
 
         // 3. 使用AIServiceRouter智能路由调用AI服务分析进度
+        Log.d("MessageRepository", "开始学习进度分析...")
         val progressAnalysis = try {
-            aiRouter.routeByCapability(
+            val analysis = aiRouter.routeByCapability(
                 capabilityCheck = { it.supportLearningAnalysis },
-                operation = { service -> service.analyzeLearningProgress(conversationHistory) }
+                operation = { service -> 
+                    Log.d("MessageRepository", "使用服务进行进度分析: ${service.config.displayName}")
+                    service.analyzeLearningProgress(conversationHistory) 
+                }
             )
+            Log.d("MessageRepository", "学习进度分析成功: 总体进度=${analysis.overallProgress}%, 概念掌握=${analysis.conceptMastery.size}个")
+            analysis
         } catch (e: Exception) {
             Log.e("MessageRepository", "学习进度分析失败: ${e.message}", e)
             // 返回默认分析，不影响主流程
-            com.autodroid.teachitback.model.ProgressAnalysis(
+            val defaultAnalysis = com.autodroid.teachitback.model.ProgressAnalysis(
                 overallProgress = 50,
                 conceptMastery = emptyMap(),
                 learningVelocity = 0.0,
                 knowledgeGaps = emptyList(),
                 recommendedNextSteps = emptyList()
             )
+            Log.w("MessageRepository", "使用默认进度分析: ${defaultAnalysis.overallProgress}%")
+            defaultAnalysis
         }
-        Log.d("MessageRepository", "学习进度分析完成: ${progressAnalysis.overallProgress}%")
 
         // 4. 构建上下文并使用AIServiceRouter获取AI回复
+        Log.d("MessageRepository", "开始生成AI回复...")
         val context = buildContext(conversationHistory, progressAnalysis)
-        val aiResponse: AIServiceResponse = try {
+        Log.d("MessageRepository", "构建上下文完成，上下文长度: ${context.length}")
+        
+        val aiResponse: com.autodroid.teachitback.model.AIServiceResponse = try {
+            Log.d("MessageRepository", "检查服务推荐: suggestedService=$suggestedService")
             if (suggestedService != null) {
                 // 如果有推荐的服务，优先使用该服务
+                Log.d("MessageRepository", "使用推荐服务: $suggestedService")
                 aiRouter.routeWithPreference(
                     capabilityCheck = { it.supportBasicChat },
                     preferredServiceId = suggestedService,
-                    operation = { service -> service.sendMessage(userMessage, context) }
+                    operation = { service -> 
+                        Log.d("MessageRepository", "调用服务生成回复: ${service.config.displayName}")
+                        service.sendMessage(userMessage, context) 
+                    }
                 )
             } else {
                 // 否则使用智能路由
+                Log.d("MessageRepository", "使用智能路由选择服务")
                 aiRouter.routeByCapability(
                     capabilityCheck = { it.supportBasicChat },
-                    operation = { service -> service.sendMessage(userMessage, context) }
+                    operation = { service -> 
+                        Log.d("MessageRepository", "调用服务生成回复: ${service.config.displayName}")
+                        service.sendMessage(userMessage, context) 
+                    }
                 )
             }
         } catch (e: Exception) {
             Log.e("MessageRepository", "AI回复生成失败: ${e.message}", e)
             // 返回错误响应，不阻塞主流程
-            AIServiceResponse(
+            val errorResponse = com.autodroid.teachitback.model.AIServiceResponse(
                 content = "抱歉，AI服务暂时不可用，请稍后重试。",
                 processInfo = com.autodroid.teachitback.model.AIProcessInfo(
                     serviceId = "error",
@@ -126,8 +150,12 @@ class MessageRepository(
                     processingTime = 0
                 )
             )
+            Log.w("MessageRepository", "返回错误响应: ${errorResponse.content}")
+            errorResponse
         }
-        Log.d("MessageRepository", "AI回复生成完成: ${aiResponse.processInfo.serviceName}")
+        
+        Log.d("MessageRepository", "AI回复生成完成: 服务=${aiResponse.processInfo.serviceName}, 模型=${aiResponse.processInfo.modelUsed}, 处理时间=${aiResponse.processInfo.processingTime}ms")
+        Log.d("MessageRepository", "AI回复内容: ${aiResponse.content.take(100)}...")
 
         // 5. 保存AI回复到本地数据库（包含AIProcessInfo）
         val aiMessage = MessageEntity(
@@ -142,6 +170,7 @@ class MessageRepository(
         messageDao.insertMessage(aiMessage)
         Log.d("MessageRepository", "已保存AI消息: ${aiMessage.id}")
 
+        Log.d("MessageRepository", "消息处理流程完成")
         return aiMessage
     }
 

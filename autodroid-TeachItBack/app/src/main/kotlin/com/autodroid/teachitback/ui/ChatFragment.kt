@@ -273,7 +273,10 @@ class ChatFragment : Fragment() {
         viewModel.loadTopicAndMessages(args.topicId)
     }
 
-    private fun sendMessage() {
+    /**
+     * 发送消息
+     */
+    fun sendMessage() {
         val content = binding.messageInput.text.toString().trim()
         if (content.isNotEmpty()) {
             viewModel.sendUserMessage(content, args.topicId)
@@ -312,10 +315,11 @@ class ChatFragment : Fragment() {
     }
 
     /**
-     * 直接发送消息（可选择指定服务）
+     * 直接发送消息（可选择指定服务）- 公开方法，可从外部调用
      */
-    private fun sendMessageDirectly(message: String, suggestedService: String? = null) {
+    fun sendMessageDirectly(message: String, suggestedService: String? = null) {
         if (message.isNotEmpty()) {
+            android.util.Log.d("ChatFragment", "直接发送消息: '$message'")
             viewModel.sendUserMessage(message, args.topicId, suggestedService)
             binding.messageInput.text?.clear()
         }
