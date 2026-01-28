@@ -18,7 +18,12 @@ public class MNNNetNative {
         System.loadLibrary("MNN");
         loadGpuLibrary("MNN_Vulkan");
         loadGpuLibrary("MNN_CL");
-        loadGpuLibrary("MNN_GL");
+        // MNN_GL is optional - don't fail if not available
+        try {
+            System.loadLibrary("MNN_GL");
+        } catch (Throwable e) {
+            Log.w(Common.TAG, "load MNN MNN_GL GPU so exception=%s", e);
+        }
         System.loadLibrary("mnncore");
     }
 

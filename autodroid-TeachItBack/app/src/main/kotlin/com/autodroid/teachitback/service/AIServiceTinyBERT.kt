@@ -270,10 +270,10 @@ class AIServiceTinyBERT(
                     
                     Log.d(TAG, "找到匹配: question=${entry.question}, similarity=$similarity, rank=${matchResult.rank}")
                     
-                    if (similarity >= 0.7) {
+                    if (similarity >= 0.4) {
                         // 高相似度，直接返回答案
                         entry.answer
-                    } else if (similarity >= 0.5) {
+                    } else if (similarity >= 0.3) {
                         // 中等相似度，返回答案并提示
                         "${entry.answer}\n\n(相似度: ${(similarity * 100).toInt()}%)"
                     } else {
@@ -520,10 +520,18 @@ class AIServiceTinyBERT(
                 
                 // 提取文本1的 embedding
                 val embedding1 = model!!.extractEmbedding(text1)
+                if (embedding1 == null) {
+                    Log.w(TAG, "文本1 embedding 提取失败，使用简化相似度")
+                    return@withContext calculateSimpleSimilarity(text1, text2)
+                }
                 Log.d(TAG, "Embedding1 提取完成: size=${embedding1.size}")
                 
                 // 提取文本2的 embedding
                 val embedding2 = model!!.extractEmbedding(text2)
+                if (embedding2 == null) {
+                    Log.w(TAG, "文本2 embedding 提取失败，使用简化相似度")
+                    return@withContext calculateSimpleSimilarity(text1, text2)
+                }
                 Log.d(TAG, "Embedding2 提取完成: size=${embedding2.size}")
                 
                 // 计算余弦相似度
@@ -690,16 +698,16 @@ class AIServiceTinyBERT(
             
             Log.d(TAG, "开始语义匹配: query=$query, 知识库条目数=${entries.size}")
             
-            // 直接使用关键词匹配（由于MNN推理存在崩溃问题，使用备用方案）
-            Log.w(TAG, "由于MNN推理稳定性问题，使用关键词匹配作为备用方案")
+            // 使用BERT embedding进行语义匹配
+            Log.d(TAG, "使用BERT embedding进行语义匹配")
             
             Log.d(TAG, "semanticMatch: 步骤2 - 开始循环匹配")
             
             val matchResults = mutableListOf<SemanticMatchResult>()
             
             for (entry in entries) {
-                // 使用简化相似度计算（关键词匹配）
-                val similarity = calculateSimpleSimilarity(query, entry.question)
+                // 使用BERT embedding计算相似度
+                val similarity = calculateSimilarity(query, entry.question)
                 matchResults.add(SemanticMatchResult(entry, similarity, 0))
             }
             
@@ -772,7 +780,12 @@ class AIServiceTinyBERT(
                     // 使用 BERT embedding 计算相似度
                     try {
                         val entryEmbedding = model!!.extractEmbedding(entry.question)
-                        cosineSimilarity(queryEmbedding, entryEmbedding)
+                        if (entryEmbedding != null) {
+                            cosineSimilarity(queryEmbedding, entryEmbedding)
+                        } else {
+                            Log.w(TAG, "条目 embedding 提取失败: ${entry.question}")
+                            calculateSimpleSimilarity(query, entry.question)
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "提取条目 embedding 失败: ${entry.question}", e)
                         // 降级到简化相似度计算

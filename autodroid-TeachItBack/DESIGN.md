@@ -1075,6 +1075,468 @@ object PromptTemplates {
 5. **维护成本低**：统一配置管理减少重复代码
 6. **架构清晰**：MVVM模式确保ViewModel不感知AI服务细节
 
+## 嵌入式AI集成
+
+### 概述
+
+Teach It Back应用集成了嵌入式AI模型，支持离线学习和快速响应。嵌入式AI模型与云端AI服务协同工作，通过智能路由系统根据任务需求选择最适合的服务。
+
+**核心设计原则**：
+- **能力导向**：路由决策基于任务能力需求，而非部署位置（本地/云端）
+- **统一接口**：所有本地和云端服务实现相同的AIService接口
+- **智能选择**：根据性能、成本、可用性自动选择最佳服务
+- **用户透明**：用户无需关心服务部署位置，只关注功能体验
+
+### 嵌入式AI服务架构
+
+```mermaid
+graph TB
+    A["UI Layer<br/>Activities/Fragments"] --> B["ViewModel Layer<br/>ChatViewModel, SettingsViewModel"]
+    B --> C["Repository Layer<br/>MessageRepository, MindMapRepository"]
+    C --> D["AI Service Layer<br/>AIServiceRouter + AIServiceRegistry"]
+    D --> E["Cloud AI Services<br/>DeepSeek, 腾讯云, OpenAI等"]
+    D --> F["Embedded AI Services<br/>TinyBERT, ChatGLM等"]
+    F --> G["MNN Framework<br/>模型推理引擎"]
+    F --> H["Knowledge Base<br/>语义匹配知识库"]
+    
+    C --> I["Room Database<br/>本地持久化"]
+    I -.->|LiveData更新| A
+    
+    subgraph "嵌入式AI特性"
+        J["离线可用性：本地模型无需网络"]
+        K["快速响应：<200ms推理时间"]
+        L["语义匹配：BERT embedding相似度计算"]
+        M["知识库：预置问答对"]
+    end
+    
+    F --> J
+    F --> K
+    F --> L
+    F --> M
+```
+
+### TinyBERT嵌入式服务
+
+TinyBERT是一个轻量级的BERT模型，专门用于快速答案判断和语义相似度计算。
+
+**TinyBERT服务特点**：
+- **模型大小**：约100MB（INT8量化版）
+- **推理速度**：<200ms/次
+- **能力范围**：
+  - ✅ 语义相似度计算
+  - ✅ 快速答案判断
+  - ✅ 知识库语义匹配
+  - ❌ 文本生成（不是生成式模型）
+
+**TinyBERT服务架构**：
+
+```mermaid
+classDiagram
+    class AIServiceTinyBERT {
+        +sendMessage()
+        +semanticMatch()
+        +initialize()
+        +checkStatus()
+    }
+    
+    class MNNIntegration {
+        +loadModel()
+        +isModelDownloaded()
+        +deleteModel()
+    }
+    
+    class MNNModel {
+        +load()
+        +inference()
+        +extractEmbedding()
+    }
+    
+    class BertTokenizer {
+        +encode()
+        +decode()
+        +fromFile()
+    }
+    
+    class KnowledgeBaseManager {
+        +loadKnowledgeBase()
+        +findBestMatch()
+    }
+    
+    class SemanticMatchingUtils {
+        +cosineSimilarity()
+        +calculateSimpleSimilarity()
+    }
+    
+    AIServiceTinyBERT --> MNNIntegration
+    MNNIntegration --> MNNModel
+    MNNModel --> BertTokenizer
+    AIServiceTinyBERT --> KnowledgeBaseManager
+    KnowledgeBaseManager --> SemanticMatchingUtils
+```
+
+**TinyBERT工作流程**：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant T as AIServiceTinyBERT
+    participant M as MNNModel
+    participant B as BertTokenizer
+    participant K as KnowledgeBase
+    participant S as SemanticMatching
+    
+    U->>T: 发送问题："解释一下抛物线"
+    T->>B: 分词输入文本
+    B-->>T: 返回token IDs
+    
+    T->>M: 提取embedding
+    M->>M: MNN推理
+    M-->>T: 返回embedding向量
+    
+    T->>K: 获取知识库条目
+    K-->>T: 返回25个问答对
+    
+    loop 遍历知识库
+        T->>M: 提取每个问题的embedding
+        M-->>T: 返回embedding向量
+        T->>S: 计算余弦相似度
+        S-->>T: 返回相似度分数
+    end
+    
+    T->>T: 排序选择最佳匹配
+    T-->>U: 返回答案："抛物线是二次函数的图像..."
+```
+
+### MNN框架集成
+
+MNN（Mobile Neural Network）是字节跳动开源的移动端深度学习推理框架，对Android ARM架构优化极佳。
+
+**MNN框架特点**：
+- **高性能**：针对移动端ARM架构优化
+- **低内存占用**：INT8量化模型减少内存使用
+- **跨平台**：支持Android、iOS、Linux等平台
+- **模型格式**：.mnn格式，支持多种模型转换
+
+**MNN模型封装**：
+
+```kotlin
+class MNNModel(
+    private val netInstance: MNNNetInstance,
+    private val session: MNNNetInstance.Session,
+    private val tokenizer: BertTokenizer? = null
+) {
+    suspend fun load(): Boolean
+    suspend fun inference(input: String): String
+    suspend fun extractEmbedding(input: String): FloatArray?
+    fun release()
+    fun isLoaded(): Boolean
+}
+```
+
+**MNN推理流程**：
+
+```mermaid
+flowchart TD
+    A[输入文本] --> B[BertTokenizer分词]
+    B --> C[生成input_ids]
+    C --> D[生成attention_mask]
+    D --> E[生成token_type_ids]
+    
+    E --> F[设置输入张量]
+    F --> G[MNN Session.run]
+    G --> H[获取输出张量]
+    H --> I[提取hidden_states]
+    I --> J{任务类型}
+    
+    J -->|推理| K[后处理输出]
+    J -->|embedding| L[提取CLS token向量]
+    
+    K --> M[返回推理结果]
+    L --> N[返回embedding向量]
+```
+
+### 语义匹配系统
+
+语义匹配系统使用BERT embedding计算文本之间的相似度，用于在知识库中查找最匹配的问答对。
+
+**语义匹配流程**：
+
+```mermaid
+graph TD
+    A[用户问题] --> B[TinyBERT提取embedding]
+    B --> C[生成query向量]
+    
+    D[知识库] --> E[遍历所有问答对]
+    E --> F[TinyBERT提取embedding]
+    F --> G[生成每个问题的向量]
+    
+    C --> H[计算余弦相似度]
+    G --> H
+    
+    H --> I[排序匹配结果]
+    I --> J[选择最佳匹配]
+    J --> K{相似度阈值}
+    
+    K -->|>= 40%| L[返回知识库答案]
+    K -->|低于40%| M[返回"未找到匹配"]
+```
+
+**余弦相似度计算**：
+
+```kotlin
+fun cosineSimilarity(vec1: List<Float>, vec2: List<Float>): Float {
+    if (vec1.size != vec2.size) {
+        throw IllegalArgumentException("Vectors must have the same size: ${vec1.size} vs ${vec2.size}")
+    }
+
+    if (vec1.isEmpty()) {
+        return 0.0f
+    }
+
+    var dotProduct = 0.0f
+    var norm1 = 0.0f
+    var norm2 = 0.0f
+
+    for (i in vec1.indices) {
+        dotProduct += vec1[i] * vec2[i]
+        norm1 += vec1[i] * vec1[i]
+        norm2 += vec2[i] * vec2[i]
+    }
+
+    val denominator = kotlin.math.sqrt(norm1.toDouble()) * kotlin.math.sqrt(norm2.toDouble())
+
+    return if (denominator > 0) {
+        (dotProduct / denominator).toFloat()
+    } else {
+        0.0f
+    }
+}
+```
+
+### 知识库管理
+
+知识库包含预置的问答对，用于语义匹配和快速回答。
+
+**知识库结构**：
+
+```kotlin
+data class KnowledgeBaseEntry(
+    val id: String,
+    val question: String,
+    val answer: String,
+    val category: String,
+    val tags: List<String>
+)
+
+class KnowledgeBaseManager {
+    private val entries: List<KnowledgeBaseEntry>
+    
+    suspend fun loadKnowledgeBase(context: Context): Boolean
+    fun findBestMatch(query: String): SemanticMatchResult?
+}
+```
+
+**高中数学知识库示例**：
+
+| 问题 | 答案 | 类别 |
+|------|------|------|
+| 什么是抛物线？ | 抛物线是二次函数的图像，是平面上到定点（焦点）和定直线（准线）距离相等的点的轨迹。 | 数学 |
+| 什么是二次函数？ | 二次函数是形如 y = ax² + bx + c（a ≠ 0）的函数，图像为抛物线。 | 数学 |
+| 什么是三角函数？ | 三角函数是角度与比值之间的函数关系，包括正弦、余弦、正切等。 | 数学 |
+
+### 输入建议系统
+
+输入建议系统在用户发送消息前进行分析，提供优化建议，帮助用户获得更好的AI响应。
+
+**输入建议检测器**：
+
+```kotlin
+class InputSuggestionDetector {
+    fun analyzeBeforeSend(message: String): SuggestionResult
+    
+    companion object {
+        private val SIMPLE_QA_PATTERNS = listOf(
+            "是什么", "为什么", "怎么", "如何", "哪个", "什么"
+        )
+        
+        private val CONCEPT_EXPLANATION_PATTERNS = listOf(
+            "定义", "概念", "含义", "意思", "解释一下"
+        )
+        
+        private val MATH_PATTERNS = listOf(
+            "计算", "求解", "解方程", "求导", "积分", "证明题"
+        )
+    }
+}
+```
+
+**输入建议流程**：
+
+```mermaid
+graph TD
+    A[用户输入消息] --> B[InputSuggestionDetector分析]
+    B --> C{是否匹配关键词?}
+    
+    C -->|是| D[直接发送]
+    D --> E[AI服务处理]
+    
+    C -->|否| F[显示建议对话框]
+    F --> G{用户选择}
+    
+    G -->|采纳建议| H[修改输入内容]
+    H --> E
+    
+    G -->|忽略建议| D
+    
+    E --> I[返回AI响应]
+```
+
+**输入类型识别**：
+
+| 输入类型 | 关键词 | 推荐服务 | 说明 |
+|---------|--------|----------|------|
+| 简单问答 | 是什么、为什么、怎么 | TinyBERT | 快速语义匹配 |
+| 概念解释 | 定义、概念、解释一下 | TinyBERT | 知识库匹配 |
+| 数学计算 | 计算、求解、解方程 | DeepSeek | 复杂推理 |
+| 代码生成 | 代码、编程、实现 | DeepSeek | 代码生成 |
+| 创意写作 | 写作、创作、写一篇 | DeepSeek | 文本生成 |
+
+### 智能路由增强
+
+智能路由系统根据任务类型和能力需求，自动选择最适合的AI服务。
+
+**路由决策流程**：
+
+```mermaid
+flowchart TD
+    A[用户请求] --> B[InputSuggestionDetector分析]
+    B --> C{输入类型}
+    
+    C -->|简单问答| D[推荐TinyBERT]
+    C -->|概念解释| E[推荐TinyBERT]
+    C -->|数学计算| F[推荐DeepSeek]
+    C -->|代码生成| G[推荐DeepSeek]
+    C -->|复杂推理| H[推荐DeepSeek]
+    
+    D --> I{TinyBERT可用?}
+    E --> I
+    I -->|是| J[使用TinyBERT]
+    I -->|否| K[降级到DeepSeek]
+    
+    F --> L{DeepSeek可用?}
+    G --> L
+    H --> L
+    L -->|是| M[使用DeepSeek]
+    L -->|否| N[降级到其他服务]
+    
+    J --> O[执行AI任务]
+    K --> O
+    M --> O
+    N --> O
+```
+
+**路由优先级**：
+
+1. **能力匹配**：优先选择支持任务能力的服务
+2. **性能优先**：在能力匹配的基础上，选择性能最好的服务
+3. **成本优化**：在性能相当的情况下，选择成本最低的服务
+4. **可用性检查**：实时检查服务状态，自动故障转移
+
+### 嵌入式AI与云端AI的协同
+
+嵌入式AI和云端AI通过智能路由系统协同工作，为用户提供最佳体验。
+
+**协同策略**：
+
+```mermaid
+graph TB
+    A[用户请求] --> B{任务类型}
+    
+    B -->|快速问答| C[TinyBERT本地]
+    B -->|概念解释| C
+    B -->|答案判断| C
+    
+    C --> D{TinyBERT可用?}
+    D -->|是| E[本地响应<200ms]
+    D -->|否| F[降级到云端AI]
+    
+    B -->|复杂推理| G[DeepSeek云端]
+    B -->|代码生成| G
+    B -->|创意写作| G
+    
+    G --> H{云端AI可用?}
+    H -->|是| I[云端响应]
+    H -->|否| J[降级到其他云端服务]
+    
+    E --> K[返回结果]
+    F --> K
+    I --> K
+    J --> K
+```
+
+**协同优势**：
+
+- **离线可用**：TinyBERT本地模型无需网络连接
+- **快速响应**：本地模型推理时间<200ms
+- **成本优化**：简单任务使用本地模型，减少云端API调用
+- **能力互补**：本地模型擅长快速匹配，云端模型擅长复杂推理
+- **自动降级**：本地模型不可用时自动切换到云端服务
+
+### 嵌入式AI配置管理
+
+嵌入式AI服务的配置管理与云端AI服务保持一致，通过统一的SettingsItem和ViewModel进行管理。
+
+**嵌入式AI服务设置项**：
+
+| 设置项 | 说明 | 类型 |
+|--------|------|------|
+| 模型下载状态 | 显示模型是否已下载 | Boolean |
+| 模型大小 | 显示模型文件大小 | String |
+| 下载进度 | 显示模型下载进度 | Float |
+| 启用/禁用 | 控制服务是否启用 | Boolean |
+| 服务优先级 | 设置服务优先级 | Int |
+
+**嵌入式AI服务状态管理**：
+
+```kotlin
+data class TinyBERTAIServiceItem(
+    val id: String = "tinybert-embedded",
+    val name: String = "TinyBERT (嵌入式)",
+    val description: String = "轻量级BERT模型，用于快速答案判断和分类，体积小响应快",
+    
+    val modelVersion: String = "tinybert-4l",
+    val modelSize: String = "约100MB",
+    val isModelDownloaded: Boolean = false,
+    val modelPath: String = "",
+    val downloadProgress: Float = 0f,
+    
+    val isEnabled: Boolean = false,
+    val priority: Int = 5
+) : SettingsItem()
+```
+
+### 嵌入式AI测试
+
+嵌入式AI功能通过单元测试和Android Instrumented Tests进行验证。
+
+**测试覆盖**：
+
+1. **BertTokenizer测试**：验证分词功能
+2. **语义匹配测试**：验证相似度计算
+3. **MNN推理测试**：验证模型推理功能
+4. **知识库测试**：验证问答对匹配
+5. **输入建议测试**：验证输入类型识别
+6. **集成测试**：验证端到端流程
+
+**测试结果**：
+
+- ✅ BertTokenizer单元测试通过
+- ✅ 语义匹配功能正常
+- ✅ MNN模型推理成功
+- ✅ 知识库匹配准确
+- ✅ 输入建议识别正确
+- ✅ 端到端流程稳定
+
 ## UI 架构
 
 ### 主界面布局

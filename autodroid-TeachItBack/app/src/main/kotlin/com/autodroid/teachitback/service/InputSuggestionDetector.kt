@@ -16,8 +16,15 @@ class InputSuggestionDetector {
         )
         
         private val CONCEPT_EXPLANATION_PATTERNS = listOf(
-            "定义", "解释", "概念", "含义", "意思", "理解", "阐述", "说明",
-            "什么是", "解释一下", "详细说明", "详细介绍"
+            "定义", "概念", "含义", "意思", "理解", "阐述", "说明",
+            "什么是", "详细说明", "详细介绍"
+        )
+        
+        // 简单问答模式（包括解释类问题）
+        private val SIMPLE_QA_WITH_EXPLANATION_PATTERNS = listOf(
+            "是什么", "为什么", "怎么", "如何", "哪个", "什么", "哪里", "何时",
+            "谁", "多少", "几岁", "多大", "多长", "多重", "多高", "多远",
+            "解释一下", "解释", "说明一下"
         )
         
         private val COMPLEX_REASONING_PATTERNS = listOf(
@@ -147,11 +154,11 @@ class InputSuggestionDetector {
             containsAnyPattern(lowerMessage, MATH_PATTERNS) -> 
                 AnalysisResult.MATH
             
-            // 检查简单问答
-            containsAnyPattern(lowerMessage, SIMPLE_QA_PATTERNS) -> 
+            // 检查简单问答（包括解释类问题）
+            containsAnyPattern(lowerMessage, SIMPLE_QA_WITH_EXPLANATION_PATTERNS) -> 
                 AnalysisResult.SIMPLE_QA
             
-            // 检查概念解释
+            // 检查概念解释（详细解释）
             containsAnyPattern(lowerMessage, CONCEPT_EXPLANATION_PATTERNS) -> 
                 AnalysisResult.CONCEPT_EXPLANATION
             

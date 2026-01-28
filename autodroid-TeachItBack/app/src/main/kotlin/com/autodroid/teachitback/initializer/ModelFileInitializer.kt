@@ -30,6 +30,7 @@ object ModelFileInitializer {
      * 可能的源路径列表（按优先级排序）
      */
     private val SOURCE_PATHS = listOf(
+        "models",  // assets目录
         "/sdcard/Android/data/com.autodroid.teachitback/files/tibresource/models",
         "/storage/emulated/0/Android/data/com.autodroid.teachitback/files/tibresource/models",
         "/sdcard/tibresource/models",
@@ -64,30 +65,59 @@ object ModelFileInitializer {
 
                 // 尝试从多个可能的源路径查找文件
                 var sourceFile: File? = null
+                var sourceInputStream: java.io.InputStream? = null
+
                 for (sourcePath in SOURCE_PATHS) {
-                    val file = File(sourcePath, fileName)
-                    Log.d(TAG, "检查路径: ${file.absolutePath}")
-                    if (file.exists()) {
-                        sourceFile = file
-                        Log.d(TAG, "找到源文件: ${file.absolutePath}")
-                        break
+                    if (sourcePath == "models") {
+                        // 尝试从assets加载
+                        try {
+                            sourceInputStream = context.assets.open("$sourcePath/$fileName")
+                            Log.d(TAG, "从assets找到源文件: $sourcePath/$fileName")
+                            break
+                        } catch (e: Exception) {
+                            Log.d(TAG, "assets中未找到: $sourcePath/$fileName")
+                        }
+                    } else {
+                        // 尝试从外部存储加载
+                        val file = File(sourcePath, fileName)
+                        Log.d(TAG, "检查路径: ${file.absolutePath}")
+                        if (file.exists()) {
+                            sourceFile = file
+                            Log.d(TAG, "找到源文件: ${file.absolutePath}")
+                            break
+                        }
                     }
                 }
 
-                sourceFile?.let { source ->
-                    if (shouldCopyFile(source, targetFile)) {
-                        val success = copyFile(source, targetFile)
+                if (sourceInputStream != null) {
+                    // 从assets复制
+                    if (shouldCopyFileFromAssets(sourceInputStream, targetFile)) {
+                        val success = copyFileFromAssets(sourceInputStream, targetFile)
                         if (success) {
                             copiedCount++
-                            Log.i(TAG, "复制模型文件成功: ${source.name} -> ${targetFile.name} (${targetFile.length()} bytes)")
+                            Log.i(TAG, "从assets复制模型文件成功: $fileName -> ${targetFile.name} (${targetFile.length()} bytes)")
                         } else {
-                            Log.e(TAG, "复制模型文件失败: ${source.name}")
+                            Log.e(TAG, "从assets复制模型文件失败: $fileName")
                         }
                     } else {
                         skippedCount++
                         Log.d(TAG, "跳过已存在的模型文件: ${targetFile.name}")
                     }
-                } ?: run {
+                } else if (sourceFile != null) {
+                    // 从外部存储复制
+                    if (shouldCopyFile(sourceFile, targetFile)) {
+                        val success = copyFile(sourceFile, targetFile)
+                        if (success) {
+                            copiedCount++
+                            Log.i(TAG, "复制模型文件成功: ${sourceFile.name} -> ${targetFile.name} (${targetFile.length()} bytes)")
+                        } else {
+                            Log.e(TAG, "复制模型文件失败: ${sourceFile.name}")
+                        }
+                    } else {
+                        skippedCount++
+                        Log.d(TAG, "跳过已存在的模型文件: ${targetFile.name}")
+                    }
+                } else {
                     Log.w(TAG, "未找到模型文件: $fileName")
                     Log.d(TAG, "已检查路径: ${SOURCE_PATHS.joinToString(", ")}")
                 }
@@ -113,6 +143,14 @@ object ModelFileInitializer {
     }
 
     /**
+     * 判断是否需要从assets复制文件
+     */
+    private fun shouldCopyFileFromAssets(sourceInputStream: java.io.InputStream, targetFile: File): Boolean {
+        // 如果目标文件不存在，需要复制
+        return !targetFile.exists()
+    }
+
+    /**
      * 复制文件
      */
     private fun copyFile(sourceFile: File, targetFile: File): Boolean {
@@ -125,6 +163,23 @@ object ModelFileInitializer {
             true
         } catch (e: Exception) {
             Log.e(TAG, "文件复制失败: ${sourceFile.name} -> ${targetFile.name}", e)
+            false
+        }
+    }
+
+    /**
+     * 从assets复制文件
+     */
+    private fun copyFileFromAssets(sourceInputStream: java.io.InputStream, targetFile: File): Boolean {
+        return try {
+            FileOutputStream(targetFile).use { output ->
+                sourceInputStream.use { input ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "从assets复制文件失败: ${targetFile.name}", e)
             false
         }
     }

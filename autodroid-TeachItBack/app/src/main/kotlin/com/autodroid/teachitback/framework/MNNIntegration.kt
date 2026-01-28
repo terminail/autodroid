@@ -372,13 +372,12 @@ class MNNModel(
      * @param input 输入文本
      * @return embedding 向量（[CLS] token 的输出）
      */
-    suspend fun extractEmbedding(input: String): FloatArray = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+    suspend fun extractEmbedding(input: String): FloatArray? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
         if (!isLoaded) {
             throw IllegalStateException("模型未加载")
         }
 
         Log.d(TAG, "extractEmbedding: input='$input', 长度=${input.length}")
-        Log.d(TAG, "extractEmbedding: 前3个字符: ${input.take(3).map { "U+${it.code.toString(16).uppercase()}" }}")
 
         try {
             // 获取输入张量
@@ -391,21 +390,67 @@ class MNNModel(
             val tokenTypeIdsTensor = session.getInput(TOKEN_TYPE_IDS)
                 ?: throw IllegalStateException("无法获取输入张量: $TOKEN_TYPE_IDS")
             
+            // 获取张量的原始维度信息
+            val inputIdsDims = inputIdsTensor.getDimensions()
+            val attentionMaskDims = attentionMaskTensor.getDimensions()
+            val tokenTypeIdsDims = tokenTypeIdsTensor.getDimensions()
+            
+            Log.d(TAG, "张量原始维度: inputIds=${inputIdsDims?.joinToString(", ")}, attentionMask=${attentionMaskDims?.joinToString(", ")}, tokenTypeIds=${tokenTypeIdsDims?.joinToString(", ")}")
+            
             // 准备输入数据
             val (inputIds, attentionMask, tokenTypeIds) = preprocessInput(input)
             
-            Log.d(TAG, "输入数据: inputIds size=${inputIds.size}")
-            Log.d(TAG, "输入数据前10个: ${inputIds.take(10).joinToString(", ")}")
+            Log.d(TAG, "预处理后数据: inputIds size=${inputIds.size}, attentionMask size=${attentionMask.size}")
             
-            // 设置输入数据
+            // 确定目标序列长度
+            val targetSeqLength = if (inputIdsDims != null && inputIdsDims.size >= 2) {
+                inputIdsDims[1]
+            } else {
+                MAX_SEQ_LENGTH
+            }
+            
+            Log.d(TAG, "目标序列长度: $targetSeqLength")
+            
+            // 截断或填充到目标长度
+            val truncatedInputIds = inputIds.copyOf(minOf(inputIds.size.toInt(), targetSeqLength).toInt())
+            val truncatedAttentionMask = attentionMask.copyOf(minOf(attentionMask.size.toInt(), targetSeqLength).toInt())
+            val truncatedTokenTypeIds = tokenTypeIds.copyOf(minOf(tokenTypeIds.size.toInt(), targetSeqLength).toInt())
+            
+            // 填充到目标长度
+            val paddedInputIds = FloatArray(targetSeqLength) { 
+                if (it < truncatedInputIds.size) truncatedInputIds[it] else 0f 
+            }
+            val paddedAttentionMask = FloatArray(targetSeqLength) {
+                if (it < truncatedAttentionMask.size) truncatedAttentionMask[it] else 0f
+            }
+            val paddedTokenTypeIds = FloatArray(targetSeqLength) {
+                if (it < truncatedTokenTypeIds.size) truncatedTokenTypeIds[it] else 0f
+            }
+            
+            // 将 FloatArray 转换为 IntArray（如果模型期望整数输入）
+            val inputIdsInt = paddedInputIds.map { it.toInt() }.toIntArray()
+            val attentionMaskInt = paddedAttentionMask.map { it.toInt() }.toIntArray()
+            val tokenTypeIdsInt = paddedTokenTypeIds.map { it.toInt() }.toIntArray()
+            
+            Log.d(TAG, "设置输入数据: inputIdsInt size=${inputIdsInt.size}")
+            
+            // 设置输入数据（使用整数类型）
             try {
-                inputIdsTensor.setInputFloatData(inputIds)
-                attentionMaskTensor.setInputFloatData(attentionMask)
-                tokenTypeIdsTensor.setInputFloatData(tokenTypeIds)
+                inputIdsTensor.setInputIntData(inputIdsInt)
+                attentionMaskTensor.setInputIntData(attentionMaskInt)
+                tokenTypeIdsTensor.setInputIntData(tokenTypeIdsInt)
                 Log.d(TAG, "输入数据设置成功")
             } catch (e: Exception) {
-                Log.e(TAG, "设置输入数据失败: ${e.message}", e)
-                throw e
+                Log.w(TAG, "整数输入失败，尝试浮点数: ${e.message}")
+                try {
+                    inputIdsTensor.setInputFloatData(paddedInputIds)
+                    attentionMaskTensor.setInputFloatData(paddedAttentionMask)
+                    tokenTypeIdsTensor.setInputFloatData(paddedTokenTypeIds)
+                    Log.d(TAG, "浮点数输入设置成功")
+                } catch (e2: Exception) {
+                    Log.e(TAG, "设置输入数据失败: ${e2.message}", e2)
+                    return@withContext null
+                }
             }
             
             // 执行推理
@@ -415,25 +460,40 @@ class MNNModel(
                 Log.d(TAG, "推理执行完成")
             } catch (e: Exception) {
                 Log.e(TAG, "推理执行失败: ${e.message}", e)
-                throw e
+                return@withContext null
             }
             
             // 获取输出张量
             val outputTensor = session.getOutput(HIDDEN_STATES)
-                ?: throw IllegalStateException("无法获取输出张量: $HIDDEN_STATES")
+                ?: run {
+                    Log.e(TAG, "无法获取输出张量: $HIDDEN_STATES")
+                    return@withContext null
+                }
+            
+            // 获取输出张量形状
+            val outputDims = outputTensor.getDimensions()
+            Log.d(TAG, "输出张量形状: ${outputDims?.joinToString(", ")}")
             
             // 获取输出数据
             val outputData = outputTensor.getFloatData()
+            Log.d(TAG, "输出数据大小: ${outputData.size}")
             
-            // 提取 [CLS] token 的 embedding（第一个 token）
-            val clsEmbedding = outputData.sliceArray(0 until HIDDEN_SIZE)
+            // 提取 [CLS] token 的 embedding
+            val clsEmbedding = if (outputDims != null && outputDims.size >= 2) {
+                val hiddenSize = outputDims[outputDims.size - 1]
+                val startIdx = 0
+                val endIdx = minOf(startIdx + hiddenSize, outputData.size)
+                outputData.sliceArray(startIdx until endIdx)
+            } else {
+                outputData.sliceArray(0 until minOf(outputData.size, HIDDEN_SIZE))
+            }
             
             Log.d(TAG, "Embedding 提取完成: size=${clsEmbedding.size}")
             
             clsEmbedding
         } catch (e: Exception) {
-            Log.e(TAG, "Embedding 提取失败", e)
-            throw e
+            Log.e(TAG, "Embedding 提取失败: ${e.message}", e)
+            null
         }
     }
 

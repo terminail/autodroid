@@ -116,28 +116,19 @@ class MessageRepository(
         
         val aiResponse: com.autodroid.teachitback.model.AIServiceResponse = try {
             Log.d("MessageRepository", "检查服务推荐: suggestedService=$suggestedService")
-            if (suggestedService != null) {
-                // 如果有推荐的服务，优先使用该服务
-                Log.d("MessageRepository", "使用推荐服务: $suggestedService")
-                aiRouter.routeWithPreference(
-                    capabilityCheck = { it.supportBasicChat },
-                    preferredServiceId = suggestedService,
-                    operation = { service -> 
-                        Log.d("MessageRepository", "调用服务生成回复: ${service.config.displayName}")
-                        service.sendMessage(userMessage, context) 
-                    }
-                )
-            } else {
-                // 否则使用智能路由
-                Log.d("MessageRepository", "使用智能路由选择服务")
-                aiRouter.routeByCapability(
-                    capabilityCheck = { it.supportBasicChat },
-                    operation = { service -> 
-                        Log.d("MessageRepository", "调用服务生成回复: ${service.config.displayName}")
-                        service.sendMessage(userMessage, context) 
-                    }
-                )
-            }
+            
+            // 临时强制使用TinyBERT服务
+            val forcedService = "tinybert_local"
+            Log.d("MessageRepository", "临时强制使用TinyBERT服务: $forcedService")
+            
+            aiRouter.routeWithPreference(
+                capabilityCheck = { it.supportBasicChat },
+                preferredServiceId = forcedService,
+                operation = { service -> 
+                    Log.d("MessageRepository", "调用服务生成回复: ${service.config.displayName}")
+                    service.sendMessage(userMessage, context) 
+                }
+            )
         } catch (e: Exception) {
             Log.e("MessageRepository", "AI回复生成失败: ${e.message}", e)
             // 返回错误响应，不阻塞主流程
