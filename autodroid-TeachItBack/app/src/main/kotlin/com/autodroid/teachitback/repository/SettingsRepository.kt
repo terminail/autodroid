@@ -386,5 +386,207 @@ class SettingsRepository(private val settingDao: SettingDao) {
             emptyList()
         }
     }
+
+    /**
+     * 将 AIServiceConfig 转换为 SettingsItem
+     */
+    fun configToSettingsItem(config: AIServiceConfig): SettingsItem? {
+        return when (config) {
+            is AIServiceConfig.DoubaoConfig -> SettingsItem.DoubaoAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://developer.doubao.com",
+                officialWebsite = "https://www.doubao.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.DeepSeekConfig -> SettingsItem.DeepSeekAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://platform.deepseek.com",
+                officialWebsite = "https://www.deepseek.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.MiniMaxConfig -> SettingsItem.MinimaxAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://platform.minimaxi.com",
+                officialWebsite = "https://minimax.chat",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.KimiConfig -> SettingsItem.KimiAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://platform.moonshot.cn",
+                officialWebsite = "https://kimi.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.OpenAIConfig -> SettingsItem.OpenAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://platform.openai.com",
+                officialWebsite = "https://openai.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.ErnieConfig -> SettingsItem.ErnieAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://console.bce.baidu.com/qianfan",
+                officialWebsite = "https://yiyan.baidu.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.QwenConfig -> SettingsItem.QwenAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://dashscope.aliyuncs.com",
+                officialWebsite = "https://tongyi.aliyun.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.ZhipuConfig -> SettingsItem.ZhipuAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://open.bigmodel.cn",
+                officialWebsite = "https://www.zhipuai.cn",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.SparkConfig -> SettingsItem.SparkAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://console.xfyun.cn/services/spark",
+                officialWebsite = "https://xinghuo.xfyun.cn",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.HunyuanConfig -> SettingsItem.HunyuanAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://cloud.tencent.com/product/hunyuan",
+                officialWebsite = "https://混元.tencent.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.BaichuanConfig -> SettingsItem.BaichuanAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://platform.baichuan-ai.com",
+                officialWebsite = "https://www.baichuan-ai.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.LingyiConfig -> SettingsItem.LingyiAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://open.lingyiwanwu.com",
+                officialWebsite = "https://www.lingyiwanwu.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.JieyueConfig -> SettingsItem.JieyueAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                baseUrl = config.baseUrl,
+                defaultModel = config.model,
+                freeQuota = "${config.freeQuota} tokens",
+                apiKeyUrl = "https://open.jieyuesx.com",
+                officialWebsite = "https://www.jieyuesx.com",
+                isEnabled = config.isEnabled
+            )
+            is AIServiceConfig.ChatGLMConfig -> SettingsItem.ChatGLMAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                defaultModel = config.model,
+                isEnabled = config.isEnabled,
+                priority = 100,
+                modelDownloadStrategy = "AUTO",
+                isModelDownloaded = false,
+                modelDownloadProgress = 0.0f,
+                modelSize = "6GB",
+                githubRepo = "THUDM/ChatGLM-6B"
+            )
+            is AIServiceConfig.TinyBERTConfig -> SettingsItem.TinyBERTAIServiceItem(
+                id = config.id,
+                name = config.name,
+                description = config.description,
+                defaultModel = config.model,
+                isEnabled = config.isEnabled,
+                priority = 100,
+                modelDownloadStrategy = "AUTO",
+                isModelDownloaded = false,
+                modelDownloadProgress = 0.0f,
+                modelSize = "50MB",
+                githubRepo = "huawei-noah/TinyBERT"
+            )
+            is AIServiceConfig.TencentHunyuanConfig -> null
+        }
+    }
+
+    /**
+     * 将 SettingsItem 转换为 AIServiceConfig
+     */
+    fun settingsItemToConfig(item: SettingsItem): AIServiceConfig? {
+        return when (item) {
+            is SettingsItem.DoubaoAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.DeepSeekAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.MinimaxAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.KimiAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.OpenAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.ErnieAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.QwenAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.ZhipuAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.SparkAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.HunyuanAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.BaichuanAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.LingyiAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.JieyueAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.ChatGLMAIServiceItem -> item.toAIServiceConfig()
+            is SettingsItem.TinyBERTAIServiceItem -> item.toAIServiceConfig()
+            else -> null
+        }
+    }
 }
 

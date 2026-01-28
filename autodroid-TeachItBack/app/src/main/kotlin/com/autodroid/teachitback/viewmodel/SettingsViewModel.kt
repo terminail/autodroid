@@ -39,6 +39,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     init {
         loadSettings()
         loadAIServiceConfigs()
+        observeAIServiceConfigs()
     }
     
     /**
@@ -96,64 +97,89 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // AI服务设置 - 从数据库加载
         items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
         
-        val aiServiceMap = aiServiceItems.associateBy {
-            when (it) {
-                is SettingsItem.TencentCloudAIServiceItem -> "tencentcloud"
-                is SettingsItem.DoubaoAIServiceItem -> "doubao"
-                is SettingsItem.ErnieAIServiceItem -> "ernie"
-                is SettingsItem.QwenAIServiceItem -> "qwen"
-                is SettingsItem.DeepSeekAIServiceItem -> "deepseek"
-                is SettingsItem.ZhipuAIServiceItem -> "zhipu"
-                is SettingsItem.SparkAIServiceItem -> "spark"
-                is SettingsItem.MinimaxAIServiceItem -> "minimax"
-                is SettingsItem.KimiAIServiceItem -> "kimi"
-                is SettingsItem.HunyuanAIServiceItem -> "hunyuan"
-                is SettingsItem.BaichuanAIServiceItem -> "baichuan"
-                is SettingsItem.LingyiAIServiceItem -> "lingyi"
-                is SettingsItem.JieyueAIServiceItem -> "jieyue"
-                is SettingsItem.OpenAIServiceItem -> "openai"
-                is SettingsItem.ChatGLMAIServiceItem -> "chatglm"
-                is SettingsItem.TinyBERTAIServiceItem -> "tinybert"
-                else -> ""
-            }
-        }
-        
-        // 获取当前AI服务配置状态
+        // 获取当前AI服务配置状态 - 始终从AIServiceConfig获取最新状态
         val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
         
-        // 根据实际配置状态设置 isEnabled
-        items.add(aiServiceMap["tencentcloud"] as? SettingsItem.TencentCloudAIServiceItem ?:
-            SettingsItem.TencentCloudAIServiceItem(enabled = currentConfigs["tencent-hunyuan"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["openai"] as? SettingsItem.OpenAIServiceItem ?: 
-            SettingsItem.OpenAIServiceItem(isEnabled = currentConfigs["openai"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["deepseek"] as? SettingsItem.DeepSeekAIServiceItem ?: 
-            SettingsItem.DeepSeekAIServiceItem(isEnabled = currentConfigs["deepseek"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["ernie"] as? SettingsItem.ErnieAIServiceItem ?: 
-            SettingsItem.ErnieAIServiceItem(isEnabled = currentConfigs["ernie"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["qwen"] as? SettingsItem.QwenAIServiceItem ?: 
-            SettingsItem.QwenAIServiceItem(isEnabled = currentConfigs["qwen"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["doubao"] as? SettingsItem.DoubaoAIServiceItem ?: 
-            SettingsItem.DoubaoAIServiceItem(isEnabled = currentConfigs["doubao"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["minimax"] as? SettingsItem.MinimaxAIServiceItem ?: 
-            SettingsItem.MinimaxAIServiceItem(isEnabled = currentConfigs["minimax"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["kimi"] as? SettingsItem.KimiAIServiceItem ?: 
-            SettingsItem.KimiAIServiceItem(isEnabled = currentConfigs["kimi"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["zhipu"] as? SettingsItem.ZhipuAIServiceItem ?: 
-            SettingsItem.ZhipuAIServiceItem(isEnabled = currentConfigs["zhipu"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["spark"] as? SettingsItem.SparkAIServiceItem ?: 
-            SettingsItem.SparkAIServiceItem(isEnabled = currentConfigs["spark"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["hunyuan"] as? SettingsItem.HunyuanAIServiceItem ?: 
-            SettingsItem.HunyuanAIServiceItem(isEnabled = currentConfigs["hunyuan"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["baichuan"] as? SettingsItem.BaichuanAIServiceItem ?: 
-            SettingsItem.BaichuanAIServiceItem(isEnabled = currentConfigs["baichuan"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["lingyi"] as? SettingsItem.LingyiAIServiceItem ?: 
-            SettingsItem.LingyiAIServiceItem(isEnabled = currentConfigs["lingyi"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["jieyue"] as? SettingsItem.JieyueAIServiceItem ?: 
-            SettingsItem.JieyueAIServiceItem(isEnabled = currentConfigs["jieyue"]?.apiKey?.isNotEmpty() == true))
-        items.add(aiServiceMap["chatglm"] as? SettingsItem.ChatGLMAIServiceItem ?: 
-            SettingsItem.ChatGLMAIServiceItem())
-        items.add(aiServiceMap["tinybert"] as? SettingsItem.TinyBERTAIServiceItem ?: 
-            SettingsItem.TinyBERTAIServiceItem())
+        // 创建AI服务Map，使用AIServiceConfig的isEnabled状态
+        val aiServiceMap = mutableMapOf<String, SettingsItem>()
+        
+        // 添加所有AI服务项，始终使用AIServiceConfig中的isEnabled状态
+        aiServiceMap["tencentcloud"] = SettingsItem.TencentCloudAIServiceItem(
+            enabled = currentConfigs["tencent-hunyuan"]?.isEnabled == true
+        )
+        aiServiceMap["openai"] = SettingsItem.OpenAIServiceItem(
+            isEnabled = currentConfigs["openai"]?.isEnabled == true
+        )
+        aiServiceMap["deepseek"] = SettingsItem.DeepSeekAIServiceItem(
+            isEnabled = currentConfigs["deepseek"]?.isEnabled == true
+        )
+        aiServiceMap["ernie"] = SettingsItem.ErnieAIServiceItem(
+            isEnabled = currentConfigs["ernie"]?.isEnabled == true
+        )
+        aiServiceMap["qwen"] = SettingsItem.QwenAIServiceItem(
+            isEnabled = currentConfigs["qwen"]?.isEnabled == true
+        )
+        aiServiceMap["doubao"] = SettingsItem.DoubaoAIServiceItem(
+            isEnabled = currentConfigs["doubao"]?.isEnabled == true
+        )
+        aiServiceMap["minimax"] = SettingsItem.MinimaxAIServiceItem(
+            isEnabled = currentConfigs["minimax"]?.isEnabled == true
+        )
+        aiServiceMap["kimi"] = SettingsItem.KimiAIServiceItem(
+            isEnabled = currentConfigs["kimi"]?.isEnabled == true
+        )
+        aiServiceMap["zhipu"] = SettingsItem.ZhipuAIServiceItem(
+            isEnabled = currentConfigs["zhipu"]?.isEnabled == true
+        )
+        aiServiceMap["spark"] = SettingsItem.SparkAIServiceItem(
+            isEnabled = currentConfigs["spark"]?.isEnabled == true
+        )
+        aiServiceMap["hunyuan"] = SettingsItem.HunyuanAIServiceItem(
+            isEnabled = currentConfigs["hunyuan"]?.isEnabled == true
+        )
+        aiServiceMap["baichuan"] = SettingsItem.BaichuanAIServiceItem(
+            isEnabled = currentConfigs["baichuan"]?.isEnabled == true
+        )
+        aiServiceMap["lingyi"] = SettingsItem.LingyiAIServiceItem(
+            isEnabled = currentConfigs["lingyi"]?.isEnabled == true
+        )
+        aiServiceMap["jieyue"] = SettingsItem.JieyueAIServiceItem(
+            isEnabled = currentConfigs["jieyue"]?.isEnabled == true
+        )
+        aiServiceMap["chatglm"] = SettingsItem.ChatGLMAIServiceItem(
+            isEnabled = currentConfigs["chatglm"]?.isEnabled == true
+        )
+        aiServiceMap["tinybert"] = SettingsItem.TinyBERTAIServiceItem(
+             isEnabled = currentConfigs["tinybert_local"]?.isEnabled == true
+         )
+         
+         // 对AI服务项进行排序：已启用的排在前面
+         val sortedAIServices = aiServiceMap.values.sortedWith(
+             compareByDescending<SettingsItem> { item ->
+                 when (item) {
+                     is SettingsItem.TencentCloudAIServiceItem -> item.enabled
+                     is SettingsItem.OpenAIServiceItem -> item.isEnabled
+                     is SettingsItem.DeepSeekAIServiceItem -> item.isEnabled
+                     is SettingsItem.ErnieAIServiceItem -> item.isEnabled
+                     is SettingsItem.QwenAIServiceItem -> item.isEnabled
+                     is SettingsItem.DoubaoAIServiceItem -> item.isEnabled
+                     is SettingsItem.MinimaxAIServiceItem -> item.isEnabled
+                     is SettingsItem.KimiAIServiceItem -> item.isEnabled
+                     is SettingsItem.ZhipuAIServiceItem -> item.isEnabled
+                     is SettingsItem.SparkAIServiceItem -> item.isEnabled
+                     is SettingsItem.HunyuanAIServiceItem -> item.isEnabled
+                     is SettingsItem.BaichuanAIServiceItem -> item.isEnabled
+                     is SettingsItem.LingyiAIServiceItem -> item.isEnabled
+                     is SettingsItem.JieyueAIServiceItem -> item.isEnabled
+                     is SettingsItem.ChatGLMAIServiceItem -> item.isEnabled
+                     is SettingsItem.TinyBERTAIServiceItem -> item.isEnabled
+                     else -> false
+                 }
+             }
+         )
+         
+         // 添加排序后的AI服务项到items列表
+         items.addAll(sortedAIServices)
         
         // 应用设置
         items.add(SettingsItem.SectionHeaderItem("应用设置"))
@@ -208,38 +234,52 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleAIService(serviceName: String, isEnabled: Boolean) {
         viewModelScope.launch {
             try {
-                val existingItem = settingsRepository.getSettingByKeySync("ai_$serviceName")
-                val item = when (serviceName) {
-                    "doubao" -> (existingItem as? SettingsItem.DoubaoAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.DoubaoAIServiceItem(isEnabled = isEnabled)
-                    "deepseek" -> (existingItem as? SettingsItem.DeepSeekAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.DeepSeekAIServiceItem(isEnabled = isEnabled)
-                    "minimax" -> (existingItem as? SettingsItem.MinimaxAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.MinimaxAIServiceItem(isEnabled = isEnabled)
-                    "kimi" -> (existingItem as? SettingsItem.KimiAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.KimiAIServiceItem(isEnabled = isEnabled)
-                    "openai" -> (existingItem as? SettingsItem.OpenAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.OpenAIServiceItem(isEnabled = isEnabled)
-                    "ernie" -> (existingItem as? SettingsItem.ErnieAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.ErnieAIServiceItem(isEnabled = isEnabled)
-                    "qwen" -> (existingItem as? SettingsItem.QwenAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.QwenAIServiceItem(isEnabled = isEnabled)
-                    "zhipu" -> (existingItem as? SettingsItem.ZhipuAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.ZhipuAIServiceItem(isEnabled = isEnabled)
-                    "spark" -> (existingItem as? SettingsItem.SparkAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.SparkAIServiceItem(isEnabled = isEnabled)
-                    "hunyuan" -> (existingItem as? SettingsItem.HunyuanAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.HunyuanAIServiceItem(isEnabled = isEnabled)
-                    "baichuan" -> (existingItem as? SettingsItem.BaichuanAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.BaichuanAIServiceItem(isEnabled = isEnabled)
-                    "lingyi" -> (existingItem as? SettingsItem.LingyiAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.LingyiAIServiceItem(isEnabled = isEnabled)
-                    "jieyue" -> (existingItem as? SettingsItem.JieyueAIServiceItem)?.copy(isEnabled = isEnabled) 
-                        ?: SettingsItem.JieyueAIServiceItem(isEnabled = isEnabled)
+                // 获取现有的 AI 服务配置
+                val existingConfig = settingsRepository.loadAIServiceConfig(serviceName)
+                
+                // 更新配置的 isEnabled 状态
+                val updatedConfig = when (serviceName) {
+                    "doubao" -> (existingConfig as? AIServiceConfig.DoubaoConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.DoubaoConfig(isEnabled = isEnabled)
+                    "deepseek" -> (existingConfig as? AIServiceConfig.DeepSeekConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.DeepSeekConfig(isEnabled = isEnabled)
+                    "minimax" -> (existingConfig as? AIServiceConfig.MiniMaxConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.MiniMaxConfig(isEnabled = isEnabled)
+                    "kimi" -> (existingConfig as? AIServiceConfig.KimiConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.KimiConfig(isEnabled = isEnabled)
+                    "openai" -> (existingConfig as? AIServiceConfig.OpenAIConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.OpenAIConfig(isEnabled = isEnabled)
+                    "ernie" -> (existingConfig as? AIServiceConfig.ErnieConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.ErnieConfig(isEnabled = isEnabled)
+                    "qwen" -> (existingConfig as? AIServiceConfig.QwenConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.QwenConfig(isEnabled = isEnabled)
+                    "zhipu" -> (existingConfig as? AIServiceConfig.ZhipuConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.ZhipuConfig(isEnabled = isEnabled)
+                    "spark" -> (existingConfig as? AIServiceConfig.SparkConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.SparkConfig(isEnabled = isEnabled)
+                    "hunyuan" -> (existingConfig as? AIServiceConfig.HunyuanConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.HunyuanConfig(isEnabled = isEnabled)
+                    "baichuan" -> (existingConfig as? AIServiceConfig.BaichuanConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.BaichuanConfig(isEnabled = isEnabled)
+                    "lingyi" -> (existingConfig as? AIServiceConfig.LingyiConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.LingyiConfig(isEnabled = isEnabled)
+                    "jieyue" -> (existingConfig as? AIServiceConfig.JieyueConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.JieyueConfig(isEnabled = isEnabled)
+                    "chatglm" -> (existingConfig as? AIServiceConfig.ChatGLMConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.ChatGLMConfig(isEnabled = isEnabled)
+                    "tinybert" -> (existingConfig as? AIServiceConfig.TinyBERTConfig)?.copy(isEnabled = isEnabled)
+                        ?: AIServiceConfig.TinyBERTConfig(isEnabled = isEnabled)
                     else -> return@launch
                 }
-                settingsRepository.saveSetting(item)
-                loadSettings() // 重新加载以反映更改
+                
+                // 保存更新后的配置
+                settingsRepository.saveAIServiceConfig(updatedConfig)
+                
+                // 重新加载 AI 服务配置
+                loadAIServiceConfigs()
+                
+                // 重新加载设置以反映更改
+                loadSettings()
             } catch (e: Exception) {
                 _errorMessage.value = "切换AI服务失败: ${e.message}"
             }
@@ -252,24 +292,24 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private fun buildDefaultSettingsItems(): List<SettingsItem> {
         val items = mutableListOf<SettingsItem>()
 
-        // AI服务设置 - 默认配置
+        // AI服务设置 - 默认配置（所有服务默认禁用）
         items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
-        items.add(SettingsItem.TencentCloudAIServiceItem())  // 腾讯云知识引擎
-        items.add(SettingsItem.OpenAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.DeepSeekAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.QwenAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.DoubaoAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.MinimaxAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.KimiAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.ZhipuAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.SparkAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.HunyuanAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.BaichuanAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.LingyiAIServiceItem(isEnabled = true))
-        items.add(SettingsItem.JieyueAIServiceItem(isEnabled = true))
+        items.add(SettingsItem.TencentCloudAIServiceItem(enabled = false))
+        items.add(SettingsItem.OpenAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.DeepSeekAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.QwenAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.DoubaoAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.MinimaxAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.KimiAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.ZhipuAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.SparkAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.HunyuanAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.BaichuanAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.LingyiAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.JieyueAIServiceItem(isEnabled = false))
         items.add(SettingsItem.ErnieAIServiceItem(isEnabled = false))
-        items.add(SettingsItem.ChatGLMAIServiceItem())
-        items.add(SettingsItem.TinyBERTAIServiceItem())
+        items.add(SettingsItem.ChatGLMAIServiceItem(isEnabled = false))
+        items.add(SettingsItem.TinyBERTAIServiceItem(isEnabled = false))
 
         // 应用设置
         items.add(SettingsItem.SectionHeaderItem("应用设置"))
@@ -323,7 +363,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 val serviceIds = listOf(
                     "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
                     "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
-                    "doubao", "lingyi", "jieyue"
+                    "doubao", "lingyi", "jieyue", "chatglm", "tinybert_local"
                 )
                 
                 serviceIds.forEach { serviceId ->
@@ -366,5 +406,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     fun clearErrorMessage() {
         _errorMessage.value = null
+    }
+    
+    /**
+     * 观察 AI 服务配置变化
+     */
+    private fun observeAIServiceConfigs() {
+        _aiServiceConfigs.observeForever { configs ->
+            // 当 AI 服务配置加载完成后，重新构建 SettingsItem 以确保状态一致
+            if (configs.isNotEmpty()) {
+                viewModelScope.launch {
+                    loadSettings()
+                }
+            }
+        }
     }
 }

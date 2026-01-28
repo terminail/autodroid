@@ -101,9 +101,13 @@ class ServiceSettingsViewModel(
     private fun loadEnabledServices() {
         viewModelScope.launch {
             try {
-                // 默认所有服务都启用（简化实现）
-                val allConfigs = _availableServices.value ?: emptyList()
-                _enabledServices.value = allConfigs
+                // 从数据库加载所有 AI 服务配置
+                val allConfigs = settingsRepository.getAllAIServiceConfigs()
+                
+                // 过滤出已启用的服务
+                val enabledConfigs = allConfigs.filter { it.isEnabled }
+                
+                _enabledServices.value = enabledConfigs
             } catch (e: Exception) {
                 _errorMessage.value = "加载启用服务失败: ${e.message}"
             }
@@ -127,21 +131,60 @@ class ServiceSettingsViewModel(
     fun toggleService(serviceId: String, enabled: Boolean) {
         viewModelScope.launch {
             try {
-                // 更新启用服务列表
-                val currentEnabled = _enabledServices.value?.toMutableList() ?: mutableListOf()
-                val allConfigs = _availableServices.value ?: emptyList()
+                // 获取现有的服务配置
+                val existingConfig = settingsRepository.loadAIServiceConfig(serviceId)
                 
-                val serviceConfig = allConfigs.find { it.id == serviceId }
-                
-                if (enabled) {
-                    if (serviceConfig != null && !currentEnabled.any { it.id == serviceId }) {
-                        currentEnabled.add(serviceConfig)
+                // 更新配置的 isEnabled 状态
+                val updatedConfig = when (existingConfig) {
+                    is AIServiceConfig.DoubaoConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.DeepSeekConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.MiniMaxConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.BaichuanConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.KimiConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.OpenAIConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.ErnieConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.QwenConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.ZhipuConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.SparkConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.HunyuanConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.LingyiConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.JieyueConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.ChatGLMConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.TinyBERTConfig -> existingConfig.copy(isEnabled = enabled)
+                    is AIServiceConfig.TencentHunyuanConfig -> existingConfig.copy(isEnabled = enabled)
+                    null -> {
+                        // 如果配置不存在，创建新配置
+                        val allConfigs = _availableServices.value ?: emptyList()
+                        allConfigs.find { it.id == serviceId }?.let { defaultConfig ->
+                            when (defaultConfig) {
+                                is AIServiceConfig.DoubaoConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.DeepSeekConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.MiniMaxConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.BaichuanConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.KimiConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.OpenAIConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.ErnieConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.QwenConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.ZhipuConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.SparkConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.HunyuanConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.LingyiConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.JieyueConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.ChatGLMConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.TinyBERTConfig -> defaultConfig.copy(isEnabled = enabled)
+                                is AIServiceConfig.TencentHunyuanConfig -> defaultConfig.copy(isEnabled = enabled)
+                            }
+                        }
                     }
-                } else {
-                    currentEnabled.removeAll { it.id == serviceId }
                 }
                 
-                _enabledServices.value = currentEnabled
+                if (updatedConfig != null) {
+                    // 保存更新后的配置
+                    settingsRepository.saveAIServiceConfig(updatedConfig)
+                    
+                    // 重新加载启用的服务
+                    loadEnabledServices()
+                }
             } catch (e: Exception) {
                 _errorMessage.value = "切换服务状态失败: ${e.message}"
             }

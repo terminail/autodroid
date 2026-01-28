@@ -48,6 +48,9 @@ class SettingsAIServiceDetailFragment : Fragment() {
     // ViewModel实例
     private lateinit var viewModel: SettingsViewModel
 
+    // 标志：是否由程序更新开关状态（避免触发监听器）
+    private var isUpdatingSwitchProgrammatically = false
+
     // API Key 获取地址映射
     private val apiKeyUrls = mapOf(
         "tencent-hunyuan" to "https://cloud.tencent.com/product/hunyuan",
@@ -144,7 +147,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
             configs?.get(currentConfig.id)?.let { savedConfig ->
                 // 使用已保存的配置更新 UI
                 updateUIWithSavedConfig(savedConfig)
-                // 更新服务状态显示
+                // 更新服务状态显示（显示上次保存的状态）
                 updateServiceStatusDisplay(savedConfig.status)
             }
         }
@@ -214,9 +217,20 @@ class SettingsAIServiceDetailFragment : Fragment() {
      * 使用已保存的配置更新 UI
      */
     private fun updateUIWithSavedConfig(savedConfig: AIServiceConfig) {
+        // 更新 currentConfig，确保后续操作使用正确的配置
+        currentConfig = savedConfig
+
+        // 更新输入框
         binding.apiKeyInput.setText(savedConfig.apiKey)
         binding.secretIdInput.setText(savedConfig.secretId)
         binding.modelInput.setText(savedConfig.model, false)
+
+        // 更新开关状态和文本显示
+        val isEnabled = savedConfig.isEnabled
+        isUpdatingSwitchProgrammatically = true
+        binding.enableServiceSwitch.isChecked = isEnabled
+        isUpdatingSwitchProgrammatically = false
+        updateUIForEnabledState(isEnabled)
     }
 
     /**
@@ -281,14 +295,43 @@ class SettingsAIServiceDetailFragment : Fragment() {
      */
     private fun setupEnableSwitch() {
         // 初始状态：从当前配置获取启用状态
-        // 注意：启用状态应该存储在SettingsItem中，而不是单独存储在数据库
-        val isEnabled = true // 默认启用，具体实现需要根据SettingsItem状态
+        val isEnabled = currentConfig.isEnabled
         binding.enableServiceSwitch.isChecked = isEnabled
+        
+        // 更新文本显示
+        updateUIForEnabledState(isEnabled)
 
         // 监听开关状态变化
         binding.enableServiceSwitch.setOnCheckedChangeListener { _, isChecked ->
-            // 启用状态应该通过更新SettingsItem来管理，而不是单独存储
-            // 这里需要调用相应的方法来更新SettingsItem中的启用状态
+            // 如果是由程序更新开关状态，跳过处理
+            if (isUpdatingSwitchProgrammatically) return@setOnCheckedChangeListener
+
+            // 更新配置的启用状态
+            val config = currentConfig
+            val updatedConfig = when (config) {
+                is AIServiceConfig.DoubaoConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.DeepSeekConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.MiniMaxConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.BaichuanConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.KimiConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.OpenAIConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.ErnieConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.QwenConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.ZhipuConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.SparkConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.HunyuanConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.LingyiConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.JieyueConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.ChatGLMConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.TinyBERTConfig -> config.copy(isEnabled = isChecked)
+                is AIServiceConfig.TencentHunyuanConfig -> config.copy(isEnabled = isChecked)
+            }
+
+            // 更新当前配置引用
+            currentConfig = updatedConfig
+
+            // 保存配置
+            viewModel.saveAIServiceConfig(updatedConfig)
 
             // 更新UI状态
             updateUIForEnabledState(isChecked)
@@ -443,7 +486,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
     }
 
     /**
-     * 检查服务状态
+     * 检查服务状态（用户点击按钮时调用）
      */
     private fun checkServiceStatus() {
         safeBinding()?.let { binding ->

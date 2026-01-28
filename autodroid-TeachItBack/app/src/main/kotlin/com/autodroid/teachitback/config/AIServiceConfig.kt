@@ -29,7 +29,10 @@ sealed class AIServiceConfig : Parcelable {
     // 配额和定价
     abstract val freeQuota: Long
     abstract val pricePerMillion: Double
-    
+
+    // 服务启用状态
+    abstract val isEnabled: Boolean
+
     // 嵌入式服务专用字段（可选）
     open val modelFilePath: String? = null
     open val requiresDownload: Boolean = false
@@ -38,7 +41,7 @@ sealed class AIServiceConfig : Parcelable {
     open val temperature: Float = 0.7f
     open val threshold: Float = 0.5f
     open val maxResponseTime: Long = 200L
-    
+
     // 服务状态
     open val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     
@@ -62,6 +65,7 @@ sealed class AIServiceConfig : Parcelable {
         override val capabilities: AIServiceCapability = AIServiceCapability.FULL_CAPABILITIES,
         override val freeQuota: Long = 1000000, // 100万token
         override val pricePerMillion: Double = 12.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -90,6 +94,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000, // 50万token
         override val pricePerMillion: Double = 1.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -117,6 +122,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportLongText(true),
         override val freeQuota: Long = 300000, // 30万token
         override val pricePerMillion: Double = 5.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -139,6 +145,7 @@ sealed class AIServiceConfig : Parcelable {
         override val capabilities: AIServiceCapability = AIServiceCapability.BASIC_CHAT,
         override val freeQuota: Long = 1000000, // 100万token
         override val pricePerMillion: Double = 4.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -167,6 +174,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 800000, // 80万token
         override val pricePerMillion: Double = 12.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -189,6 +197,7 @@ sealed class AIServiceConfig : Parcelable {
         override val capabilities: AIServiceCapability = AIServiceCapability.FULL_CAPABILITIES,
         override val freeQuota: Long = 500000, // 50万token
         override val pricePerMillion: Double = 20.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -216,6 +225,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 8.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -243,6 +253,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 1000000,
         override val pricePerMillion: Double = 6.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -270,6 +281,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 15.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -297,6 +309,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 10.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -324,6 +337,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 1000000,
         override val pricePerMillion: Double = 12.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -351,6 +365,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 1000000,
         override val pricePerMillion: Double = 8.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -378,6 +393,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 10.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
 
@@ -405,6 +421,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = 500000,
         override val pricePerMillion: Double = 10.0,
+        override val isEnabled: Boolean = false,
         override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
     ) : AIServiceConfig()
     
@@ -435,6 +452,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportCreativeWriting(true),
         override val freeQuota: Long = Long.MAX_VALUE,
         override val pricePerMillion: Double = 0.0,
+        override val isEnabled: Boolean = false,
         override val modelFilePath: String = "models/chatglm-6b-int4.mnn",
         override val requiresDownload: Boolean = true,
         override val downloadSize: Long = 2_800_000_000L, // 2.8GB
@@ -463,6 +481,7 @@ sealed class AIServiceConfig : Parcelable {
             .supportAnswerEvaluation(true),
         override val freeQuota: Long = Long.MAX_VALUE,
         override val pricePerMillion: Double = 0.0,
+        override val isEnabled: Boolean = false,
         override val modelFilePath: String = "models/tinybert-int8.mnn",
         override val requiresDownload: Boolean = true,
         override val downloadSize: Long = 14_720_116L, // 实际大小14.7MB

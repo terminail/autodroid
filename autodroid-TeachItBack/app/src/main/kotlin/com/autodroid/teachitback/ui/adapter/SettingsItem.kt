@@ -1,5 +1,7 @@
 package com.autodroid.teachitback.ui.adapter
 
+import com.autodroid.teachitback.config.AIServiceConfig
+
 /**
  * SettingsFragment异构数据项的密封类
  * 支持设置界面中的所有数据类型：每个设置项都有独立的类型
@@ -134,6 +136,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_DOUBAO_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.DoubaoConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -151,6 +163,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_DEEPSEEK_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.DeepSeekConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -168,6 +190,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_MINIMAX_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.MiniMaxConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -185,6 +217,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_KIMI_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.KimiConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -202,6 +244,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_OPENAI_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.OpenAIConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -219,6 +271,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_ERNIE_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.ErnieConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -236,6 +298,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_QWEN_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.QwenConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -253,6 +325,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_ZHIPU_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.ZhipuConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -270,6 +352,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_SPARK_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.SparkConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -287,6 +379,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_HUNYUAN_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.HunyuanConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -304,6 +406,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_BAICHUAN_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.BaichuanConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -321,6 +433,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_LINGYI_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.LingyiConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -338,6 +460,16 @@ sealed class SettingsItem {
         val isEnabled: Boolean = true
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_JIEYUE_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.JieyueConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            baseUrl = baseUrl,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
 
     /**
@@ -375,6 +507,15 @@ sealed class SettingsItem {
         val githubRepo: String = "THUDM/ChatGLM-6B"
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_CHATGLM_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.ChatGLMConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
     
     /**
@@ -394,5 +535,14 @@ sealed class SettingsItem {
         val githubRepo: String = "huawei-noah/TinyBERT"
     ) : SettingsItem() {
         override fun getType(): Int = TYPE_TINYBERT_AI_SERVICE_ITEM
+
+        fun toAIServiceConfig(): AIServiceConfig = AIServiceConfig.TinyBERTConfig(
+            id = id,
+            name = name,
+            displayName = name,
+            description = description,
+            model = defaultModel,
+            isEnabled = isEnabled
+        )
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.autodroid.teachitback.database
+package com.autodroid.teachitback.database
 
 import android.util.Log
 import androidx.room.TypeConverter
@@ -102,6 +102,7 @@ object TopicConverters {
         map["model"] = config.model
         map["freeQuota"] = config.freeQuota
         map["pricePerMillion"] = config.pricePerMillion
+        map["isEnabled"] = config.isEnabled
         map["statusCode"] = config.status.code
         map["statusDesc"] = config.status.description
         
@@ -133,6 +134,7 @@ object TopicConverters {
             val map: Map<String, Any> = gson.fromJson(json, type) ?: return null
             
             val typeName = map["type"] as? String ?: return null
+            val isEnabled = map["isEnabled"] as? Boolean ?: false
             
             when (typeName) {
                 "TencentHunyuanConfig" -> AIServiceConfig.TencentHunyuanConfig(
@@ -147,6 +149,7 @@ object TopicConverters {
                     model = map["model"] as? String ?: "",
                     freeQuota = (map["freeQuota"] as? Double)?.toLong() ?: 0L,
                     pricePerMillion = (map["pricePerMillion"] as? Double) ?: 0.0,
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode(
                         (map["statusCode"] as? Double)?.toInt() ?: 200,
                         map["statusDesc"] as? String
@@ -158,6 +161,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "KimiConfig" -> AIServiceConfig.KimiConfig(
@@ -166,6 +170,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "MiniMaxConfig" -> AIServiceConfig.MiniMaxConfig(
@@ -174,6 +179,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "BaichuanConfig" -> AIServiceConfig.BaichuanConfig(
@@ -182,6 +188,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "OpenAIConfig" -> AIServiceConfig.OpenAIConfig(
@@ -190,6 +197,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "ErnieConfig" -> AIServiceConfig.ErnieConfig(
@@ -198,6 +206,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "QwenConfig" -> AIServiceConfig.QwenConfig(
@@ -206,6 +215,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "ZhipuConfig" -> AIServiceConfig.ZhipuConfig(
@@ -214,6 +224,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "SparkConfig" -> AIServiceConfig.SparkConfig(
@@ -222,6 +233,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "HunyuanConfig" -> AIServiceConfig.HunyuanConfig(
@@ -230,6 +242,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "DoubaoConfig" -> AIServiceConfig.DoubaoConfig(
@@ -238,6 +251,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "LingyiConfig" -> AIServiceConfig.LingyiConfig(
@@ -246,6 +260,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "JieyueConfig" -> AIServiceConfig.JieyueConfig(
@@ -254,6 +269,7 @@ object TopicConverters {
                     baseUrl = map["baseUrl"] as? String ?: "",
                     region = map["region"] as? String ?: "",
                     model = map["model"] as? String ?: "",
+                    isEnabled = isEnabled,
                     status = AIServiceStatus.fromCode((map["statusCode"] as? Double)?.toInt() ?: 200, map["statusDesc"] as? String)
                 )
                 "ChatGLMConfig" -> AIServiceConfig.ChatGLMConfig(
@@ -261,14 +277,16 @@ object TopicConverters {
                     requiresDownload = map["requiresDownload"] as? Boolean ?: true,
                     downloadSize = (map["downloadSize"] as? Double)?.toLong() ?: 2_800_000_000L,
                     maxTokens = (map["maxTokens"] as? Double)?.toInt() ?: 2048,
-                    temperature = (map["temperature"] as? Double)?.toFloat() ?: 0.7f
+                    temperature = (map["temperature"] as? Double)?.toFloat() ?: 0.7f,
+                    isEnabled = isEnabled
                 )
                 "TinyBERTConfig" -> AIServiceConfig.TinyBERTConfig(
                     modelFilePath = map["modelFilePath"] as? String ?: "models/tinybert-int8.mnn",
                     requiresDownload = map["requiresDownload"] as? Boolean ?: true,
                     downloadSize = (map["downloadSize"] as? Double)?.toLong() ?: 14_720_116L,
                     threshold = (map["threshold"] as? Double)?.toFloat() ?: 0.5f,
-                    maxResponseTime = (map["maxResponseTime"] as? Double)?.toLong() ?: 200L
+                    maxResponseTime = (map["maxResponseTime"] as? Double)?.toLong() ?: 200L,
+                    isEnabled = isEnabled
                 )
                 else -> null
             }

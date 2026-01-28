@@ -55,67 +55,83 @@ object AIServiceConfigHelper {
                 apiKey = apiKey,
                 baseUrl = baseUrl,
                 region = region,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.DeepSeekConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.KimiConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.MiniMaxConfig -> baseConfig.copy(
                 apiKey = apiKey,
                 baseUrl = baseUrl,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.BaichuanConfig -> baseConfig.copy(
                 apiKey = apiKey,
                 baseUrl = baseUrl,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.OpenAIConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.ErnieConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.QwenConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.ZhipuConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.SparkConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.HunyuanConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.DoubaoConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.LingyiConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.JieyueConfig -> baseConfig.copy(
                 apiKey = apiKey,
-                model = model
+                model = model,
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.ChatGLMConfig -> baseConfig.copy(
                 // ChatGLM和TinyBERT是本地模型，不需要额外配置
+                isEnabled = baseConfig.isEnabled
             )
             is AIServiceConfig.TinyBERTConfig -> baseConfig.copy(
                 // ChatGLM和TinyBERT是本地模型，不需要额外配置
+                isEnabled = baseConfig.isEnabled
             )
         }
     }
