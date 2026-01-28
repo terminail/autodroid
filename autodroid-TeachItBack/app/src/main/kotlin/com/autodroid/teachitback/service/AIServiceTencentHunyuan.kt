@@ -21,9 +21,10 @@ import android.util.Base64
  * 继承BaseAIServiceImpl，重写所有教育相关功能
  */
 class AIServiceTencentHunyuan(
-    private val context: android.content.Context,
-    override val config: AIServiceConfig = AIServiceConfig.TencentHunyuanConfig()
+    private val context: android.content.Context
 ) : BaseAIServiceImpl() {
+
+    override val config: AIServiceConfig = AIServiceConfig.TencentHunyuanConfig()
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -34,7 +35,7 @@ class AIServiceTencentHunyuan(
     private val gson = Gson()
 
     override var isAvailable: Boolean = true
-    override var remainingQuota: Long = config.freeQuota
+    override var remainingQuota: Long = 0L
 
     // ===== 基础对话功能 =====
 
@@ -354,14 +355,6 @@ class AIServiceTencentHunyuan(
             averageResponseTime = 0,
             lastCallTime = System.currentTimeMillis()
         )
-    }
-
-    // ===== 配置管理 =====
-
-    override suspend fun updateConfig(newConfig: AIServiceConfig) {
-        if (newConfig is AIServiceConfig.TencentHunyuanConfig) {
-            // 更新配置逻辑
-        }
     }
 
     // ===== 私有辅助方法 =====

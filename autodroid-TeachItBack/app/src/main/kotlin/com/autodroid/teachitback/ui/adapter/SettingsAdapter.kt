@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.autodroid.teachitback.R
+import com.autodroid.teachitback.config.AIServiceStatus
 
 /**
  * SettingsFragment适配器
@@ -13,16 +14,16 @@ import com.autodroid.teachitback.R
  */
 class SettingsAdapter(
     private val onItemClick: ((SettingsItem) -> Unit)? = null,
-    private var aiServiceTestStatus: Map<String, Boolean>? = null
+    private var aiServiceStatus: Map<String, AIServiceStatus>? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     
     private var items: List<SettingsItem> = emptyList()
     
     /**
-     * 更新AI服务测试连接状态
+     * 更新AI服务状态
      */
-    fun updateAIServiceTestStatus(newStatus: Map<String, Boolean>) {
-        aiServiceTestStatus = newStatus
+    fun updateAIServiceStatus(newStatus: Map<String, AIServiceStatus>) {
+        aiServiceStatus = newStatus
         notifyDataSetChanged()
     }
     
@@ -132,26 +133,26 @@ class SettingsAdapter(
                     else -> ""
                 }
                 
-                val testStatus = aiServiceTestStatus?.get(serviceId)
+                val serviceStatus = aiServiceStatus?.get(serviceId)
                 
                 when (item) {
-                    is SettingsItem.DoubaoAIServiceItem -> holder.bind("豆包", item.isEnabled, item, testStatus)
-                    is SettingsItem.DeepSeekAIServiceItem -> holder.bind("DeepSeek", item.isEnabled, item, testStatus)
-                    is SettingsItem.MinimaxAIServiceItem -> holder.bind("MiniMax", item.isEnabled, item, testStatus)
-                    is SettingsItem.KimiAIServiceItem -> holder.bind("Kimi", item.isEnabled, item, testStatus)
-                    is SettingsItem.OpenAIServiceItem -> holder.bind("OpenAI", item.isEnabled, item, testStatus)
-                    is SettingsItem.ErnieAIServiceItem -> holder.bind("文心一言", item.isEnabled, item, testStatus)
-                    is SettingsItem.QwenAIServiceItem -> holder.bind("通义千问", item.isEnabled, item, testStatus)
-                    is SettingsItem.ZhipuAIServiceItem -> holder.bind("智谱AI", item.isEnabled, item, testStatus)
-                    is SettingsItem.SparkAIServiceItem -> holder.bind("讯飞星火", item.isEnabled, item, testStatus)
-                    is SettingsItem.HunyuanAIServiceItem -> holder.bind("混元", item.isEnabled, item, testStatus)
-                    is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item, testStatus)
-                    is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item, testStatus)
-                    is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item, testStatus)
-                    is SettingsItem.ChatGLMAIServiceItem -> holder.bind("ChatGLM", item.isEnabled, item, testStatus)
-                    is SettingsItem.TinyBERTAIServiceItem -> holder.bind("TinyBERT", item.isEnabled, item, testStatus)
-                    is SettingsItem.TencentCloudAIServiceItem -> holder.bind("腾讯云知识引擎", item.enabled, item, testStatus)
-                    else -> holder.bind("未知AI服务", false, item, testStatus)
+                    is SettingsItem.DoubaoAIServiceItem -> holder.bind("豆包", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.DeepSeekAIServiceItem -> holder.bind("DeepSeek", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.MinimaxAIServiceItem -> holder.bind("MiniMax", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.KimiAIServiceItem -> holder.bind("Kimi", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.OpenAIServiceItem -> holder.bind("OpenAI", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.ErnieAIServiceItem -> holder.bind("文心一言", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.QwenAIServiceItem -> holder.bind("通义千问", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.ZhipuAIServiceItem -> holder.bind("智谱AI", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.SparkAIServiceItem -> holder.bind("讯飞星火", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.HunyuanAIServiceItem -> holder.bind("混元", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.BaichuanAIServiceItem -> holder.bind("百川", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.LingyiAIServiceItem -> holder.bind("零一万物", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.JieyueAIServiceItem -> holder.bind("阶跃", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.ChatGLMAIServiceItem -> holder.bind("ChatGLM", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.TinyBERTAIServiceItem -> holder.bind("TinyBERT", item.isEnabled, item, serviceStatus)
+                    is SettingsItem.TencentCloudAIServiceItem -> holder.bind("腾讯云知识引擎", item.enabled, item, serviceStatus)
+                    else -> holder.bind("未知AI服务", false, item, serviceStatus)
                 }
             }
         }
@@ -301,33 +302,44 @@ class SettingsAdapter(
         private val descriptionTextView: TextView? = itemView.findViewById(R.id.setting_description)
         private val statusTextView: TextView? = itemView.findViewById(R.id.setting_status)
         
-        fun bind(serviceName: String, isEnabled: Boolean, item: SettingsItem, testStatus: Boolean? = null) {
+        fun bind(serviceName: String, isEnabled: Boolean, item: SettingsItem, serviceStatus: AIServiceStatus? = null) {
             // 第一行：服务名称
             titleTextView?.text = serviceName
             
-            // 第二行：服务状态、配置状态和测试连接状态
-            val serviceStatus = if (isEnabled) "☑️服务已启用" else "☐服务未启用"
+            // 第二行：服务状态、配置状态和检查服务状态
+            val serviceStatusText = if (isEnabled) "☑️服务已启用" else "☐服务未启用"
             val configStatus = if (isEnabled) "☑️" else "☐"
-            val testConnectionStatus = if (testStatus == true) "☑️测试连接" else "☐测试连接"
+            val checkStatusText = when (serviceStatus?.code) {
+                0 -> "服务未检查"
+                200 -> "服务检查可用"
+                402 -> "服务检查不可用（余额不足）"
+                401 -> "服务检查不可用（API Key无效）"
+                503 -> "服务检查不可用（服务不可用）"
+                429 -> "服务检查不可用（请求频率限制）"
+                500 -> "服务检查不可用（网络错误）"
+                400 -> "服务检查不可用（配置错误）"
+                404 -> "服务检查不可用（模型未加载）"
+                else -> "服务检查不可用"
+            }
             
             val detailText = when (item) {
-                is SettingsItem.TencentCloudAIServiceItem -> "$serviceStatus，SecretID, $configStatus Api Key，腾讯云AI服务，$testConnectionStatus"
-                is SettingsItem.DoubaoAIServiceItem -> "$serviceStatus，Api Key，字节跳动AI助手，$testConnectionStatus"
-                is SettingsItem.DeepSeekAIServiceItem -> "$serviceStatus，Api Key，深度求索AI，$testConnectionStatus"
-                is SettingsItem.MinimaxAIServiceItem -> "$serviceStatus，Api Key，稀宇科技，$testConnectionStatus"
-                is SettingsItem.KimiAIServiceItem -> "$serviceStatus，Api Key，月之暗面，$testConnectionStatus"
-                is SettingsItem.OpenAIServiceItem -> "$serviceStatus，Api Key，OpenAI，$testConnectionStatus"
-                is SettingsItem.ErnieAIServiceItem -> "$serviceStatus，Api Key，百度AI，$testConnectionStatus"
-                is SettingsItem.QwenAIServiceItem -> "$serviceStatus，Api Key，阿里巴巴AI，$testConnectionStatus"
-                is SettingsItem.ZhipuAIServiceItem -> "$serviceStatus，Api Key，智谱AI，$testConnectionStatus"
-                is SettingsItem.SparkAIServiceItem -> "$serviceStatus，Api Key，科大讯飞，$testConnectionStatus"
-                is SettingsItem.HunyuanAIServiceItem -> "$serviceStatus，Api Key，腾讯混元，$testConnectionStatus"
-                is SettingsItem.BaichuanAIServiceItem -> "$serviceStatus，Api Key，百川智能，$testConnectionStatus"
-                is SettingsItem.LingyiAIServiceItem -> "$serviceStatus，Api Key，零一万物，$testConnectionStatus"
-                is SettingsItem.JieyueAIServiceItem -> "$serviceStatus，Api Key，阶跃星辰，$testConnectionStatus"
-                is SettingsItem.ChatGLMAIServiceItem -> "$serviceStatus，${item.modelSize}模型，清华开源，${if(item.isModelDownloaded) "已下载" else "未下载"}"
-                is SettingsItem.TinyBERTAIServiceItem -> "$serviceStatus，${item.modelSize}模型，设备端推理，${if(item.isModelDownloaded) "已下载" else "未下载"}"
-                else -> "$serviceStatus，未知服务，$testConnectionStatus"
+                is SettingsItem.TencentCloudAIServiceItem -> "$serviceStatusText，SecretID, $configStatus Api Key，腾讯云AI服务，$checkStatusText"
+                is SettingsItem.DoubaoAIServiceItem -> "$serviceStatusText，Api Key，字节跳动AI助手，$checkStatusText"
+                is SettingsItem.DeepSeekAIServiceItem -> "$serviceStatusText，Api Key，深度求索AI，$checkStatusText"
+                is SettingsItem.MinimaxAIServiceItem -> "$serviceStatusText，Api Key，稀宇科技，$checkStatusText"
+                is SettingsItem.KimiAIServiceItem -> "$serviceStatusText，Api Key，月之暗面，$checkStatusText"
+                is SettingsItem.OpenAIServiceItem -> "$serviceStatusText，Api Key，OpenAI，$checkStatusText"
+                is SettingsItem.ErnieAIServiceItem -> "$serviceStatusText，Api Key，百度AI，$checkStatusText"
+                is SettingsItem.QwenAIServiceItem -> "$serviceStatusText，Api Key，阿里巴巴AI，$checkStatusText"
+                is SettingsItem.ZhipuAIServiceItem -> "$serviceStatusText，Api Key，智谱AI，$checkStatusText"
+                is SettingsItem.SparkAIServiceItem -> "$serviceStatusText，Api Key，科大讯飞，$checkStatusText"
+                is SettingsItem.HunyuanAIServiceItem -> "$serviceStatusText，Api Key，腾讯混元，$checkStatusText"
+                is SettingsItem.BaichuanAIServiceItem -> "$serviceStatusText，Api Key，百川智能，$checkStatusText"
+                is SettingsItem.LingyiAIServiceItem -> "$serviceStatusText，Api Key，零一万物，$checkStatusText"
+                is SettingsItem.JieyueAIServiceItem -> "$serviceStatusText，Api Key，阶跃星辰，$checkStatusText"
+                is SettingsItem.ChatGLMAIServiceItem -> "$serviceStatusText，${item.modelSize}模型，清华开源，${if(item.isModelDownloaded) "已下载" else "未下载"}"
+                is SettingsItem.TinyBERTAIServiceItem -> "$serviceStatusText，${item.modelSize}模型，设备端推理，${if(item.isModelDownloaded) "已下载" else "未下载"}"
+                else -> "$serviceStatusText，未知服务，$checkStatusText"
             }
             
             descriptionTextView?.text = detailText

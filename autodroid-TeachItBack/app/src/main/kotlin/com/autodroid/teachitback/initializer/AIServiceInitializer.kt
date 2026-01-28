@@ -13,6 +13,7 @@ import com.autodroid.teachitback.service.AIServiceKimi
 import com.autodroid.teachitback.service.AIServiceMiniMax
 import com.autodroid.teachitback.service.AIServiceTencentHunyuan
 import com.autodroid.teachitback.service.AIServiceTinyBERT
+import com.autodroid.teachitback.service.AIServiceZhipu
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
@@ -21,6 +22,8 @@ object AIServiceInitializer {
     private lateinit var registry: AIServiceRegistry
 
     fun registerAllServices(context: Context, registry: AIServiceRegistry) {
+        this.registry = registry
+        
         try {
             val tencentService = AIServiceTencentHunyuan(context)
             registry.registerAiService(tencentService)
@@ -59,6 +62,14 @@ object AIServiceInitializer {
             Log.i(TAG, "Baichuan AI service registered: ${baichuanService.config.displayName}")
         } catch (e: Exception) {
             Log.e(TAG, "Baichuan AI service registration failed: ${e.message}")
+        }
+
+        try {
+            val zhipuService = AIServiceZhipu(context)
+            registry.registerAiService(zhipuService)
+            Log.i(TAG, "Zhipu AI service registered: ${zhipuService.config.displayName}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Zhipu AI service registration failed: ${e.message}")
         }
 
         try {
@@ -158,5 +169,16 @@ object AIServiceInitializer {
         val totalServices = registry.getAllServices().size
         Log.i(TAG, "AI service initialization completed")
         Log.i(TAG, "Total registered services: $totalServices")
+    }
+
+    /**
+     * 订阅配置变化
+     * @param configLiveData 配置LiveData
+     */
+    fun observeConfigChanges(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
+        registry.getAllServices().forEach { service ->
+            service.observeConfig(configLiveData)
+        }
+        Log.i(TAG, "All services subscribed to config changes")
     }
 }

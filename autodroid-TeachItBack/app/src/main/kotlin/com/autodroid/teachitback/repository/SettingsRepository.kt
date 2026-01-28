@@ -2,6 +2,8 @@ package com.autodroid.teachitback.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.database.SettingDao
@@ -23,6 +25,25 @@ class SettingsRepository(private val settingDao: SettingDao) {
     
     // 初始化gson用于SettingsItem的序列化
     private val gson = Gson()
+    
+    // AI服务配置LiveData
+    private val _aiServiceConfigs = MutableLiveData<Map<String, AIServiceConfig>>()
+    val aiServiceConfigs: LiveData<Map<String, AIServiceConfig>> = _aiServiceConfigs
+    
+    /**
+     * 加载所有AI服务配置到LiveData
+     */
+    suspend fun loadAllAIServiceConfigsToLiveData() {
+        try {
+            val entities = settingDao.getAllSettingsSync()
+            val configs = entities.filter { it.key.startsWith("ai_service_") }
+                .mapNotNull { deserializeAIServiceConfig(it.value) }
+            val configMap = configs.associateBy { it.id }
+            _aiServiceConfigs.value = configMap
+        } catch (e: Exception) {
+            Log.e("SettingsRepository", "加载AI服务配置到LiveData失败", e)
+        }
+    }
     
     /**
      * 获取所有设置项
@@ -166,11 +187,13 @@ class SettingsRepository(private val settingDao: SettingDao) {
         // 3. 测试服务的checkStatus()方法来验证服务是否可用
         return try {
             // 获取服务实例
-            val service = AppContainer.getAIServiceRegistry().getService(config.id)
+            val registry = AppContainer.getAIServiceRegistry()
+            val service = registry.getService(config.id)
             if (service == null) {
                 copyConfigWithStatus(config, AIServiceStatus.fromCode(404, "服务未注册: ${config.id}"))
             } else {
                 // 测试服务的checkStatus()方法
+                // 注意：服务会自动从LiveData获取最新配置，无需手动调用updateConfig
                 val status = service.checkStatus()
                 copyConfigWithStatus(config, status)
             }
@@ -355,6 +378,10 @@ class SettingsRepository(private val settingDao: SettingDao) {
                 created = System.currentTimeMillis()
             )
             settingDao.insertSetting(entity)
+            
+            // 更新LiveData（使用postValue在后台线程中更新）
+            val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
+            _aiServiceConfigs.postValue(currentConfigs + (config.id to config))
         } catch (e: Exception) {
             Log.e("SettingsRepository", "保存AI服务配置失败: ${config.id}", e)
         }

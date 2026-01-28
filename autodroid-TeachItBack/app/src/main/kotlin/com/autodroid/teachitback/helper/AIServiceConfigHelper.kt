@@ -191,82 +191,13 @@ object AIServiceConfigHelper {
      * 获取模型列表
      */
     fun getModelList(config: AIServiceConfig): List<String> {
-        return when (config) {
-            is AIServiceConfig.TencentHunyuanConfig -> listOf(
-                "hunyuan-lite",
-                "hunyuan-standard",
-                "hunyuan-pro"
-            )
-            is AIServiceConfig.DeepSeekConfig -> listOf(
-                "deepseek-chat",
-                "deepseek-coder"
-            )
-            is AIServiceConfig.KimiConfig -> listOf(
-                "moonshot-v1-8k",
-                "moonshot-v1-32k",
-                "moonshot-v1-128k"
-            )
-            is AIServiceConfig.MiniMaxConfig -> listOf(
-                "abab5.5-chat",
-                "abab5.5s-chat"
-            )
-            is AIServiceConfig.BaichuanConfig -> listOf(
-                "Baichuan2-Turbo",
-                "Baichuan2-7B",
-                "Baichuan2-13B"
-            )
-            is AIServiceConfig.OpenAIConfig -> listOf(
-                "gpt-3.5-turbo",
-                "gpt-4",
-                "gpt-4-turbo"
-            )
-            is AIServiceConfig.ErnieConfig -> listOf(
-                "ernie-bot-4",
-                "ernie-bot-turbo"
-            )
-            is AIServiceConfig.QwenConfig -> listOf(
-                "qwen-turbo",
-                "qwen-plus",
-                "qwen-max"
-            )
-            is AIServiceConfig.ZhipuConfig -> listOf(
-                "glm-4",
-                "glm-4-plus",
-                "glm-4-0520"
-            )
-            is AIServiceConfig.SparkConfig -> listOf(
-                "spark-lite",
-                "spark-pro",
-                "spark-max"
-            )
-            is AIServiceConfig.HunyuanConfig -> listOf(
-                "hunyuan-lite",
-                "hunyuan-standard",
-                "hunyuan-pro"
-            )
-            is AIServiceConfig.DoubaoConfig -> listOf(
-                "doubao-pro-32k",
-                "doubao-pro-128k",
-                "doubao-pro-256k"
-            )
-            is AIServiceConfig.LingyiConfig -> listOf(
-                "yi-34b-chat",
-                "yi-34b-0926",
-                "yi-98b"
-            )
-            is AIServiceConfig.JieyueConfig -> listOf(
-                "jieyue-chat",
-                "jieyue-chat-pro",
-                "jieyue-chat-max"
-            )
-            is AIServiceConfig.ChatGLMConfig -> listOf(
-                "chatglm-6b",
-                "chatglm-6b-int4"
-            )
-            is AIServiceConfig.TinyBERTConfig -> listOf(
-                "tinybert-50m",
-                "tinybert-100m"
-            )
-        }
+        return config.availableModels.map { it.name }
+    }
+
+    /**
+     * 获取模型描述
+     */
+    fun getModelDescription(config: AIServiceConfig, modelName: String): String {
+        return config.availableModels.find { it.name == modelName }?.description ?: ""
     }
 }

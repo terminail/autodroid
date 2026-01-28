@@ -333,8 +333,14 @@ class AIServiceOpenAI(
         throw UnsupportedFeatureException.knowledgeGraph(config.displayName)
     }
 
-    override suspend fun updateConfig(newConfig: AIServiceConfig) {
-        throw UnsupportedFeatureException.configurationUpdate(config.displayName)
+    override fun observeConfig(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
+        configLiveData.observeForever { configs ->
+            configs[config.id]?.let { newConfig ->
+                if (newConfig is AIServiceConfig.OpenAIConfig) {
+                    // OpenAI服务可以更新配置
+                }
+            }
+        }
     }
 
     private fun validateConfig(): Boolean {

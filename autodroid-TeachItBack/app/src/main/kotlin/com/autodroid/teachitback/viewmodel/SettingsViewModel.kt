@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.autodroid.teachitback.config.AIServiceConfig
+import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.repository.SettingsRepository
 import com.autodroid.teachitback.repository.TopicRepository
 import com.autodroid.teachitback.ui.adapter.SettingsItem
@@ -32,14 +33,70 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
     
-    // AI 服务配置相关
-    private val _aiServiceConfigs = MutableLiveData<Map<String, AIServiceConfig>>()
-    val aiServiceConfigs: LiveData<Map<String, AIServiceConfig>> = _aiServiceConfigs
+    // AI 服务配置相关 - 直接使用Repository的LiveData
+    val aiServiceConfigs: LiveData<Map<String, AIServiceConfig>> = settingsRepository.aiServiceConfigs
 
     init {
         loadSettings()
-        loadAIServiceConfigs()
-        observeAIServiceConfigs()
+        viewModelScope.launch {
+            initializeAIServiceConfigs()
+        }
+        // 观察Repository的配置变化
+        aiServiceConfigs.observeForever { configs ->
+            // 当 AI 服务配置加载完成后，重新构建 SettingsItem 以确保状态一致
+            if (configs.isNotEmpty()) {
+                viewModelScope.launch {
+                    loadSettings()
+                }
+            }
+        }
+    }
+    
+    /**
+     * 初始化 AI 服务配置
+     * 从数据库加载配置，如果 API Key 为空则用 BuildConfig 中的 API Key 更新
+     */
+    private fun initializeAIServiceConfigs() {
+        viewModelScope.launch {
+            try {
+                val serviceIds = listOf(
+                    "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
+                    "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
+                    "doubao", "lingyi", "jieyue", "chatglm", "tinybert_local"
+                )
+                
+                serviceIds.forEach { serviceId ->
+                    val config = settingsRepository.loadAIServiceConfig(serviceId)
+                    config?.let {
+                        if (serviceId == "zhipu") {
+                            val apiKey = com.autodroid.teachitback.BuildConfig.GLM47FLASH_API_KEY
+                            val shouldUpdate = it.apiKey.isEmpty() || it.apiKey != apiKey
+                            if (shouldUpdate && apiKey.isNotEmpty()) {
+                                val updatedConfig = when (it) {
+                                    is AIServiceConfig.ZhipuConfig -> it.copy(
+                                        apiKey = apiKey,
+                                        status = AIServiceStatus.STATUS_NOT_CHECKED
+                                    )
+                                    else -> it
+                                }
+                                settingsRepository.saveAIServiceConfig(updatedConfig)
+                                Log.d("SettingsViewModel", "Initialized API Key for $serviceId")
+                            }
+                        }
+                    } ?: run {
+                        if (serviceId == "zhipu") {
+                            val defaultConfig = createDefaultConfig(serviceId)
+                            defaultConfig?.let {
+                                settingsRepository.saveAIServiceConfig(it)
+                                Log.d("SettingsViewModel", "Created and saved default config for $serviceId")
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Failed to initialize AI service configs", e)
+            }
+        }
     }
     
     /**
@@ -98,7 +155,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         items.add(SettingsItem.SectionHeaderItem("AI服务设置"))
         
         // 获取当前AI服务配置状态 - 始终从AIServiceConfig获取最新状态
-        val currentConfigs = _aiServiceConfigs.value ?: emptyMap()
+        val currentConfigs = aiServiceConfigs.value ?: emptyMap()
         
         // 创建AI服务Map，使用AIServiceConfig的isEnabled状态
         val aiServiceMap = mutableMapOf<String, SettingsItem>()
@@ -275,9 +332,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 // 保存更新后的配置
                 settingsRepository.saveAIServiceConfig(updatedConfig)
                 
-                // 重新加载 AI 服务配置
-                loadAIServiceConfigs()
-                
                 // 重新加载设置以反映更改
                 loadSettings()
             } catch (e: Exception) {
@@ -342,40 +396,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             try {
                 settingsRepository.deleteAllSettings()
                 _errorMessage.value = "数据清除成功"
-                loadAIServiceConfigs() // 重新加载配置
             } catch (e: Exception) {
                 _errorMessage.value = "清除数据失败: ${e.message}"
             } finally {
                 _isLoading.value = false
-            }
-        }
-    }
-    
-    /**
-     * 加载所有 AI 服务配置
-     */
-    private fun loadAIServiceConfigs() {
-        viewModelScope.launch {
-            try {
-                val configs = mutableMapOf<String, AIServiceConfig>()
-                
-                // 加载所有支持的 AI 服务配置
-                val serviceIds = listOf(
-                    "tencent-hunyuan", "deepseek", "kimi", "minimax", "baichuan",
-                    "openai", "ernie", "qwen", "zhipu", "spark", "hunyuan",
-                    "doubao", "lingyi", "jieyue", "chatglm", "tinybert_local"
-                )
-                
-                serviceIds.forEach { serviceId ->
-                    val config = settingsRepository.loadAIServiceConfig(serviceId)
-                    config?.let {
-                        configs[serviceId] = it
-                    }
-                }
-                
-                _aiServiceConfigs.value = configs
-            } catch (e: Exception) {
-                _errorMessage.value = "加载AI服务配置失败: ${e.message}"
             }
         }
     }
@@ -387,7 +411,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 settingsRepository.saveAIServiceConfig(config)
-                loadAIServiceConfigs() // 重新加载配置以更新 UI
             } catch (e: Exception) {
                 _errorMessage.value = "保存AI服务配置失败: ${e.message}"
             }
@@ -395,10 +418,38 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
     
     /**
+     * 创建默认配置
+     */
+    private fun createDefaultConfig(serviceId: String): AIServiceConfig? {
+        return when (serviceId) {
+            "zhipu" -> {
+                val apiKey = com.autodroid.teachitback.BuildConfig.GLM47FLASH_API_KEY
+                AIServiceConfig.ZhipuConfig(
+                    apiKey = apiKey,
+                    status = AIServiceStatus.STATUS_NOT_CHECKED
+                )
+            }
+            else -> null
+        }
+    }
+    
+    /**
      * 获取特定 AI 服务配置
      */
     fun getAIServiceConfig(configId: String): AIServiceConfig? {
-        return _aiServiceConfigs.value?.get(configId)
+        return aiServiceConfigs.value?.get(configId)
+    }
+    
+    /**
+     * 获取所有 AI 服务状态映射
+     */
+    fun getAIServiceStatuses(): Map<String, AIServiceStatus> {
+        val configs = aiServiceConfigs.value ?: return emptyMap()
+        val statuses = mutableMapOf<String, AIServiceStatus>()
+        configs.forEach { (serviceId, config) ->
+            statuses[serviceId] = config.status
+        }
+        return statuses
     }
     
     /**
@@ -406,19 +457,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     fun clearErrorMessage() {
         _errorMessage.value = null
-    }
-    
-    /**
-     * 观察 AI 服务配置变化
-     */
-    private fun observeAIServiceConfigs() {
-        _aiServiceConfigs.observeForever { configs ->
-            // 当 AI 服务配置加载完成后，重新构建 SettingsItem 以确保状态一致
-            if (configs.isNotEmpty()) {
-                viewModelScope.launch {
-                    loadSettings()
-                }
-            }
-        }
     }
 }

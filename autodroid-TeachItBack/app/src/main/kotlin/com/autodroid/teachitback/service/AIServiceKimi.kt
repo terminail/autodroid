@@ -13,9 +13,10 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class AIServiceKimi(
-    private val context: android.content.Context,
-    override val config: AIServiceConfig = AIServiceConfig.KimiConfig()
+    private val context: android.content.Context
 ) : BaseAIServiceImpl() {
+
+    override val config: AIServiceConfig = AIServiceConfig.KimiConfig()
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -26,7 +27,7 @@ class AIServiceKimi(
     private val gson = Gson()
 
     override var isAvailable: Boolean = true
-    override var remainingQuota: Long = config.freeQuota
+    override var remainingQuota: Long = 0L
 
     override suspend fun sendMessage(message: MessageEntity, context: String): AIServiceResponse {
         val startTime = System.currentTimeMillis()
@@ -321,9 +322,6 @@ class AIServiceKimi(
             averageResponseTime = 0,
             lastCallTime = System.currentTimeMillis()
         )
-    }
-
-    override suspend fun updateConfig(newConfig: AIServiceConfig) {
     }
 
     // ===== 私有辅助方法 =====

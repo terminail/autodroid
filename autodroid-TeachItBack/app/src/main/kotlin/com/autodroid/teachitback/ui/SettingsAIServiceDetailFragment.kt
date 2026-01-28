@@ -68,7 +68,8 @@ class SettingsAIServiceDetailFragment : Fragment() {
         "lingyi" to "https://open.lingyiwanwu.com",
         "jieyue" to "https://open.jieyuesx.com",
         "chatglm" to "https://github.com/THUDM/ChatGLM-6B",
-        "tinybert" to "https://github.com/huawei-noah/TinyBERT"
+        "tinybert" to "https://github.com/huawei-noah/TinyBERT",
+        "glm-4.7-flash" to "https://open.bigmodel.cn"
     )
 
     override fun onCreateView(
@@ -144,11 +145,15 @@ class SettingsAIServiceDetailFragment : Fragment() {
      */
     private fun observeViewModel() {
         viewModel.aiServiceConfigs.observe(viewLifecycleOwner) { configs ->
+            android.util.Log.d("SettingsAIServiceDetailFragment", "aiServiceConfigs updated, size: ${configs?.size}, currentConfig.id: ${currentConfig.id}")
             configs?.get(currentConfig.id)?.let { savedConfig ->
+                android.util.Log.d("SettingsAIServiceDetailFragment", "Found saved config for ${currentConfig.id}, apiKey: ${savedConfig.apiKey.take(10)}...")
                 // 使用已保存的配置更新 UI
                 updateUIWithSavedConfig(savedConfig)
                 // 更新服务状态显示（显示上次保存的状态）
                 updateServiceStatusDisplay(savedConfig.status)
+            } ?: run {
+                android.util.Log.d("SettingsAIServiceDetailFragment", "No saved config found for ${currentConfig.id}")
             }
         }
 
@@ -207,16 +212,36 @@ class SettingsAIServiceDetailFragment : Fragment() {
         )
         binding.modelInput.setAdapter(adapter)
 
+        // 设置模型选择监听器，显示模型描述
+        binding.modelInput.setOnItemClickListener { _, _, position, _ ->
+            val selectedModel = models[position]
+            val description = AIServiceConfigHelper.getModelDescription(currentConfig, selectedModel)
+            if (description.isNotEmpty()) {
+                binding.modelDescription.text = description
+                binding.modelDescription.visibility = android.view.View.VISIBLE
+            } else {
+                binding.modelDescription.visibility = android.view.View.GONE
+            }
+        }
+
         // 初始使用默认配置值
         binding.apiKeyInput.setText(currentConfig.apiKey)
         binding.secretIdInput.setText(currentConfig.secretId)
         binding.modelInput.setText(currentConfig.model, false)
+
+        // 初始显示当前模型的描述
+        val initialDescription = AIServiceConfigHelper.getModelDescription(currentConfig, currentConfig.model)
+        if (initialDescription.isNotEmpty()) {
+            binding.modelDescription.text = initialDescription
+            binding.modelDescription.visibility = android.view.View.VISIBLE
+        }
     }
 
     /**
      * 使用已保存的配置更新 UI
      */
     private fun updateUIWithSavedConfig(savedConfig: AIServiceConfig) {
+        android.util.Log.d("SettingsAIServiceDetailFragment", "updateUIWithSavedConfig called, apiKey: ${savedConfig.apiKey.take(10)}...")
         // 更新 currentConfig，确保后续操作使用正确的配置
         currentConfig = savedConfig
 
@@ -224,6 +249,16 @@ class SettingsAIServiceDetailFragment : Fragment() {
         binding.apiKeyInput.setText(savedConfig.apiKey)
         binding.secretIdInput.setText(savedConfig.secretId)
         binding.modelInput.setText(savedConfig.model, false)
+        android.util.Log.d("SettingsAIServiceDetailFragment", "Updated apiKeyInput text")
+
+        // 更新模型描述
+        val description = AIServiceConfigHelper.getModelDescription(savedConfig, savedConfig.model)
+        if (description.isNotEmpty()) {
+            binding.modelDescription.text = description
+            binding.modelDescription.visibility = android.view.View.VISIBLE
+        } else {
+            binding.modelDescription.visibility = android.view.View.GONE
+        }
 
         // 更新开关状态和文本显示
         val isEnabled = savedConfig.isEnabled
@@ -431,6 +466,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
 
             // 根据状态码设置颜色
             val color = when (status.code) {
+                0 -> "#9E9E9E" // 灰色 - 未检查
                 200 -> "#4CAF50" // 绿色 - 正常
                 in 400..499 -> "#FF9800" // 橙色 - 客户端错误
                 in 500..599 -> "#F44336" // 红色 - 服务器错误

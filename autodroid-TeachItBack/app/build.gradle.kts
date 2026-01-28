@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
     id("kotlin-parcelize")
+}
+
+// Read local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -19,8 +28,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "DEEPSEEK_API_KEY", "\"${project.findProperty("DEEPSEEK_API_KEY") ?: ""}\"")
-        buildConfigField("String", "KIMI_API_KEY", "\"${project.findProperty("KIMI_API_KEY") ?: ""}\"")
+        buildConfigField("String", "DEEPSEEK_API_KEY", "\"${localProperties["DEEPSEEK_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "KIMI_API_KEY", "\"${localProperties["KIMI_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "GLM47FLASH_API_KEY", "\"${localProperties["GLM47FLASH_API_KEY"] ?: ""}\"")
    
         javaCompileOptions {
             annotationProcessorOptions {
@@ -48,6 +58,14 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+    }
+}
+
+tasks.register("printGLM47FLASHApiKey") {
+    doLast {
+        val apiKey = localProperties["GLM47FLASH_API_KEY"] ?: "NOT FOUND"
+        println("GLM47FLASH_API_KEY from local.properties: $apiKey")
+        println("GLM47FLASH_API_KEY length: ${apiKey.toString().length}")
     }
 }
 
@@ -101,6 +119,7 @@ dependencies {
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("io.mockk:mockk:1.13.9")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

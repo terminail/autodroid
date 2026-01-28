@@ -21,12 +21,16 @@ data class AIServiceRequiredFields(
         val NO_REQUIRED_FIELDS = AIServiceRequiredFields()
         
         // 仅需要 API Key
-        val API_KEY_ONLY = AIServiceRequiredFields(requireApiKey = true)
+        val API_KEY_ONLY = AIServiceRequiredFields(
+            requireApiKey = true,
+            requireModel = true
+        )
         
         // 需要 API Key 和 Base URL
         val API_AND_URL = AIServiceRequiredFields(
             requireApiKey = true,
-            requireBaseUrl = true
+            requireBaseUrl = true,
+            requireModel = true
         )
         
         // 完整的云服务配置需求

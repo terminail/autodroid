@@ -1,5 +1,7 @@
 package com.autodroid.teachitback.service
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import com.autodroid.teachitback.api.AIService
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.config.AIServiceStatus
@@ -18,6 +20,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 abstract class BaseAIServiceImpl : AIService {
     
+    abstract override val config: AIServiceConfig
+    
     // 错误处理相关属性
     protected val errorCounter = AtomicInteger(0)
     protected val lastErrorTime = AtomicInteger(0)
@@ -28,6 +32,10 @@ abstract class BaseAIServiceImpl : AIService {
         backoffFactor = 2.0
     )
 
+    // 配置相关属性
+    private var configObserver: Observer<Map<String, AIServiceConfig>>? = null
+    protected var currentConfig: AIServiceConfig = config
+    
     /**
      * 重试配置类
      */
@@ -43,6 +51,24 @@ abstract class BaseAIServiceImpl : AIService {
             AIServiceErrorType.API_SERVER_ERROR
         )
     )
+
+    // ===== 配置管理 =====
+
+    override fun observeConfig(configLiveData: LiveData<Map<String, AIServiceConfig>>) {
+        configObserver = Observer { configs ->
+            configs[config.id]?.let { newConfig ->
+                android.util.Log.d("BaseAIServiceImpl", "observeConfig: ${config.id} received config update")
+                android.util.Log.d("BaseAIServiceImpl", "observeConfig: newConfig.apiKey = ${newConfig.apiKey.take(10)}...")
+                currentConfig = newConfig
+                remainingQuota = newConfig.freeQuota
+                android.util.Log.d("BaseAIServiceImpl", "observeConfig: currentConfig updated, remainingQuota = $remainingQuota")
+            }
+        }
+        configLiveData.observeForever(configObserver!!)
+        
+        // 初始化 remainingQuota（此时 currentConfig 已经被正确初始化）
+        remainingQuota = config.freeQuota
+    }
 
     // ===== 安全执行方法 =====
 
@@ -131,6 +157,9 @@ abstract class BaseAIServiceImpl : AIService {
             is com.autodroid.teachitback.config.AIServiceConfig.BaichuanConfig -> {
                 config.apiKey.isNotBlank()
             }
+            is com.autodroid.teachitback.config.AIServiceConfig.ZhipuConfig -> {
+                config.apiKey.isNotBlank()
+            }
             else -> true
         }
     }
@@ -201,9 +230,5 @@ abstract class BaseAIServiceImpl : AIService {
         )
     }
 
-    // ===== 配置管理（默认不支持）=====
 
-    override suspend fun updateConfig(newConfig: com.autodroid.teachitback.config.AIServiceConfig) {
-        throw UnsupportedFeatureException("配置更新", config.displayName)
-    }
 }

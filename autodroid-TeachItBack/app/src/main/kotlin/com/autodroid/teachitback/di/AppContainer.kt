@@ -50,8 +50,17 @@ object AppContainer {
             Log.i(TAG, "开始初始化AI服务...")
             
             runBlocking(Dispatchers.IO) {
+                // 先初始化zhipu配置（从BuildConfig读取API key）
+                initializeZhipuConfig()
+                
+                // 加载AI服务配置到LiveData
+                _settingsRepository.loadAllAIServiceConfigsToLiveData()
+                
                 com.autodroid.teachitback.initializer.AIServiceInitializer.registerAllServices(_application, _aiServiceRegistry)
             }
+            
+            // 订阅配置变化
+            com.autodroid.teachitback.initializer.AIServiceInitializer.observeConfigChanges(_settingsRepository.aiServiceConfigs)
             
             // 初始化AI服务路由器
             com.autodroid.teachitback.router.AIServiceRouter.initialize(_aiServiceRegistry)
@@ -61,6 +70,50 @@ object AppContainer {
             
         } catch (e: Exception) {
             Log.e(TAG, "AI服务初始化失败: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 初始化zhipu配置（从BuildConfig读取API key）
+     */
+    private suspend fun initializeZhipuConfig() {
+        try {
+            val config = _settingsRepository.loadAIServiceConfig("zhipu")
+            val apiKey = com.autodroid.teachitback.BuildConfig.GLM47FLASH_API_KEY
+            
+            Log.i(TAG, "initializeZhipuConfig: BuildConfig.GLM47FLASH_API_KEY = ${apiKey.take(10)}...")
+            Log.i(TAG, "initializeZhipuConfig: API Key length = ${apiKey.length}")
+            
+            if (config == null) {
+                // 数据库中没有配置，创建默认配置
+                Log.i(TAG, "创建zhipu默认配置，API Key: ${apiKey.take(10)}...")
+                val defaultConfig = com.autodroid.teachitback.config.AIServiceConfig.ZhipuConfig(
+                    apiKey = apiKey,
+                    status = com.autodroid.teachitback.config.AIServiceStatus.STATUS_NOT_CHECKED
+                )
+                _settingsRepository.saveAIServiceConfig(defaultConfig)
+                Log.i(TAG, "initializeZhipuConfig: 默认配置已保存到数据库")
+            } else {
+                // 数据库中有配置，检查是否需要更新API key
+                Log.i(TAG, "initializeZhipuConfig: 数据库中已有配置，API Key = ${config.apiKey.take(10)}...")
+                val shouldUpdate = config.apiKey.isEmpty() || config.apiKey != apiKey
+                if (shouldUpdate && apiKey.isNotEmpty()) {
+                    Log.i(TAG, "更新zhipu API Key: ${apiKey.take(10)}...")
+                    val updatedConfig = when (config) {
+                        is com.autodroid.teachitback.config.AIServiceConfig.ZhipuConfig -> config.copy(
+                            apiKey = apiKey,
+                            status = com.autodroid.teachitback.config.AIServiceStatus.STATUS_NOT_CHECKED
+                        )
+                        else -> config
+                    }
+                    _settingsRepository.saveAIServiceConfig(updatedConfig)
+                    Log.i(TAG, "initializeZhipuConfig: API Key已更新到数据库")
+                } else {
+                    Log.i(TAG, "initializeZhipuConfig: API Key无需更新")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "初始化zhipu配置失败: ${e.message}", e)
         }
     }
     

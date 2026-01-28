@@ -45,8 +45,9 @@ class AIServiceTinyBERT(
     override val isAvailable: Boolean
         get() = isModelLoaded && model?.isLoaded() == true
     
-    override val remainingQuota: Long
+    override var remainingQuota: Long
         get() = if (isAvailable) Long.MAX_VALUE else 0
+        set(value) {}
     
     private var usageStats = UsageStatistics(
         totalCalls = 0,
@@ -492,10 +493,16 @@ class AIServiceTinyBERT(
     override suspend fun getUsageStatistics(): UsageStatistics {
         return usageStats
     }
-    
-    override suspend fun updateConfig(newConfig: AIServiceConfig) {
-        // 配置更新逻辑
-        Log.d(TAG, "配置已更新: ${newConfig.id}")
+
+    override fun observeConfig(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
+        configLiveData.observeForever { configs ->
+            configs[config.id]?.let { newConfig ->
+                if (newConfig is TinyBERTConfig) {
+                    // TinyBERT本地服务可以更新配置
+                    Log.d(TAG, "TinyBERT config updated")
+                }
+            }
+        }
     }
 
     // ===== 私有辅助方法 =====

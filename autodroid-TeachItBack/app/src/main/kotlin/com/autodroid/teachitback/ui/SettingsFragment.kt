@@ -147,8 +147,10 @@ class SettingsFragment : Fragment() {
         }
 
         viewModel.aiServiceConfigs.observe(viewLifecycleOwner) { _ ->
-            // 当AI服务配置发生变化时，重新加载设置项
+            // 当AI服务配置发生变化时，重新加载设置项并更新服务状态
             viewModel.loadSettings()
+            val serviceStatuses = viewModel.getAIServiceStatuses()
+            settingsAdapter.updateAIServiceStatus(serviceStatuses)
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->

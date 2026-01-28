@@ -12,5 +12,6 @@ data class AIProcessInfo(
     val serviceId: String,
     val serviceName: String,
     val modelUsed: String? = null,
-    val processingTime: Long? = null
+    val processingTime: Long? = null,
+    val tokensUsed: Int? = null
 ) : Parcelable

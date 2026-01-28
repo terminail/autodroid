@@ -19,9 +19,10 @@ import java.util.concurrent.TimeUnit
  * 继承BaseAIServiceImpl，只重写基础对话
  */
 class AIServiceBaichuan(
-    private val context: android.content.Context,
-    override val config: AIServiceConfig = AIServiceConfig.BaichuanConfig()
+    private val context: android.content.Context
 ) : BaseAIServiceImpl() {
+
+    override val config: AIServiceConfig = AIServiceConfig.BaichuanConfig()
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -32,7 +33,7 @@ class AIServiceBaichuan(
     private val gson = Gson()
 
     override var isAvailable: Boolean = true
-    override var remainingQuota: Long = config.freeQuota
+    override var remainingQuota: Long = 0L
 
     // ===== 基础对话功能 =====
 
@@ -130,12 +131,6 @@ class AIServiceBaichuan(
             averageResponseTime = 0,
             lastCallTime = System.currentTimeMillis()
         )
-    }
-
-    // ===== 配置管理 =====
-
-    override suspend fun updateConfig(newConfig: AIServiceConfig) {
-        // 百川不支持运行时更新配置
     }
 
     // ===== 教育专用功能（百川不支持）=====

@@ -15,6 +15,7 @@ data class AIServiceStatus(
 ) : Parcelable {
     companion object {
         // 预定义状态常量
+        val STATUS_NOT_CHECKED = AIServiceStatus(0, "未检查")
         val STATUS_OK = AIServiceStatus(200, "正常")
         val STATUS_BALANCE_INSUFFICIENT = AIServiceStatus(402, "余额不足")
         val STATUS_API_KEY_INVALID = AIServiceStatus(401, "API Key无效")
