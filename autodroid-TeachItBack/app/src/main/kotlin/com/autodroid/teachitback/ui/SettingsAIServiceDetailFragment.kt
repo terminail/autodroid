@@ -1,8 +1,5 @@
 package com.autodroid.teachitback.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,10 +14,13 @@ import com.autodroid.teachitback.MainActivity
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.databinding.FragmentSettingsAiServiceDetailBinding
+import com.autodroid.teachitback.registry.AIServiceRegistry
 import com.autodroid.teachitback.di.ViewModelFactoryProvider
 import com.autodroid.teachitback.helper.AIServiceConfigHelper
 import com.autodroid.teachitback.viewmodel.SettingsAIServiceDetailViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 /**
  * AI服务配置Fragment
@@ -245,7 +245,7 @@ class SettingsAIServiceDetailFragment : Fragment() {
                 },
                 onLoading = { isLoading ->
                     binding.saveButton.isEnabled = !isLoading
-                    binding.testConnectionButton.isEnabled = !isLoading
+                    binding.checkStatusButton.isEnabled = !isLoading
                     binding.saveButton.text = if (isLoading) "保存中..." else "保存配置"
                 }
             )
@@ -267,15 +267,15 @@ class SettingsAIServiceDetailFragment : Fragment() {
                 },
                 onLoading = { isLoading ->
                     binding.saveButton.isEnabled = !isLoading
-                    binding.testConnectionButton.isEnabled = !isLoading
+                    binding.checkStatusButton.isEnabled = !isLoading
                     binding.saveButton.text = if (isLoading) "保存中..." else "保存配置"
                 }
             )
         }
         
-        // 测试连接按钮
-        binding.testConnectionButton.setOnClickListener {
-            testConnection()
+        // 检查服务状态按钮
+        binding.checkStatusButton.setOnClickListener {
+            checkStatus()
         }
     }
     
@@ -412,10 +412,53 @@ class SettingsAIServiceDetailFragment : Fragment() {
     }
 
     /**
-     * 测试连接
+     * 检查服务状态
+     * 调用AI服务的checkStatus API来验证服务是否可用
      */
-    private fun testConnection() {
-        Toast.makeText(requireContext(), "连接测试功能开发中...", Toast.LENGTH_SHORT).show()
+    private fun checkStatus() {
+        lifecycleScope.launch {
+            try {
+                binding.checkStatusButton.isEnabled = false
+                binding.checkStatusButton.text = "检查中..."
+                
+                // 从UI获取当前配置
+                val currentConfig = buildConfigFromUI()
+                
+                // 获取对应的服务实例
+                val service = com.autodroid.teachitback.di.AppContainer.getAIServiceRegistry().getService(currentConfig.id)
+                
+                if (service == null) {
+                    Toast.makeText(requireContext(), "服务未找到: ${currentConfig.id}", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                
+                // 更新服务配置（使用UI上的最新配置）
+                service.updateConfig(currentConfig)
+                
+                // 在IO线程执行网络请求
+                val status = withContext(Dispatchers.IO) {
+                    service.checkStatus()
+                }
+                
+                // 根据状态显示结果
+                when {
+                    status.isOk -> {
+                        Toast.makeText(requireContext(), "服务正常: ${status.description}", Toast.LENGTH_LONG).show()
+                    }
+                    status.requiresUserAction -> {
+                        Toast.makeText(requireContext(), "需要操作: ${status.description}", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        Toast.makeText(requireContext(), "服务异常: ${status.description} (代码: ${status.code})", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "检查失败: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                binding.checkStatusButton.isEnabled = true
+                binding.checkStatusButton.text = "检查服务状态"
+            }
+        }
     }
 
     override fun onDestroyView() {

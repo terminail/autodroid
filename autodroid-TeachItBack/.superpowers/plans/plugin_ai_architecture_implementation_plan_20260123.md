@@ -146,7 +146,7 @@ interface AIService {
 
     // 配置管理
     suspend fun updateConfig(newConfig: AIServiceConfig)
-    suspend fun testConnection(): Boolean
+    suspend fun checkStatus(): Boolean
 }
 ```
 - **验证步骤**：

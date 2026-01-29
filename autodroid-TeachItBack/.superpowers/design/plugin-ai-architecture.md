@@ -115,7 +115,7 @@ interface AIService {
     
     // 配置管理
     suspend fun updateConfig(newConfig: AIServiceConfig)
-    suspend fun testConnection(): Boolean
+    suspend fun checkStatus(): Boolean
 }
 
 enum class ServiceStatus {
@@ -838,7 +838,7 @@ class TencentHunyuanAIService : AIService {
     override suspend fun checkStatus(): ServiceStatus {
         return try {
             // 测试API连接
-            apiClient.testConnection()
+            apiClient.checkStatus()
             ServiceStatus.AVAILABLE
         } catch (e: AuthenticationException) {
             ServiceStatus.UNAUTHORIZED

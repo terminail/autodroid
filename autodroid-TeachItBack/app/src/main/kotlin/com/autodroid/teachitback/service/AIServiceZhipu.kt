@@ -353,15 +353,18 @@ class AIServiceZhipu(
             return if (response.isSuccessful) {
                 AIServiceStatus.STATUS_OK
             } else {
+                val responseBody = response.body?.string()
+                android.util.Log.e("AIServiceZhipu", "checkStatus: Response error body = $responseBody")
                 when (response.code) {
                     401 -> AIServiceStatus.fromCode(401, "API Key无效")
                     429 -> AIServiceStatus.fromCode(429, "请求频率超限")
-                    500 -> AIServiceStatus.fromCode(500, "智谱AI服务器错误")
-                    else -> AIServiceStatus.fromCode(response.code, "未知错误: ${response.code}")
+                    500 -> AIServiceStatus.fromCode(500, "智谱AI服务器错误: $responseBody")
+                    else -> AIServiceStatus.fromCode(response.code, "未知错误: ${response.code}, $responseBody")
                 }
             }
         } catch (e: Exception) {
-            return AIServiceStatus.fromCode(500, "连接失败: ${e.message}")
+            android.util.Log.e("AIServiceZhipu", "checkStatus: Exception", e)
+            return AIServiceStatus.fromCode(500, "连接失败: ${e.javaClass.simpleName}: ${e.message}")
         }
     }
 
