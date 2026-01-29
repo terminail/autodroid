@@ -172,13 +172,28 @@ object AIServiceInitializer {
     }
 
     /**
-     * 订阅配置变化
-     * @param configLiveData 配置LiveData
+     * 初始化所有服务的配置
+     * 每个服务从数据库加载自己的配置
+     * @param repository SettingsRepository 用于加载配置
      */
-    fun observeConfigChanges(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
+    suspend fun initializeAllServiceConfigs(repository: com.autodroid.teachitback.repository.SettingsRepository) {
         registry.getAllServices().forEach { service ->
-            service.observeConfig(configLiveData)
+            val serviceId = service.config.id
+            // 从数据库加载配置
+            val config = repository.loadAIServiceConfig(serviceId)
+            if (config != null) {
+                // 更新服务配置
+                service.updateConfig(config)
+                Log.d(TAG, "Service config loaded: $serviceId")
+            }
+            
+            // 注册配置变更监听器 - 当配置在设置页面被修改时，自动更新服务
+            repository.registerConfigChangeListener(serviceId) { newConfig ->
+                service.updateConfig(newConfig)
+                Log.d(TAG, "Service config updated via listener: $serviceId")
+            }
+            Log.d(TAG, "Config change listener registered: $serviceId")
         }
-        Log.i(TAG, "All services subscribed to config changes")
+        Log.i(TAG, "All service configs initialized with change listeners")
     }
 }

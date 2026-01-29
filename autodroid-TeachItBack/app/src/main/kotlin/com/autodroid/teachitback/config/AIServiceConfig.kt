@@ -1,7 +1,10 @@
 package com.autodroid.teachitback.config
 
 import android.os.Parcelable
+import com.google.gson.annotations.Expose
+import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.IgnoredOnParcel
 
 /**
  * AI模型数据类
@@ -32,7 +35,9 @@ sealed class AIServiceConfig : Parcelable {
     abstract val baseUrl: String
     abstract val region: String
     abstract val model: String
-    open val availableModels: List<AIModel> = emptyList()
+    
+    // 使用 abstract 避免父类生成字段，防止 Gson 序列化时的重复字段冲突
+    abstract val availableModels: List<AIModel>
     
     // AI能力配置
     abstract val capabilities: AIServiceCapability
@@ -44,17 +49,8 @@ sealed class AIServiceConfig : Parcelable {
     // 服务启用状态
     abstract val isEnabled: Boolean
 
-    // 嵌入式服务专用字段（可选）
-    open val modelFilePath: String? = null
-    open val requiresDownload: Boolean = false
-    open val downloadSize: Long = 0L
-    open val maxTokens: Int = 0
-    open val temperature: Float = 0.7f
-    open val threshold: Float = 0.5f
-    open val maxResponseTime: Long = 200L
-
     // 服务状态
-    open val status: AIServiceStatus = AIServiceStatus.STATUS_OK
+    abstract val status: AIServiceStatus
     
     /**
      * TencentHunyuanConfig
@@ -556,12 +552,13 @@ sealed class AIServiceConfig : Parcelable {
         override val freeQuota: Long = Long.MAX_VALUE,
         override val pricePerMillion: Double = 0.0,
         override val isEnabled: Boolean = false,
-        override val modelFilePath: String = "models/chatglm-6b-int4.mnn",
-        override val requiresDownload: Boolean = true,
-        override val downloadSize: Long = 2_800_000_000L,
-        override val maxTokens: Int = 2048,
-        override val temperature: Float = 0.7f,
-        override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
+        override val status: AIServiceStatus = AIServiceStatus.STATUS_OK,
+        // 嵌入式服务专用字段
+        val modelFilePath: String = "models/chatglm-6b-int4.mnn",
+        val requiresDownload: Boolean = true,
+        val downloadSize: Long = 2_800_000_000L,
+        val maxTokens: Int = 2048,
+        val temperature: Float = 0.7f
     ) : AIServiceConfig()
 
     /**
@@ -589,11 +586,12 @@ sealed class AIServiceConfig : Parcelable {
         override val freeQuota: Long = Long.MAX_VALUE,
         override val pricePerMillion: Double = 0.0,
         override val isEnabled: Boolean = false,
-        override val modelFilePath: String = "models/tinybert-int8.mnn",
-        override val requiresDownload: Boolean = true,
-        override val downloadSize: Long = 14_720_116L,
-        override val threshold: Float = 0.5f,
-        override val maxResponseTime: Long = 200L,
-        override val status: AIServiceStatus = AIServiceStatus.STATUS_OK
+        override val status: AIServiceStatus = AIServiceStatus.STATUS_OK,
+        // 嵌入式服务专用字段
+        val modelFilePath: String = "models/tinybert-int8.mnn",
+        val requiresDownload: Boolean = true,
+        val downloadSize: Long = 14_720_116L,
+        val threshold: Float = 0.5f,
+        val maxResponseTime: Long = 200L
     ) : AIServiceConfig()
 }

@@ -26,7 +26,8 @@ class AIServiceKimi(
 
     private val gson = Gson()
 
-    override var isAvailable: Boolean = true
+    override val isAvailable: Boolean
+        get() = config.isEnabled
     override var remainingQuota: Long = 0L
 
     override suspend fun sendMessage(message: MessageEntity, context: String): AIServiceResponse {

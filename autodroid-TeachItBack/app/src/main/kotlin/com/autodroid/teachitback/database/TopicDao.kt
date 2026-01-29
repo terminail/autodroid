@@ -14,8 +14,14 @@ interface TopicDao {
     @Query("SELECT * FROM topics ORDER BY lastAccessed DESC")
     fun getAllTopics(): Flow<List<TopicEntity>>
 
+    @Query("SELECT * FROM topics ORDER BY lastAccessed DESC")
+    suspend fun getAllTopicsSync(): List<TopicEntity>
+
     @Query("SELECT * FROM topics WHERE id = :id")
     fun getTopicById(id: String): Flow<TopicEntity?>
+
+    @Query("SELECT * FROM topics WHERE id = :id")
+    suspend fun getTopicByIdSync(id: String): TopicEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTopic(topic: TopicEntity)
@@ -31,11 +37,6 @@ interface TopicDao {
     
     @Query("SELECT * FROM topics WHERE presetTopicId = :presetTopicId AND isPreset = 0 LIMIT 1")
     suspend fun getPersonalCopyByPresetId(presetTopicId: String): TopicEntity?
-    
-    // ===== 验证工具需要的额外方法 =====
-    
-    @Query("SELECT * FROM topics WHERE id = :id")
-    suspend fun getTopicByIdSync(id: String): TopicEntity?
     
     // ===== 基于新字段的查询方法 =====
     

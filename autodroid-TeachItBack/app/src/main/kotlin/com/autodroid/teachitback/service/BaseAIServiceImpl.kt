@@ -1,7 +1,5 @@
 package com.autodroid.teachitback.service
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import com.autodroid.teachitback.api.AIService
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.config.AIServiceStatus
@@ -33,8 +31,7 @@ abstract class BaseAIServiceImpl : AIService {
     )
 
     // 配置相关属性
-    private var configObserver: Observer<Map<String, AIServiceConfig>>? = null
-    protected var currentConfig: AIServiceConfig = config
+    protected lateinit var currentConfig: AIServiceConfig
     
     /**
      * 重试配置类
@@ -53,21 +50,29 @@ abstract class BaseAIServiceImpl : AIService {
     )
 
     // ===== 配置管理 =====
-
-    override fun observeConfig(configLiveData: LiveData<Map<String, AIServiceConfig>>) {
-        configObserver = Observer { configs ->
-            configs[config.id]?.let { newConfig ->
-                android.util.Log.d("BaseAIServiceImpl", "observeConfig: ${config.id} received config update")
-                android.util.Log.d("BaseAIServiceImpl", "observeConfig: newConfig.apiKey = ${newConfig.apiKey.take(10)}...")
-                currentConfig = newConfig
-                remainingQuota = newConfig.freeQuota
-                android.util.Log.d("BaseAIServiceImpl", "observeConfig: currentConfig updated, remainingQuota = $remainingQuota")
-            }
+    
+    /**
+     * 更新服务配置（公共方法，供外部调用）
+     * @param newConfig 新的配置
+     */
+    override fun updateConfig(newConfig: AIServiceConfig) {
+        updateConfigInternal(newConfig)
+    }
+    
+    private fun updateConfigInternal(newConfig: AIServiceConfig) {
+        // 如果 currentConfig 未初始化，直接设置
+        if (!::currentConfig.isInitialized) {
+            android.util.Log.d("BaseAIServiceImpl", "updateConfigInternal: ${config.id} initializing currentConfig for the first time")
+            currentConfig = newConfig
+            remainingQuota = newConfig.freeQuota
+            android.util.Log.d("BaseAIServiceImpl", "updateConfigInternal: currentConfig initialized, remainingQuota = $remainingQuota")
+            return
         }
-        configLiveData.observeForever(configObserver!!)
         
-        // 初始化 remainingQuota（此时 currentConfig 已经被正确初始化）
-        remainingQuota = config.freeQuota
+        android.util.Log.d("BaseAIServiceImpl", "updateConfigInternal: ${config.id}, apiKey = ${newConfig.apiKey.take(10)}...")
+        currentConfig = newConfig
+        remainingQuota = newConfig.freeQuota
+        android.util.Log.d("BaseAIServiceImpl", "updateConfigInternal: currentConfig updated, remainingQuota = $remainingQuota")
     }
 
     // ===== 安全执行方法 =====
@@ -140,7 +145,7 @@ abstract class BaseAIServiceImpl : AIService {
     /**
      * 检查配置是否有效
      */
-    protected fun validateConfig(): Boolean {
+    protected open fun validateConfig(): Boolean {
         return when (config) {
             is com.autodroid.teachitback.config.AIServiceConfig.OpenAIConfig -> {
                 config.apiKey.isNotBlank() && config.model.isNotBlank()

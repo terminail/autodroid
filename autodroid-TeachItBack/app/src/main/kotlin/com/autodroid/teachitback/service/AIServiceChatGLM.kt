@@ -21,7 +21,7 @@ class AIServiceChatGLM(
     private val context: Context,
     override val config: ChatGLMConfig,
     private val mnnIntegration: MNNIntegration
-) : AIService {
+) : BaseAIServiceImpl() {
     
     companion object {
         private const val TAG = "AIServiceChatGLM"
@@ -33,7 +33,7 @@ class AIServiceChatGLM(
     private var isModelLoaded = false
     
     override val isAvailable: Boolean
-        get() = isModelLoaded && model?.isLoaded() == true
+        get() = config.isEnabled && isModelLoaded && model?.isLoaded() == true
     
     override var remainingQuota: Long
         get() = if (isAvailable) Long.MAX_VALUE else 0
@@ -367,17 +367,6 @@ class AIServiceChatGLM(
     
     override suspend fun getUsageStatistics(): UsageStatistics {
         return usageStats
-    }
-
-    override fun observeConfig(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
-        configLiveData.observeForever { configs ->
-            configs[config.id]?.let { newConfig ->
-                if (newConfig is ChatGLMConfig) {
-                    // ChatGLM本地服务可以更新配置
-                    Log.d(TAG, "ChatGLM config updated")
-                }
-            }
-        }
     }
 
     // ===== 私有辅助方法 =====

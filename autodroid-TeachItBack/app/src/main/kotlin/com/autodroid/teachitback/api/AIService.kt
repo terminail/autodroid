@@ -1,6 +1,5 @@
 package com.autodroid.teachitback.api
 
-import androidx.lifecycle.LiveData
 import com.autodroid.teachitback.config.AIServiceConfig
 import com.autodroid.teachitback.config.AIServiceStatus
 import com.autodroid.teachitback.model.*
@@ -17,10 +16,10 @@ interface AIService {
     // ===== 配置管理 =====
     
     /**
-     * 订阅配置变化
-     * @param configLiveData 配置LiveData
+     * 更新服务配置
+     * @param newConfig 新的配置
      */
-    fun observeConfig(configLiveData: LiveData<Map<String, AIServiceConfig>>)
+    fun updateConfig(newConfig: AIServiceConfig)
     
     // ===== 基础对话功能 =====
     

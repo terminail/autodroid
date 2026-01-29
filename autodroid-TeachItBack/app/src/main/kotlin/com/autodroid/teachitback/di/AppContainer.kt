@@ -53,14 +53,12 @@ object AppContainer {
                 // 先初始化zhipu配置（从BuildConfig读取API key）
                 initializeZhipuConfig()
                 
-                // 加载AI服务配置到LiveData
-                _settingsRepository.loadAllAIServiceConfigsToLiveData()
-                
+                // 注册所有AI服务
                 com.autodroid.teachitback.initializer.AIServiceInitializer.registerAllServices(_application, _aiServiceRegistry)
+                
+                // 初始化所有服务的配置（从数据库加载）
+                com.autodroid.teachitback.initializer.AIServiceInitializer.initializeAllServiceConfigs(_settingsRepository)
             }
-            
-            // 订阅配置变化
-            com.autodroid.teachitback.initializer.AIServiceInitializer.observeConfigChanges(_settingsRepository.aiServiceConfigs)
             
             // 初始化AI服务路由器
             com.autodroid.teachitback.router.AIServiceRouter.initialize(_aiServiceRegistry)

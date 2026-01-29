@@ -34,7 +34,8 @@ class AIServiceTencentHunyuan(
 
     private val gson = Gson()
 
-    override var isAvailable: Boolean = true
+    override val isAvailable: Boolean
+        get() = config.isEnabled
     override var remainingQuota: Long = 0L
 
     // ===== 基础对话功能 =====

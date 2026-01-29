@@ -53,8 +53,9 @@ class ServiceSettingsViewModel(
 
     init {
         loadServiceConfigurations()
-        loadEnabledServices()
         initializeServiceStatus()
+        // 初始刷新一次启用的服务
+        refreshEnabledServices()
     }
 
     /**
@@ -96,20 +97,25 @@ class ServiceSettingsViewModel(
     }
 
     /**
-     * 加载启用的服务
+     * 刷新启用的服务列表
+     * 在配置变化时调用，重新从数据库加载
      */
-    private fun loadEnabledServices() {
+    fun refreshEnabledServices() {
         viewModelScope.launch {
             try {
-                // 从数据库加载所有 AI 服务配置
-                val allConfigs = settingsRepository.getAllAIServiceConfigs()
-                
-                // 过滤出已启用的服务
-                val enabledConfigs = allConfigs.filter { it.isEnabled }
-                
+                // 从 availableServices 中过滤出已启用的服务
+                // 每个服务的配置应该从数据库单独查询
+                val enabledConfigs = mutableListOf<AIServiceConfig>()
+                _availableServices.value?.forEach { defaultConfig ->
+                    settingsRepository.loadAIServiceConfig(defaultConfig.id)?.let { savedConfig ->
+                        if (savedConfig.isEnabled) {
+                            enabledConfigs.add(savedConfig)
+                        }
+                    }
+                }
                 _enabledServices.value = enabledConfigs
             } catch (e: Exception) {
-                _errorMessage.value = "加载启用服务失败: ${e.message}"
+                _errorMessage.value = "刷新启用服务失败: ${e.message}"
             }
         }
     }
@@ -183,7 +189,7 @@ class ServiceSettingsViewModel(
                     settingsRepository.saveAIServiceConfig(updatedConfig)
                     
                     // 重新加载启用的服务
-                    loadEnabledServices()
+                    refreshEnabledServices()
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "切换服务状态失败: ${e.message}"

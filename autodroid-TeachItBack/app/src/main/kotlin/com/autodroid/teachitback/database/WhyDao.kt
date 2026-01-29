@@ -14,6 +14,9 @@ interface WhyDao {
     @Query("SELECT * FROM why_content ORDER BY orderIndex ASC")
     fun getAllWhyContent(): Flow<List<WhyEntity>>
 
+    @Query("SELECT * FROM why_content ORDER BY orderIndex ASC")
+    suspend fun getAllWhyContentSync(): List<WhyEntity>
+
     @Query("SELECT * FROM why_content WHERE id = :id")
     fun getWhyContentById(id: String): Flow<WhyEntity?>
 

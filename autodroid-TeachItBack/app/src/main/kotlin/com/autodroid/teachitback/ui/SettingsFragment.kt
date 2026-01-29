@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -12,8 +13,14 @@ import com.autodroid.teachitback.R
 import com.autodroid.teachitback.databinding.FragmentSettingsBinding
 import com.autodroid.teachitback.di.ViewModelFactoryProvider
 import com.autodroid.teachitback.ui.adapter.SettingsAdapter
+import com.autodroid.teachitback.ui.adapter.SettingsItem
 import com.autodroid.teachitback.viewmodel.SettingsViewModel
 
+/**
+ * SettingsFragment
+ * 
+ * 传统方式：不使用 LiveData，使用回调接口
+ */
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -37,12 +44,13 @@ class SettingsFragment : Fragment() {
         val factory = ViewModelFactoryProvider.getFactory()
         viewModel = ViewModelProvider(requireActivity(), factory)[SettingsViewModel::class.java]
 
-        setupUI()
         setupRecyclerView()
-        observeViewModel()
     }
-
-    private fun setupUI() {
+    
+    override fun onResume() {
+        super.onResume()
+        // 每次进入页面时刷新数据
+        loadAllSettings()
     }
 
     private fun setupRecyclerView() {
@@ -57,79 +65,48 @@ class SettingsFragment : Fragment() {
             adapter = settingsAdapter
         }
     }
-
-    private fun handleSettingsItemClick(item: com.autodroid.teachitback.ui.adapter.SettingsItem) {
+    
+    /**
+     * 加载所有设置项（传统回调方式）
+     */
+    private fun loadAllSettings() {
+        viewModel.loadAllSettings(
+            onSuccess = { items ->
+                settingsAdapter.submitList(items)
+            },
+            onError = { message ->
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            },
+            onLoading = { isLoading ->
+                // 可以在这里显示/隐藏加载指示器
+                // binding.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+            }
+        )
+    }
+    
+    private fun handleSettingsItemClick(item: SettingsItem) {
         when (item) {
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.TencentCloudAIServiceItem -> {
-                navigateToAIServiceDetail("tencent-hunyuan")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.DoubaoAIServiceItem -> {
-                navigateToAIServiceDetail("doubao")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.DeepSeekAIServiceItem -> {
-                navigateToAIServiceDetail("deepseek")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.MinimaxAIServiceItem -> {
-                navigateToAIServiceDetail("minimax")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.KimiAIServiceItem -> {
-                navigateToAIServiceDetail("kimi")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.OpenAIServiceItem -> {
-                navigateToAIServiceDetail("openai")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.ErnieAIServiceItem -> {
-                navigateToAIServiceDetail("ernie")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.QwenAIServiceItem -> {
-                navigateToAIServiceDetail("qwen")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.ZhipuAIServiceItem -> {
-                navigateToAIServiceDetail("zhipu")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.SparkAIServiceItem -> {
-                navigateToAIServiceDetail("spark")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.HunyuanAIServiceItem -> {
-                navigateToAIServiceDetail("hunyuan")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.BaichuanAIServiceItem -> {
-                navigateToAIServiceDetail("baichuan")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.LingyiAIServiceItem -> {
-                navigateToAIServiceDetail("lingyi")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.JieyueAIServiceItem -> {
-                navigateToAIServiceDetail("jieyue")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.ChatGLMAIServiceItem -> {
-                navigateToAIServiceDetail("chatglm")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.TinyBERTAIServiceItem -> {
-                navigateToAIServiceDetail("tinybert")
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.DarkModeSwitchItem -> {
-                viewModel.updateSwitchSetting("dark_mode", !item.isChecked)
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.AutoSaveSwitchItem -> {
-                viewModel.updateSwitchSetting("auto_save", !item.isChecked)
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.LanguageSettingItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_preferences)
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.BackupDataItem -> {
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.RestoreDataItem -> {
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.ClearAllDataButtonItem -> {
-                viewModel.clearAllData()
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.VersionInfoItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_about)
-            }
-            is com.autodroid.teachitback.ui.adapter.SettingsItem.HelpAndFeedbackItem -> {
-                findNavController().navigate(R.id.action_nav_settings_to_about)
-            }
+            is SettingsItem.TencentCloudAIServiceItem -> navigateToAIServiceDetail("tencent-hunyuan")
+            is SettingsItem.DoubaoAIServiceItem -> navigateToAIServiceDetail("doubao")
+            is SettingsItem.DeepSeekAIServiceItem -> navigateToAIServiceDetail("deepseek")
+            is SettingsItem.MinimaxAIServiceItem -> navigateToAIServiceDetail("minimax")
+            is SettingsItem.KimiAIServiceItem -> navigateToAIServiceDetail("kimi")
+            is SettingsItem.OpenAIServiceItem -> navigateToAIServiceDetail("openai")
+            is SettingsItem.ErnieAIServiceItem -> navigateToAIServiceDetail("ernie")
+            is SettingsItem.QwenAIServiceItem -> navigateToAIServiceDetail("qwen")
+            is SettingsItem.ZhipuAIServiceItem -> navigateToAIServiceDetail("zhipu")
+            is SettingsItem.SparkAIServiceItem -> navigateToAIServiceDetail("spark")
+            is SettingsItem.HunyuanAIServiceItem -> navigateToAIServiceDetail("hunyuan")
+            is SettingsItem.BaichuanAIServiceItem -> navigateToAIServiceDetail("baichuan")
+            is SettingsItem.LingyiAIServiceItem -> navigateToAIServiceDetail("lingyi")
+            is SettingsItem.JieyueAIServiceItem -> navigateToAIServiceDetail("jieyue")
+            is SettingsItem.ChatGLMAIServiceItem -> navigateToAIServiceDetail("chatglm")
+            is SettingsItem.TinyBERTAIServiceItem -> navigateToAIServiceDetail("tinybert")
+            is SettingsItem.LanguageSettingItem -> navigateToLanguageSettings()
+            is SettingsItem.BackupDataItem -> backupData()
+            is SettingsItem.RestoreDataItem -> restoreData()
+            is SettingsItem.ClearAllDataButtonItem -> clearAllData()
+            is SettingsItem.HelpAndFeedbackItem -> navigateToHelpAndFeedback()
             else -> {}
         }
     }
@@ -141,24 +118,25 @@ class SettingsFragment : Fragment() {
         findNavController().navigate(R.id.action_nav_settings_to_ai_service_detail, bundle)
     }
 
-    private fun observeViewModel() {
-        viewModel.settingsItems.observe(viewLifecycleOwner) { items ->
-            settingsAdapter.submitList(items)
-        }
+    private fun navigateToLanguageSettings() {
+        // 语言设置页面导航 - 暂时使用 Toast 提示
+        Toast.makeText(requireContext(), "语言设置功能开发中...", Toast.LENGTH_SHORT).show()
+    }
 
-        viewModel.aiServiceConfigs.observe(viewLifecycleOwner) { _ ->
-            // 当AI服务配置发生变化时，重新加载设置项并更新服务状态
-            viewModel.loadSettings()
-            val serviceStatuses = viewModel.getAIServiceStatuses()
-            settingsAdapter.updateAIServiceStatus(serviceStatuses)
-        }
+    private fun backupData() {
+        Toast.makeText(requireContext(), "备份功能开发中...", Toast.LENGTH_SHORT).show()
+    }
 
-        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
-            message?.let {
-                android.widget.Toast.makeText(requireContext(), it, android.widget.Toast.LENGTH_SHORT).show()
-                viewModel.clearErrorMessage()
-            }
-        }
+    private fun restoreData() {
+        Toast.makeText(requireContext(), "恢复功能开发中...", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun clearAllData() {
+        Toast.makeText(requireContext(), "清除数据功能开发中...", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun navigateToHelpAndFeedback() {
+        Toast.makeText(requireContext(), "帮助与反馈功能开发中...", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

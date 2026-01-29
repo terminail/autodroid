@@ -10,7 +10,7 @@ import com.autodroid.teachitback.ui.adapter.SettingsItem
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
+
 import kotlinx.coroutines.launch
 import android.util.Log
 
@@ -42,7 +42,10 @@ class DataInitializer(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(context)
             
-            val existingTopics = database.topicDao().getAllTopics().first()
+            // 始终初始化 why 内容（使用 REPLACE 策略，不会重复）
+            initializeWhyFragmentContent(database)
+            
+            val existingTopics = database.topicDao().getAllTopicsSync()
             
             if (existingTopics.isNotEmpty()) {
                 return@launch
@@ -202,7 +205,7 @@ class DataInitializer(private val context: Context) {
     }
 
     private suspend fun initializeAIServices(database: AppDatabase) {
-        val existingSettings = database.settingDao().getAllSettings().first()
+        val existingSettings = database.settingDao().getAllSettingsSync()
         
         if (existingSettings.isNotEmpty()) {
             return
@@ -235,17 +238,11 @@ class DataInitializer(private val context: Context) {
             )
             database.settingDao().insertSetting(entity)
         }
-        
-        initializeWhyFragmentContent(database)
     }
     
     private suspend fun initializeWhyFragmentContent(database: AppDatabase) {
-        val existingWhyContent = database.whyDao().getAllWhyContent().first()
-        
-        if (existingWhyContent.isNotEmpty()) {
-            return
-        }
-        
+        // 使用 REPLACE 策略插入，确保内容始终存在
+        // 如果数据库被重建（如 fallbackToDestructiveMigration），内容会重新初始化
         val whyContents = listOf(
             WhyEntity(
                 id = "app_intro",

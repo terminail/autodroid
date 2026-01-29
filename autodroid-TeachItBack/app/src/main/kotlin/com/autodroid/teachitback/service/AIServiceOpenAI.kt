@@ -22,9 +22,10 @@ import kotlinx.coroutines.delay
  */
 class AIServiceOpenAI(
     private val openAIConfig: AIServiceConfig.OpenAIConfig
-) : com.autodroid.teachitback.api.AIService {
+) : BaseAIServiceImpl() {
     override val config: com.autodroid.teachitback.config.AIServiceConfig = openAIConfig
-    override var isAvailable: Boolean = true
+    override val isAvailable: Boolean
+        get() = config.isEnabled
     override var remainingQuota: Long = (config as com.autodroid.teachitback.config.AIServiceConfig.OpenAIConfig).freeQuota
 
     private val client = OkHttpClient.Builder()
@@ -333,17 +334,7 @@ class AIServiceOpenAI(
         throw UnsupportedFeatureException.knowledgeGraph(config.displayName)
     }
 
-    override fun observeConfig(configLiveData: androidx.lifecycle.LiveData<Map<String, AIServiceConfig>>) {
-        configLiveData.observeForever { configs ->
-            configs[config.id]?.let { newConfig ->
-                if (newConfig is AIServiceConfig.OpenAIConfig) {
-                    // OpenAI服务可以更新配置
-                }
-            }
-        }
-    }
-
-    private fun validateConfig(): Boolean {
+    override fun validateConfig(): Boolean {
         return config.apiKey.isNotBlank() && config.baseUrl.isNotBlank()
     }
 

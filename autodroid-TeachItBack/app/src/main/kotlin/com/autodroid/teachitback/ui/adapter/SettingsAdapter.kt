@@ -32,6 +32,10 @@ class SettingsAdapter(
         notifyDataSetChanged()
     }
     
+    fun getCurrentList(): List<SettingsItem> {
+        return items.toList()
+    }
+    
     override fun getItemViewType(position: Int): Int {
         return items[position].getType()
     }

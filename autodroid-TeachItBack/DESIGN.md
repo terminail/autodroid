@@ -1075,6 +1075,107 @@ object PromptTemplates {
 5. **维护成本低**：统一配置管理减少重复代码
 6. **架构清晰**：MVVM模式确保ViewModel不感知AI服务细节
 
+### AI服务配置刷新机制
+
+为了避免LiveData观察带来的内存开销和生命周期管理问题，我们采用回调监听器模式实现配置刷新。
+
+#### 配置刷新工作流程
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant SF as SettingsFragment
+    participant SVM as SettingsAIServiceDetailViewModel
+    participant SR as SettingsRepository
+    participant DB as Room Database
+    participant AI as AIServiceInitializer
+    participant Svc as AI Service
+
+    U->>SF: 修改配置并保存
+    SF->>SVM: 调用 saveConfig()
+    SVM->>SR: 调用 saveAIServiceConfig()
+    SR->>DB: 保存配置到数据库
+    DB-->>SR: 确认保存成功
+    SR->>SR: 调用 notifyConfigChanged()
+    SR->>AI: 触发配置变更监听器
+    AI->>Svc: 调用 updateConfig(newConfig)
+    Svc-->>AI: 配置更新完成
+    SR-->>SVM: 返回保存成功
+    SVM-->>SF: 回调 onSaveSuccess()
+    SF-->>U: 显示保存成功提示
+
+    Note over SR,Svc: 配置变更监听器在<br/>AIServiceInitializer初始化时注册
+```
+
+#### 配置监听器注册机制
+
+```mermaid
+flowchart TD
+    A[应用启动] --> B[AIServiceInitializer初始化]
+    B --> C[遍历所有已注册服务]
+    C --> D[从数据库加载配置]
+    D --> E[调用 service.updateConfig]
+    E --> F[注册配置变更监听器]
+    F --> G{更多服务?}
+    G -->|是| C
+    G -->|否| H[初始化完成]
+    
+    I[用户在设置页修改配置] --> J[SettingsRepository保存配置]
+    J --> K[保存到数据库]
+    K --> L[notifyConfigChanged]
+    L --> M[遍历该服务的监听器]
+    M --> N[调用 service.updateConfig]
+    N --> O[服务使用最新配置]
+```
+
+#### 核心组件职责
+
+**SettingsRepository**:
+- 管理配置变更监听器注册/注销
+- 保存配置后自动通知监听器
+- 使用同步查询方式，避免LiveData开销
+
+```kotlin
+class SettingsRepository(private val settingDao: SettingDao) {
+    private val configChangeListeners = mutableMapOf<String, MutableList<(AIServiceConfig) -> Unit>>()
+    
+    fun registerConfigChangeListener(serviceId: String, listener: (AIServiceConfig) -> Unit)
+    fun unregisterConfigChangeListener(serviceId: String, listener: (AIServiceConfig) -> Unit)
+    
+    suspend fun saveAIServiceConfig(config: AIServiceConfig) {
+        // 保存到数据库...
+        notifyConfigChanged(config)  // 通知监听器
+    }
+}
+```
+
+**AIServiceInitializer**:
+- 在应用启动时初始化所有服务配置
+- 为每个服务注册配置变更监听器
+- 监听器回调时更新对应服务实例
+
+```kotlin
+suspend fun initializeAllServiceConfigs(repository: SettingsRepository) {
+    registry.getAllServices().forEach { service ->
+        val config = repository.loadAIServiceConfig(serviceId)
+        config?.let { service.updateConfig(it) }
+        
+        // 注册监听器
+        repository.registerConfigChangeListener(serviceId) { newConfig ->
+            service.updateConfig(newConfig)
+        }
+    }
+}
+```
+
+#### 设计优势
+
+1. **无LiveData开销**：避免LiveData的内存占用和生命周期管理问题
+2. **精确通知**：只有被修改的服务会收到更新通知
+3. **松耦合**：SettingsRepository不直接依赖AI服务，通过回调解耦
+4. **线程安全**：配置更新在主线程执行，确保UI一致性
+5. **设置不常用**：由于设置页面使用频率低，传统回调方式更合适
+
 ## 嵌入式AI集成
 
 ### 概述
